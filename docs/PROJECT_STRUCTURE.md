@@ -1,6 +1,7 @@
 # PROJECT_STRUCTURE.md — Estructura del repositorio
 
-> **Estado:** Borrador normativo v0.1 · **Depende de:** `ARCHITECTURE.md`, `REQUIREMENTS.md`
+> **Estado:** Borrador normativo v0.2 · **Depende de:** `ARCHITECTURE.md`, `REQUIREMENTS.md`
+> **Revisión v0.2 (2026-10-10):** incorpora la revisión de arquitectura (ADR-0016 a ADR-0020, en estado **Propuesto**); lo que depende de ellos es propuesta hasta su aceptación por un mantenedor humano.
 > Este documento fija **dónde vive cada cosa** y **qué puede depender de qué**. Crear un directorio, crate o paquete fuera de esta estructura requiere actualizar este documento en el mismo PR (y un ADR si cambia una regla de capas).
 
 ---
@@ -62,6 +63,7 @@ pip/
 │   │   ├── SDK_API.md
 │   │   ├── ERROR_CODES.md
 │   │   ├── TEST_STRATEGY.md
+│   │   ├── models/               # (F13) Modelos formales de protocolo
 │   │   ├── CONTRACTS.md
 │   │   └── profiles/
 │   │       ├── pip-personal-v1.md
@@ -84,9 +86,11 @@ pip/
 │   ├── pip-holder/
 │   ├── pip-issuer/
 │   ├── pip-storage/
+│   ├── pip-storage-sqlite/       # Adaptador L5
 │   ├── pip-protocol/
 │   ├── pip-recovery/
 │   ├── pip-sync/
+│   ├── pip-transport-http/       # Adaptador L5
 │   ├── pip-ledger/
 │   ├── pip-ledger-evm/
 │   ├── pip-sdk/
@@ -147,35 +151,39 @@ pip/
 | `pip-types` | L1 | Identificadores (`IssuerId`, `Kid`, `Vct`, `ProfileId`), tiempo (`UnixTime`), versiones, newtypes validados | No | Sí | — |
 | `pip-codec` | L1 | base64url estricto, JSON con límites y rechazo de duplicados, CBOR con límites, DEFLATE con límite, Base45 | No | Sí | types |
 | `pip-crypto` | L1 | Trait `CryptoBackend`; ES256, SHA-256, HMAC, HKDF, XChaCha20-Poly1305, ECDH P-256, HPKE, JWK, thumbprints, comparación en tiempo constante | No | Sí | types, codec |
-| `pip-keys` | L1 | `KeyPurpose`, `KeyHandle`, trait `KeyStore`, keystore software (feature `software-keystore`) | No | Sí | types, crypto |
+| `pip-keys` | L1 | `KeyPurpose`, `KeyHandle`, trait `KeyStore` (firma y acuerdo de claves), normalización de firmas DER → P1363, keystore software (feature `software-keystore`) | No | Sí | types, crypto |
 | `pip-credential` | L2 | SD-JWT (RFC 9901), SD-JWT VC, KB-JWT, esquemas de perfil | No | Sí | types, codec, crypto, keys |
 | `pip-status` | L2 | Token Status List: parseo, verificación, índice, frescura | No | Sí | types, codec, crypto |
-| `pip-trust` | L2 | Trust bundle, anti-rollback, piso de tiempo, `Policy` | No | Sí | types, codec, crypto, status |
-| `pip-verifier` | L3 | Pipeline de verificación, caché de nonces (trait), `VerificationResult` | No | Sí | credential, status, trust |
+| `pip-trust` | L2 | Raíz de confianza, trust bundle multi-firma, manifiesto de estado, anti-rollback, piso de tiempo, `Policy`, trait `VerifierStateStore` | No | Sí | types, codec, crypto, status |
+| `pip-verifier` | L3 | Pipeline de verificación con typestate, caché de nonces (sobre `VerifierStateStore`), `VerificationResult` | No | Sí | credential, status, trust |
 | `pip-holder` | L3 | Gestión de credenciales, lotes, preparar/confirmar presentaciones | No* | Sí | credential, keys, storage (trait) |
 | `pip-issuer` | L3 | Construcción y firma de credenciales, asignación de índices | No | Sí | credential, status, keys |
-| `pip-storage` | L3 | Trait `StorageBackend`, cifrado de sobre, índices ciegos, migraciones; backend SQLite (feature `sqlite`) | Sí (backend) | Trait sí; SQLite no | types, crypto |
+| `pip-storage` | L3 | Trait `StorageBackend`, cifrado de sobre, índices ciegos, migraciones, backend en memoria | No | Sí | types, crypto |
 | `pip-recovery` | L3 | Respaldo, código de recuperación, Shamir, migración SAS, solicitudes de re-vinculación | No | Sí | crypto, keys, holder |
 | `pip-protocol` | L4 | Mensajes OID4VCI/OID4VP, perfil offline QR, sobres de operación | No | Sí | credential, verifier, holder, recovery |
-| `pip-sync` | L4 | Cola de operaciones, cliente de sincronización (async), trait `Transport` | Sí | Sí | protocol, trust, status, storage |
-| `pip-ledger` | L4 | Trait `LedgerAdapter`, tipos de eventos, verificación de bundle contra estado | Sí (trait) | Sí | trust, types |
+| `pip-sync` | L4 | Cola de operaciones y sincronización como máquina de estado sans-I/O; trait `Transport` (lo implementa L5 o el host) | No | Sí | protocol, trust, status, storage |
+| `pip-ledger` | L4 | Trait `LedgerAdapter`, tipos de eventos, reconstrucción pura del estado, derivación determinista del bundle, contraste bundle ↔ estado | No | Sí | trust, types |
+| `pip-storage-sqlite` | L5 | Backend SQLite (`rusqlite`) de `StorageBackend` y de `VerifierStateStore` | Sí | No | storage, trust |
+| `pip-transport-http` | L5 | Implementación por defecto de `Transport`; conduce las máquinas de `pip-sync` y `pip-protocol` | Sí | No (en web el host inyecta `fetch`) | sync |
 | `pip-ledger-evm` | L5 | Implementación EVM con `alloy`; solo servicios y modo completo | Sí | No | ledger |
 | `pip-sdk` | L6 | API pública estable; fachada sobre L1–L4; features `verifier`, `holder`, `issuer`, `sync`, `full-verification` | Según features | Sí (sin `full-verification`) | todos salvo testkit |
 | `pip-testkit` | — | `FixedClock`, `SeededRng`, emisores y bundles de prueba, generadores proptest | — | Sí | todos (solo dev) |
 
 \* `pip-holder` usa el trait de almacenamiento; el I/O real lo hace el backend.
 
+Los crates L1–L3 son `#![no_std]` + `alloc` (ADR-0019): no pueden hacer I/O, leer el reloj ni obtener aleatoriedad del sistema, porque esas APIs no existen para ellos. Los crates L4 pueden usar `std`, pero son sans-I/O: exponen máquinas de estado que emiten efectos y consumen resultados. Solo L5 (adaptadores) y el host ejecutan I/O.
+
 ---
 
 ## 4. Reglas de dependencias (verificadas por `cargo xtask check-layers`)
 
 1. Un crate solo puede depender de crates de **su capa o inferiores** según `xtask/layers.toml`.
-2. Los crates L0–L3 **no** pueden depender de: `tokio`, `reqwest`, `hyper`, `alloy`, `rusqlite` (salvo `pip-storage` bajo feature `sqlite`), ni de ningún crate de `services/`.
-3. `pip-verifier` **no** puede depender de `pip-sync`, `pip-ledger*`, `pip-storage` (usa traits propios para la caché de nonces).
+2. Los crates L1–L4 **no** pueden depender de: `tokio` ni otro runtime async, `reqwest`, `hyper`, `alloy`, `rusqlite`, ni de ningún crate de `services/`. Los crates L1–L3 son además `#![no_std]`: `check-layers` falla si alguno enlaza `std`.
+3. `pip-verifier` **no** puede depender de `pip-sync`, `pip-ledger*`, `pip-storage*` ni `pip-transport-http` (persiste su estado mediante el trait `VerifierStateStore` de `pip-trust`).
 4. Ningún crate de `crates/` puede depender de `bindings/`, `services/`, `apps/` o `spikes/`.
 5. `pip-testkit` solo puede aparecer en `[dev-dependencies]`.
 6. Los bindings solo pueden depender de `pip-sdk` (nunca de crates internos directamente).
-7. Los servicios pueden depender de `pip-sdk` y de `pip-ledger-evm`; no de crates internos salvo que `layers.toml` lo autorice explícitamente con justificación.
+7. Los servicios pueden depender de `pip-sdk` y de los adaptadores L5 (`pip-ledger-evm`, `pip-storage-sqlite`, `pip-transport-http`); no de crates internos salvo que `layers.toml` lo autorice explícitamente con justificación.
 
 Violaciones ⇒ CI falla. Cambiar `layers.toml` requiere ADR.
 
@@ -200,6 +208,9 @@ flowchart BT
     protocol --> sync[pip-sync]
     trust --> ledger[pip-ledger]
     ledger --> evm[pip-ledger-evm]
+    storage --> sqlite[pip-storage-sqlite]
+    trust --> sqlite
+    sync --> http[pip-transport-http]
     sync --> sdk[pip-sdk]
     issuer --> sdk
     ledger --> sdk
@@ -213,7 +224,7 @@ flowchart BT
 
 ```toml
 [workspace.lints.rust]
-unsafe_code = "forbid"          # Los crates de bindings lo relajan a "deny" + allow puntual con // SAFETY:
+unsafe_code = "deny"            # Ver nota sobre unsafe: "forbid" no admite excepciones ni sobrescritura por crate
 missing_docs = "deny"
 unused_must_use = "deny"
 
@@ -227,9 +238,11 @@ unimplemented = "deny"
 dbg_macro = "deny"
 print_stdout = "deny"
 print_stderr = "deny"
-float_arithmetic = "warn"
-arithmetic_side_effects = "warn"   # Usar checked_*/saturating_* en cálculos de tamaños e índices
+float_arithmetic = "deny"          # CI compila con -D warnings: declararlos "deny" evita diferencias entre local y CI
+arithmetic_side_effects = "deny"   # Usar checked_*/saturating_* en cálculos de tamaños e índices
 ```
+
+**`unsafe`:** Cargo no permite heredar los lints del workspace y sobrescribir uno en un crate, y `forbid` no admite `allow` posteriores. Por eso el workspace declara `deny`, cada crate fuera de `bindings/` añade `#![forbid(unsafe_code)]` en su `lib.rs` (§6) y `cargo xtask check-layers` falla si falta. En `bindings/`, cada bloque lleva `#[allow(unsafe_code)]` local junto a su `// SAFETY:` (INV-09).
 
 En pruebas (`#[cfg(test)]`, `tests/`, `benches/`, `xtask`, `pip-cli`) se permite `unwrap`/`expect` mediante `#![allow(...)]` local con comentario.
 
@@ -247,11 +260,14 @@ inherits = "release"
 opt-level = "z"
 ```
 
+`wasm32-unknown-unknown` no desenrolla aunque el perfil pida `unwind`: el binding WASM usa la estrategia de instancia envenenada de `ARCHITECTURE.md §3`. `opt-level = "z"` puede penalizar la criptografía; el valor definitivo (`z` o `s`) se fija con las mediciones de F2.T12.
+
 ### 5.3 Feature flags
 
 - **Aditivas**: activar una feature nunca elimina comportamiento.
 - Nombres en kebab-case; features peligrosas llevan `insecure-`/`dangerous-` (p. ej., `dangerous-allow-software-keys-financial` **no existirá**: es un ejemplo de lo que no se acepta).
 - Cada combinación relevante se compila en CI con `cargo hack --feature-powerset` acotado.
+- La elección de backend criptográfico **no** es una feature (sería excluyente, no aditiva): se hace por tipo (ADR-0007).
 
 ---
 
@@ -310,6 +326,9 @@ Reglas:
 | Vectores de conformidad | `conformance/vectors/` | `pip-conformance` | Desde F3 en Rust; desde F9 en cada lenguaje |
 | Vectores externos | `crates/pip-crypto/tests/vectors/` | Project Wycheproof, ejemplos de RFC | pip-crypto, credential |
 | Fuzzing | `fuzz/fuzz_targets/` | `cargo-fuzz` | Todo parser |
+| Mutación | — | `cargo-mutants` | Reglas de rechazo de credential, status, trust y verifier (desde F4) |
+| Comprobación acotada de modelos | `src/**` (`#[cfg(kani)]`) | Kani | pip-codec: ausencia de pánicos y de desbordamientos |
+| Modelos formales de protocolo | `docs/specs/models/` | Tamarin o ProVerif | Presentación, re-vinculación y migración (F13) |
 | Benchmarks | `benches/` | `criterion` | Desde F2 |
 | Contratos | `contracts/test/` | Foundry (unit, fuzz, invariantes), Slither | F6 |
 | Servicios | `services/*/tests/` | Testcontainers (PostgreSQL, nodo EVM local) | F7 |
@@ -327,7 +346,7 @@ Reglas:
 
 | Workflow | Disparador | Contenido |
 |---|---|---|
-| `ci.yml` | Cada PR y push a `main` | fmt, clippy (todas las features), build, nextest, doc (`-D warnings`), `xtask check-layers`, `xtask trace`, MSRV, `cargo hack` acotado, build `wasm32-unknown-unknown` |
+| `ci.yml` | Cada PR y push a `main` | fmt, clippy (todas las features), build, nextest, doc (`-D warnings`), `xtask check-layers`, `xtask trace`, MSRV, `cargo hack` acotado, build `wasm32-unknown-unknown` y build *bare-metal* de L1–L3 (`no_std`) |
 | `security.yml` | Cada PR + diario | `cargo-deny`, `cargo-audit`, revisión de nuevas dependencias, búsqueda de secretos |
 | `mobile.yml` | Push a `main` + nocturno + PR con label `ci:mobile` | Android (cargo-ndk, todas las ABIs) e iOS (XCFramework); pruebas de bindings en emulador/simulador |
 | `wasm.yml` | PR que toque `bindings/wasm` o crates L1–L4 | wasm-pack, pruebas en Node y navegador headless |

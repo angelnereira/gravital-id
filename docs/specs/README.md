@@ -7,7 +7,7 @@ Estas especificaciones detallan lo que `ARCHITECTURE.md` define a alto nivel. Se
 | `THREAT_MODEL.md` | Activos, actores, fronteras, STRIDE, LINDDUN, mitigaciones ↔ REQ | F0.T05 | Pendiente |
 | `CRYPTO_PROFILES.md` | Algoritmos, versiones fijadas de estándares, parámetros y límites | F0.T06 | Pendiente |
 | `PROTOCOL.md` | Flujos, mensajes, máquinas de estado, errores de protocolo | F0.T12 | Pendiente |
-| `TRUST_BUNDLE.md` | Formato, validación, anti-rollback, rotación | F0.T13 | Pendiente |
+| `TRUST_BUNDLE.md` | Raíz de confianza, bundle multi-firma, derivación determinista, manifiesto de estado, validación, anti-rollback, rotación | F0.T13 | Pendiente |
 | `CONTRACTS.md` | Funciones, roles, eventos, invariantes, migración | F0.T14 | Pendiente |
 | `profiles/pip-personal-v1.md` | Perfil personal | F0.T15 | Pendiente |
 | `profiles/pip-financial-v1.md` | Perfil financiero | F0.T15 | Pendiente |

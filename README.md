@@ -23,7 +23,7 @@ La documentación define principios, requisitos, arquitectura y orden de trabajo
 
 ## En una frase, cómo funciona
 
-Un **emisor** autorizado firma una credencial SD-JWT VC para el **titular**; el titular la guarda cifrada en su dispositivo y, ante un **verificador**, presenta solo los atributos pedidos, vinculados a esa sesión; el verificador la comprueba **localmente** con un *trust bundle* firmado derivado de un **registro público en blockchain** que dice qué emisores y claves son válidos. Ningún dato personal toca la cadena.
+Un **emisor** autorizado firma una credencial SD-JWT VC para el **titular**; el titular la guarda cifrada en su dispositivo y, ante un **verificador**, presenta solo los atributos pedidos, vinculados a esa sesión; el verificador la comprueba **localmente** con un *trust bundle* cofirmado por operadores independientes y derivado de un **registro público en blockchain** que dice qué emisores y claves son válidos. Ningún dato personal toca la cadena.
 
 ## Empezar a contribuir
 

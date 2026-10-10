@@ -1,6 +1,7 @@
 # ROADMAP.md — Hoja de ruta completa hasta producción
 
-> **Estado:** Normativo v0.1 · **Depende de:** `ARCHITECTURE.md`, `REQUIREMENTS.md`, `PROJECT_STRUCTURE.md`
+> **Estado:** Normativo v0.2 · **Depende de:** `ARCHITECTURE.md`, `REQUIREMENTS.md`, `PROJECT_STRUCTURE.md`
+> **Revisión v0.2 (2026-10-10):** incorpora la revisión de arquitectura (ADR-0016 a ADR-0020, en estado **Propuesto**); lo que depende de ellos es propuesta hasta su aceptación por un mantenedor humano.
 > Esta hoja de ruta cubre **desde el repositorio vacío hasta el producto en producción y su operación continua**. Ninguna fase se omite. Cada tarea se convierte en un issue de GitHub antes de empezar.
 
 ---
@@ -70,7 +71,7 @@ flowchart LR
     F15 --> F16 --> F17 --> F18
 ```
 
-Solapamientos permitidos: **F6** puede empezar cuando cierra G2 (los contratos no dependen del formato de credencial) y avanzar en paralelo con F3–F5. **F10** puede empezar cuando la API de `pip-sdk` esté congelada (F9.T02). **F14** puede empezar con G11 abierto. La **contratación** de auditores (F13.T01) empieza durante F9.
+Solapamientos permitidos: **F6** puede empezar cuando cierra G2 (los contratos no dependen del formato de credencial) y avanzar en paralelo con F3–F5. La tarea F6.T08 (`pip-ledger`) necesita además el modelo de bundle de F4.T03. **F10** puede empezar cuando la API de `pip-sdk` esté congelada (F9.T02). **F14** puede empezar con G11 abierto. La **contratación** de auditores (F13.T01) empieza durante F9.
 
 ---
 
@@ -112,25 +113,25 @@ Solapamientos permitidos: **F6** puede empezar cuando cierra G2 (los contratos n
 | F0.T04 | `SECURITY.md` definitivo | Canal privado (GitHub Security Advisories), tiempos de acuse y corrección, alcance, safe harbor. | REQ-SEC-010, REQ-SEC-011 |
 | F0.T05 | `THREAT_MODEL.md` | Activos, actores, fronteras de confianza, diagramas de flujo de datos, STRIDE por componente, LINDDUN para privacidad, casos de abuso; cada amenaza mapeada a mitigación y a REQ. | REQ-SEC-* |
 | F0.T06 | `CRYPTO_PROFILES.md` | Algoritmos permitidos y prohibidos; versiones exactas fijadas de RFC 9901, borrador SD-JWT VC, Token Status List, OID4VCI 1.0, OID4VP 1.0; tamaños de sal, nonces, límites de entrada, límites de descompresión; política de deprecación. | REQ-CRED-001, REQ-STAT-001 |
-| F0.T07 | Spike QR | Informe en `spikes/qr/REPORT.md`: tamaños reales de presentaciones por perfil con DEFLATE + Base45; lectura con ≥ 3 teléfonos (gama baja, media y alta) y lectores genéricos; propuesta de presupuesto por perfil y umbral de fragmentación. | REQ-PRES-005 |
-| F0.T08 | Spike claves en hardware | Firma ES256 desde Rust mediante trait exterior (UniFFI) con Secure Enclave (iOS) y StrongBox/TEE (Android) en dispositivos físicos; latencia medida; confirmación de viabilidad o ADR alternativo. | REQ-KEY-002 |
-| F0.T09 | Spike WASM | ES256, SHA-256 y XChaCha20-Poly1305 de RustCrypto compilados a `wasm32-unknown-unknown`, ejecutados en navegador y Node; tamaño medido. | REQ-PORT-002 |
+| F0.T07 | Spike QR | Informe en `spikes/qr/REPORT.md`: tamaños reales de presentaciones por perfil con DEFLATE + Base45, con y sin transcodificación binaria previa; secuencia multi-QR indexada frente a códigos fuente; lectura con ≥ 3 teléfonos (gama baja, media y alta) y lectores genéricos; propuesta de presupuesto por perfil y umbral de fragmentación. | REQ-PRES-005 |
+| F0.T08 | Spike claves en hardware | Firma ES256 desde Rust mediante trait exterior (UniFFI) con Secure Enclave (iOS) y StrongBox/TEE (Android) en dispositivos físicos; latencia medida; formato de firma devuelto por cada plataforma (DER, `s` alto o bajo) documentado; confirmación de viabilidad o ADR alternativo. | REQ-KEY-002 |
+| F0.T09 | Spike WASM | ES256, SHA-256 y XChaCha20-Poly1305 de RustCrypto compilados a `wasm32-unknown-unknown`, ejecutados en navegador y Node; tamaño medido; comportamiento ante un pánico (instancia envenenada) comprobado. | REQ-PORT-002 |
 | F0.T10 | Spike ledger + ADR-0004 | Contrato mínimo en testnets candidatas; costo de alta de emisor, rotación y anclaje por lotes; tiempo a finalidad; disponibilidad de RPC; ADR-0004 aceptado. | REQ-LEDG-002 |
-| F0.T11 | ADRs 0003, 0005–0012 | Cada ADR aceptado o diferido con fecha y fase límite; índice `docs/adr/README.md` actualizado. | REQ-DOC-002 |
+| F0.T11 | ADRs 0003, 0005–0012, 0016–0018 y 0020 | Cada ADR aceptado o diferido con fecha y fase límite; índice `docs/adr/README.md` actualizado. | REQ-DOC-002 |
 | F0.T12 | `PROTOCOL.md` v0.1 | Flujos y mensajes: emisión, presentación offline (QR), presentación en línea, sincronización, sobres de operación, re-vinculación, migración; máquinas de estado; códigos de error de protocolo. | REQ-PRES-*, REQ-SYNC-* |
-| F0.T13 | `TRUST_BUNDLE.md` | Formato exacto, límites, reglas de validación, anti-rollback, rotación de clave con solapamiento, ejemplos. | REQ-TRUST-001..006 |
+| F0.T13 | `TRUST_BUNDLE.md` | Formato exacto de la raíz de confianza y del bundle multi-firma, serialización canónica y derivación determinista, límites, reglas de validación, anti-rollback con `bundle_epoch`, rotación por raíz encadenada, manifiesto de estado, ejemplos. | REQ-TRUST-001..010, REQ-STAT-008 |
 | F0.T14 | `CONTRACTS.md` v0.1 | Funciones, roles, eventos, errores, invariantes y procedimiento de migración de contratos. | REQ-LEDG-* |
 | F0.T15 | Perfiles v0.1 | `pip-personal-v1`, `pip-financial-v1`, `pip-enterprise-v1`: `vct`, esquemas JSON, parámetros de `ARCHITECTURE.md §16` con valores concretos, retención, procedimiento de recuperación. | REQ-CRED-004, REQ-REC-005 |
 | F0.T16 | `SDK_API.md` v0.1 y `ERROR_CODES.md` | Objetos, métodos, interfaces del host, semántica de errores, ejemplos en pseudocódigo; catálogo inicial de códigos. | REQ-SDK-001, REQ-SDK-003 |
 | F0.T17 | `STORAGE_FORMAT.md` | Registros, datos asociados, índices ciegos, versión de esquema, reglas de migración. | REQ-STOR-* |
-| F0.T18 | `TRUST_FRAMEWORK.md` v0.1 (técnico) | Roles, umbrales de multisig, timelock, rol de emergencia, alta y baja de emisores; marcado como pendiente de revisión legal (F14). | REQ-GOV-001 |
+| F0.T18 | `TRUST_FRAMEWORK.md` v0.1 (técnico) | Roles; umbrales de la multisig, de la raíz y de los firmantes de bundle; timelock; rol de emergencia limitado a suspender, con su plazo de caducidad; alta y baja de emisores; marcado como pendiente de revisión legal (F14). | REQ-GOV-001 |
 | F0.T19 | `TEST_STRATEGY.md` | Niveles de prueba, herramientas, horas mínimas de fuzzing por gate, criterios de cobertura, entornos, datos de prueba. | REQ-MAINT-003 |
 | F0.T20 | Análisis regulatorio preliminar | Documento en `docs/legal/`: mercado objetivo, Ley 81 de 2019, requisitos KYC/AML probables del perfil financiero, preguntas para asesoría legal. | REQ-COMP-001 |
 | F0.T21 | Revisión cruzada de especificaciones | Cada especificación revisada por alguien distinto de su autor con lista de verificación (consistencia, ambigüedades, trazabilidad). | REQ-DOC-001 |
 
 **Gate G0:**
 - Todas las especificaciones v0.1 fusionadas en `main` y revisadas.
-- ADRs 0001–0012 aceptados (o diferidos con fase límite permitida).
+- ADRs 0001–0012, 0016–0018 y 0020 aceptados (o diferidos con fase límite permitida).
 - Informes de los cuatro spikes publicados; ningún spike reveló una inviabilidad sin resolver.
 - Nombre definitivo aplicado.
 
@@ -147,16 +148,18 @@ Solapamientos permitidos: **F6** puede empezar cuando cierra G2 (los contratos n
 |---|---|---|---|
 | F1.T01 | Workspace Cargo | Todos los crates de `PROJECT_STRUCTURE.md §3` creados vacíos con `lib.rs` documentado, `README.md`, lints del workspace y perfiles de compilación. | REQ-MAINT-004 |
 | F1.T02 | Toolchain y MSRV (ADR-0014) | `rust-toolchain.toml`; MSRV declarado; job de CI que compila con el MSRV. | REQ-MAINT-001 |
-| F1.T03 | `xtask check-layers` | `xtask/layers.toml` con las reglas de `PROJECT_STRUCTURE.md §4`; CI falla ante una dependencia prohibida, incluido cualquier runtime async en el núcleo (probado con un caso negativo). | REQ-MAINT-002, REQ-PORT-003 |
+| F1.T03 | `xtask check-layers` | `xtask/layers.toml` con las reglas de `PROJECT_STRUCTURE.md §4`; CI falla ante una dependencia prohibida, incluido cualquier runtime async en L1–L4; falla también si un crate L1–L3 enlaza `std` o si a un crate fuera de `bindings/` le falta `#![forbid(unsafe_code)]` (cada regla probada con un caso negativo). | REQ-MAINT-002, REQ-PORT-003, REQ-PORT-004 |
 | F1.T04 | `xtask trace` | Matriz REQ → pruebas generada; falla si un REQ DEBE de una fase cerrada no tiene pruebas. | REQ-DOC-003 |
 | F1.T05 | Workflows de CI | `ci.yml`, `security.yml`, `docs.yml` según `PROJECT_STRUCTURE.md §9`. | REQ-SEC-006 |
 | F1.T06 | `deny.toml` | Licencias permitidas (ADR-0002), solo crates.io como fuente, advisories, duplicados con aviso. | REQ-COMP-003 |
 | F1.T07 | `pip-testkit` base | `FixedClock`, `SeededRng`, utilidades de aserción de resultados de verificación. | REQ-VER-009 |
 | F1.T08 | Esqueleto de errores | `PipError` con códigos; `xtask check-error-codes` (códigos únicos y documentados en `ERROR_CODES.md`). | REQ-SDK-003 |
-| F1.T09 | `clippy.toml` con métodos y tipos prohibidos | `std::net`, `std::fs`, `std::time::SystemTime::now` prohibidos en crates L1–L3 mediante `disallowed-methods`/`disallowed-types`. | REQ-VER-001, REQ-SEC-001 |
-| F1.T10 | Compilación cruzada de humo | CI compila los crates vacíos para `wasm32-unknown-unknown`, `aarch64-linux-android` y `aarch64-apple-ios`. | REQ-PORT-001 |
+| F1.T09 | `clippy.toml` con métodos y tipos prohibidos | `std::net`, `std::fs`, `std::time::SystemTime::now` prohibidos en crates L1–L4 mediante `disallowed-methods`/`disallowed-types`, como segunda barrera tras `no_std` (L1–L3). | REQ-VER-001, REQ-SEC-001 |
+| F1.T10 | Compilación cruzada de humo | CI compila los crates vacíos para `wasm32-unknown-unknown`, `aarch64-linux-android` y `aarch64-apple-ios`; y los crates L1–L3 para un target *bare-metal* (`thumbv7em-none-eabihf`). | REQ-PORT-001, REQ-PORT-004 |
 | F1.T11 | Andamiaje de fuzzing y benchmarks | `fuzz/` con un objetivo de ejemplo; `fuzz.yml` nocturno; criterion configurado. | REQ-SEC-005, REQ-PERF-001 |
 | F1.T12 | Gobierno del repositorio | `CONTRIBUTING.md`, `CODEOWNERS` (rutas sensibles: `crates/pip-crypto`, `pip-credential`, `pip-trust`, `pip-verifier`, `contracts/`, `docs/specs/`, `.github/`), labels como código. | REQ-DOC-001 |
+| F1.T13 | ADR-0019 y esqueleto vertical | ADR-0019 aceptado; `pip-sdk` existe desde esta fase como fachada mínima y un binding (WASM) la compila y ejecuta una prueba de humo en CI, de modo que la forma de la API se valida contra FFI en cada fase y no solo en F9. | REQ-PORT-003, REQ-SDK-001 |
+| F1.T14 | Andamiaje de mutación y Kani | `cargo-mutants` y Kani configurados con un ejemplo cada uno; job nocturno. | REQ-MAINT-006 |
 
 **Gate G1:** CI verde en todos los targets; `check-layers`, `trace`, `check-error-codes` y `deny` activos y probados con casos negativos; un PR de ejemplo recorre la plantilla completa.
 
@@ -176,11 +179,11 @@ Solapamientos permitidos: **F6** puede empezar cuando cierra G2 (los contratos n
 | F2.T03 | JSON acotado | Límites de tamaño, profundidad y elementos; rechazo de miembros duplicados; UTF-8 estricto; números fuera de rango rechazados; fuzzing. | REQ-CRED-009, REQ-VER-008 |
 | F2.T04 | CBOR acotado | Límites equivalentes; rechazo de codificaciones no deterministas donde el protocolo lo exija; fuzzing. | REQ-VER-008 |
 | F2.T05 | DEFLATE y Base45 | Descompresión con límite de salida (prueba de bomba de descompresión); Base45 según RFC 9285 con vectores del RFC. | REQ-STAT-003 |
-| F2.T06 | `CryptoBackend` + RustCrypto | ES256 (firma P1363 `r‖s` de 64 bytes, rechazo de codificaciones no canónicas), SHA-256, HMAC-SHA-256, HKDF, XChaCha20-Poly1305, ECDH P-256, HPKE (RFC 9180, suite fijada en `CRYPTO_PROFILES.md`), CSPRNG del sistema. | REQ-SEC-002, REQ-PORT-002 |
+| F2.T06 | `CryptoBackend` + RustCrypto | ES256 (firma P1363 `r‖s` de 64 bytes; conversión DER ↔ P1363; rechazo de longitudes y codificaciones inválidas, sin exigir *low-S*), SHA-256, HMAC-SHA-256, HKDF, XChaCha20-Poly1305, ECDH P-256, HPKE (RFC 9180, suite fijada en `CRYPTO_PROFILES.md`), CSPRNG inyectado por el host. | REQ-SEC-002, REQ-PORT-002, REQ-KEY-010 |
 | F2.T07 | JWK y thumbprints | Parseo estricto de JWK EC P-256 (validación de punto en la curva, rechazo de miembros privados en contextos públicos); thumbprint RFC 7638. | REQ-KEY-007 |
 | F2.T08 | Vectores externos | Ejemplos de RFC 7515 (ES256), RFC 7638, RFC 5869 (HKDF), RFC 9180 (HPKE), Project Wycheproof (ECDSA P-256 y AEAD); todos pasan. | REQ-SEC-002 |
 | F2.T09 | Higiene de secretos | Tipos secretos con `Zeroize` y `Debug` redactado; prueba que verifica que `Debug` no imprime material; comparación con `subtle`. | REQ-SEC-003, REQ-SEC-004 |
-| F2.T10 | `pip-keys` | `KeyPurpose`, `KeyHandle` tipado por propósito, trait `KeyStore` (generar, firmar, clave pública, borrar, atestación opcional), keystore software bajo feature; prueba de compilación fallida (`trybuild`) al usar una clave con otro propósito. | REQ-KEY-001, REQ-KEY-004 |
+| F2.T10 | `pip-keys` | `KeyPurpose` (incluido el acuerdo de claves HPKE, separado de la firma), `KeyHandle` tipado por propósito, trait `KeyStore` (generar, firmar, acuerdo de claves, clave pública, borrar, atestación opcional), keystore software bajo feature; prueba de compilación fallida (`trybuild`) al usar una clave con otro propósito. | REQ-KEY-001, REQ-KEY-004, REQ-KEY-009 |
 | F2.T11 | Objetivos de fuzzing | Un objetivo por parser (base64url, JSON, CBOR, DEFLATE, Base45, JWK) en `fuzz.yml`. | REQ-SEC-005 |
 | F2.T12 | Benchmarks base | Firma, verificación, hash y AEAD en x86_64, aarch64 y WASM; resultados publicados en `docs/STATUS.md`. | REQ-PERF-001 |
 
@@ -222,15 +225,15 @@ Solapamientos permitidos: **F6** puede empezar cuando cierra G2 (los contratos n
 
 | ID | Tarea | Entregable y criterio de aceptación | REQ |
 |---|---|---|---|
-| F4.T01 | `pip-status`: listas | Parseo de Token Status List (JWT), firma, descompresión acotada, lectura de 1 y 2 bits, coincidencia de URI, expiración/TTL. | REQ-STAT-001, REQ-STAT-003, REQ-STAT-007 |
+| F4.T01 | `pip-status`: listas | Parseo de Token Status List (JWT), firma, descompresión acotada, lectura de 1 y 2 bits, coincidencia de URI, expiración/TTL; parseo y verificación del manifiesto de estado con versión monotónica. | REQ-STAT-001, REQ-STAT-003, REQ-STAT-007 |
 | F4.T02 | `pip-status`: caché y frescura | Snapshot con instante firmado y antigüedad calculada con el `Clock` inyectado. | REQ-STAT-004 |
-| F4.T03 | Trust bundle | Modelo, verificación de firma desde clave fijada, anti-rollback, ventana de validez, cadena de rotación de claves de bundle. | REQ-TRUST-001, REQ-TRUST-002 |
-| F4.T04 | Piso de tiempo confiable | Persistencia del máximo instante firmado; detección de retroceso de reloj ⇒ `Unverifiable` con evidencia. | REQ-VER-006 |
+| F4.T03 | Trust bundle | Modelo de raíz y de bundle; cadena de raíces desde la raíz fijada; verificación de ≥ k firmas de firmantes distintos; anti-rollback por `(bundle_epoch, bundle_version)`; ventana de validez; recuperación de un avance forzado probada. | REQ-TRUST-001, REQ-TRUST-002, REQ-TRUST-009, REQ-TRUST-010 |
+| F4.T04 | Piso de tiempo confiable | Trait `VerifierStateStore` (piso de tiempo, versiones aceptadas, nonces) con comprobación de integridad; detección de retroceso de reloj y de estado perdido o restaurado ⇒ `Unverifiable` con evidencia; cota con reloj monotónico cuando exista. | REQ-VER-006, REQ-VER-011 |
 | F4.T05 | `Policy` | Estados aceptados por operación, frescura máxima, tolerancia de reloj, emisores y `vct` aceptados, requisitos del perfil. | REQ-VER-005, REQ-VER-007 |
-| F4.T06 | Pipeline del verificador | Comprobaciones ordenadas (estructura, emisor autorizado, estado de clave, firma, vigencia, divulgaciones, esquema, vinculación, nonce, estado, política) con evidencia por paso. | REQ-VER-002, REQ-VER-004 |
+| F4.T06 | Pipeline del verificador | Comprobaciones ordenadas (estructura, emisor autorizado, estado de clave, firma, vigencia, divulgaciones, esquema, vinculación, nonce, estado, política) con evidencia por paso; typestate que impide evaluar comprobaciones sobre datos no autenticados (`Skipped`) y construir `Valid` sin todas las obligatorias (prueba `trybuild`). | REQ-VER-002, REQ-VER-004, REQ-VER-012 |
 | F4.T07 | Caché de nonces | Trait + implementación en memoria con expiración, límite de tamaño y rechazo de reutilización. | REQ-PRES-004 |
-| F4.T08 | Estados de clave del emisor | Semántica `active`/`retired`/`compromised` de `ARCHITECTURE.md §11.6` con pruebas. | REQ-KEY-005, REQ-KEY-006 |
-| F4.T09 | Matriz negativa y cobertura | Un vector por cada comprobación que falla; pruebas de precedencia de estados; cobertura de líneas medida en crates críticos. | REQ-MAINT-003, REQ-MAINT-005, REQ-VER-010 |
+| F4.T08 | Estados de clave del emisor | Semántica `active`/`retired`/`suspended`/`compromised` de `ARCHITECTURE.md §11.6` con pruebas. | REQ-KEY-005, REQ-KEY-006 |
+| F4.T09 | Matriz negativa y cobertura | Un vector por cada comprobación que falla; pruebas de precedencia de estados; cobertura de líneas medida en crates críticos; pruebas de mutación sobre las reglas de rechazo sin mutantes supervivientes sin justificar. | REQ-MAINT-003, REQ-MAINT-005, REQ-MAINT-006, REQ-VER-010 |
 | F4.T10 | Verificación sin red | `pip-verifier` compila sin dependencias de red (verificado por `check-layers` y `clippy.toml`); prueba de que ningún camino de verificación invoca `Transport`. | REQ-VER-001, REQ-SDK-008, REQ-PRIV-002 |
 | F4.T11 | Determinismo | Propiedad: mismas entradas e instante ⇒ mismo resultado. | REQ-VER-009 |
 | F4.T12 | `pip-cli` offline | Subcomandos `dev-issuer`, `dev-bundle`, `issue`, `verify` con archivos locales y clave de desarrollo claramente marcada como insegura. | REQ-VER-001 |
@@ -251,12 +254,12 @@ Solapamientos permitidos: **F6** puede empezar cuando cierra G2 (los contratos n
 | F5.T01 | `StorageBackend` | Trait clave-valor transaccional; implementación en memoria. | REQ-STOR-008 |
 | F5.T02 | Cifrado de sobre | DEK/KEK con XChaCha20-Poly1305 y datos asociados; trait `KekProvider` del host; prueba de que intercambiar registros falla. | REQ-STOR-001 |
 | F5.T03 | Índices ciegos | HMAC con clave dedicada; inspección automática de la base de datos: ningún metadato en claro. | REQ-STOR-003 |
-| F5.T04 | Backend SQLite | `rusqlite` con SQLite embebido, bajo feature. | REQ-STOR-008 |
+| F5.T04 | Backend SQLite | Crate adaptador `pip-storage-sqlite` (L5) con `rusqlite` y SQLite embebido; implementa también `VerifierStateStore`. | REQ-STOR-008 |
 | F5.T05 | Migraciones | Versión de esquema; migraciones probadas con fixtures de versiones anteriores. | REQ-STOR-005 |
 | F5.T06 | Consistencia ante fallos | Inyección de fallos en cada punto de escritura; tras reinicio, estado anterior o posterior, nunca corrupto. | REQ-STOR-004 |
 | F5.T07 | `pip-holder`: gestión | Importar (verificando antes de guardar), listar, borrar, lotes y consumo, registro mínimo de eventos con retención; contenido de presentaciones no persistido. | REQ-STOR-006, REQ-KEY-008, REQ-PRIV-005 |
 | F5.T08 | `pip-holder`: presentación | Preparar desde solicitud (subconjunto DCQL acordado en `PROTOCOL.md`), plan de divulgación visible, confirmación y firma KB-JWT vía `KeyStore`. | REQ-PRES-001, REQ-PRES-003, REQ-PRIV-001 |
-| F5.T09 | Perfil offline | Solicitud del verificador (CBOR, firma opcional), respuesta, DEFLATE + Base45, fragmentación multi-QR con índice y hash de integridad. | REQ-PRES-005, REQ-PRES-006 |
+| F5.T09 | Perfil offline | Solicitud del verificador (CBOR, firma opcional), respuesta, transcodificación binaria sin pérdida + DEFLATE + Base45 (propiedad: la reconstrucción reproduce los bytes exactos), fragmentación multi-QR con índice y hash de integridad. | REQ-PRES-005, REQ-PRES-006 |
 | F5.T10 | Presupuesto de tamaño en CI | Prueba que falla si una presentación de referencia de cada perfil excede su presupuesto. | REQ-PERF-003 |
 | F5.T11 | Validación de solicitudes por la wallet | Verificador registrado cuando el perfil lo exige, claims solicitados permitidos, expiración. | REQ-PRES-007 |
 | F5.T12 | Flujo CLI completo | `pip-cli` emisor → wallet → verificador offline usando imágenes QR generadas y decodificadas (ida y vuelta). | REQ-PRES-005 |
@@ -272,18 +275,18 @@ Solapamientos permitidos: **F6** puede empezar cuando cierra G2 (los contratos n
 ## 11. F6 — Contratos y adaptador de ledger
 
 **Objetivo:** registro de confianza en cadena, gobernado y probado, y un adaptador robusto ante fallos de red y reorganizaciones.
-**Entrada:** G2 cerrado y ADR-0004 aceptado (puede ejecutarse en paralelo a F3–F5).
+**Entrada:** G2 cerrado y ADR-0004 aceptado (puede ejecutarse en paralelo a F3–F5); F6.T08 requiere F4.T03 completada.
 
 | ID | Tarea | Entregable y criterio de aceptación | REQ |
 |---|---|---|---|
 | F6.T01 | `CONTRACTS.md` v1 | Especificación detallada actualizada desde v0.1; revisada. | REQ-LEDG-* |
-| F6.T02 | `TrustRegistry.sol` | Emisores, claves con estados, perfiles/`vct`, verificadores, claves de bundle; roles; eventos. | REQ-TRUST-007, REQ-LEDG-003 |
+| F6.T02 | `TrustRegistry.sol` | Emisores, claves con estados (incluida la suspensión con caducidad), perfiles/`vct`, verificadores, hash de la raíz de confianza y firmantes de bundle; roles; eventos. | REQ-TRUST-007, REQ-LEDG-003 |
 | F6.T03 | `StatusAnchor.sol` | Compromisos por lotes (raíz Merkle) con eventos. | REQ-STAT-006 |
-| F6.T04 | Gobernanza | Multisig propietaria; `TimelockController` para altas; rol de emergencia limitado a revocaciones. | REQ-LEDG-004 |
-| F6.T05 | Pruebas Foundry | Unitarias, fuzz e invariantes (p. ej., una clave comprometida nunca vuelve a `active`; solo el timelock añade emisores; emergencia no puede añadir). | REQ-LEDG-004 |
+| F6.T04 | Gobernanza | Multisig propietaria; `TimelockController` para altas; rol de emergencia limitado a suspensiones reversibles con caducidad, que el propio rol no puede renovar. | REQ-LEDG-004 |
+| F6.T05 | Pruebas Foundry | Unitarias, fuzz e invariantes (p. ej., una clave comprometida nunca vuelve a `active`; solo el timelock añade emisores; emergencia no puede añadir, ni marcar `compromised`, ni renovar una suspensión; toda suspensión caduca). | REQ-LEDG-004 |
 | F6.T06 | Análisis estático y gas | Slither sin hallazgos altos; snapshot de gas versionado. | REQ-SEC-007 |
 | F6.T07 | Verificación "sin datos personales" | Revisión de tipos de parámetros y eventos (solo identificadores de organización, claves públicas, hashes de alta entropía); prueba automatizada sobre las ABI; regla documentada. | REQ-LEDG-001, REQ-LEDG-007 |
-| F6.T08 | `pip-ledger` | Trait `LedgerAdapter`, tipos de eventos, reconstrucción pura del estado desde eventos, comparación estado ↔ bundle. | REQ-LEDG-002 |
+| F6.T08 | `pip-ledger` | Trait `LedgerAdapter`, tipos de eventos, reconstrucción pura del estado desde eventos, derivación determinista del bundle (bytes idénticos entre ejecuciones), comparación estado ↔ bundle. | REQ-LEDG-002, REQ-TRUST-008 |
 | F6.T09 | `pip-ledger-evm` | Implementación con `alloy`; lectura por rangos solo de bloques finalizados; múltiples RPC; reintentos; verificación de consistencia entre proveedores. | REQ-LEDG-005, REQ-LEDG-006 |
 | F6.T10 | Pruebas de fallos | Nodo local con reorganizaciones simuladas, RPC caído, respuestas inconsistentes, eventos duplicados. | REQ-LEDG-005 |
 | F6.T11 | Despliegue en testnet | Scripts reproducibles; código verificado en el explorador; direcciones en `deploy/environments/testnet/contracts.json`. | REQ-LEDG-003 |
@@ -304,12 +307,12 @@ Solapamientos permitidos: **F6** puede empezar cuando cierra G2 (los contratos n
 | F7.T01 | ADR-0013 e IaC base | Proveedor inicial; entornos `dev` y `testnet` como código; sin secretos en el repositorio. | REQ-REL-001 |
 | F7.T02 | `pip-service-common` | Configuración tipada, OpenTelemetry, `/healthz`, `/readyz`, apagado ordenado, capa de redacción de logs con prueba de no-PII. | REQ-OBS-001, REQ-PRIV-003 |
 | F7.T03 | `pip-indexer` | Ingesta de eventos finalizados, PostgreSQL, idempotencia, reprocesamiento desde un bloque, detección de divergencias entre RPC, métrica de retraso. | REQ-LEDG-005 |
-| F7.T04 | `pip-trust-service` | Bundle desde el indexador; versión monotónica; firma (clave de desarrollo en `dev`, KMS en `testnet`); publicación en almacenamiento de objetos/CDN. | REQ-TRUST-003, REQ-TRUST-005 |
-| F7.T05 | Listas de estado del emisor | Asignación aleatoria de índices, tamaño mínimo, actualización, firma, publicación direccionada por contenido, anclaje periódico en `StatusAnchor`. | REQ-ISS-003, REQ-STAT-002, REQ-STAT-005, REQ-STAT-006 |
+| F7.T04 | `pip-trust-service` | Bundle derivado de forma determinista desde un indexador propio; cofirma: cada operador firma solo lo que derivó y un agregador no confiable reúne ≥ k firmas (claves de desarrollo en `dev`, KMS en `testnet`); publicación en almacenamiento de objetos/CDN; prueba con ≥ 3 operadores y uno divergente. | REQ-TRUST-003, REQ-TRUST-005, REQ-TRUST-008 |
+| F7.T05 | Listas de estado del emisor | Asignación aleatoria de índices, tamaño mínimo, actualización, firma, publicación direccionada por contenido, manifiesto de estado firmado, anclaje periódico en `StatusAnchor`. | REQ-ISS-003, REQ-STAT-002, REQ-STAT-005, REQ-STAT-006, REQ-STAT-008 |
 | F7.T06 | `pip-relay` | Objetos por hash; buzón de sobres HPKE con idempotencia; límites de tasa y tamaño; TTL; sin registro de contenido. | REQ-SYNC-004, REQ-SYNC-006 |
-| F7.T07 | `pip-sync` | Cola cifrada, idempotencia, backoff con jitter, múltiples relays, verificación de todo contenido, trait `Transport` con implementación por defecto bajo feature; descargas públicas sin identificadores. | REQ-SYNC-001..007 |
+| F7.T07 | `pip-sync` | Máquina de estado sans-I/O: cola cifrada, idempotencia, backoff con jitter, múltiples relays, verificación de todo contenido; trait `Transport` con implementación por defecto en `pip-transport-http`; descargas públicas sin identificadores; pruebas deterministas sin red ni runtime. | REQ-SYNC-001..007 |
 | F7.T08 | Modo de verificación completa | Contraste del bundle con ≥ 2 fuentes de ledger; divergencia ⇒ alarma y rechazo. | REQ-TRUST-004 |
-| F7.T09 | Backend `aws-lc-rs` (FIPS) | Feature solo para servicios; mismos vectores que RustCrypto. | REQ-ISS-002 |
+| F7.T09 | Backend `aws-lc-rs` (FIPS), condicional | Solo si ADR-0007 identifica un requisito regulatorio que el HSM/KMS no cubre; seleccionado por tipo, no por feature; mismos vectores que RustCrypto. Si no aplica, la tarea se cierra como no necesaria con referencia al ADR. | REQ-ISS-002 |
 | F7.T10 | Integración con contenedores | Cadena local + indexador + trust service + relay + SDK en pruebas automatizadas. | — |
 | F7.T11 | Revocación durante periodo offline | Escenario MVP-05 (§24): verificador offline; revocación ocurre; resultado `ValidWithStaleStatus` mientras corresponde y `Invalid` tras sincronizar. | REQ-STAT-004 |
 | F7.T12 | Caos | Relay malicioso (rollback, retención, alteración), RPC caído, CDN caída; el sistema degrada a estados explícitos sin aceptar datos falsos. | REQ-REL-004, REQ-SYNC-004 |
@@ -329,12 +332,12 @@ Solapamientos permitidos: **F6** puede empezar cuando cierra G2 (los contratos n
 |---|---|---|---|
 | F8.T01 | Código de recuperación y respaldo | Generación ≥ 128 bits, codificación legible con suma de verificación, derivación HKDF, formato de respaldo versionado y cifrado. | REQ-REC-002 |
 | F8.T02 | Shamir k-de-n | Biblioteca revisada (o ADR si no existe una adecuada); pruebas de umbral y de fragmentos insuficientes. | REQ-REC-003 |
-| F8.T03 | Clave de recuperación | `KeyPurpose::Recovery`; registro de su huella en la emisión como extensión documentada en `PROTOCOL.md`. | REQ-REC-004 |
+| F8.T03 | Clave de recuperación | `KeyPurpose::Recovery`; una clave por emisor derivada del secreto de recuperación y del `IssuerId`; registro de su huella en la emisión como extensión documentada en `PROTOCOL.md`; prueba de que dos emisores nunca reciben la misma huella. | REQ-REC-004, REQ-REC-007 |
 | F8.T04 | Re-vinculación | Solicitud firmada, nonce del emisor, revocación de la credencial anterior, emisión nueva; biblioteca y endpoint del emisor. | REQ-REC-004, REQ-ISS-006 |
-| F8.T05 | Migración entre dispositivos | QR con clave efímera, ECDH, SAS, transferencia cifrada, re-vinculación en cola. | REQ-REC-001 |
+| F8.T05 | Migración entre dispositivos | QR con clave efímera, ECDH con compromiso previo, SAS, transferencia cifrada, re-vinculación en cola. | REQ-REC-001 |
 | F8.T06 | Rotación de clave de emisor E2E | Registro → indexador → bundle → verificadores; credenciales anteriores al retiro siguen válidas. | REQ-KEY-006 |
-| F8.T07 | Compromiso de clave de emisor E2E | Revocación de emergencia → bundle → `Invalid` en todos los verificadores sincronizados. | REQ-KEY-005, REQ-LEDG-004 |
-| F8.T08 | Rotación de clave de bundle | Solapamiento sin interrupción de clientes con distintas versiones. | REQ-TRUST-006 |
+| F8.T07 | Compromiso de clave de emisor E2E | Suspensión de emergencia → bundle → `Unverifiable` en todos los verificadores sincronizados; confirmación por la multisig → `compromised` → `Invalid`; y caso de suspensión levantada → la clave vuelve a aceptarse. | REQ-KEY-005, REQ-LEDG-004 |
+| F8.T08 | Rotación de firmantes de bundle y de raíz | Raíz nueva encadenada; solapamiento sin interrupción de clientes con distintas versiones; simulacro de avance forzado y recuperación por `bundle_epoch`. | REQ-TRUST-006 |
 | F8.T09 | Procedimientos por perfil | Recuperación institucional documentada en cada perfil. | REQ-REC-005, REQ-REC-006 |
 | F8.T10 | Robustez | Persistencia, migración y recuperación con inyección de fallos. | REQ-STOR-004 |
 | F8.T11 | Revisión del MVP | Ejecución scriptada y reproducible de todos los criterios de §24 con informe. | — |
@@ -352,9 +355,9 @@ Solapamientos permitidos: **F6** puede empezar cuando cierra G2 (los contratos n
 
 | ID | Tarea | Entregable y criterio de aceptación | REQ |
 |---|---|---|---|
-| F9.T01 | `pip-sdk` | Fachada según `SDK_API.md`, features, `PipError` con códigos estables, interfaces del host (`KeyStore`, `Clock`, `StorageBackend`, `Transport`). | REQ-SDK-001, REQ-SDK-003, REQ-SDK-005 |
+| F9.T01 | `pip-sdk` completo | Fachada (iniciada en F1.T13 y ampliada en cada fase) completa según `SDK_API.md`, features, `PipError` con códigos estables, interfaces del host (`KeyStore`, `Clock`, `StorageBackend`, `VerifierStateStore`, `Transport`). | REQ-SDK-001, REQ-SDK-003, REQ-SDK-005 |
 | F9.T02 | Revisión y congelación de API | Revisión formal; versión `0.x` congelada para la beta; `cargo-semver-checks` activo. | REQ-SDK-006 |
-| F9.T03 | Seguridad FFI | `catch_unwind` en todas las fronteras; prueba de pánico inducido ⇒ `PIP-E9999`; fuzzing a través de la frontera FFI; revisión que confirma que ninguna clave privada del titular cruza FFI. | REQ-SDK-004, REQ-KEY-003 |
+| F9.T03 | Seguridad FFI | `catch_unwind` en todas las fronteras nativas e instancia envenenada en WASM; prueba de pánico inducido ⇒ `PIP-E9999` en ambos casos; fuzzing a través de la frontera FFI; revisión que confirma que ninguna clave privada del titular cruza FFI. | REQ-SDK-004, REQ-KEY-003 |
 | F9.T04 | Kotlin (Android + JVM) | UniFFI + cargo-ndk (todas las ABIs); `KeyStore` Android (StrongBox con alternativa TEE; autenticación de usuario según perfil); KEK en Android Keystore; exclusión de backups; pruebas en emulador y dispositivo físico. | REQ-KEY-002, REQ-STOR-002, REQ-STOR-007 |
 | F9.T05 | Swift (iOS + macOS) | XCFramework; `KeyStore` Secure Enclave; KEK en Keychain solo-este-dispositivo; exclusión de backups; pruebas en dispositivo físico (el simulador no tiene Secure Enclave: allí solo keystore software marcado como de prueba). | REQ-KEY-002, REQ-STOR-002, REQ-STOR-007 |
 | F9.T06 | JavaScript/TypeScript (WASM) | wasm-bindgen; tipos TypeScript; `KeyStore` WebCrypto no extraíble; `StorageBackend` IndexedDB; pruebas en Node y en Chromium, Firefox y WebKit headless. | REQ-PORT-001 |
@@ -452,6 +455,7 @@ Solapamientos permitidos: **F6** puede empezar cuando cierra G2 (los contratos n
 | F13.T07 | Campaña de fuzzing extendida | Campaña larga (p. ej., OSS-Fuzz si el proyecto es elegible); análisis de cobertura de fuzzing. | REQ-SEC-005 |
 | F13.T08 | Publicación de informes | Informes publicados tras corregir. | — |
 | F13.T09 | Builds reproducibles y firma | Reproducibilidad verificada de forma independiente; artefactos firmados; SBOM. | REQ-SEC-009 |
+| F13.T10 | Modelos formales de protocolo | Modelos Tamarin o ProVerif de presentación, re-vinculación y migración en `docs/specs/models/`; propiedades de autenticación y secreto comprobadas, o desviaciones registradas como issues. | REQ-SEC-007 |
 
 **Gate G13:** cero hallazgos críticos o altos abiertos; medios con plan aceptado y fecha; informes publicados.
 
@@ -469,7 +473,7 @@ Solapamientos permitidos: **F6** puede empezar cuando cierra G2 (los contratos n
 | F14.T03 | Validación del perfil financiero | Validación KYC/AML con asesoría y, cuando corresponda, regulador; **sin aprobación, el perfil financiero no entra en producción**. | REQ-COMP-002 |
 | F14.T04 | `TRUST_FRAMEWORK.md` v1 | Documento técnico-legal: miembros de la TFA, umbrales, debida diligencia de emisores, bajas, emergencias, disputas, responsabilidades. | REQ-GOV-001 |
 | F14.T05 | Constitución de la TFA | Firmantes de organizaciones distintas con monederos hardware; procedimientos probados en testnet. | REQ-GOV-001 |
-| F14.T06 | Ceremonias de claves | Guion, ensayo en testnet, testigos y acta; claves de bundle en HSM. | REQ-GOV-002 |
+| F14.T06 | Ceremonias de claves | Guion, ensayo en testnet, testigos y acta; claves de raíz offline y claves de los firmantes de bundle en HSM/KMS de cada operador. | REQ-GOV-002 |
 | F14.T07 | Documentos legales de servicio | Términos de uso de servicios operados, políticas de privacidad de apps de referencia, acuerdos con emisores piloto. | REQ-COMP-001 |
 | F14.T08 | Proceso de propuestas | Proceso público de propuestas de mejora del protocolo, con plantilla y ciclo de revisión. | REQ-GOV-003 |
 
@@ -487,7 +491,7 @@ Solapamientos permitidos: **F6** puede empezar cuando cierra G2 (los contratos n
 | F15.T01 | Infraestructura de producción | IaC; relays multi-región y multi-proveedor; indexador redundante (idealmente ≥ 2 operadores); RPC ≥ 2 proveedores + nodo propio. | REQ-REL-001, REQ-LEDG-006 |
 | F15.T02 | Secretos y claves | KMS/HSM para todas las claves de servicio; ninguna clave en variables de entorno en claro. | REQ-ISS-002 |
 | F15.T03 | Observabilidad y SLOs | Dashboards, SLOs, alertas, guardias (on-call). | REQ-REL-002, REQ-OBS-002 |
-| F15.T04 | Runbooks | Compromiso de clave de emisor y de bundle, divergencia ledger/bundle, caída de relay o RPC, migración de contrato, restauración de indexador, rotaciones programadas. | REQ-REL-004 |
+| F15.T04 | Runbooks | Compromiso de clave de emisor, de un firmante de bundle y del rol de emergencia; sustitución de firmantes por raíz nueva; divergencia ledger/bundle, caída de relay o RPC, migración de contrato, restauración de indexador, rotaciones programadas. | REQ-REL-004 |
 | F15.T05 | Recuperación ante desastres | Backups, RPO/RTO definidos, simulacro completo de restauración. | REQ-REL-003 |
 | F15.T06 | Game day | Ejercicio de incidente con runbooks y guardias. | REQ-REL-003 |
 | F15.T07 | Pipeline de release de producción | Firma, SBOM, publicación en crates.io, Maven Central, Swift Package, npm, PyPI, pub.dev, NuGet, proxy Go; notas de release; matriz de compatibilidad. | REQ-SEC-009 |
@@ -578,11 +582,15 @@ El producto está en producción cuando **todo** lo siguiente es verdad:
 | F18.T04 | ISO 18013-5 (mdoc) y transporte BLE/NFC | Demanda de integradores; ADR |
 | F18.T05 | Presentaciones no correlacionables (BBS) | Estándar en Recommendation y bibliotecas auditadas; ADR |
 | F18.T06 | Registro de emisión anclado (excepción ante compromiso de clave) | ADR |
-| F18.T07 | Preparación post-cuántica | Inventario criptográfico; perfil híbrido con ML-DSA cuando existan estándares JOSE/VC y soporte de plataforma; plan de migración |
+| F18.T07 | Preparación post-cuántica | Inventario criptográfico; perfil híbrido con ML-DSA cuando existan estándares JOSE/VC y soporte de plataforma; firma híbrida de la raíz y del bundle como primer paso (el formato multi-firma ya la admite); plan de migración |
 | F18.T08 | Nuevos perfiles (p. ej., gubernamental) | Proceso de propuestas |
 | F18.T09 | Re-auditorías | Anual o tras cambios mayores |
 | F18.T10 | Deprecación y fin de vida de versiones | Según política de soporte |
 | F18.T11 | Revisión del threat model y de riesgos | Trimestral |
+| F18.T12 | Registro de transparencia con testigos para claves y manifiestos de estado, anclando en cadena solo su raíz | Costo del anclaje por emisor o demanda de auditoría; ADR |
+| F18.T13 | Bundle Merkle con deltas y prueba de inclusión adjunta a la presentación | El tamaño del bundle supera el presupuesto móvil; ADR |
+| F18.T14 | Propagación de bundles y manifiestos entre dispositivos (wallets como portadoras de datos firmados) | Transporte de proximidad disponible; ADR |
+| F18.T15 | Pruebas de conocimiento cero sobre ECDSA P-256 (no correlación compatible con claves de hardware) | Especificación estable y biblioteca auditada; ADR |
 
 ---
 
@@ -591,9 +599,9 @@ El producto está en producción cuando **todo** lo siguiente es verdad:
 | ID | Riesgo | Prob. | Impacto | Mitigación | Dueño |
 |---|---|---|---|---|---|
 | R-01 | Estándares en borrador cambian (SD-JWT VC, Token Status List) | Media | Medio | Versiones fijadas; ADR para actualizar; vectores por versión | Mantenedores del protocolo |
-| R-02 | QR insuficiente para presentaciones reales | Media | Alto | Spike F0, presupuestos, fragmentación, BLE en F18 | Protocolo |
+| R-02 | QR insuficiente para presentaciones reales | Media | Alto | Spike F0, transcodificación binaria, presupuestos, fragmentación, BLE de proximidad adelantable | Protocolo |
 | R-03 | Claves de hardware no disponibles en dispositivos de gama baja | Media | Medio | Perfil personal con software cifrado; financiero exige hardware | Bindings |
-| R-04 | Compromiso de clave de emisor | Baja | Crítico | HSM, rotación, revocación de emergencia, runbook | Emisores / TFA |
+| R-04 | Compromiso de clave de emisor | Baja | Crítico | HSM, rotación, suspensión de emergencia y confirmación por multisig, runbook | Emisores / TFA |
 | R-05 | Captura o parálisis de la gobernanza | Baja | Crítico | Multisig de organizaciones distintas, timelock, rol de emergencia limitado | TFA |
 | R-06 | Cambio de costo o de condiciones de la red blockchain | Media | Medio | EVM portable, anclaje por lotes, ADR-0004 revisable | Ledger |
 | R-07 | Retraso en auditorías externas | Alta | Alto | Contratación en F9; alcance acordado temprano | Seguridad |
@@ -602,6 +610,8 @@ El producto está en producción cuando **todo** lo siguiente es verdad:
 | R-10 | Dependencia comprometida en la cadena de suministro | Baja | Crítico | cargo-deny/audit, revisión, builds reproducibles | Seguridad |
 | R-11 | Baja adopción de la re-vinculación por emisores | Media | Medio | Recuperación institucional siempre disponible | Producto |
 | R-12 | Correlación por reutilización de credenciales SD-JWT | Alta | Medio | Lotes de uso único; BBS en F18 | Protocolo |
+| R-13 | Colusión o indisponibilidad de los firmantes de bundle | Baja | Crítico | Operadores de organizaciones distintas, umbral k < n, raíz offline que los sustituye, `bundle_epoch` | TFA |
+| R-14 | Mantenedor humano único: la aceptación de ADRs y las revisiones de CODEOWNERS se vuelven cuello de botella | Alta | Medio | Decisión explícita en un issue `type:decision`; ADRs agrupados por revisión; incorporar un segundo revisor humano | Mantenedores |
 
 ---
 

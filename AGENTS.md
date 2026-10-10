@@ -56,7 +56,7 @@ Romper cualquiera invalida el PR, aunque las pruebas pasen.
 
 | ID | Invariante |
 |---|---|
-| INV-01 | La verificación **nunca** realiza I/O de red. Ningún crate de las capas L1–L3 hace I/O (ver `PROJECT_STRUCTURE.md §4`). |
+| INV-01 | La verificación **nunca** realiza I/O de red. Ningún crate de las capas L1–L4 hace I/O: L1–L3 son `no_std` y L4 es sans-I/O; el I/O vive en adaptadores L5 y en el host (ver `PROJECT_STRUCTURE.md §4`). |
 | INV-02 | **Ningún dato personal**, ni hash de dato personal, ni identificador de titular va al ledger, a logs, a métricas ni a mensajes de error. |
 | INV-03 | Ningún servicio custodia claves privadas de titulares. Las claves privadas de titulares nunca cruzan FFI. |
 | INV-04 | El resultado de verificación tiene **cuatro estados** con evidencia. Nunca se reduce a un booleano ni se añade un estado sin ADR. |
@@ -71,6 +71,7 @@ Romper cualquiera invalida el PR, aunque las pruebas pasen.
 | INV-13 | Ninguna fase de `ROADMAP.md` se salta. Ninguna tarea se marca hecha sin cumplir su criterio de aceptación. |
 | INV-14 | Las vulnerabilidades **no** se publican como issues públicos (ver §7.4). |
 | INV-15 | Los bindings no contienen lógica de negocio; solo ergonomía y adaptadores de plataforma. |
+| INV-16 | Ninguna clave única decide la confianza de un dispositivo offline: la raíz y el trust bundle exigen su umbral k-de-n de firmantes distintos. Nunca se añade un modo de "firmante único" ni se reduce un umbral sin ADR. |
 
 ---
 
@@ -319,6 +320,10 @@ Estos son los errores típicos de un agente sin contexto. Revisa tu PR contra es
 | Marcar una prueba con `#[ignore]` o borrarla | Pérdida silenciosa de cobertura. |
 | Capturar un error y devolver un valor por defecto | Oculta fallos; suele romper fail-closed. |
 | Añadir `tokio`/`reqwest` a un crate del núcleo | Rompe capas y portabilidad WASM/móvil. |
+| Añadir `std`, `async` o un cliente HTTP a un crate L1–L4 | Rompe INV-01 y la portabilidad a WASM y a hardware embebido. |
+| Aceptar un bundle con menos firmas que el umbral "porque un operador está caído" | Rompe INV-16: devuelve la confianza a una sola clave. |
+| Evaluar vigencia o estado antes de autenticar la firma | Informa sobre datos que cualquiera pudo fabricar; esas comprobaciones deben quedar `Skipped`. |
+| Usar una firma como identificador o clave de deduplicación | ECDSA es maleable (`s` alto o bajo): dos firmas distintas pueden ser válidas para el mismo mensaje. |
 | Poner lógica en un binding "porque es más fácil en Kotlin" | Rompe P-11: divergencia entre lenguajes. |
 | Guardar el contenido de presentaciones "para depurar" | Rompe minimización. |
 | Hashear un dato personal "para anonimizarlo" y publicarlo | Un hash de baja entropía es reversible; rompe INV-02. |
