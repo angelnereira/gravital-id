@@ -23,13 +23,14 @@
 
 | Tarea | Issue | Responsable | Estado | Siguiente paso |
 |---|---|---|---|---|
-| F0.T01 | — | Angel Nereira | En curso | Paquete documental en su estructura y commit inicial hechos en local. Falta: push, proteger `main`, labels y tablero en GitHub |
-| Revisión de arquitectura v0.2 | `.issues/pending/20261010-decision-revision-arquitectura.md` | Claude (agente) | Lista para revisión | El mantenedor acepta, rechaza o difiere ADR-0016 a ADR-0020 y fusiona la rama `docs/pending-architecture-review` |
+| F0.T01 | — | Angel Nereira | En curso | Paquete documental publicado en `main`. Falta: labels y tablero en GitHub; la protección de `main` depende de la decisión sobre el flujo de trabajo (ver Bloqueos) |
+| Revisión de arquitectura v0.2 | `.issues/pending/20261010-decision-revision-arquitectura.md` | Claude (agente) | Lista para revisión | Publicada en `main` por instrucción del mantenedor. Los ADR-0016 a ADR-0020 siguen **Propuestos**: el mantenedor acepta, rechaza o difiere cada uno |
 
 ## Bloqueos
 
 - Los ADR-0016 a ADR-0020 están **Propuestos**: las especificaciones de F0 que dependen de ellos (F0.T13, F0.T14, F0.T16, F0.T18) esperan su aceptación.
 - Proceso con un único mantenedor humano sin decidir (`.issues/pending/20261010-decision-mantenedor-unico.md`, riesgo R-14).
+- **Flujo de trabajo:** el mantenedor indicó el 2026-10-10 trabajar directamente sobre `main`. `AGENTS.md §6` y `§14` prohíben el push directo a `main`; hasta que el mantenedor decida cómo se refleja en `AGENTS.md`, la instrucción y el documento se contradicen (`AGENTS.md §15`).
 
 ## Decisiones pendientes que bloquean la fase actual
 
@@ -46,17 +47,17 @@ ADR-0001 a ADR-0012, ADR-0016 a ADR-0018 y ADR-0020 (ver `docs/adr/README.md`). 
 ## Última nota de traspaso
 
 ### Traspaso — 2026-10-10 — Claude (agente)
-- Tarea: F0.T01 y revisión de arquitectura v0.2 — `.issues/pending/20261010-decision-revision-arquitectura.md` — rama `docs/pending-architecture-review`
+- Tarea: F0.T01 y revisión de arquitectura v0.2 — `.issues/pending/20261010-decision-revision-arquitectura.md` — publicado en `main`
 - Estado: lista para revisión
 - Hecho en esta sesión:
   - Paquete documental colocado en la estructura de `PROJECT_STRUCTURE.md §2`; commit inicial en `main` (local).
   - Revisión completa de la documentación; correcciones aplicadas a `ARCHITECTURE.md`, `REQUIREMENTS.md`, `PROJECT_STRUCTURE.md`, `ROADMAP.md` y `AGENTS.md` (v0.2).
   - ADR-0016 a ADR-0020 redactados en estado Propuesto; índice de ADRs actualizado.
 - Pendiente (siguiente paso concreto):
-  - El mantenedor revisa la rama y decide cada ADR; después, push y creación de los issues en GitHub.
+  - El mantenedor decide cada ADR y cómo se refleja en `AGENTS.md` el trabajo directo sobre `main`; después, creación de los issues en GitHub.
   - Completar F0.T01 en GitHub (protección de `main`, labels, tablero).
   - Primera especificación a redactar tras la decisión: `TRUST_BUNDLE.md` (F0.T13).
 - Bugs/issues abiertos durante la sesión: cinco archivos en `.issues/pending/` (dos `type:decision`, tres `type:spec-gap`).
 - Decisiones tomadas (con enlace a ADR/issue): ninguna aceptada; todas quedan propuestas en ADR-0016 a ADR-0020.
-- Riesgos o dudas: el estado de los estándares citados se verificó en línea el 2026-10-10 (tabla en el issue de decisión) y debe volver a comprobarse en F0.T06; la rama no sigue el patrón `<tipo>/<issue>-<slug>` porque aún no existen issues en GitHub; nada se ha subido al remoto.
+- Riesgos o dudas: el estado de los estándares citados se verificó en línea el 2026-10-10 (tabla en el issue de decisión) y debe volver a comprobarse en F0.T06; los issues siguen solo en `.issues/pending/` (aún no creados en GitHub).
 - Comprobaciones locales: fmt, clippy, tests, layers y trace no aplican (aún no hay código ni `xtask`).

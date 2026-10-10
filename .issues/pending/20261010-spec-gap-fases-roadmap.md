@@ -20,7 +20,7 @@ labels: ["type:spec-gap", "status:needs-review", "phase:F0", "area:docs"]
 
 ## Opciones de resolución
 
-1. Mover REQ-STAT-002 a F7 y anotar que F6.T08 requiere F4.T03. **Aplicada en la rama `docs/pending-architecture-review`.**
+1. Mover REQ-STAT-002 a F7 y anotar que F6.T08 requiere F4.T03. **Aplicada en `main`.**
 2. Dividir REQ-STAT-002 en un requisito de verificación (F4) y otro de emisión (F7).
 
 ## ¿Requiere ADR?

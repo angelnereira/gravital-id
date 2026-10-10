@@ -20,7 +20,7 @@ labels: ["type:spec-gap", "status:needs-review", "phase:F0", "area:docs", "area:
 
 ## Opciones de resolución
 
-1. Workspace con `unsafe_code = "deny"`; `#![forbid(unsafe_code)]` en el `lib.rs` de cada crate fuera de `bindings/`, comprobado por `xtask check-layers`; `#[allow(unsafe_code)]` local con `// SAFETY:` en bindings; los dos lints aritméticos declarados `deny`. **Aplicada en la rama `docs/pending-architecture-review`.**
+1. Workspace con `unsafe_code = "deny"`; `#![forbid(unsafe_code)]` en el `lib.rs` de cada crate fuera de `bindings/`, comprobado por `xtask check-layers`; `#[allow(unsafe_code)]` local con `// SAFETY:` en bindings; los dos lints aritméticos declarados `deny`. **Aplicada en `main`.**
 2. Tabla de lints propia y duplicada en cada crate de bindings.
 
 ## ¿Requiere ADR?

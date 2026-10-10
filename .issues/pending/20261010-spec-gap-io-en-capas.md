@@ -21,7 +21,7 @@ labels: ["type:spec-gap", "status:needs-review", "phase:F0", "area:docs", "area:
 
 ## Opciones de resolución
 
-1. Extraer los backends a crates adaptadores L5 (`pip-storage-sqlite`, `pip-transport-http`) y dejar L1–L4 sin I/O. **Aplicada en la rama `docs/pending-architecture-review`** junto con ADR-0019.
+1. Extraer los backends a crates adaptadores L5 (`pip-storage-sqlite`, `pip-transport-http`) y dejar L1–L4 sin I/O. **Aplicada en `main`** junto con ADR-0019.
 2. Mover `pip-storage` completo a L5 (obligaría a `pip-holder` a depender de una capa superior).
 
 ## ¿Requiere ADR?

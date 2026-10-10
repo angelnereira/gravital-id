@@ -5,7 +5,7 @@ labels: ["type:decision", "status:needs-review", "phase:F0", "area:docs", "area:
 
 ## Qué hay que decidir
 
-Aceptar, rechazar o diferir cada propuesta de la revisión de arquitectura del 2026-10-10 (rama `docs/pending-architecture-review`):
+Aceptar, rechazar o diferir cada propuesta de la revisión de arquitectura del 2026-10-10 (publicada en `main`):
 
 | ADR | Decisión propuesta |
 |---|---|
@@ -34,8 +34,8 @@ Y los ajustes a propuestas de ADR aún no redactados:
 
 ## Opciones conocidas
 
-1. Aceptar todo: fusionar la rama; los ADR pasan a Aceptado con la firma del mantenedor.
-2. Aceptar por partes: indicar qué ADR se rechaza o difiere; se revierten las secciones correspondientes de `ARCHITECTURE.md`, `REQUIREMENTS.md`, `PROJECT_STRUCTURE.md` y `ROADMAP.md` antes de fusionar.
+1. Aceptar todo: los ADR pasan a Aceptado con la firma del mantenedor.
+2. Aceptar por partes: indicar qué ADR se rechaza o difiere; se revierten las secciones correspondientes de `ARCHITECTURE.md`, `REQUIREMENTS.md`, `PROJECT_STRUCTURE.md` y `ROADMAP.md` en un commit posterior.
 
 ## Información que falta para decidir
 
