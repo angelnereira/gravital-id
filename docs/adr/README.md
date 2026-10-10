@@ -13,7 +13,7 @@ Un ADR registra una decisión difícil de revertir: contexto, opciones, decisió
 |---|---|---|---|---|
 | 0001 | Nombre del proyecto y de los paquetes | Propuesto | Nombre sin colisiones en registros de paquetes | F0 |
 | 0002 | Licencia y política de contribución | Propuesto | Dual MIT / Apache-2.0; DCO | F0 |
-| 0003 | Formato de credencial v1 | Propuesto | SD-JWT VC (RFC 9901 + borrador SD-JWT VC fijado) | F0 |
+| 0003 | Formato de credencial v1 | Propuesto | SD-JWT VC (RFC 9901 + borrador SD-JWT VC fijado); alineación con HAIP 1.0 (`x5c`) | F0 |
 | 0004 | Red blockchain | Propuesto | EVM; Ethereum L1 vs L2 madura tras spike | F0 |
 | 0005 | Mecanismo de estado y revocación | Propuesto | Token Status List (IETF) | F0 |
 | 0006 | Estrategia de bindings | Propuesto | UniFFI + wasm-bindgen + C ABI + flutter_rust_bridge; estrategia de pánicos en WASM | F0 |
@@ -32,4 +32,4 @@ Un ADR registra una decisión difícil de revertir: contexto, opciones, decisió
 | [0019](0019-nucleo-no-std-y-sans-io.md) | Núcleo `no_std` y protocolos sans-I/O | Propuesto | L1–L3 `no_std` + `alloc`; L4 sans-I/O; adaptadores en L5 | F1 |
 | [0020](0020-fail-closed-por-tipos.md) | Fail-closed por tipos y resultado por comprobación | Propuesto | Typestate + `Passed`/`Failed`/`Indeterminate`/`Skipped` | F0 |
 
-_Los archivos de cada ADR se crean cuando se redacta su propuesta completa (tarea F0.T11 y siguientes). Los ADR 0016–0020 proceden de la revisión de arquitectura del 2026-10-10; la columna de propuesta de 0006, 0007, 0009, 0010, 0011 y 0012 se ajustó en esa misma revisión._
+_Los archivos de cada ADR se crean cuando se redacta su propuesta completa (tarea F0.T11 y siguientes). Los ADR 0016–0020 proceden de la revisión de arquitectura del 2026-10-10; la columna de propuesta de 0003, 0006, 0007, 0009, 0010, 0011 y 0012 se ajustó en esa misma revisión._

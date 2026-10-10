@@ -396,7 +396,7 @@ Solapamientos permitidos: **F6** puede empezar cuando cierra G2 (los contratos n
 
 **Gate G10:** flujos en línea E2E en testnet; suite OpenID ejecutada; servicio de emisión desplegado con KMS.
 
-**Riesgos:** perfiles de interoperabilidad (p. ej., HAIP) en evolución (mitigación: perfil propio documentado con mapeo a perfiles externos).
+**Riesgos:** divergencia respecto de perfiles de interoperabilidad externos: HAIP 1.0 (Final) exige `x5c` para la clave del emisor, mientras que PIP la resuelve desde el trust bundle (mitigación: ADR-0003 decide la alineación; perfil propio documentado con mapeo a perfiles externos).
 
 ---
 
@@ -582,7 +582,7 @@ El producto está en producción cuando **todo** lo siguiente es verdad:
 | F18.T04 | ISO 18013-5 (mdoc) y transporte BLE/NFC | Demanda de integradores; ADR |
 | F18.T05 | Presentaciones no correlacionables (BBS) | Estándar en Recommendation y bibliotecas auditadas; ADR |
 | F18.T06 | Registro de emisión anclado (excepción ante compromiso de clave) | ADR |
-| F18.T07 | Preparación post-cuántica | Inventario criptográfico; perfil híbrido con ML-DSA cuando existan estándares JOSE/VC y soporte de plataforma; firma híbrida de la raíz y del bundle como primer paso (el formato multi-firma ya la admite); plan de migración |
+| F18.T07 | Preparación post-cuántica | Inventario criptográfico; perfil híbrido con ML-DSA (RFC 9964 ya lo define para JOSE) cuando exista soporte de plataforma para las claves del titular; firma híbrida de la raíz y del bundle como primer paso (el formato multi-firma ya la admite); plan de migración |
 | F18.T08 | Nuevos perfiles (p. ej., gubernamental) | Proceso de propuestas |
 | F18.T09 | Re-auditorías | Anual o tras cambios mayores |
 | F18.T10 | Deprecación y fin de vida de versiones | Según política de soporte |

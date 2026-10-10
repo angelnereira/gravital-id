@@ -25,4 +25,4 @@ labels: ["type:spec-gap", "status:needs-review", "phase:F0", "area:docs", "area:
 
 ## ¿Requiere ADR?
 
-No — no cambia una regla, corrige cómo se expresa. A confirmar al implementar F1.T01 con la versión de Cargo fijada en ADR-0014.
+No — no cambia una regla, corrige cómo se expresa. Comprobado el 2026-10-10 con cargo 1.99.0 en un workspace mínimo: heredar y sobrescribir falla con `cannot override workspace.lints in lints`; `forbid` con `#[allow]` local falla con E0453; `deny` con `#[allow]` local compila.

@@ -19,6 +19,7 @@ Y los ajustes a propuestas de ADR aún no redactados:
 
 | ADR | Ajuste |
 |---|---|
+| 0003 | Alineación con HAIP 1.0: emitir `x5c` y cómo la trata el verificador PIP |
 | 0006 | Estrategia de pánicos en WASM (instancia envenenada) |
 | 0007 | Backend FIPS condicional y seleccionado por tipo, no por feature |
 | 0009 | Claves de recuperación por emisor; SAS con compromiso previo |
@@ -42,7 +43,19 @@ Y los ajustes a propuestas de ADR aún no redactados:
 - Formato de firma que devuelven Secure Enclave y StrongBox (spike F0.T08).
 - Compatibilidad `no_std` de las dependencias criptográficas (spike F0.T09, F1.T10).
 - Cuántos operadores independientes son realistas para el piloto (umbral de ADR-0016).
-- Estado actual de los estándares citados (HAIP y `x5c`, pruebas de conocimiento cero sobre ECDSA, ML-DSA en JOSE): no se verificó en línea durante la revisión.
+
+## Estado de los estándares, verificado en línea el 2026-10-10
+
+| Estándar | Estado | Efecto en la documentación |
+|---|---|---|
+| Token Status List | `draft-ietf-oauth-status-list-21` (junio de 2026), en la cola del RFC Editor; sin número de RFC | Coincide con `ARCHITECTURE.md §10.1`; candidato a fijar en `CRYPTO_PROFILES.md` |
+| SD-JWT VC | `draft-ietf-oauth-sd-jwt-vc-19` (agosto de 2026), en evaluación del IESG | Sigue siendo borrador; candidato a fijar en `CRYPTO_PROFILES.md` |
+| HAIP 1.0 | Final desde el 24 de diciembre de 2025. Exige `x5c` para la clave del emisor del SD-JWT VC y para el Status List Token; índice de estado único e impredecible por credencial; `status` opcional | Nueva decisión dentro de ADR-0003; nota en `ARCHITECTURE.md §7.2` y riesgo de F10 |
+| ML-DSA en JOSE/COSE | RFC 9964 (mayo de 2026) | F18.T07 ya no depende de que exista el estándar JOSE |
+| Longfellow ZK | `draft-google-cfrg-libzk-03` (septiembre de 2026), informativo, en CFRG | Sigue fuera de v1 (F18.T15) |
+| Pánicos en WASM | `wasm32-unknown-unknown` usa `panic=abort`; desenrollar requiere `-Zbuild-std` (nightly) | Confirma la estrategia de instancia envenenada (ADR-0006) |
+
+El estado de la cola del RFC Editor y del IESG cambia: hay que volver a comprobarlo al redactar `CRYPTO_PROFILES.md` (F0.T06).
 
 ## ¿Se convertirá en ADR?
 

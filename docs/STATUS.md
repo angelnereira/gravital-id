@@ -33,7 +33,7 @@
 
 ## Decisiones pendientes que bloquean la fase actual
 
-ADR-0001 a ADR-0012, ADR-0016 a ADR-0018 y ADR-0020 (ver `docs/adr/README.md`). ADR-0019 debe decidirse en F1.
+ADR-0001 a ADR-0012, ADR-0016 a ADR-0018 y ADR-0020 (ver `docs/adr/README.md`). ADR-0003 incluye ahora la alineación con HAIP 1.0. ADR-0019 debe decidirse en F1.
 
 ## Métricas base (se rellenan desde F2)
 
@@ -58,5 +58,5 @@ ADR-0001 a ADR-0012, ADR-0016 a ADR-0018 y ADR-0020 (ver `docs/adr/README.md`). 
   - Primera especificación a redactar tras la decisión: `TRUST_BUNDLE.md` (F0.T13).
 - Bugs/issues abiertos durante la sesión: cinco archivos en `.issues/pending/` (dos `type:decision`, tres `type:spec-gap`).
 - Decisiones tomadas (con enlace a ADR/issue): ninguna aceptada; todas quedan propuestas en ADR-0016 a ADR-0020.
-- Riesgos o dudas: no se verificó en línea el estado actual de los estándares citados; la rama no sigue el patrón `<tipo>/<issue>-<slug>` porque aún no existen issues en GitHub; nada se ha subido al remoto.
+- Riesgos o dudas: el estado de los estándares citados se verificó en línea el 2026-10-10 (tabla en el issue de decisión) y debe volver a comprobarse en F0.T06; la rama no sigue el patrón `<tipo>/<issue>-<slug>` porque aún no existen issues en GitHub; nada se ha subido al remoto.
 - Comprobaciones locales: fmt, clippy, tests, layers y trace no aplican (aún no hay código ni `xtask`).

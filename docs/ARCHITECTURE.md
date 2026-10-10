@@ -106,7 +106,7 @@ Rust es la elección correcta para el núcleo (seguridad de memoria, rendimiento
 
 | Complejidad | Impacto | Decisión |
 |---|---|---|
-| **Pánicos a través de FFI** | Un pánico que cruza la frontera FFI aborta el proceso del host o produce comportamiento indefinido en C ABI. | Código de biblioteca **sin** `unwrap`/`expect`/`panic!`/indexación que pueda fallar (lints `deny`). Las capas FFI capturan pánicos (`catch_unwind`) y los convierten en un error `PIP-E9999 InternalError`. En `wasm32-unknown-unknown` no hay desenrollado (un pánico aborta la instancia): el binding WASM instala un *panic hook* que marca la instancia como envenenada, toda llamada posterior devuelve `PIP-E9999` y el host debe reinstanciar el módulo (ADR-0006). |
+| **Pánicos a través de FFI** | Un pánico que cruza la frontera FFI aborta el proceso del host o produce comportamiento indefinido en C ABI. | Código de biblioteca **sin** `unwrap`/`expect`/`panic!`/indexación que pueda fallar (lints `deny`). Las capas FFI capturan pánicos (`catch_unwind`) y los convierten en un error `PIP-E9999 InternalError`. En `wasm32-unknown-unknown` el valor por defecto es `panic=abort` (un pánico aborta la instancia; el desenrollado mediante WebAssembly Exception Handling exige hoy reconstruir `std` con una toolchain *nightly*, incompatible con la toolchain estable fijada): el binding WASM instala un *panic hook* que marca la instancia como envenenada, toda llamada posterior devuelve `PIP-E9999` y el host debe reinstanciar el módulo (ADR-0006). |
 | **Asincronía entre lenguajes** | Kotlin (corrutinas), Swift (`async`), JS (`Promise`), Go y C no comparten modelo. | El **núcleo es síncrono y puro** (verificación, criptografía, formatos). Los protocolos (L4) son **máquinas de estado sans-I/O**: emiten *efectos* ("envía esta petición", "persiste este registro", "espera") y consumen sus resultados; no contienen `async` ni conocen ningún runtime (ADR-0019). El I/O real vive en adaptadores L5 (`pip-transport-http`, `pip-ledger-evm`) o en el host. Los bindings exponen un bucle de conducción idiomático (`suspend`, `async`, `Promise`, callbacks en C) sin lógica. |
 | **WebAssembly** | `wasm32-unknown-unknown` no tiene sistema de archivos, hilos por defecto ni RNG del sistema; bibliotecas con C/ensamblador no compilan. | Backend criptográfico **puro Rust (RustCrypto)** por defecto; `getrandom` configurado con su backend para JS; almacenamiento inyectado por el host (IndexedDB); sin SQLite en WASM. |
 | **Claves en hardware** | Secure Enclave (iOS) solo soporta **P-256**; StrongBox/TEE en Android tienen soporte amplio solo para P-256. Las claves no son exportables y Rust no puede acceder a ellas de forma portable. | **ES256 (ECDSA P-256 + SHA-256) es obligatorio** para claves de vinculación del titular. La firma se delega a un `KeyStore` implementado por el host (trait exterior vía UniFFI/wasm/C). La clave privada nunca entra en memoria Rust. Los almacenes de hardware devuelven firmas ECDSA en DER con `s` arbitrario: la conversión a P1363 (`r‖s`) se hace **en Rust** (P-11), la verificación **no** exige *low-S* y ninguna firma se usa como identificador ni como clave de deduplicación. |
@@ -224,7 +224,7 @@ flowchart TB
 
 - Un emisor se identifica con un `IssuerId`: la URL HTTPS usada como `iss` en sus credenciales (compatible con SD-JWT VC).
 - **La resolución de claves NO usa DNS ni HTTPS en tiempo de verificación.** El registro de confianza (§11) asocia `IssuerId` → claves autorizadas, perfiles, tipos de credencial (`vct`) y vigencias. Los verificadores PIP resuelven desde el trust bundle local.
-- Verificadores externos que no usen PIP pueden seguir resolviendo claves por los mecanismos estándar en línea del emisor; esto preserva la interoperabilidad.
+- Verificadores externos que no usen PIP resuelven la clave por sus propios mecanismos estándar. El perfil HAIP 1.0 de OpenID (Final) exige que el SD-JWT VC lleve el certificado del emisor en la cabecera `x5c`; un emisor PUEDE incluirla para interoperar con ese ecosistema. El verificador PIP **nunca** la usa para decidir la confianza (INV-06): la clave sale del trust bundle. Si la alineación con HAIP es obligatoria para algún perfil, y cómo trata el verificador PIP una `x5c` presente, se decide en ADR-0003.
 - **Emisores que sean personas naturales** se registran con un identificador seudónimo; su identidad legal consta en acuerdos fuera de la cadena (P-02).
 
 ### 7.3 Otros identificadores
@@ -271,7 +271,7 @@ Para mitigar la correlación (§2), un emisor PUEDE emitir **N copias** de la mi
 | ISO/IEC 18013-5 mdoc | Proximidad (BLE/NFC), documentos gubernamentales | ADR + fase F18 |
 | W3C VCDM 2.0 con JOSE/COSE | Ecosistemas basados en W3C | ADR + demanda de integradores |
 | BBS (Data Integrity) | Presentaciones no correlacionables | Estándar en Recommendation + bibliotecas auditadas |
-| Prueba de conocimiento cero sobre ECDSA P-256 | Presentaciones no correlacionables **compatibles con las claves de hardware existentes** (BBS no puede vincularse a una clave P-256 de Secure Enclave/StrongBox) | Especificación estable + biblioteca auditada; ADR + F18 |
+| Prueba de conocimiento cero sobre ECDSA P-256 | Presentaciones no correlacionables **compatibles con las claves de hardware existentes** (BBS no puede vincularse a una clave P-256 de Secure Enclave/StrongBox) | Especificación estable (hoy borrador informativo en CFRG, *Longfellow ZK*) + biblioteca auditada; ADR + F18 |
 
 ---
 
@@ -685,7 +685,7 @@ El índice vivo está en `docs/adr/README.md`. Las decisiones marcadas "Bloquea"
 |---|---|---|---|
 | 0001 | Nombre del proyecto y paquetes | Nombre sin colisiones en registros de paquetes | F0 |
 | 0002 | Licencia | Dual MIT / Apache-2.0 (convención Rust) | F0 |
-| 0003 | Formato de credencial v1 | SD-JWT VC (RFC 9901 + borrador SD-JWT VC fijado) | F0 |
+| 0003 | Formato de credencial v1 | SD-JWT VC (RFC 9901 + borrador SD-JWT VC fijado); alineación con HAIP 1.0 (`x5c`) | F0 |
 | 0004 | Red blockchain | EVM; Ethereum L1 vs L2 madura tras PoC | F0 |
 | 0005 | Mecanismo de estado | Token Status List | F0 |
 | 0006 | Estrategia de bindings | UniFFI + wasm-bindgen + C ABI + flutter_rust_bridge; estrategia de pánicos en WASM | F0 |
@@ -748,4 +748,7 @@ Las versiones exactas se fijan en `docs/specs/CRYPTO_PROFILES.md`.
 - W3C Bitstring Status List v1.0 (referencia de tamaño de listas).
 - W3C Data Integrity BBS Cryptosuites (seguimiento, no normativo en v1).
 - ISO/IEC 18013-5 (seguimiento, no normativo en v1).
+- OpenID4VC High Assurance Interoperability Profile (HAIP) 1.0 (Final, diciembre de 2025): referencia de interoperabilidad; su alineación se decide en ADR-0003.
+- RFC 9964 — ML-DSA para JOSE y COSE (seguimiento, no normativo en v1).
+- IRTF CFRG draft-google-cfrg-libzk — Longfellow ZK (seguimiento, no normativo en v1).
 - Ley 81 de 2019 de Panamá sobre protección de datos personales.

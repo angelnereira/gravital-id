@@ -260,7 +260,7 @@ inherits = "release"
 opt-level = "z"
 ```
 
-`wasm32-unknown-unknown` no desenrolla aunque el perfil pida `unwind`: el binding WASM usa la estrategia de instancia envenenada de `ARCHITECTURE.md §3`. `opt-level = "z"` puede penalizar la criptografía; el valor definitivo (`z` o `s`) se fija con las mediciones de F2.T12.
+`wasm32-unknown-unknown` usa `panic=abort` por defecto y no desenrolla con la toolchain estable aunque el perfil pida `unwind`: el binding WASM usa la estrategia de instancia envenenada de `ARCHITECTURE.md §3`. `opt-level = "z"` puede penalizar la criptografía; el valor definitivo (`z` o `s`) se fija con las mediciones de F2.T12.
 
 ### 5.3 Feature flags
 
