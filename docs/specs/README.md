@@ -5,7 +5,7 @@ Estas especificaciones detallan lo que `ARCHITECTURE.md` define a alto nivel. Se
 | Especificación | Contenido | Tarea | Estado |
 |---|---|---|---|
 | `THREAT_MODEL.md` | Activos, actores, fronteras, STRIDE, LINDDUN, mitigaciones ↔ REQ | F0.T05 | Pendiente |
-| `CRYPTO_PROFILES.md` | Algoritmos, versiones fijadas de estándares, parámetros y límites | F0.T06 | Pendiente |
+| [`CRYPTO_PROFILES.md`](CRYPTO_PROFILES.md) | Algoritmos, versiones fijadas de estándares, parámetros y límites | F0.T06 | Redactada (v0.1.0-draft) |
 | `PROTOCOL.md` | Flujos, mensajes, máquinas de estado, errores de protocolo | F0.T12 | Pendiente |
 | [`TRUST_BUNDLE.md`](TRUST_BUNDLE.md) | Raíz de confianza, bundle multi-firma, derivación determinista, manifiesto de estado, validación, anti-rollback, rotación | F0.T13 | Redactada (v0.1.0-draft) |
 | `CONTRACTS.md` | Funciones, roles, eventos, invariantes, migración | F0.T14 | Pendiente |

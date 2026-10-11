@@ -24,17 +24,21 @@
 | Tarea | Issue | Responsable | Estado | Siguiente paso |
 |---|---|---|---|---|
 | F0.T01 | — | Angel Nereira / Antigravity | Hecha | 57 labels creados en GitHub (`AGENTS.md §8`); 5 issues iniciales sincronizados y resueltos (#1..#5); régimen F0 formalizado |
-| Revisión de arquitectura v0.2 | #2 | Angel Nereira (mantenedor) | Hecha | ADR-0016 a ADR-0020 **Aceptados** formalmente; Issue #2 cerrado |
-| Régimen de mantenedor único | #1 | Angel Nereira (mantenedor) | Hecha | `AGENTS.md §6/§14` adaptados para F0; Issue #1 cerrado |
-| F0.T13 `TRUST_BUNDLE.md` | — | Antigravity (agente) | Lista para revisión | Redactada v0.1.0-draft en `docs/specs/TRUST_BUNDLE.md` |
+| F0.T02 | — | Angel Nereira | Pendiente | ADR-0001: Selección de nombre definitivo sin colisiones para reemplazar `pip` |
+| F0.T03 | — | Angel Nereira / Antigravity | Hecha | ADR-0002 Aceptado (Dual MIT/Apache-2.0, DCO 1.1, `LICENSE-MIT`, `LICENSE-APACHE`, `CONTRIBUTING.md`) |
+| F0.T04 | — | Antigravity (agente) | Hecha | `SECURITY.md` definitivo publicado con canal privado, SLAs y Safe Harbor |
+| F0.T06 | — | Antigravity (agente) | Lista para revisión | `docs/specs/CRYPTO_PROFILES.md` redactada (v0.1.0-draft) |
+| F0.T13 | — | Antigravity (agente) | Lista para revisión | `docs/specs/TRUST_BUNDLE.md` redactada (v0.1.0-draft) |
+| Revisión v0.2 | #2 | Angel Nereira (mantenedor) | Hecha | ADR-0016 a ADR-0020 **Aceptados** formalmente; Issue #2 cerrado |
+| Régimen mantenedor | #1 | Angel Nereira (mantenedor) | Hecha | `AGENTS.md §6/§14` adaptados para F0; Issue #1 cerrado |
 
 ## Bloqueos
 
-- Ninguno inmediato que impida la redacción de especificaciones de F0.
+- Ninguno inmediato que impida continuar la redacción de especificaciones de F0.
 
 ## Decisiones pendientes que bloquean la fase actual
 
-ADR-0001 a ADR-0012 (ver `docs/adr/README.md`). ADR-0001 (nombre definitivo) y ADR-0002 (licencia) son los prioritarios siguientes.
+ADR-0001 (nombre definitivo) y ADR-0003 a ADR-0012 (ver `docs/adr/README.md`). ADR-0002 quedó formalmente aceptado.
 
 ## Métricas base (se rellenan desde F2)
 

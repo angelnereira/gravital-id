@@ -33,4 +33,8 @@ Un **emisor** autorizado firma una credencial SD-JWT VC para el **titular**; el 
 
 ## Licencia
 
-Pendiente de ADR-0002 (propuesta: dual MIT / Apache-2.0).
+Este proyecto se distribuye bajo **licencia dual MIT y Apache-2.0** (a elección del receptor), formalizado en [`ADR-0002`](docs/adr/0002-licencia-y-contribucion.md).
+
+- [`LICENSE-MIT`](LICENSE-MIT)
+- [`LICENSE-APACHE`](LICENSE-APACHE)
+- [`CONTRIBUTING.md`](CONTRIBUTING.md)

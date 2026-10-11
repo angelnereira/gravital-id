@@ -12,7 +12,7 @@ Un ADR registra una decisión difícil de revertir: contexto, opciones, decisió
 | ADR | Título | Estado | Propuesta inicial (ver `ARCHITECTURE.md §22`) | Debe decidirse en |
 |---|---|---|---|---|
 | 0001 | Nombre del proyecto y de los paquetes | Propuesto | Nombre sin colisiones en registros de paquetes | F0 |
-| 0002 | Licencia y política de contribución | Propuesto | Dual MIT / Apache-2.0; DCO | F0 |
+| [0002](0002-licencia-y-contribucion.md) | Licencia y política de contribución | Aceptado | Dual MIT / Apache-2.0; DCO 1.1 | F0 |
 | 0003 | Formato de credencial v1 | Propuesto | SD-JWT VC (RFC 9901 + borrador SD-JWT VC fijado); alineación con HAIP 1.0 (`x5c`) | F0 |
 | 0004 | Red blockchain | Propuesto | EVM; Ethereum L1 vs L2 madura tras spike | F0 |
 | 0005 | Mecanismo de estado y revocación | Propuesto | Token Status List (IETF) | F0 |
