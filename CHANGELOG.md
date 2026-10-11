@@ -21,12 +21,24 @@ Cada componente publicado (SDK, servicios, contratos, especificación) indica su
 - [specs] Marco de gobernanza técnica `TRUST_FRAMEWORK.md` v0.1.0-draft (F0.T18): roles de ecosistema, umbrales multisig, timelock 48-72h y gestión de bajas.
 - [specs] Estrategia de pruebas y calidad `TEST_STRATEGY.md` v0.1.0-draft (F0.T19): pirámide de pruebas, horas mínimas de fuzzing por gate, cobertura $\ge 85\%$ y trazabilidad REQ.
 - [legal] Análisis regulatorio preliminar `docs/legal/2026-analisis-regulatorio-preliminar.md` v0.1.0-draft (F0.T20): conformidad con la Ley 81 de 2019 de Panamá (Protección de Datos), INV-02 en blockchain y requisitos KYC/AML (Ley 23 de 2015).
+- [docs] `ADR-0001`: Aceptación de nombre definitivo "Gravital ID" / prefijo de paquetes `gravital-id` y `gid` (F0.T02).
+- [docs] `ADR-0003` a `ADR-0012`: Aceptación formal de decisiones de arquitectura para Fase F0 (F0.T11):
+  - `ADR-0003`: Formato de credencial v1 (SD-JWT VC + HAIP 1.0 `x5c`).
+  - `ADR-0004`: Red blockchain para el registro (EVM / L2 Arbitrum y Base con anclaje).
+  - `ADR-0005`: Mecanismo de estado y revocación (Token Status List comprimido).
+  - `ADR-0006`: Estrategia de bindings multi-lenguaje (UniFFI, WASM, flutter_rust_bridge, C ABI y aislamiento de pánicos).
+  - `ADR-0007`: Backend criptográfico (RustCrypto por defecto, aws-lc-rs condicional por tipos para FIPS).
+  - `ADR-0008`: Almacenamiento local (cifrado de sobre con DEK/KEK, índices ciegos HMAC y backend SQLite WAL/IndexedDB).
+  - `ADR-0009`: Modelo de recuperación (migración SAS con compromiso previo, claves derivadas por emisor y re-vinculación).
+  - `ADR-0010`: Formato del trust bundle (JWS JSON multi-firma k-de-n con canonización JCS RFC 8785 y límites).
+  - `ADR-0011`: Transporte offline (QR dos pasos, transcodificación binaria CBOR + DEFLATE + Base45, multi-QR).
+  - `ADR-0012`: Modelo de gobernanza (Multisig k-de-n, timelock 48-72h y rol de emergencia limitado a suspender).
 - [docs] `ADR-0002`: Aceptación de licencia dual MIT / Apache-2.0 y política DCO 1.1 (F0.T03); archivos `LICENSE-MIT`, `LICENSE-APACHE` y `CONTRIBUTING.md`.
 - [security] `SECURITY.md` definitivo (F0.T04): canal privado en GitHub Advisories, tiempos de SLA por severidad y política de Safe Harbor.
 - [infra] 57 labels oficiales creados en GitHub según `AGENTS.md §8` y sincronización de los 5 issues pendientes iniciales (#1 a #5).
 
 ### Changed
-- [docs] Aceptación formal de ADR-0016 a ADR-0020 por el mantenedor Angel Nereira (#2).
+- [docs] Aceptación formal de ADR-0001 a ADR-0012 y ADR-0016 a ADR-0020 por el mantenedor Angel Nereira (#2, #6, #7..#17).
 - [docs] Aceptación formal de ADR-0002 (licencia y DCO) por el mantenedor Angel Nereira.
 - [governance] Adaptación de `AGENTS.md §6` y `§14` para régimen de mantenedor único en Fase F0 (#1).
 - [docs] Revisión de arquitectura v0.2: raíz de confianza y bundles cofirmados k-de-n; manifiesto de estado fuera del bundle; estado `suspended`; claves de recuperación por emisor; SAS con compromiso previo; claves HPKE con propósito propio; estado persistente del verificador; transcodificación binaria para QR; estrategia de pánicos en WASM.

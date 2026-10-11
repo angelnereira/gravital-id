@@ -24,11 +24,12 @@
 | Tarea | Issue | Responsable | Estado | Siguiente paso |
 |---|---|---|---|---|
 | F0.T01 | — | Angel Nereira / Antigravity | Hecha | 57 labels creados en GitHub (`AGENTS.md §8`); 5 issues iniciales sincronizados y resueltos (#1..#5); régimen F0 formalizado |
-| F0.T02 | — | Angel Nereira | Pendiente | ADR-0001: Selección de nombre definitivo sin colisiones para reemplazar `pip` |
-| F0.T03 | — | Angel Nereira / Antigravity | Hecha | ADR-0002 Aceptado (Dual MIT/Apache-2.0, DCO 1.1, `LICENSE-MIT`, `LICENSE-APACHE`, `CONTRIBUTING.md`) |
+| F0.T02 | #7 | Angel Nereira / Antigravity | Hecha | ADR-0001 Aceptado: Gravital ID (`gravital-id` / `gid`) como nombre definitivo |
+| F0.T03 | #6 | Angel Nereira / Antigravity | Hecha | ADR-0002 Aceptado (Dual MIT/Apache-2.0, DCO 1.1, `LICENSE-MIT`, `LICENSE-APACHE`, `CONTRIBUTING.md`) |
 | F0.T04 | — | Antigravity (agente) | Hecha | `SECURITY.md` definitivo publicado con canal privado, SLAs y Safe Harbor |
 | F0.T05 | — | Antigravity (agente) | Lista para revisión | `docs/specs/THREAT_MODEL.md` redactada (STRIDE + LINDDUN, v0.1.0-draft) |
 | F0.T06 | — | Antigravity (agente) | Lista para revisión | `docs/specs/CRYPTO_PROFILES.md` redactada (v0.1.0-draft) |
+| F0.T11 | #8..#17 | Angel Nereira / Antigravity | Hecha | ADR-0003 a ADR-0012 Aceptados formalmente e indexados en `docs/adr/` |
 | F0.T12 | — | Antigravity (agente) | Lista para revisión | `docs/specs/PROTOCOL.md` redactada (v0.1.0-draft) |
 | F0.T13 | — | Antigravity (agente) | Lista para revisión | `docs/specs/TRUST_BUNDLE.md` redactada (v0.1.0-draft) |
 | F0.T14 | — | Antigravity (agente) | Lista para revisión | `docs/specs/CONTRACTS.md` redactada (v0.1.0-draft) |
@@ -43,11 +44,11 @@
 
 ## Bloqueos
 
-- Ninguno inmediato que impida continuar la redacción de especificaciones de F0.
+- Ninguno inmediato que impida continuar hacia el cierre de la Fase F0 (Gate G0).
 
 ## Decisiones pendientes que bloquean la fase actual
 
-ADR-0001 (nombre definitivo) y ADR-0003 a ADR-0012 (ver `docs/adr/README.md`). ADR-0002 quedó formalmente aceptado.
+Ninguna para F0. Todos los ADRs obligatorios de F0 (ADR-0001 a ADR-0012, ADR-0016 a ADR-0018 y ADR-0020) han sido formalmente aceptados. Los ADRs 0013, 0014, 0015 y 0019 están programados para sus respectivas fases (F7, F1, F3, F1).
 
 ## Métricas base (se rellenan desde F2)
 
