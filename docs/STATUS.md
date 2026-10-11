@@ -28,7 +28,9 @@
 | F0.T03 | — | Angel Nereira / Antigravity | Hecha | ADR-0002 Aceptado (Dual MIT/Apache-2.0, DCO 1.1, `LICENSE-MIT`, `LICENSE-APACHE`, `CONTRIBUTING.md`) |
 | F0.T04 | — | Antigravity (agente) | Hecha | `SECURITY.md` definitivo publicado con canal privado, SLAs y Safe Harbor |
 | F0.T06 | — | Antigravity (agente) | Lista para revisión | `docs/specs/CRYPTO_PROFILES.md` redactada (v0.1.0-draft) |
+| F0.T12 | — | Antigravity (agente) | Lista para revisión | `docs/specs/PROTOCOL.md` redactada (v0.1.0-draft) |
 | F0.T13 | — | Antigravity (agente) | Lista para revisión | `docs/specs/TRUST_BUNDLE.md` redactada (v0.1.0-draft) |
+| F0.T14 | — | Antigravity (agente) | Lista para revisión | `docs/specs/CONTRACTS.md` redactada (v0.1.0-draft) |
 | Revisión v0.2 | #2 | Angel Nereira (mantenedor) | Hecha | ADR-0016 a ADR-0020 **Aceptados** formalmente; Issue #2 cerrado |
 | Régimen mantenedor | #1 | Angel Nereira (mantenedor) | Hecha | `AGENTS.md §6/§14` adaptados para F0; Issue #1 cerrado |
 

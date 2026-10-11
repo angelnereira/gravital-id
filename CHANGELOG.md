@@ -11,6 +11,8 @@ Cada componente publicado (SDK, servicios, contratos, especificación) indica su
 - [docs] ADR-0016 a ADR-0020 (Propuestos): confianza por umbral, manifiesto de estado, emergencia limitada a suspensión, núcleo `no_std` con protocolos sans-I/O y fail-closed por tipos.
 - [specs] Especificación normativa `TRUST_BUNDLE.md` v0.1.0-draft (F0.T13): raíz de confianza encadenada, bundle multi-firma determinista, manifiesto de estado y anti-rollback con `bundle_epoch`.
 - [specs] Especificación normativa `CRYPTO_PROFILES.md` v0.1.0-draft (F0.T06): algoritmos autorizados (ES256, SHA-256, XChaCha20), versiones fijadas de RFC 9901 y borradores, mitigaciones DoS.
+- [specs] Especificación normativa `PROTOCOL.md` v0.1.0-draft (F0.T12): flujos OID4VCI y OID4VP (DCQL), transporte offline en QR bidireccional (transcodificación binaria sin pérdida + CBOR + DEFLATE + Base45), multi-QR y sobres HPKE.
+- [specs] Especificación normativa `CONTRACTS.md` v0.1.0-draft (F0.T14): contratos EVM inmutables (`TrustRegistry`, `StatusAnchor`), eventos tipados, timelock ordinario y rol de emergencia acotado a 14 días.
 - [docs] `ADR-0002`: Aceptación de licencia dual MIT / Apache-2.0 y política DCO 1.1 (F0.T03); archivos `LICENSE-MIT`, `LICENSE-APACHE` y `CONTRIBUTING.md`.
 - [security] `SECURITY.md` definitivo (F0.T04): canal privado en GitHub Advisories, tiempos de SLA por severidad y política de Safe Harbor.
 - [infra] 57 labels oficiales creados en GitHub según `AGENTS.md §8` y sincronización de los 5 issues pendientes iniciales (#1 a #5).
