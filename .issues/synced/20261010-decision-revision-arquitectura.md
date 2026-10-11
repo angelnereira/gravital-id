@@ -1,6 +1,8 @@
 ---
 title: "[DECISIÓN] Revisión de arquitectura v0.2: aceptar o rechazar ADR-0016 a ADR-0020"
 labels: ["type:decision", "status:needs-review", "phase:F0", "area:docs", "area:trust", "area:security"]
+issue: 2
+url: https://github.com/angelnereira/gravital-id/issues/2
 ---
 
 ## Qué hay que decidir

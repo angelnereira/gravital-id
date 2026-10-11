@@ -1,6 +1,8 @@
 ---
 title: "[DECISIÓN] Proceso con un único mantenedor humano"
 labels: ["type:decision", "status:triage", "phase:F0", "area:docs"]
+issue: 1
+url: https://github.com/angelnereira/gravital-id/issues/1
 ---
 
 ## Qué hay que decidir

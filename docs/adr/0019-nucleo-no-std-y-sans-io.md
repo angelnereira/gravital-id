@@ -1,10 +1,10 @@
 # ADR-0019: Núcleo `no_std` y protocolos sans-I/O
 
-- **Estado:** Propuesto
+- **Estado:** Aceptado
 - **Fecha:** 2026-10-10
 - **Autores:** Claude (agente), a petición de Angel Nereira
-- **Aprobado por:** — (pendiente de un mantenedor humano)
-- **Issue:** `.issues/pending/20261010-decision-revision-arquitectura.md`
+- **Aprobado por:** Angel Nereira
+- **Issue:** #2
 - **Requisitos y principios afectados:** REQ-VER-001, REQ-PORT-003, REQ-PORT-004, REQ-SDK-005, REQ-SDK-008; P-01, P-06, P-11, P-14; INV-01, INV-11
 - **Fase:** F1 (F1.T03, F1.T10, F1.T13); cambia las reglas de capas (`layers.toml`)
 

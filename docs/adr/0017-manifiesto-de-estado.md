@@ -1,10 +1,10 @@
 # ADR-0017: Manifiesto de estado separado del trust bundle
 
-- **Estado:** Propuesto
+- **Estado:** Aceptado
 - **Fecha:** 2026-10-10
 - **Autores:** Claude (agente), a petición de Angel Nereira
-- **Aprobado por:** — (pendiente de un mantenedor humano)
-- **Issue:** `.issues/pending/20261010-decision-revision-arquitectura.md`
+- **Aprobado por:** Angel Nereira
+- **Issue:** #2
 - **Requisitos y principios afectados:** REQ-STAT-005, 006, 008; REQ-TRUST-010; P-14
 - **Fase:** F0 (F0.T13); implementación en F4.T01 y F7.T05
 

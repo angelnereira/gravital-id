@@ -26,10 +26,10 @@ Un ADR registra una decisión difícil de revertir: contexto, opciones, decisió
 | 0013 | Proveedor de nube inicial | Propuesto | Neutral (imágenes OCI + IaC) | F7 |
 | 0014 | Toolchain de Rust y MSRV | Propuesto | Rust estable fijado; MSRV declarado | F1 |
 | 0015 | SD-JWT: construir o reutilizar | Propuesto | Evaluar crates existentes vs implementación propia | F3 |
-| [0016](0016-confianza-por-umbral.md) | Confianza por umbral: raíz encadenada y bundles cofirmados | Propuesto | Raíz offline k-de-n + bundles k-de-n con derivación determinista | F0 |
-| [0017](0017-manifiesto-de-estado.md) | Manifiesto de estado separado del trust bundle | Propuesto | Punteros a listas de estado fuera del bundle | F0 |
-| [0018](0018-emergencia-solo-suspension.md) | Alcance del rol de emergencia | Propuesto | Solo suspensión reversible con caducidad | F0 |
-| [0019](0019-nucleo-no-std-y-sans-io.md) | Núcleo `no_std` y protocolos sans-I/O | Propuesto | L1–L3 `no_std` + `alloc`; L4 sans-I/O; adaptadores en L5 | F1 |
-| [0020](0020-fail-closed-por-tipos.md) | Fail-closed por tipos y resultado por comprobación | Propuesto | Typestate + `Passed`/`Failed`/`Indeterminate`/`Skipped` | F0 |
+| [0016](0016-confianza-por-umbral.md) | Confianza por umbral: raíz encadenada y bundles cofirmados | Aceptado | Raíz offline k-de-n + bundles k-de-n con derivación determinista | F0 |
+| [0017](0017-manifiesto-de-estado.md) | Manifiesto de estado separado del trust bundle | Aceptado | Punteros a listas de estado fuera del bundle | F0 |
+| [0018](0018-emergencia-solo-suspension.md) | Alcance del rol de emergencia | Aceptado | Solo suspensión reversible con caducidad | F0 |
+| [0019](0019-nucleo-no-std-y-sans-io.md) | Núcleo `no_std` y protocolos sans-I/O | Aceptado | L1–L3 `no_std` + `alloc`; L4 sans-I/O; adaptadores en L5 | F1 |
+| [0020](0020-fail-closed-por-tipos.md) | Fail-closed por tipos y resultado por comprobación | Aceptado | Typestate + `Passed`/`Failed`/`Indeterminate`/`Skipped` | F0 |
 
 _Los archivos de cada ADR se crean cuando se redacta su propuesta completa (tarea F0.T11 y siguientes). Los ADR 0016–0020 proceden de la revisión de arquitectura del 2026-10-10; la columna de propuesta de 0003, 0006, 0007, 0009, 0010, 0011 y 0012 se ajustó en esa misma revisión._

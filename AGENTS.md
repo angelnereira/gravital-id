@@ -113,8 +113,8 @@ Issue (plantilla) → rama <tipo>/<issue>-<slug> → commits convencionales → 
 - **Ramas:** `feat/142-status-list-parser`, `fix/201-kb-jwt-aud-check`, `docs/88-trust-bundle-spec`.
 - **Commits:** Conventional Commits con el crate como ámbito y el issue: `feat(pip-status): parse token status list JWT (#142)`.
 - **PR:** un issue por PR; plantilla completa; enlaza la tarea `F<n>.T<nn>` y los `REQ-*`.
-- **Merge:** squash a `main`. Ningún push directo a `main`. Ningún `force-push` a ramas ajenas. Nunca reescribas historial publicado de `main`.
-- **Aprobación humana obligatoria** para cambios en rutas de `CODEOWNERS` (criptografía, credenciales, confianza, verificador, contratos, especificaciones, CI). Un agente **no** aprueba ni fusiona sus propios PRs en esas rutas. Fuera de ellas, la política de fusión la define `CONTRIBUTING.md`; en ausencia de ella, se requiere aprobación humana.
+- **Merge y ramas:** En operación estándar: squash merge a `main` vía PR. **Régimen de mantenedor único en Fase F0:** Mientras el proyecto cuente con un único mantenedor humano (R-14, Issue #1), el mantenedor y sus agentes en sesión interactiva directa pueden realizar commits directos sobre `main` para tareas de documentación, especificación y configuración base (F0.T01–F0.T21), manteniendo siempre historial lineal y Conventional Commits. A partir de F1 (código fuente y CI), se activará la protección de `main` con PRs obligatorios.
+- **Aprobación humana obligatoria** para cambios en rutas de `CODEOWNERS` (criptografía, credenciales, confianza, verificador, contratos, especificaciones, CI). En régimen de mantenedor único, el mantenedor humano valida y decide directamente. Un agente **no** aprueba unilateralmente decisiones de arquitectura ni relaja invariantes.
 
 ---
 
@@ -282,7 +282,7 @@ Prohibido: dependencias desde `git`, versiones comodín (`*`), crates sin licenc
 - Introducir llamadas de red en la ruta de verificación.
 - Registrar datos personales, credenciales, claves o secretos (también en pruebas que imprimen).
 - Hacer commit de secretos, claves privadas reales, `.env` o datos personales reales (usa datos sintéticos de `pip-testkit`).
-- Push directo a `main`, force-push a ramas ajenas, reescribir historial publicado.
+- Push directo a `main` fuera del régimen de mantenedor único en Fase F0 (ver §6), force-push a ramas ajenas, reescribir historial publicado.
 - Marcar tareas o gates como cumplidos sin evidencia.
 - Copiar código de spikes a `crates/`.
 - Implementar funcionalidad de fases futuras "porque era fácil" sin issue y sin que sus dependencias estén cerradas.

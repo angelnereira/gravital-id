@@ -1,10 +1,10 @@
 # ADR-0020: Fail-closed por tipos y resultado por comprobación
 
-- **Estado:** Propuesto
+- **Estado:** Aceptado
 - **Fecha:** 2026-10-10
 - **Autores:** Claude (agente), a petición de Angel Nereira
-- **Aprobado por:** — (pendiente de un mantenedor humano)
-- **Issue:** `.issues/pending/20261010-decision-revision-arquitectura.md`
+- **Aprobado por:** Angel Nereira
+- **Issue:** #2
 - **Requisitos y principios afectados:** REQ-VER-002, 003, 010, 011, 012; P-05, P-08; INV-04, INV-05
 - **Fase:** F0 (F0.T16, `SDK_API.md`); implementación en F4.T04, F4.T06
 

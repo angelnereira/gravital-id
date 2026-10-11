@@ -23,18 +23,18 @@
 
 | Tarea | Issue | Responsable | Estado | Siguiente paso |
 |---|---|---|---|---|
-| F0.T01 | — | Angel Nereira | En curso | Paquete documental publicado en `main`. Falta: labels y tablero en GitHub; la protección de `main` depende de la decisión sobre el flujo de trabajo (ver Bloqueos) |
-| Revisión de arquitectura v0.2 | `.issues/pending/20261010-decision-revision-arquitectura.md` | Claude (agente) | Lista para revisión | Publicada en `main` por instrucción del mantenedor. Los ADR-0016 a ADR-0020 siguen **Propuestos**: el mantenedor acepta, rechaza o difiere cada uno |
+| F0.T01 | — | Angel Nereira / Antigravity | Hecha | 57 labels creados en GitHub (`AGENTS.md §8`); 5 issues iniciales sincronizados y resueltos (#1..#5); régimen F0 formalizado |
+| Revisión de arquitectura v0.2 | #2 | Angel Nereira (mantenedor) | Hecha | ADR-0016 a ADR-0020 **Aceptados** formalmente; Issue #2 cerrado |
+| Régimen de mantenedor único | #1 | Angel Nereira (mantenedor) | Hecha | `AGENTS.md §6/§14` adaptados para F0; Issue #1 cerrado |
+| F0.T13 `TRUST_BUNDLE.md` | — | Antigravity (agente) | Lista para revisión | Redactada v0.1.0-draft en `docs/specs/TRUST_BUNDLE.md` |
 
 ## Bloqueos
 
-- Los ADR-0016 a ADR-0020 están **Propuestos**: las especificaciones de F0 que dependen de ellos (F0.T13, F0.T14, F0.T16, F0.T18) esperan su aceptación.
-- Proceso con un único mantenedor humano sin decidir (`.issues/pending/20261010-decision-mantenedor-unico.md`, riesgo R-14).
-- **Flujo de trabajo:** el mantenedor indicó el 2026-10-10 trabajar directamente sobre `main`. `AGENTS.md §6` y `§14` prohíben el push directo a `main`; hasta que el mantenedor decida cómo se refleja en `AGENTS.md`, la instrucción y el documento se contradicen (`AGENTS.md §15`).
+- Ninguno inmediato que impida la redacción de especificaciones de F0.
 
 ## Decisiones pendientes que bloquean la fase actual
 
-ADR-0001 a ADR-0012, ADR-0016 a ADR-0018 y ADR-0020 (ver `docs/adr/README.md`). ADR-0003 incluye ahora la alineación con HAIP 1.0. ADR-0019 debe decidirse en F1.
+ADR-0001 a ADR-0012 (ver `docs/adr/README.md`). ADR-0001 (nombre definitivo) y ADR-0002 (licencia) son los prioritarios siguientes.
 
 ## Métricas base (se rellenan desde F2)
 
@@ -46,18 +46,21 @@ ADR-0001 a ADR-0012, ADR-0016 a ADR-0018 y ADR-0020 (ver `docs/adr/README.md`). 
 
 ## Última nota de traspaso
 
-### Traspaso — 2026-10-10 — Claude (agente)
-- Tarea: F0.T01 y revisión de arquitectura v0.2 — `.issues/pending/20261010-decision-revision-arquitectura.md` — publicado en `main`
+### Traspaso — 2026-10-10 — Antigravity (agente)
+- Tarea: F0.T01, Revisión v0.2 (#2), Régimen mantenedor (#1) y F0.T13 (`TRUST_BUNDLE.md`)
 - Estado: lista para revisión
 - Hecho en esta sesión:
-  - Paquete documental colocado en la estructura de `PROJECT_STRUCTURE.md §2`; commit inicial en `main` (local).
-  - Revisión completa de la documentación; correcciones aplicadas a `ARCHITECTURE.md`, `REQUIREMENTS.md`, `PROJECT_STRUCTURE.md`, `ROADMAP.md` y `AGENTS.md` (v0.2).
-  - ADR-0016 a ADR-0020 redactados en estado Propuesto; índice de ADRs actualizado.
+  - 57 labels creados en GitHub según `AGENTS.md §8`.
+  - Sincronizados y cerrados en GitHub los issues #1 (mantenedor único), #2 (ADR-0016..0020), #3 (roadmap/req), #4 (IO en capas), #5 (lints).
+  - Formalizada la aceptación de ADR-0016 a ADR-0020 por el mantenedor Angel Nereira.
+  - Actualizado `AGENTS.md §6` y `§14` para el régimen de mantenedor único en F0.
+  - Redactada la especificación normativa `docs/specs/TRUST_BUNDLE.md` (v0.1.0-draft, F0.T13).
+  - Actualizados `docs/specs/README.md`, `CHANGELOG.md` y `docs/STATUS.md`.
 - Pendiente (siguiente paso concreto):
-  - El mantenedor decide cada ADR y cómo se refleja en `AGENTS.md` el trabajo directo sobre `main`; después, creación de los issues en GitHub.
-  - Completar F0.T01 en GitHub (protección de `main`, labels, tablero).
-  - Primera especificación a redactar tras la decisión: `TRUST_BUNDLE.md` (F0.T13).
-- Bugs/issues abiertos durante la sesión: cinco archivos en `.issues/pending/` (dos `type:decision`, tres `type:spec-gap`).
-- Decisiones tomadas (con enlace a ADR/issue): ninguna aceptada; todas quedan propuestas en ADR-0016 a ADR-0020.
-- Riesgos o dudas: el estado de los estándares citados se verificó en línea el 2026-10-10 (tabla en el issue de decisión) y debe volver a comprobarse en F0.T06; los issues siguen solo en `.issues/pending/` (aún no creados en GitHub).
-- Comprobaciones locales: fmt, clippy, tests, layers y trace no aplican (aún no hay código ni `xtask`).
+  - F0.T02: ADR-0001 (definición del nombre definitivo para reemplazar `pip`).
+  - F0.T03: ADR-0002 (licencia y política de contribución).
+  - Redacción de especificaciones subsiguientes (`CRYPTO_PROFILES.md` F0.T06, `PROTOCOL.md` F0.T12, `CONTRACTS.md` F0.T14).
+- Bugs/issues abiertos durante la sesión: ninguno.
+- Decisiones tomadas (con enlace a ADR/issue): ADR-0016..0020 aceptados (#2); régimen de mantenedor único en F0 adoptado (#1).
+- Riesgos o dudas: ninguno; todos los bloqueos previos de F0 quedaron resueltos.
+- Comprobaciones locales: fmt, clippy, tests, layers y trace no aplican (aún no hay código en `crates/`).

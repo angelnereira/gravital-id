@@ -1,10 +1,10 @@
 # ADR-0018: El rol de emergencia solo puede suspender
 
-- **Estado:** Propuesto
+- **Estado:** Aceptado
 - **Fecha:** 2026-10-10
 - **Autores:** Claude (agente), a petición de Angel Nereira
-- **Aprobado por:** — (pendiente de un mantenedor humano)
-- **Issue:** `.issues/pending/20261010-decision-revision-arquitectura.md`
+- **Aprobado por:** Angel Nereira
+- **Issue:** #2
 - **Requisitos y principios afectados:** REQ-LEDG-004, REQ-KEY-005; P-08, P-10
 - **Fase:** F0 (F0.T14, F0.T18); implementación en F4.T08, F6.T02, F6.T04, F6.T05
 

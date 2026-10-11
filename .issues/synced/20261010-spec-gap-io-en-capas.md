@@ -1,6 +1,8 @@
 ---
 title: "[SPEC-GAP] PROJECT_STRUCTURE.md: I/O en crates L3 y L4 contradice INV-01 y ARCHITECTURE §6"
 labels: ["type:spec-gap", "status:needs-review", "phase:F0", "area:docs", "area:storage", "area:sync"]
+issue: 4
+url: https://github.com/angelnereira/gravital-id/issues/4
 ---
 
 ## Documentos implicados

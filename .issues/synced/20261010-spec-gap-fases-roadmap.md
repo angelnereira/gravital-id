@@ -1,6 +1,8 @@
 ---
 title: "[SPEC-GAP] ROADMAP.md / REQUIREMENTS.md: fase de REQ-STAT-002 y dependencia de F6.T08"
 labels: ["type:spec-gap", "status:needs-review", "phase:F0", "area:docs"]
+issue: 3
+url: https://github.com/angelnereira/gravital-id/issues/3
 ---
 
 ## Documentos implicados

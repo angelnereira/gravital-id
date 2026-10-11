@@ -1,10 +1,10 @@
 # ADR-0016: Confianza por umbral — raíz encadenada y bundles cofirmados k-de-n
 
-- **Estado:** Propuesto
+- **Estado:** Aceptado
 - **Fecha:** 2026-10-10
 - **Autores:** Claude (agente), a petición de Angel Nereira
-- **Aprobado por:** — (pendiente de un mantenedor humano)
-- **Issue:** `.issues/pending/20261010-decision-revision-arquitectura.md`
+- **Aprobado por:** Angel Nereira
+- **Issue:** #2
 - **Requisitos y principios afectados:** REQ-TRUST-001, 002, 005, 006, 008, 009, 010; P-08, P-10, P-15; INV-16
 - **Fase:** F0 (tareas F0.T13, F0.T18); implementación en F4.T03, F6.T08, F7.T04, F8.T08
 

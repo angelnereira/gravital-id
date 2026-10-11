@@ -1,6 +1,8 @@
 ---
 title: "[SPEC-GAP] PROJECT_STRUCTURE.md §5.1: la configuración de lints descrita no se puede aplicar"
 labels: ["type:spec-gap", "status:needs-review", "phase:F0", "area:docs", "area:ci"]
+issue: 5
+url: https://github.com/angelnereira/gravital-id/issues/5
 ---
 
 ## Documentos implicados
