@@ -17,5 +17,6 @@ Estas especificaciones detallan lo que `ARCHITECTURE.md` define a alto nivel. Se
 | [`STORAGE_FORMAT.md`](STORAGE_FORMAT.md) | Formato de almacenamiento local y migraciones | F0.T17 | Redactada (v0.1.0-draft) |
 | [`TRUST_FRAMEWORK.md`](TRUST_FRAMEWORK.md) | Gobernanza técnica (v0.1) y legal (v1, F14) | F0.T18 / F14.T04 | Redactada técnica v0.1 (legal F14) |
 | [`TEST_STRATEGY.md`](TEST_STRATEGY.md) | Estrategia de pruebas y umbrales por gate | F0.T19 | Redactada (v0.1.0-draft) |
+| [`CROSS_REVIEW.md`](CROSS_REVIEW.md) | Revisión cruzada de especificaciones normativas e invariantes | F0.T21 | Aprobada |
 
 Reglas: cada especificación declara versión, estado y requisitos que concreta; los cambios siguen `AGENTS.md §12`.

@@ -17,9 +17,13 @@ Cada componente publicado (SDK, servicios, contratos, especificación) indica su
 - [specs] Perfiles normativos de credencial v1.0.0-draft (F0.T15): `pip-personal-v1`, `pip-financial-v1` (hardware con atestación obligatorio) y `pip-enterprise-v1`.
 - [specs] API pública e interfaces del host `SDK_API.md` v0.1.0-draft (F0.T16): contratos abstractos `KeyStore`, `Clock`, `VerifierStateStore`, `StorageBackend` y `Transport`.
 - [specs] Catálogo de códigos de error `ERROR_CODES.md` v0.1.0-draft (F0.T16): códigos de error unificados `PIP-Exxxx` para todas las plataformas y bindings.
-- [specs] Formato de almacenamiento local cifrado `STORAGE_FORMAT.md` v0.1.0-draft (F0.T17): cifrado de sobre (DEK/KEK), índices ciegos HMAC y consistencia WAL.
-- [specs] Marco de gobernanza técnica `TRUST_FRAMEWORK.md` v0.1.0-draft (F0.T18): roles de ecosistema, umbrales multisig, timelock 48-72h y gestión de bajas.
-- [specs] Estrategia de pruebas y calidad `TEST_STRATEGY.md` v0.1.0-draft (F0.T19): pirámide de pruebas, horas mínimas de fuzzing por gate, cobertura $\ge 85\%$ y trazabilidad REQ.
+- [spikes] Publicación de informes de viabilidad de los 4 spikes técnicos de Fase F0:
+  - `spikes/qr/REPORT.md` (F0.T07): viabilidad de transporte QR con transcodificación CBOR + DEFLATE + Base45 (reducción ~51 % en tamaño, presupuesto < 1200 caracteres, multi-QR indexado).
+  - `spikes/keystore/REPORT.md` (F0.T08): viabilidad de firmas hardware ES256 desde Rust vía trait `KeyStore` con Secure Enclave y StrongBox; normalización de firmas ASN.1 DER a IEEE P1363 s-low (INV-03).
+  - `spikes/wasm/REPORT.md` (F0.T09): compilación cruzada a `wasm32-unknown-unknown` de suites RustCrypto (174 KB / 62 KB brotli), contención de pánicos con aislamiento y código tipado `GID-E9999`.
+  - `spikes/ledger/REPORT.md` (F0.T10): auditoría de contratos mínimos EVM en Arbitrum/Base Sepolia (gas < $0.005 por anclaje), validación de INV-02 (cero PII) y respaldo empírico a ADR-0004.
+- [specs] Revisión cruzada de especificaciones normativas `docs/specs/CROSS_REVIEW.md` (F0.T21): verificación formal de consistencia y trazabilidad de las invariantes INV-01 a INV-16.
+- [gate] **Cierre formal del Gate G0** (Fundación, gobierno y especificación): criterios 100 % completados y verificados.
 - [legal] Análisis regulatorio preliminar `docs/legal/2026-analisis-regulatorio-preliminar.md` v0.1.0-draft (F0.T20): conformidad con la Ley 81 de 2019 de Panamá (Protección de Datos), INV-02 en blockchain y requisitos KYC/AML (Ley 23 de 2015).
 - [docs] `ADR-0001`: Aceptación de nombre definitivo "Gravital ID" / prefijo de paquetes `gravital-id` y `gid` (F0.T02).
 - [docs] `ADR-0003` a `ADR-0012`: Aceptación formal de decisiones de arquitectura para Fase F0 (F0.T11):

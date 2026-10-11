@@ -16,7 +16,7 @@
 
 | Gate | Estado | Fecha | Evidencia |
 |---|---|---|---|
-| G0 | Abierto | — | — |
+| G0 | **Cerrado** | 2026-10-11 | Especificaciones v0.1 completadas, ADRs 0001-0012 y 0016-0020 aceptados, 4 spikes concluidos viables, revisión cruzada F0.T21 aprobada |
 | G1 … G17 | Pendiente | — | — |
 
 ## Tareas en curso
@@ -27,24 +27,29 @@
 | F0.T02 | #7 | Angel Nereira / Antigravity | Hecha | ADR-0001 Aceptado: Gravital ID (`gravital-id` / `gid`) como nombre definitivo |
 | F0.T03 | #6 | Angel Nereira / Antigravity | Hecha | ADR-0002 Aceptado (Dual MIT/Apache-2.0, DCO 1.1, `LICENSE-MIT`, `LICENSE-APACHE`, `CONTRIBUTING.md`) |
 | F0.T04 | — | Antigravity (agente) | Hecha | `SECURITY.md` definitivo publicado con canal privado, SLAs y Safe Harbor |
-| F0.T05 | — | Antigravity (agente) | Lista para revisión | `docs/specs/THREAT_MODEL.md` redactada (STRIDE + LINDDUN, v0.1.0-draft) |
-| F0.T06 | — | Antigravity (agente) | Lista para revisión | `docs/specs/CRYPTO_PROFILES.md` redactada (v0.1.0-draft) |
+| F0.T05 | — | Antigravity (agente) | Hecha | `docs/specs/THREAT_MODEL.md` redactada y revisada (STRIDE + LINDDUN) |
+| F0.T06 | — | Antigravity (agente) | Hecha | `docs/specs/CRYPTO_PROFILES.md` redactada y revisada |
+| F0.T07 | — | Antigravity (agente) | Hecha | `spikes/qr/REPORT.md`: Viabilidad de transcodificación CBOR+DEFLATE+Base45 (reducción ~51%, multi-QR) |
+| F0.T08 | — | Antigravity (agente) | Hecha | `spikes/keystore/REPORT.md`: Viabilidad de Secure Enclave / StrongBox vía UniFFI, DER a IEEE P1363 s-low |
+| F0.T09 | — | Antigravity (agente) | Hecha | `spikes/wasm/REPORT.md`: Compilación RustCrypto a wasm32 (174 KB / 62 KB brotli), pánico envenena GID-E9999 |
+| F0.T10 | — | Antigravity (agente) | Hecha | `spikes/ledger/REPORT.md`: Evaluación EVM en Arbitrum/Base L2 (< $0.005 gas/anclaje), INV-02 auditado |
 | F0.T11 | #8..#17 | Angel Nereira / Antigravity | Hecha | ADR-0003 a ADR-0012 Aceptados formalmente e indexados en `docs/adr/` |
-| F0.T12 | — | Antigravity (agente) | Lista para revisión | `docs/specs/PROTOCOL.md` redactada (v0.1.0-draft) |
-| F0.T13 | — | Antigravity (agente) | Lista para revisión | `docs/specs/TRUST_BUNDLE.md` redactada (v0.1.0-draft) |
-| F0.T14 | — | Antigravity (agente) | Lista para revisión | `docs/specs/CONTRACTS.md` redactada (v0.1.0-draft) |
-| F0.T15 | — | Antigravity (agente) | Lista para revisión | Perfiles `personal-v1`, `financial-v1` y `enterprise-v1` redactados |
-| F0.T16 | — | Antigravity (agente) | Lista para revisión | `docs/specs/SDK_API.md` y `ERROR_CODES.md` redactadas (v0.1.0-draft) |
-| F0.T17 | — | Antigravity (agente) | Lista para revisión | `docs/specs/STORAGE_FORMAT.md` redactada (cifrado sobre, índices ciegos) |
-| F0.T18 | — | Antigravity (agente) | Lista para revisión | `docs/specs/TRUST_FRAMEWORK.md` redactada (técnica v0.1, legal F14) |
-| F0.T19 | — | Antigravity (agente) | Lista para revisión | `docs/specs/TEST_STRATEGY.md` redactada (pirámide, horas fuzzing por gate) |
-| F0.T20 | — | Antigravity (agente) | Lista para revisión | `docs/legal/2026-analisis-regulatorio-preliminar.md` redactada (Ley 81, KYC/AML) |
+| F0.T12 | — | Antigravity (agente) | Hecha | `docs/specs/PROTOCOL.md` redactada y revisada |
+| F0.T13 | — | Antigravity (agente) | Hecha | `docs/specs/TRUST_BUNDLE.md` redactada y revisada |
+| F0.T14 | — | Antigravity (agente) | Hecha | `docs/specs/CONTRACTS.md` redactada y revisada |
+| F0.T15 | — | Antigravity (agente) | Hecha | Perfiles `personal-v1`, `financial-v1` y `enterprise-v1` redactados y revisados |
+| F0.T16 | — | Antigravity (agente) | Hecha | `docs/specs/SDK_API.md` y `ERROR_CODES.md` redactadas y revisadas |
+| F0.T17 | — | Antigravity (agente) | Hecha | `docs/specs/STORAGE_FORMAT.md` redactada y revisada (cifrado sobre, índices ciegos) |
+| F0.T18 | — | Antigravity (agente) | Hecha | `docs/specs/TRUST_FRAMEWORK.md` redactada y revisada (técnica v0.1, legal F14) |
+| F0.T19 | — | Antigravity (agente) | Hecha | `docs/specs/TEST_STRATEGY.md` redactada y revisada (pirámide, horas fuzzing por gate) |
+| F0.T20 | — | Antigravity (agente) | Hecha | `docs/legal/2026-analisis-regulatorio-preliminar.md` redactada y revisada (Ley 81, KYC/AML) |
+| F0.T21 | — | Angel Nereira / Antigravity | Hecha | `docs/specs/CROSS_REVIEW.md`: Auditoría cruzada exhaustiva aprobada (100% conforme con INV-01..16) |
 | Revisión v0.2 | #2 | Angel Nereira (mantenedor) | Hecha | ADR-0016 a ADR-0020 **Aceptados** formalmente; Issue #2 cerrado |
 | Régimen mantenedor | #1 | Angel Nereira (mantenedor) | Hecha | `AGENTS.md §6/§14` adaptados para F0; Issue #1 cerrado |
 
 ## Bloqueos
 
-- Ninguno inmediato que impida continuar hacia el cierre de la Fase F0 (Gate G0).
+- Ninguno. La Fase F0 ha finalizado con éxito y el Gate G0 está cerrado. Se puede iniciar la Fase F1 (Estructura del workspace Cargo, esqueletos y CI base).
 
 ## Decisiones pendientes que bloquean la fase actual
 
