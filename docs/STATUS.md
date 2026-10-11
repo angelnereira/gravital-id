@@ -31,6 +31,8 @@
 | F0.T12 | — | Antigravity (agente) | Lista para revisión | `docs/specs/PROTOCOL.md` redactada (v0.1.0-draft) |
 | F0.T13 | — | Antigravity (agente) | Lista para revisión | `docs/specs/TRUST_BUNDLE.md` redactada (v0.1.0-draft) |
 | F0.T14 | — | Antigravity (agente) | Lista para revisión | `docs/specs/CONTRACTS.md` redactada (v0.1.0-draft) |
+| F0.T15 | — | Antigravity (agente) | Lista para revisión | Perfiles `personal-v1`, `financial-v1` y `enterprise-v1` redactados |
+| F0.T16 | — | Antigravity (agente) | Lista para revisión | `docs/specs/SDK_API.md` y `ERROR_CODES.md` redactadas (v0.1.0-draft) |
 | Revisión v0.2 | #2 | Angel Nereira (mantenedor) | Hecha | ADR-0016 a ADR-0020 **Aceptados** formalmente; Issue #2 cerrado |
 | Régimen mantenedor | #1 | Angel Nereira (mantenedor) | Hecha | `AGENTS.md §6/§14` adaptados para F0; Issue #1 cerrado |
 
