@@ -37,6 +37,7 @@
 | F0.T17 | — | Antigravity (agente) | Lista para revisión | `docs/specs/STORAGE_FORMAT.md` redactada (cifrado sobre, índices ciegos) |
 | F0.T18 | — | Antigravity (agente) | Lista para revisión | `docs/specs/TRUST_FRAMEWORK.md` redactada (técnica v0.1, legal F14) |
 | F0.T19 | — | Antigravity (agente) | Lista para revisión | `docs/specs/TEST_STRATEGY.md` redactada (pirámide, horas fuzzing por gate) |
+| F0.T20 | — | Antigravity (agente) | Lista para revisión | `docs/legal/2026-analisis-regulatorio-preliminar.md` redactada (Ley 81, KYC/AML) |
 | Revisión v0.2 | #2 | Angel Nereira (mantenedor) | Hecha | ADR-0016 a ADR-0020 **Aceptados** formalmente; Issue #2 cerrado |
 | Régimen mantenedor | #1 | Angel Nereira (mantenedor) | Hecha | `AGENTS.md §6/§14` adaptados para F0; Issue #1 cerrado |
 
