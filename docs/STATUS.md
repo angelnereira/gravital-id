@@ -27,12 +27,16 @@
 | F0.T02 | — | Angel Nereira | Pendiente | ADR-0001: Selección de nombre definitivo sin colisiones para reemplazar `pip` |
 | F0.T03 | — | Angel Nereira / Antigravity | Hecha | ADR-0002 Aceptado (Dual MIT/Apache-2.0, DCO 1.1, `LICENSE-MIT`, `LICENSE-APACHE`, `CONTRIBUTING.md`) |
 | F0.T04 | — | Antigravity (agente) | Hecha | `SECURITY.md` definitivo publicado con canal privado, SLAs y Safe Harbor |
+| F0.T05 | — | Antigravity (agente) | Lista para revisión | `docs/specs/THREAT_MODEL.md` redactada (STRIDE + LINDDUN, v0.1.0-draft) |
 | F0.T06 | — | Antigravity (agente) | Lista para revisión | `docs/specs/CRYPTO_PROFILES.md` redactada (v0.1.0-draft) |
 | F0.T12 | — | Antigravity (agente) | Lista para revisión | `docs/specs/PROTOCOL.md` redactada (v0.1.0-draft) |
 | F0.T13 | — | Antigravity (agente) | Lista para revisión | `docs/specs/TRUST_BUNDLE.md` redactada (v0.1.0-draft) |
 | F0.T14 | — | Antigravity (agente) | Lista para revisión | `docs/specs/CONTRACTS.md` redactada (v0.1.0-draft) |
 | F0.T15 | — | Antigravity (agente) | Lista para revisión | Perfiles `personal-v1`, `financial-v1` y `enterprise-v1` redactados |
 | F0.T16 | — | Antigravity (agente) | Lista para revisión | `docs/specs/SDK_API.md` y `ERROR_CODES.md` redactadas (v0.1.0-draft) |
+| F0.T17 | — | Antigravity (agente) | Lista para revisión | `docs/specs/STORAGE_FORMAT.md` redactada (cifrado sobre, índices ciegos) |
+| F0.T18 | — | Antigravity (agente) | Lista para revisión | `docs/specs/TRUST_FRAMEWORK.md` redactada (técnica v0.1, legal F14) |
+| F0.T19 | — | Antigravity (agente) | Lista para revisión | `docs/specs/TEST_STRATEGY.md` redactada (pirámide, horas fuzzing por gate) |
 | Revisión v0.2 | #2 | Angel Nereira (mantenedor) | Hecha | ADR-0016 a ADR-0020 **Aceptados** formalmente; Issue #2 cerrado |
 | Régimen mantenedor | #1 | Angel Nereira (mantenedor) | Hecha | `AGENTS.md §6/§14` adaptados para F0; Issue #1 cerrado |
 

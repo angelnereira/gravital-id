@@ -9,6 +9,7 @@ Cada componente publicado (SDK, servicios, contratos, especificación) indica su
 ### Added
 - [docs] Paquete documental inicial: `AGENTS.md`, arquitectura, requisitos, estructura del proyecto, hoja de ruta F0–F18, plantillas de issues y PR, índice de ADRs.
 - [docs] ADR-0016 a ADR-0020 (Propuestos): confianza por umbral, manifiesto de estado, emergencia limitada a suspensión, núcleo `no_std` con protocolos sans-I/O y fail-closed por tipos.
+- [specs] Modelo de amenazas y privacidad `THREAT_MODEL.md` v0.1.0-draft (F0.T05): análisis STRIDE por componente y LINDDUN para privacidad.
 - [specs] Especificación normativa `TRUST_BUNDLE.md` v0.1.0-draft (F0.T13): raíz de confianza encadenada, bundle multi-firma determinista, manifiesto de estado y anti-rollback con `bundle_epoch`.
 - [specs] Especificación normativa `CRYPTO_PROFILES.md` v0.1.0-draft (F0.T06): algoritmos autorizados (ES256, SHA-256, XChaCha20), versiones fijadas de RFC 9901 y borradores, mitigaciones DoS.
 - [specs] Especificación normativa `PROTOCOL.md` v0.1.0-draft (F0.T12): flujos OID4VCI y OID4VP (DCQL), transporte offline en QR bidireccional (transcodificación binaria sin pérdida + CBOR + DEFLATE + Base45), multi-QR y sobres HPKE.
@@ -16,6 +17,9 @@ Cada componente publicado (SDK, servicios, contratos, especificación) indica su
 - [specs] Perfiles normativos de credencial v1.0.0-draft (F0.T15): `pip-personal-v1`, `pip-financial-v1` (hardware con atestación obligatorio) y `pip-enterprise-v1`.
 - [specs] API pública e interfaces del host `SDK_API.md` v0.1.0-draft (F0.T16): contratos abstractos `KeyStore`, `Clock`, `VerifierStateStore`, `StorageBackend` y `Transport`.
 - [specs] Catálogo de códigos de error `ERROR_CODES.md` v0.1.0-draft (F0.T16): códigos de error unificados `PIP-Exxxx` para todas las plataformas y bindings.
+- [specs] Formato de almacenamiento local cifrado `STORAGE_FORMAT.md` v0.1.0-draft (F0.T17): cifrado de sobre (DEK/KEK), índices ciegos HMAC y consistencia WAL.
+- [specs] Marco de gobernanza técnica `TRUST_FRAMEWORK.md` v0.1.0-draft (F0.T18): roles de ecosistema, umbrales multisig, timelock 48-72h y gestión de bajas.
+- [specs] Estrategia de pruebas y calidad `TEST_STRATEGY.md` v0.1.0-draft (F0.T19): pirámide de pruebas, horas mínimas de fuzzing por gate, cobertura $\ge 85\%$ y trazabilidad REQ.
 - [docs] `ADR-0002`: Aceptación de licencia dual MIT / Apache-2.0 y política DCO 1.1 (F0.T03); archivos `LICENSE-MIT`, `LICENSE-APACHE` y `CONTRIBUTING.md`.
 - [security] `SECURITY.md` definitivo (F0.T04): canal privado en GitHub Advisories, tiempos de SLA por severidad y política de Safe Harbor.
 - [infra] 57 labels oficiales creados en GitHub según `AGENTS.md §8` y sincronización de los 5 issues pendientes iniciales (#1 a #5).
