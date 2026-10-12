@@ -28,9 +28,13 @@ jobs:
         with:
           workspaces: fuzz -> target
       - uses: taiki-e/install-action@cargo-fuzz
+      # RUSTUP_TOOLCHAIN sobrescribe el pin de rust-toolchain.toml (1.85.0):
+      # cargo-fuzz necesita el sanitizador de nightly.
       - name: Ejecutar ${{ matrix.target }} durante 10 minutos
         run: cargo fuzz run ${{ matrix.target }} -- -max_total_time=600
         working-directory: fuzz
+        env:
+          RUSTUP_TOOLCHAIN: nightly
       # Un crash se trata como potencial vulnerabilidad (AGENTS.md §7.4):
       # se conserva el artefacto y el triaje es PRIVADO, nunca un issue público.
       - name: Conservar artefactos si hay crash

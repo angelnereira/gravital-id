@@ -28,8 +28,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: model-checking/kani-github-action@v1.2
+      - uses: model-checking/kani-github-action@v1.1
         with:
           # Pruebas sobre los crates con invariantes demostrables en F1
           # (PROJECT_STRUCTURE.md §8; las de codec llegan en F2).
-          args: --package gravital-id-types
+          command: cargo kani --package gravital-id-types
