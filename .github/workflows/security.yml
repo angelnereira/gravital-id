@@ -1,0 +1,80 @@
+name: Security
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "17 4 * * *" # diario
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  cargo-deny:
+    name: cargo-deny (licencias, advisories, fuentes)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: EmbarkStudios/cargo-deny-action@v2
+        with:
+          arguments: --all-features
+          command: check
+
+  cargo-audit:
+    name: cargo-audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.85.0"
+      - uses: Swatinem/rust-cache@v2
+      - uses: taiki-e/install-action@cargo-audit
+      - run: cargo audit
+
+  dependency-review:
+    name: Revisión de dependencias nuevas
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: high
+          # Revisión humana obligatoria de dependencias nuevas (AGENTS.md §13);
+          # este job complementa al aviso del PR, no lo sustituye.
+
+  new-dependencies-report:
+    name: Dependencias nuevas en el PR (revisión humana)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Cargo.toml modificados respecto a main
+        run: |
+          files=$(git diff --name-only "origin/${{ github.base_ref }}...HEAD" -- '**/Cargo.toml' || true)
+          if [ -z "$files" ]; then
+            echo "Sin cambios de dependencias en este PR."
+            exit 0
+          fi
+          echo "### Manifiestos modificados" >> "$GITHUB_STEP_SUMMARY"
+          for f in $files; do
+            echo "- \`$f\`" >> "$GITHUB_STEP_SUMMARY"
+            git diff "origin/${{ github.base_ref }}...HEAD" -- "$f" >> "$GITHUB_STEP_SUMMARY"
+          done
+
+  secret-scan:
+    name: Búsqueda de secretos (gitleaks)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

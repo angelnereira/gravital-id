@@ -1,0 +1,37 @@
+name: WASM
+
+on:
+  pull_request:
+    paths:
+      - "bindings/wasm/**"
+      - "crates/**"
+      - ".github/workflows/wasm.yml"
+  push:
+    branches: [main]
+    paths:
+      - "bindings/wasm/**"
+      - "crates/**"
+  workflow_dispatch:
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-and-test:
+    name: wasm-pack build + test (Node)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.85.0"
+          targets: wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: bindings/wasm -> target
+      - uses: taiki-e/install-action@wasm-pack
+      - name: Pruebas de humo de la fachada del SDK a través de FFI (F1.T13)
+        run: wasm-pack test --node bindings/wasm
+      - name: Build del paquete npm (target web)
+        run: wasm-pack build bindings/wasm --target web
