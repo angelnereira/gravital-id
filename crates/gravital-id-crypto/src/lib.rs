@@ -10,5 +10,9 @@
 
 extern crate alloc;
 
+pub mod rng;
+
+pub use rng::Rng;
+
 /// Versión semántica del crate en compilación.
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");

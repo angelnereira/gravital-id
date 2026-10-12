@@ -10,8 +10,10 @@
 
 extern crate alloc;
 
+pub mod clock;
 pub mod error;
 
+pub use clock::Clock;
 pub use error::{ErrorCode, GidError, PipError};
 
 /// Versión semántica del crate en compilación.
