@@ -39,6 +39,8 @@ pub struct CrateInfo {
     pub dir: PathBuf,
     /// Capa asignada (ej. "L1", "L2", "L5", o None).
     pub layer: Option<String>,
+    /// `true` si el crate vive en `bindings/`.
+    pub is_binding: bool,
     /// Dependencias normales (excluyendo dev-dependencies).
     pub dependencies: Vec<String>,
     /// Dev-dependencies.
@@ -179,6 +181,18 @@ pub fn validate_layers(config: &LayersConfig, crates: &[CrateInfo]) -> Result<()
                 ));
             }
         }
+        // Regla 8: Los bindings solo pueden depender de gravital-id-sdk
+        // (PROJECT_STRUCTURE §4 regla 6, INV-15).
+        if c.is_binding {
+            for dep in &c.dependencies {
+                if dep.starts_with("gravital-id-") && dep != "gravital-id-sdk" {
+                    errors.push(format!(
+                        "[{}] PROJECT_STRUCTURE §4 regla 6: un binding solo puede depender de 'gravital-id-sdk', no de '{}'",
+                        c.name, dep
+                    ));
+                }
+            }
+        }
     }
 
     if errors.is_empty() {
@@ -192,7 +206,7 @@ pub fn validate_layers(config: &LayersConfig, crates: &[CrateInfo]) -> Result<()
     }
 }
 
-/// Carga los crates del workspace desde el sistema de archivos.
+/// Carga los crates del workspace desde el sistema de ficheros (núcleo y bindings).
 pub fn load_workspace_crates(
     workspace_root: &Path,
     config: &LayersConfig,
@@ -261,12 +275,71 @@ pub fn load_workspace_crates(
                         name: package_name,
                         dir: path,
                         layer,
+                        is_binding: false,
                         dependencies,
                         dev_dependencies,
                         root_source,
                     });
                 }
             }
+        }
+    }
+
+    // Bindings (PROJECT_STRUCTURE.md §4 regla 6): crates excluidos del workspace
+    // de Cargo porque solo compilan para su plataforma destino.
+    let bindings_dir = workspace_root.join("bindings");
+    if bindings_dir.exists() {
+        for entry in fs::read_dir(&bindings_dir)? {
+            let entry = entry?;
+            let path = entry.path();
+            if !path.is_dir() {
+                continue;
+            }
+            let cargo_toml_path = path.join("Cargo.toml");
+            if !cargo_toml_path.exists() {
+                continue;
+            }
+            let toml_str = fs::read_to_string(&cargo_toml_path)?;
+            let parsed: toml::Value = toml::from_str(&toml_str)
+                .with_context(|| format!("Error parseando {}", cargo_toml_path.display()))?;
+
+            let package_name = parsed
+                .get("package")
+                .and_then(|p| p.get("name"))
+                .and_then(|n| n.as_str())
+                .unwrap_or("")
+                .to_string();
+
+            let mut dependencies = Vec::new();
+            if let Some(deps_table) = parsed.get("dependencies").and_then(|d| d.as_table()) {
+                for (dep_name, _) in deps_table {
+                    dependencies.push(dep_name.clone());
+                }
+            }
+
+            let mut dev_dependencies = Vec::new();
+            if let Some(dev_deps) = parsed.get("dev-dependencies").and_then(|d| d.as_table()) {
+                for (dep_name, _) in dev_deps {
+                    dev_dependencies.push(dep_name.clone());
+                }
+            }
+
+            let lib_rs = path.join("src").join("lib.rs");
+            let root_source = if lib_rs.exists() {
+                fs::read_to_string(&lib_rs)?
+            } else {
+                String::new()
+            };
+
+            result.push(CrateInfo {
+                name: package_name,
+                dir: path,
+                layer: None,
+                is_binding: true,
+                dependencies,
+                dev_dependencies,
+                root_source,
+            });
         }
     }
 
@@ -327,6 +400,7 @@ mod tests {
                 name: "crate-l1".into(),
                 dir: PathBuf::from("crates/crate-l1"),
                 layer: Some("L1".into()),
+                is_binding: false,
                 dependencies: vec![],
                 dev_dependencies: vec!["gravital-id-testkit".into()],
                 root_source: "#![no_std]\n#![forbid(unsafe_code)]\n".into(),
@@ -335,6 +409,7 @@ mod tests {
                 name: "crate-l2".into(),
                 dir: PathBuf::from("crates/crate-l2"),
                 layer: Some("L2".into()),
+                is_binding: false,
                 dependencies: vec!["crate-l1".into()],
                 dev_dependencies: vec![],
                 root_source: "#![no_std]\n#![forbid(unsafe_code)]\n".into(),
@@ -352,6 +427,7 @@ mod tests {
             name: "crate-l1".into(),
             dir: PathBuf::from("crates/crate-l1"),
             layer: Some("L1".into()),
+            is_binding: false,
             dependencies: vec!["crate-l2".into()], // L1 depende de L2 -> Ilegal
             dev_dependencies: vec![],
             root_source: "#![no_std]\n#![forbid(unsafe_code)]\n".into(),
@@ -370,6 +446,7 @@ mod tests {
             name: "crate-l4".into(),
             dir: PathBuf::from("crates/crate-l4"),
             layer: Some("L4".into()),
+            is_binding: false,
             dependencies: vec!["tokio".into()], // Ilegal en L4
             dev_dependencies: vec![],
             root_source: "#![forbid(unsafe_code)]\n".into(),
@@ -391,6 +468,7 @@ mod tests {
             name: "crate-l2".into(),
             dir: PathBuf::from("crates/crate-l2"),
             layer: Some("L2".into()),
+            is_binding: false,
             dependencies: vec![],
             dev_dependencies: vec![],
             root_source: "#![forbid(unsafe_code)]\n".into(), // Falta #![no_std]
@@ -412,6 +490,7 @@ mod tests {
             name: "crate-l5".into(),
             dir: PathBuf::from("crates/crate-l5"),
             layer: Some("L5".into()),
+            is_binding: false,
             dependencies: vec![],
             dev_dependencies: vec![],
             root_source: "// sin forbid unsafe\n".into(),
@@ -433,6 +512,7 @@ mod tests {
             name: "gravital-id-verifier".into(),
             dir: PathBuf::from("crates/gravital-id-verifier"),
             layer: Some("L3".into()),
+            is_binding: false,
             dependencies: vec!["gravital-id-sync".into()], // Verifier no puede depender de sync
             dev_dependencies: vec![],
             root_source: "#![no_std]\n#![forbid(unsafe_code)]\n".into(),
@@ -446,6 +526,42 @@ mod tests {
             .contains("Violación de aislamiento"));
     }
 
+    // // Verifies: PROJECT_STRUCTURE §4 regla 6 (caso positivo: binding solo depende del sdk)
+    #[test]
+    fn test_binding_may_depend_only_on_sdk() {
+        let config = sample_config();
+        let crates = vec![CrateInfo {
+            name: "gravital-id-wasm".into(),
+            dir: PathBuf::from("bindings/wasm"),
+            layer: None,
+            is_binding: true,
+            dependencies: vec!["gravital-id-sdk".into(), "wasm-bindgen".into()],
+            dev_dependencies: vec![],
+            root_source: "#![forbid(unsafe_code)]\n".into(),
+        }];
+
+        assert!(validate_layers(&config, &crates).is_ok());
+    }
+
+    // // Verifies: PROJECT_STRUCTURE §4 regla 6 (caso negativo: binding usa crate interno)
+    #[test]
+    fn test_negative_binding_depending_on_internal_crate() {
+        let config = sample_config();
+        let crates = vec![CrateInfo {
+            name: "gravital-id-wasm".into(),
+            dir: PathBuf::from("bindings/wasm"),
+            layer: None,
+            is_binding: true,
+            dependencies: vec!["gravital-id-verifier".into()], // Ilegal: saltarse la fachada
+            dev_dependencies: vec![],
+            root_source: "#![forbid(unsafe_code)]\n".into(),
+        }];
+
+        let res = validate_layers(&config, &crates);
+        assert!(res.is_err());
+        assert!(res.unwrap_err().to_string().contains("regla 6"));
+    }
+
     // // Verifies: INV-01, PROJECT_STRUCTURE §4 (caso negativo: testkit en dependencias normales)
     #[test]
     fn test_negative_testkit_in_regular_dependencies() {
@@ -454,6 +570,7 @@ mod tests {
             name: "crate-l1".into(),
             dir: PathBuf::from("crates/crate-l1"),
             layer: Some("L1".into()),
+            is_binding: false,
             dependencies: vec!["gravital-id-testkit".into()], // Solo dev-dependencies
             dev_dependencies: vec![],
             root_source: "#![no_std]\n#![forbid(unsafe_code)]\n".into(),
