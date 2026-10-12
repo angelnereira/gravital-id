@@ -1,0 +1,28 @@
+[package]
+name = "gravital-id-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2021"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+arbitrary = { version = "1", features = ["derive"] }
+
+# Núcleo bajo prueba (L1: catálogo de errores canónico).
+gravital-id-types = { path = "../crates/gravital-id-types" }
+
+# Workspace independiente del principal: cargo-fuzz gestiona aquí sus perfiles.
+[workspace]
+members = ["."]
+
+[[bin]]
+name = "gid_error_format"
+path = "fuzz_targets/gid_error_format.rs"
+test = false
+doc = false
+
+[profile.release]
+debug = 1
