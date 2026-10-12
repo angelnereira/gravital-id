@@ -1,0 +1,69 @@
+# layers.toml — Reglas de dependencias entre capas para Gravital ID (ADR-0019, REQ-MAINT-002)
+
+[layers]
+L1 = [
+    "gravital-id-types",
+    "gravital-id-codec",
+    "gravital-id-crypto",
+    "gravital-id-keys",
+]
+L2 = [
+    "gravital-id-credential",
+    "gravital-id-status",
+    "gravital-id-trust",
+]
+L3 = [
+    "gravital-id-verifier",
+    "gravital-id-holder",
+    "gravital-id-issuer",
+    "gravital-id-storage",
+    "gravital-id-recovery",
+]
+L4 = [
+    "gravital-id-protocol",
+    "gravital-id-sync",
+    "gravital-id-ledger",
+]
+L5 = [
+    "gravital-id-storage-sqlite",
+    "gravital-id-transport-http",
+    "gravital-id-ledger-evm",
+]
+L6 = [
+    "gravital-id-sdk",
+]
+
+[rules]
+# Dependencias prohibidas para capas L1 a L4 (INV-01, sans-I/O)
+forbidden_deps_l1_l4 = [
+    "tokio",
+    "async-std",
+    "smol",
+    "actix-rt",
+    "reqwest",
+    "hyper",
+    "alloy",
+    "rusqlite",
+    "sqlx",
+]
+
+# Capas que deben ser estrictamente #![no_std] (L1–L3)
+no_std_layers = ["L1", "L2", "L3"]
+
+# Crates de los que gravital-id-verifier NUNCA puede depender
+verifier_disallowed = [
+    "gravital-id-sync",
+    "gravital-id-ledger",
+    "gravital-id-ledger-evm",
+    "gravital-id-storage",
+    "gravital-id-storage-sqlite",
+    "gravital-id-transport-http",
+]
+
+# Prefijos prohibidos como dependencias directas en crates/
+forbidden_root_prefixes_for_crates = [
+    "bindings/",
+    "services/",
+    "apps/",
+    "spikes/",
+]

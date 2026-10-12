@@ -1,0 +1,14 @@
+# clippy.toml — Configuración de lints restrictivos para Gravital ID
+
+# Métodos prohibidos (INV-11: determinismo estricto e inyección de reloj)
+disallowed-methods = [
+    { path = "std::time::SystemTime::now", reason = "INV-11: El núcleo no lee el reloj implícitamente; inyectar trait Clock" },
+]
+
+# Tipos prohibidos (INV-01: sin I/O en L1–L4)
+disallowed-types = [
+    { path = "std::net::TcpStream", reason = "INV-01: Prohibido I/O de red en crates del núcleo" },
+    { path = "std::net::UdpSocket", reason = "INV-01: Prohibido I/O de red en crates del núcleo" },
+    { path = "std::net::IpAddr", reason = "INV-01: Prohibido I/O de red en crates del núcleo" },
+    { path = "std::fs::File", reason = "INV-01: Prohibido I/O de filesystem en capas L1–L4" },
+]
