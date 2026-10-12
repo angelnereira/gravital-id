@@ -1,0 +1,9 @@
+[toolchain]
+channel = "1.85.0"
+components = ["rustfmt", "clippy"]
+targets = [
+    "wasm32-unknown-unknown",
+    "aarch64-linux-android",
+    "aarch64-apple-ios",
+    "thumbv7em-none-eabihf",
+]
