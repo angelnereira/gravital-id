@@ -1,0 +1,17 @@
+[package]
+name = "gravital-id-transport-http"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+readme = "README.md"
+description = "Adaptador de transporte de red HTTP para sincronización de Gravital ID."
+
+[lints]
+workspace = true
+
+[dependencies]
+gravital-id-sync = { workspace = true }

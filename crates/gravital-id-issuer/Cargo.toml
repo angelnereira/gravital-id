@@ -1,0 +1,19 @@
+[package]
+name = "gravital-id-issuer"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+readme = "README.md"
+description = "Construcción y firma de credenciales verificables de emisor para Gravital ID."
+
+[lints]
+workspace = true
+
+[dependencies]
+gravital-id-credential = { workspace = true }
+gravital-id-status = { workspace = true }
+gravital-id-keys = { workspace = true }

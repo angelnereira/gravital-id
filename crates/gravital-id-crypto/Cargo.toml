@@ -1,0 +1,18 @@
+[package]
+name = "gravital-id-crypto"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+readme = "README.md"
+description = "Abstracciones y backend criptográfico (ES256, SHA-256, HMAC, XChaCha20-Poly1305, HPKE) para Gravital ID."
+
+[lints]
+workspace = true
+
+[dependencies]
+gravital-id-types = { workspace = true }
+gravital-id-codec = { workspace = true }

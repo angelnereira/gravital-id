@@ -1,0 +1,17 @@
+[package]
+name = "gravital-id-ledger-evm"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+readme = "README.md"
+description = "Adaptador de ledger para redes EVM para Gravital ID."
+
+[lints]
+workspace = true
+
+[dependencies]
+gravital-id-ledger = { workspace = true }

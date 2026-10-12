@@ -1,0 +1,31 @@
+[package]
+name = "gravital-id-sdk"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+readme = "README.md"
+description = "Fachada y API pública del SDK de Gravital ID."
+
+[lints]
+workspace = true
+
+[dependencies]
+gravital-id-types = { workspace = true }
+gravital-id-codec = { workspace = true }
+gravital-id-crypto = { workspace = true }
+gravital-id-keys = { workspace = true }
+gravital-id-credential = { workspace = true }
+gravital-id-status = { workspace = true }
+gravital-id-trust = { workspace = true }
+gravital-id-verifier = { workspace = true }
+gravital-id-holder = { workspace = true }
+gravital-id-issuer = { workspace = true }
+gravital-id-storage = { workspace = true }
+gravital-id-protocol = { workspace = true }
+gravital-id-recovery = { workspace = true }
+gravital-id-sync = { workspace = true }
+gravital-id-ledger = { workspace = true }
