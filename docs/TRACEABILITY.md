@@ -37,7 +37,7 @@
 | REQ-VER-006 | F4 | DEBE | T | P-08 | — | Pendiente (Fase futura) |
 | REQ-VER-007 | F4 | DEBE | I | P-05 | — | Inspección / Auditoría |
 | REQ-VER-008 | F2 | DEBE | T, F | P-08 | — | Pendiente (Fase futura) |
-| REQ-VER-009 | F4 | DEBE | T | P-06 | — | Pendiente (Fase futura) |
+| REQ-VER-009 | F4 | DEBE | T | P-06 | lib.rs, clock.rs | Cubierto |
 | REQ-VER-010 | F4 | DEBE | T | P-08 | — | Pendiente (Fase futura) |
 | REQ-VER-011 | F4 | DEBE | T | P-08 | — | Pendiente (Fase futura) |
 | REQ-VER-012 | F4 | DEBE | T, I | P-08 | — | Pendiente (Fase futura) |
@@ -94,9 +94,9 @@
 | REQ-ISS-004 | F10 | DEBE | T | P-08 | — | Pendiente (Fase futura) |
 | REQ-ISS-005 | F10 | DEBE | T, D | P-08 | — | Pendiente (Fase futura) |
 | REQ-ISS-006 | F8 | DEBE | T | — | — | Pendiente (Fase futura) |
-| REQ-SDK-001 | F9 | DEBE | I | P-11 | — | Inspección / Auditoría |
+| REQ-SDK-001 | F9 | DEBE | I | P-11 | lib.rs | Cubierto |
 | REQ-SDK-002 | F9 | DEBE | T, D | P-11 | — | Pendiente (Fase futura) |
-| REQ-SDK-003 | F9 | DEBE | T | P-11 | error.rs, error_codes.rs | Cubierto |
+| REQ-SDK-003 | F9 | DEBE | T | P-11 | lib.rs, error.rs, error_codes.rs | Cubierto |
 | REQ-SDK-004 | F9 | DEBE | T, F | P-08 | error.rs | Cubierto |
 | REQ-SDK-005 | F9 | DEBE | T | P-11 | — | Pendiente (Fase futura) |
 | REQ-SDK-006 | F9 | DEBE | T | — | — | Pendiente (Fase futura) |
