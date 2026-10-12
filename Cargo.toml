@@ -38,6 +38,9 @@ readme = "README.md"
 unsafe_code = "deny"
 missing_docs = "deny"
 unused_must_use = "deny"
+# Registra el cfg personalizado de Kani (F1.T14, PROJECT_STRUCTURE.md §8) para
+# que rustc y clippy no lo reporten como inesperado.
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(kani)'] }
 
 [workspace.lints.clippy]
 unwrap_used = "deny"

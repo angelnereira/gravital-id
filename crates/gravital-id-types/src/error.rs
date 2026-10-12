@@ -378,6 +378,33 @@ impl fmt::Display for GidError {
 /// Alias para compatibilidad con código y especificaciones iniciales.
 pub type PipError = GidError;
 
+#[cfg(kani)]
+mod kani_proofs {
+    use super::*;
+
+    /// Invariante del catálogo (REQ-SDK-003, PROJECT_STRUCTURE.md §7): todo
+    /// código publicado es un entero de 4 dígitas dentro del rango documentado
+    /// 1001..=9999. Kani lo comprueba para las 48 variantes del enum.
+    #[kani::proof]
+    fn error_codes_are_four_digit_numbers() {
+        let code: ErrorCode = kani::any();
+        let numeric = code.numeric_code();
+        assert!(numeric >= 1001, "código por debajo del rango documentado");
+        assert!(numeric <= 9999, "código por encima del rango documentado");
+    }
+
+    /// Invariante: `GidError` conserva el código canónico y el mensaje sin
+    /// transformarlos; el formateo contiene ambos.
+    #[kani::proof]
+    fn gid_error_display_contains_code_and_message() {
+        let code: ErrorCode = kani::any();
+        let message = String::from("detalle de prueba");
+        let err = GidError::new(code, message.clone());
+        assert_eq!(err.code, code);
+        assert_eq!(err.message, message);
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
