@@ -6,54 +6,47 @@
 
 | Campo | Valor |
 |---|---|
-| Fase actual | **F0 — Fundación, gobierno y especificación** |
-| Último gate cerrado | — |
-| Próximo gate | G0 |
+| Fase actual | **F1 — Infraestructura de ingeniería** |
+| Último gate cerrado | **G0** (2026-10-11) |
+| Próximo gate | G1 |
 | Hito siguiente | M1 · Núcleo offline (al cerrar G5) |
-| Última actualización | 2026-10-10 |
+| Última actualización | 2026-10-12 |
 
 ## Gates
 
 | Gate | Estado | Fecha | Evidencia |
 |---|---|---|---|
 | G0 | **Cerrado** | 2026-10-11 | Especificaciones v0.1 completadas, ADRs 0001-0012 y 0016-0020 aceptados, 4 spikes concluidos viables, revisión cruzada F0.T21 aprobada |
-| G1 … G17 | Pendiente | — | — |
+| G1 | En curso | — | Workspace, xtask, CI y gobierno del repositorio implementados en `feat/6-workspace-cargo` (#6); pendiente verificación de CI en GitHub |
+| G2 … G17 | Pendiente | — | — |
 
 ## Tareas en curso
 
 | Tarea | Issue | Responsable | Estado | Siguiente paso |
 |---|---|---|---|---|
-| F0.T01 | — | Angel Nereira / Antigravity | Hecha | 57 labels creados en GitHub (`AGENTS.md §8`); 5 issues iniciales sincronizados y resueltos (#1..#5); régimen F0 formalizado |
-| F0.T02 | #7 | Angel Nereira / Antigravity | Hecha | ADR-0001 Aceptado: Gravital ID (`gravital-id` / `gid`) como nombre definitivo |
-| F0.T03 | #6 | Angel Nereira / Antigravity | Hecha | ADR-0002 Aceptado (Dual MIT/Apache-2.0, DCO 1.1, `LICENSE-MIT`, `LICENSE-APACHE`, `CONTRIBUTING.md`) |
-| F0.T04 | — | Antigravity (agente) | Hecha | `SECURITY.md` definitivo publicado con canal privado, SLAs y Safe Harbor |
-| F0.T05 | — | Antigravity (agente) | Hecha | `docs/specs/THREAT_MODEL.md` redactada y revisada (STRIDE + LINDDUN) |
-| F0.T06 | — | Antigravity (agente) | Hecha | `docs/specs/CRYPTO_PROFILES.md` redactada y revisada |
-| F0.T07 | — | Antigravity (agente) | Hecha | `spikes/qr/REPORT.md`: Viabilidad de transcodificación CBOR+DEFLATE+Base45 (reducción ~51%, multi-QR) |
-| F0.T08 | — | Antigravity (agente) | Hecha | `spikes/keystore/REPORT.md`: Viabilidad de Secure Enclave / StrongBox vía UniFFI, DER a IEEE P1363 s-low |
-| F0.T09 | — | Antigravity (agente) | Hecha | `spikes/wasm/REPORT.md`: Compilación RustCrypto a wasm32 (174 KB / 62 KB brotli), pánico envenena GID-E9999 |
-| F0.T10 | — | Antigravity (agente) | Hecha | `spikes/ledger/REPORT.md`: Evaluación EVM en Arbitrum/Base L2 (< $0.005 gas/anclaje), INV-02 auditado |
-| F0.T11 | #8..#17 | Angel Nereira / Antigravity | Hecha | ADR-0003 a ADR-0012 Aceptados formalmente e indexados en `docs/adr/` |
-| F0.T12 | — | Antigravity (agente) | Hecha | `docs/specs/PROTOCOL.md` redactada y revisada |
-| F0.T13 | — | Antigravity (agente) | Hecha | `docs/specs/TRUST_BUNDLE.md` redactada y revisada |
-| F0.T14 | — | Antigravity (agente) | Hecha | `docs/specs/CONTRACTS.md` redactada y revisada |
-| F0.T15 | — | Antigravity (agente) | Hecha | Perfiles `personal-v1`, `financial-v1` y `enterprise-v1` redactados y revisados |
-| F0.T16 | — | Antigravity (agente) | Hecha | `docs/specs/SDK_API.md` y `ERROR_CODES.md` redactadas y revisadas |
-| F0.T17 | — | Antigravity (agente) | Hecha | `docs/specs/STORAGE_FORMAT.md` redactada y revisada (cifrado sobre, índices ciegos) |
-| F0.T18 | — | Antigravity (agente) | Hecha | `docs/specs/TRUST_FRAMEWORK.md` redactada y revisada (técnica v0.1, legal F14) |
-| F0.T19 | — | Antigravity (agente) | Hecha | `docs/specs/TEST_STRATEGY.md` redactada y revisada (pirámide, horas fuzzing por gate) |
-| F0.T20 | — | Antigravity (agente) | Hecha | `docs/legal/2026-analisis-regulatorio-preliminar.md` redactada y revisada (Ley 81, KYC/AML) |
-| F0.T21 | — | Angel Nereira / Antigravity | Hecha | `docs/specs/CROSS_REVIEW.md`: Auditoría cruzada exhaustiva aprobada (100% conforme con INV-01..16) |
-| Revisión v0.2 | #2 | Angel Nereira (mantenedor) | Hecha | ADR-0016 a ADR-0020 **Aceptados** formalmente; Issue #2 cerrado |
-| Régimen mantenedor | #1 | Angel Nereira (mantenedor) | Hecha | `AGENTS.md §6/§14` adaptados para F0; Issue #1 cerrado |
+| F1.T01 Workspace Cargo | #6 | OpenCode (agente) | Hecha | 20 crates `gravital-id-*` con lints estrictos y perfiles; PR contra `main` |
+| F1.T02 Toolchain/MSRV (ADR-0014) | #6 | OpenCode (agente) | Hecha | Rust 1.85.0 fijado en `rust-toolchain.toml`; ADR-0014 Aceptado |
+| F1.T03 `xtask check-layers` | #6 | OpenCode (agente) | Hecha | Capas, `no_std`, aislamiento del verificador y bindings; casos negativos probados |
+| F1.T04 `xtask trace` | #6 | OpenCode (agente) | Hecha | Matriz REQ→pruebas regenerada y commiteada; CI falla si queda obsoleta |
+| F1.T05 Workflows de CI | #6 | OpenCode (agente) | Hecha | `ci.yml`, `security.yml`, `docs.yml`, `wasm.yml`, `fuzz.yml`, `mutation.yml`, `bench.yml` |
+| F1.T06 `deny.toml` | #6 | OpenCode (agente) | Hecha | Allowlist ADR-0002; excepción `unicode-ident` pendiente de confirmación del mantenedor |
+| F1.T07 `gravital-id-testkit` base | #6 | OpenCode (agente) | Hecha | `FixedClock` + `SeededRng`; aserciones de `VerificationResult` diferidas a F4.T06 |
+| F1.T08 Esqueleto de errores | #6 | OpenCode (agente) | Hecha | 48 códigos únicos y documentados; `check-error-codes` corregido |
+| F1.T09 `clippy.toml` restrictivo | #6 | OpenCode (agente) | Hecha | `SystemTime::now`, `std::net`, `std::fs` prohibidos |
+| F1.T10 Compilación cruzada | #6 | OpenCode (agente) | Hecha | wasm32/android/ios + bare-metal L1–L3 verificados en local y en CI |
+| F1.T11 Fuzzing y benchmarks | #6 | OpenCode (agente) | Hecha | Objetivo de ejemplo + criterion + `fuzz.yml` nocturno |
+| F1.T12 Gobierno del repo | #6 | OpenCode (agente) | Hecha | `CODEOWNERS` + labels como código con sync idempotente |
+| F1.T13 ADR-0019 + esqueleto vertical | #6 | OpenCode (agente) | Hecha | Fachada mínima del SDK + `bindings/wasm` con pruebas de humo en Node |
+| F1.T14 Mutación y Kani | #6 | OpenCode (agente) | Hecha | `cargo-mutants` + pruebas Kani de invariantes; job nocturno |
 
 ## Bloqueos
 
-- Ninguno. La Fase F0 ha finalizado con éxito y el Gate G0 está cerrado. Se puede iniciar la Fase F1 (Estructura del workspace Cargo, esqueletos y CI base).
+- Ninguno técnico. **Pendiente de verificación por el mantenedor:** los workflows no aparecen en la pestaña Actions del repositorio tras el push de `feat/6-workspace-cargo` (comprobar webhooks/permisos de Actions en GitHub); localmente todas las comprobaciones de `AGENTS.md §5.2` pasan.
 
 ## Decisiones pendientes que bloquean la fase actual
 
-Ninguna para F0. Todos los ADRs obligatorios de F0 (ADR-0001 a ADR-0012, ADR-0016 a ADR-0018 y ADR-0020) han sido formalmente aceptados. Los ADRs 0013, 0014, 0015 y 0019 están programados para sus respectivas fases (F7, F1, F3, F1).
+1. Excepción de licencia `Unicode-3.0` para `unicode-ident` (dependencia de compilación de `proc-macro2`): registrada como excepción acotada en `deny.toml`; falta confirmar si se incorpora a la allowlist de ADR-0002 (issue abierto por el agente).
+2. `PROJECT_STRUCTURE.md §7` contradice a `ERROR_CODES.md` en los rangos de códigos y sitúa `GidError` en `gravital-id-sdk` (L6) cuando el catálogo canónico vive en `gravital-id-types` (L1) y el SDK lo re-exporta: registrado como `type:spec-gap`.
 
 ## Métricas base (se rellenan desde F2)
 
@@ -65,21 +58,23 @@ Ninguna para F0. Todos los ADRs obligatorios de F0 (ADR-0001 a ADR-0012, ADR-001
 
 ## Última nota de traspaso
 
-### Traspaso — 2026-10-10 — Antigravity (agente)
-- Tarea: F0.T01, Revisión v0.2 (#2), Régimen mantenedor (#1) y F0.T13 (`TRUST_BUNDLE.md`)
-- Estado: lista para revisión
+### Traspaso — 2026-10-12 — OpenCode (agente)
+- Tarea: F1.T01–F1.T14 — #6 — rama `feat/6-workspace-cargo`
+- Estado: lista para revisión (PR contra `main` pendiente de aprobación del mantenedor)
 - Hecho en esta sesión:
-  - 57 labels creados en GitHub según `AGENTS.md §8`.
-  - Sincronizados y cerrados en GitHub los issues #1 (mantenedor único), #2 (ADR-0016..0020), #3 (roadmap/req), #4 (IO en capas), #5 (lints).
-  - Formalizada la aceptación de ADR-0016 a ADR-0020 por el mantenedor Angel Nereira.
-  - Actualizado `AGENTS.md §6` y `§14` para el régimen de mantenedor único en F0.
-  - Redactada la especificación normativa `docs/specs/TRUST_BUNDLE.md` (v0.1.0-draft, F0.T13).
-  - Actualizados `docs/specs/README.md`, `CHANGELOG.md` y `docs/STATUS.md`.
+  - Verificado y commiteado el WIP previo de F1.T01 (workspace `gravital-id-*`, lints, perfiles) y F1.T02 (ADR-0014, toolchain 1.85.0).
+  - `xtask`: corregido `check-error-codes` (falsos duplicados por menciones en doc-comments; ahora valida también discriminantes del enum) y ampliado `check-layers` con la regla de bindings (solo `gravital-id-sdk`).
+  - F1.T07: traits `Clock` (types) y `Rng` (crypto) + `FixedClock`/`SeededRng` en testkit con pruebas de determinismo.
+  - F1.T05/T06/T10: workflows `ci`, `security`, `docs`, `wasm`, `fuzz`, `mutation`, `bench`; `deny.toml`; compilación cruzada (4 targets) verificada en local.
+  - F1.T11/T14: objetivo de fuzzing de ejemplo (3.9M ejecuciones sin fallos), criterion, cargo-mutants y pruebas Kani.
+  - F1.T12: `CODEOWNERS` y labels como código (56/56 sincronizadas).
+  - F1.T13: fachada mínima del SDK y `bindings/wasm` con pruebas de humo en Node (`wasm-pack test`).
+  - `CHANGELOG.md` y esta nota actualizados.
 - Pendiente (siguiente paso concreto):
-  - F0.T02: ADR-0001 (definición del nombre definitivo para reemplazar `pip`).
-  - F0.T03: ADR-0002 (licencia y política de contribución).
-  - Redacción de especificaciones subsiguientes (`CRYPTO_PROFILES.md` F0.T06, `PROTOCOL.md` F0.T12, `CONTRACTS.md` F0.T14).
-- Bugs/issues abiertos durante la sesión: ninguno.
-- Decisiones tomadas (con enlace a ADR/issue): ADR-0016..0020 aceptados (#2); régimen de mantenedor único en F0 adoptado (#1).
-- Riesgos o dudas: ninguno; todos los bloqueos previos de F0 quedaron resueltos.
-- Comprobaciones locales: fmt, clippy, tests, layers y trace no aplican (aún no hay código en `crates/`).
+  - Mantenedor: revisar y mergear el PR de `feat/6-workspace-cargo`; confirmar las dos decisiones pendientes (excepción `Unicode-3.0` y el spec-gap de `PROJECT_STRUCTURE §7`).
+  - Confirmar que GitHub Actions ejecuta los workflows (no se registran runs tras el push).
+  - Cerrar G1 con evidencia (CI verde en todos los targets) y abrir los issues de F2 (`ROADMAP.md §7`, F2.T01…T12).
+- Bugs/issues abiertos durante la sesión: bug corregido en `xtask check-error-codes` (nunca llegó a `main`); issues de decisión y spec-gap creados desde el agente (ver comentarios en #6).
+- Decisiones tomadas (con enlace a ADR/issue): ADR-0014 y ADR-0019 (Aceptados, previos); excepción acotada `unicode-ident` en `deny.toml` (pendiente de confirmación en #6); catálogo de errores en `gravital-id-types` re-exportado por el SDK (spec-gap abierto).
+- Riesgos o dudas: los workflows no se han ejecutado aún en GitHub (validados solo en local y por sintaxis); la acción de Kani y los runners nocturnos pendientes de primera ejecución real.
+- Comprobaciones locales: fmt ✅ clippy ✅ tests ✅ (cargo test; nextest no instalado localmente) layers ✅ trace ✅ check-error-codes ✅ deny ✅ wasm-pack test ✅ cross-compile ✅

@@ -7,6 +7,21 @@ Cada componente publicado (SDK, servicios, contratos, especificación) indica su
 ## [Unreleased]
 
 ### Added
+- [infra] Workspace Cargo con los 20 crates del núcleo (`crates/gravital-id-*`), lints estrictos del workspace (`missing_docs`, `unsafe_code`, `unwrap_used`, `panic`, `indexing_slicing`, `arithmetic_side_effects`) y perfiles `release`/`release-mobile` (F1.T01, #6).
+- [infra] `rust-toolchain.toml` fija Rust 1.85.0 (MSRV) con los targets de compilación cruzada; ADR-0014 Aceptado (F1.T02, #6).
+- [infra] `xtask check-layers`, `xtask trace` y `xtask check-error-codes`: verificación de capas/no_std/aislamiento del verificador/bindings, matriz REQ→pruebas y catálogo de errores contra `ERROR_CODES.md`, con casos negativos probados (F1.T03, F1.T04, F1.T08; #6).
+- [infra] `clippy.toml` prohíbe `SystemTime::now`, `std::net` y `std::fs` como segunda barrera tras `no_std` (F1.T09, INV-01, INV-11; #6).
+- [core] `gravital-id-types`: catálogo canónico de errores `GidError`/`PipError`/`ErrorCode` (48 códigos, alias `PIP-*` para compatibilidad) y trait `Clock` (SDK_API §3.2) (F1.T07, F1.T08; #6).
+- [core] `gravital-id-crypto`: trait `Rng` de inyección de CSPRNG (INV-11) (F1.T07; #6).
+- [testkit] `gravital-id-testkit`: `FixedClock` y `SeededRng` (xoshiro256** reproducible) con pruebas de determinismo (F1.T07, REQ-VER-009; #6).
+- [sdk] Fachada mínima `gravital-id-sdk`: re-exporta `Clock`, `Rng`, `ErrorCode`, `GidError`/`PipError` (F1.T13; #6).
+- [bindings] `bindings/wasm` (`gravital-id-wasm`): binding WASM con pruebas de humo `wasm-pack test --node` que validan la fachada a través de FFI (F1.T13, REQ-PORT-001; #6).
+- [ci] Workflows `ci.yml` (fmt, clippy, nextest, doc, xtask×3, MSRV, feature-powerset acotada, compilación cruzada wasm32/android/ios/bare-metal), `security.yml` (cargo-deny, cargo-audit, dependency-review, gitleaks), `docs.yml` (markdownlint, lychee, validación de REQ-IDs), `wasm.yml`, `fuzz.yml`, `mutation.yml` (cargo-mutants + Kani) y `bench.yml` (F1.T05, F1.T10, F1.T11, F1.T14; #6).
+- [ci] `deny.toml` con la allowlist de licencias de ADR-0002, sin comodines ni fuentes fuera de crates.io (F1.T06, REQ-COMP-003; #6).
+- [governance] `CODEOWNERS` con las rutas sensibles y labels como código (`.github/labels.yml`) con script de sincronización idempotente (F1.T12; #6).
+- [test] Objetivo de fuzzing de ejemplo `fuzz/fuzz_targets/gid_error_format.rs` y benchmarks criterion de ejemplo en `gravital-id-types` (F1.T11; #6).
+- [test] Pruebas Kani de invariantes del catálogo de errores (códigos de 4 dígitos, conservación de código y mensaje) (F1.T14, REQ-SDK-003; #6).
+
 - [docs] Paquete documental inicial: `AGENTS.md`, arquitectura, requisitos, estructura del proyecto, hoja de ruta F0–F18, plantillas de issues y PR, índice de ADRs.
 - [docs] ADR-0016 a ADR-0020 (Propuestos): confianza por umbral, manifiesto de estado, emergencia limitada a suspensión, núcleo `no_std` con protocolos sans-I/O y fail-closed por tipos.
 - [specs] Modelo de amenazas y privacidad `THREAT_MODEL.md` v0.1.0-draft (F0.T05): análisis STRIDE por componente y LINDDUN para privacidad.
@@ -47,8 +62,11 @@ Cada componente publicado (SDK, servicios, contratos, especificación) indica su
 - [governance] Adaptación de `AGENTS.md §6` y `§14` para régimen de mantenedor único en Fase F0 (#1).
 - [docs] Revisión de arquitectura v0.2: raíz de confianza y bundles cofirmados k-de-n; manifiesto de estado fuera del bundle; estado `suspended`; claves de recuperación por emisor; SAS con compromiso previo; claves HPKE con propósito propio; estado persistente del verificador; transcodificación binaria para QR; estrategia de pánicos en WASM.
 - [docs] Estructura: adaptadores `pip-storage-sqlite` y `pip-transport-http` en L5; `pip-sdk` como esqueleto vertical desde F1; pruebas de mutación, Kani y modelos formales.
+- [docs] `PROJECT_STRUCTURE.md` adopta la nomenclatura canónica de crates `gravital-id-*` (ADR-0001).
+- [governance] `docs/adr/README.md`: ADR-0014 y ADR-0019 pasan a Aceptados e indexados.
 
 ### Fixed
 - [docs] Contradicción sobre I/O en L3 (`pip-storage`), configuración de lints inaplicable (`forbid` y herencia de workspace), fase de REQ-STAT-002 y dependencia de F6.T08 respecto de F4.T03 (#3, #4, #5).
+- [xtask] `check-error-codes` reportaba duplicados inexistentes porque contaba las menciones de `GID-Exxxx` en doc-comments y pruebas; ahora solo cuenta brazos de `match` de definición y verifica además que los discriminantes del enum coincidan con el catálogo documentado (#6).
 
 <!-- Secciones permitidas: Added, Changed, Deprecated, Removed, Fixed, Security -->
