@@ -41,7 +41,7 @@
 
 ## Bloqueos
 
-- Ninguno técnico. **Pendiente de verificación por el mantenedor:** los workflows no aparecen en la pestaña Actions del repositorio tras el push de `feat/6-workspace-cargo` (comprobar webhooks/permisos de Actions en GitHub); localmente todas las comprobaciones de `AGENTS.md §5.2` pasan.
+- **Bloqueo de facturación de la cuenta de GitHub:** los workflows de PR #22 se crean correctamente pero los jobs no arrancan ("The job was not started because your account is locked due to a billing issue"). No es un defecto de los workflows: se validaron por sintaxis y todas sus comprobaciones se ejecutaron en local con éxito. El mantenedor debe resolver la facturación para que CI verifique G1.
 
 ## Decisiones pendientes que bloquean la fase actual
 
@@ -76,5 +76,5 @@
   - Cerrar G1 con evidencia (CI verde en todos los targets) y abrir los issues de F2 (`ROADMAP.md §7`, F2.T01…T12).
 - Bugs/issues abiertos durante la sesión: bug corregido en `xtask check-error-codes` (nunca llegó a `main`); issues de decisión y spec-gap creados desde el agente (ver comentarios en #6).
 - Decisiones tomadas (con enlace a ADR/issue): ADR-0014 y ADR-0019 (Aceptados, previos); excepción acotada `unicode-ident` en `deny.toml` (pendiente de confirmación en #6); catálogo de errores en `gravital-id-types` re-exportado por el SDK (spec-gap abierto).
-- Riesgos o dudas: los workflows no se han ejecutado aún en GitHub (validados solo en local y por sintaxis); la acción de Kani y los runners nocturnos pendientes de primera ejecución real.
+- Riesgos o dudas: los workflows se ejecutan en GitHub pero los jobs no arrancan por el bloqueo de facturación de la cuenta (pendiente del mantenedor); Kani y los jobs nocturnos pendientes de primera ejecución real.
 - Comprobaciones locales: fmt ✅ clippy ✅ tests ✅ (cargo test; nextest no instalado localmente) layers ✅ trace ✅ check-error-codes ✅ deny ✅ wasm-pack test ✅ cross-compile ✅
