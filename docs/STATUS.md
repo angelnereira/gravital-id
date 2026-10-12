@@ -6,18 +6,19 @@
 
 | Campo | Valor |
 |---|---|
-| Fase actual | **F1 — Infraestructura de ingeniería** |
+| Fase actual | **F2 — Núcleo: tipos, codificación, criptografía y claves** |
 | Último gate cerrado | **G0** (2026-10-11) |
 | Próximo gate | G1 |
 | Hito siguiente | M1 · Núcleo offline (al cerrar G5) |
-| Última actualización | 2026-10-12 |
+| Última actualización | 2026-10-12 (F2 iniciada) |
 
 ## Gates
 
 | Gate | Estado | Fecha | Evidencia |
 |---|---|---|---|
 | G0 | **Cerrado** | 2026-10-11 | Especificaciones v0.1 completadas, ADRs 0001-0012 y 0016-0020 aceptados, 4 spikes concluidos viables, revisión cruzada F0.T21 aprobada |
-| G1 | En curso | — | Workspace, xtask, CI y gobierno del repositorio implementados en `feat/6-workspace-cargo` (#6); pendiente verificación de CI en GitHub |
+| G1 | En curso | — | Workspace, xtask, CI y gobierno del repositorio implementados en `feat/6-workspace-cargo` (#6, PR #22); pendiente merge del mantenedor |
+| G2 | En curso | — | F2 iniciada en `feat/24-types-newtypes`: F2.T01 y F2.T02 hechas (#24, #25) |
 | G2 … G17 | Pendiente | — | — |
 
 ## Tareas en curso
@@ -38,6 +39,8 @@
 | F1.T12 Gobierno del repo | #6 | OpenCode (agente) | Hecha | `CODEOWNERS` + labels como código con sync idempotente |
 | F1.T13 ADR-0019 + esqueleto vertical | #6 | OpenCode (agente) | Hecha | Fachada mínima del SDK + `bindings/wasm` con pruebas de humo en Node |
 | F1.T14 Mutación y Kani | #6 | OpenCode (agente) | Hecha | `cargo-mutants` + pruebas Kani de invariantes; job nocturno |
+| F2.T01 Newtypes validados | #24 | OpenCode (agente) | Hecha | `IssuerId`, `Kid`, `Vct`, `ProfileId`, `UnixTime`, `BundleVersion` + propiedades; rama `feat/24-types-newtypes` |
+| F2.T02 base64url estricto | #25 | OpenCode (agente) | Hecha | Sin relleno, canónica, acotada; fuzzing 6.9M ejecuciones; rama `feat/24-types-newtypes` |
 
 ## Bloqueos
 
@@ -58,23 +61,18 @@
 
 ## Última nota de traspaso
 
-### Traspaso — 2026-10-12 — OpenCode (agente)
-- Tarea: F1.T01–F1.T14 — #6 — rama `feat/6-workspace-cargo`
-- Estado: lista para revisión (PR contra `main` pendiente de aprobación del mantenedor)
-- Hecho en esta sesión:
-  - Verificado y commiteado el WIP previo de F1.T01 (workspace `gravital-id-*`, lints, perfiles) y F1.T02 (ADR-0014, toolchain 1.85.0).
-  - `xtask`: corregido `check-error-codes` (falsos duplicados por menciones en doc-comments; ahora valida también discriminantes del enum) y ampliado `check-layers` con la regla de bindings (solo `gravital-id-sdk`).
-  - F1.T07: traits `Clock` (types) y `Rng` (crypto) + `FixedClock`/`SeededRng` en testkit con pruebas de determinismo.
-  - F1.T05/T06/T10: workflows `ci`, `security`, `docs`, `wasm`, `fuzz`, `mutation`, `bench`; `deny.toml`; compilación cruzada (4 targets) verificada en local.
-  - F1.T11/T14: objetivo de fuzzing de ejemplo (3.9M ejecuciones sin fallos), criterion, cargo-mutants y pruebas Kani.
-  - F1.T12: `CODEOWNERS` y labels como código (56/56 sincronizadas).
-  - F1.T13: fachada mínima del SDK y `bindings/wasm` con pruebas de humo en Node (`wasm-pack test`).
-  - `CHANGELOG.md` y esta nota actualizados.
+### Traspaso — 2026-10-12 (cierre) — OpenCode (agente)
+- Tareas: F2.T01 (#24) y F2.T02 (#25) — rama `feat/24-types-newtypes`
+- Estado: hechas y pusheadas; #24/#25 con nota de trasparo
+- Hecho en esta sesión (F2):
+  - F2.T01: newtypes validados en `gravital-id-types` (`ids.rs`) con pruebas de propiedades (`proptest =1.5.0`, pin por MSRV).
+  - F2.T02: base64url estricta en `gravital-id-codec` con objetivo de fuzzing de canonicalidad (6.9M ejecuciones sin fallos).
+  - Corregidos 2 bugs propios cazados por las pruebas antes de commitear (guion inicial aceptado por el validador; máscaras ausentes en el encoder).
+  - Job MSRV de CI endurecido a `--all-targets` (detecta incompatibilidades en dev-dependencies).
 - Pendiente (siguiente paso concreto):
-  - Mantenedor: revisar y mergear el PR de `feat/6-workspace-cargo`; confirmar las dos decisiones pendientes (excepción `Unicode-3.0` y el spec-gap de `PROJECT_STRUCTURE §7`).
-  - Confirmar que GitHub Actions ejecuta los workflows (no se registran runs tras el push).
-  - Cerrar G1 con evidencia (CI verde en todos los targets) y abrir los issues de F2 (`ROADMAP.md §7`, F2.T01…T12).
-- Bugs/issues abiertos durante la sesión: bug corregido en `xtask check-error-codes` (nunca llegó a `main`); issues de decisión y spec-gap creados desde el agente (ver comentarios en #6).
-- Decisiones tomadas (con enlace a ADR/issue): ADR-0014 y ADR-0019 (Aceptados, previos); excepción acotada `unicode-ident` en `deny.toml` (pendiente de confirmación en #6); catálogo de errores en `gravital-id-types` re-exportado por el SDK (spec-gap abierto).
-- Riesgos o dudas: los workflows se ejecutan en GitHub pero los jobs no arrancan por el bloqueo de facturación de la cuenta (pendiente del mantenedor); Kani y los jobs nocturnos pendientes de primera ejecución real.
-- Comprobaciones locales: fmt ✅ clippy ✅ tests ✅ (cargo test; nextest no instalado localmente) layers ✅ trace ✅ check-error-codes ✅ deny ✅ wasm-pack test ✅ cross-compile ✅
+  - F2.T03 JSON acotado (#26): límites de tamaño/profundidad/elementos, rechazo de miembros duplicados (REQ-CRED-009), UTF-8 estricto, fuzzing.
+  - Merge de PR #22 (F1) y apertura del PR de `feat/24-types-newtypes` cuando el mantenedor revise.
+- Bugs/issues abiertos: #7 (decisión Unicode-3.0), #8 (spec-gap PROJECT_STRUCTURE §7), #23 (spec-gap low-S).
+- Decisiones tomadas: la verificación **no** exige low-S (rango 3: ARCHITECTURE/REQ-KEY-010) mientras se resuelve #23; `proptest` fijado por MSRV.
+- Riesgos o dudas: los jobs de CI no arrancan por el bloqueo de facturación de la cuenta de GitHub; toda la evidencia de F2.T01/T02 es local.
+- Comprobaciones locales: fmt ✅ clippy ✅ tests ✅ (54 en workspace) layers ✅ trace ✅ check-error-codes ✅ fuzz ✅
