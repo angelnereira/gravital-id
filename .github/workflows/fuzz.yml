@@ -19,8 +19,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Un objetivo por parser desde F2 (F2.T11); en F1 el objetivo de ejemplo.
-        target: [gid_error_format]
+        # Un objetivo por parser desde F2 (F2.T11).
+        target: [gid_error_format, base64url_strict]
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@nightly

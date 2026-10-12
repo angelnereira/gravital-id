@@ -11,8 +11,9 @@ cargo-fuzz = true
 libfuzzer-sys = "0.4"
 arbitrary = { version = "1", features = ["derive"] }
 
-# Núcleo bajo prueba (L1: catálogo de errores canónico).
+# Núcleo bajo prueba (L1: catálogo de errores canónico y codec).
 gravital-id-types = { path = "../crates/gravital-id-types" }
+gravital-id-codec = { path = "../crates/gravital-id-codec" }
 
 # Workspace independiente del principal: cargo-fuzz gestiona aquí sus perfiles.
 [workspace]
@@ -21,6 +22,12 @@ members = ["."]
 [[bin]]
 name = "gid_error_format"
 path = "fuzz_targets/gid_error_format.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "base64url_strict"
+path = "fuzz_targets/base64url_strict.rs"
 test = false
 doc = false
 
