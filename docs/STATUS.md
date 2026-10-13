@@ -6,11 +6,11 @@
 
 | Campo | Valor |
 |---|---|
-| Fase actual | **F2 — Núcleo: tipos, codificación, criptografía y claves (COMPLETADA)** |
+| Fase actual | **F3 — Credenciales SD-JWT VC (en curso)** |
 | Último gate cerrado | **G0** (2026-10-11) |
 | Próximo gate | **G2** (Revisión y cierre formal de Fase F2) |
 | Hito siguiente | M1 · Núcleo offline (al cerrar G5) |
-| Última actualización | 2026-10-13 (F2: T01–T12 completadas — Fase F2 finalizada) |
+| Última actualización | 2026-10-13 (F3: T01 completada — ADR-0015 propuesto) |
 
 ## Gates
 
@@ -51,6 +51,7 @@
 | F2.T10 gravital-id-keys | #33 | Antigravity (agente) | Hecha | `KeyPurpose`, `KeyHandle` tipado por propósito, trait `KeyStore`, `SoftwareKeyStore` bajo feature `software-keystore`, normalización DER↔P1363, pruebas `trybuild` compile-fail; rama `feat/24-types-newtypes` |
 | F2.T11 Objetivos de fuzzing | #34 | Antigravity (agente) | Hecha | Un objetivo por parser (`base64url_strict`, `json_bounded`, `cbor_bounded`, `base45_strict`, `deflate_bounded`, `jwk_parser`) con trazabilidad REQ-SEC-005 en `fuzz.yml`; rama `feat/24-types-newtypes` |
 | F2.T12 Benchmarks base | #35 | Antigravity (agente) | Hecha | Suite criterion `crypto_primitives` en `gravital-id-crypto` (ES256, SHA-256, XChaCha20, HPKE); línea base registrada en `STATUS.md` (REQ-PERF-001); cobertura `gravital-id-crypto` al 92,46 %; rama `feat/24-types-newtypes` |
+| F3.T01 ADR-0015 construir o reutilizar | #39 | Antigravity (agente) | Hecha | Evaluación de crates SD-JWT existentes; redactado `ADR-0015` propuesto; decisión Opción B (implementar en L2 `gravital-id-credential`); rama `docs/39-adr-0015-sd-jwt` |
 
 ## Bloqueos
 
@@ -95,26 +96,20 @@
 
 ## Última nota de traspaso
 
-### Traspaso — 2026-10-13 (cierre Fase F2: F2.T11 y F2.T12) — Antigravity (agente)
-- Tareas: F2.T11 (#34), F2.T12 (#35) — rama `feat/24-types-newtypes` (acumula F2.T01–T12 completa)
-- Estado: **Fase F2 100 % completada; Gate G2 listo para revisión/cierre**
+### Traspaso — 2026-10-13 (F3.T01: ADR-0015 SD-JWT) — Antigravity (agente)
+- Tarea: F3.T01 — #39 — rama `docs/39-adr-0015-sd-jwt`
+- Estado: **lista para revisión / hecha**
 - Hecho en esta sesión:
-  - F2.T11 (#34):
-    - Verificados y etiquetados con trazabilidad (`// Verifies: REQ-SEC-005`) los 6 objetivos de fuzzing para parsers en `fuzz/fuzz_targets/` (`base64url_strict`, `json_bounded`, `cbor_bounded`, `base45_strict`, `deflate_bounded`, `jwk_parser`).
-    - Todos integrados en la matriz nocturna de `.github/workflows/fuzz.yml`.
-    - Detectado y corregido bug #36 en `xtask/src/trace.rs`: tablas transversales de 5 columnas en `REQUIREMENTS.md` ahora son parseadas correctamente con test de regresión.
-  - F2.T12 (#35):
-    - Implementada suite Criterion en `crates/gravital-id-crypto/benches/crypto_primitives.rs` midiendo ES256 (sign y verify en formatos P1363/DER/JWK), SHA-256 (32B a 10KiB), XChaCha20-Poly1305 (seal y open 256B a 8KiB) y HPKE Base suite (seal y open 256B).
-    - Ejecutados benchmarks localmente en x86_64 y registrada la línea base en `docs/STATUS.md` (REQ-PERF-001).
-    - Diseñada e implementada suite `tests/api_coverage.rs` para `gravital-id-crypto`: cobertura de líneas elevada al **92,46 %** (superando el umbral de ≥ 90 % requerido por Gate G2).
-    - Pruebas de humo WASM verificadas en Node (`wasm-pack test --node bindings/wasm`).
-  - Total de pruebas en el workspace: **174 pruebas unitarias e integración en verde**; 25 requisitos trazados en `docs/TRACEABILITY.md`.
-  - Compilación cruzada verificada y limpia en los 4 targets (`thumbv7em-none-eabihf`, `wasm32-unknown-unknown`, `aarch64-linux-android`, `aarch64-apple-ios`).
-  - Lints `fmt`, `clippy -D warnings`, `check-layers`, `check-error-codes`, `deny` pasando al 100 %.
+  - F3.T01 (#39):
+    - Investigados y analizados crates existentes de SD-JWT en el ecosistema Rust (`sd-jwt-rs`, `affinidi-sd-jwt`, entre otros).
+    - Detectadas incompatibilidades críticas con invariantes de Gravital ID: dependencia de `std`, acoplamiento a `ring`/OpenSSL (violando INV-01 e INV-07), incapacidad de delegar firmas a hardware sin exponer claves privadas (violando INV-03) y falta de cotas DoS en parsers JSON (violando REQ-CRED-009).
+    - Redactado `docs/adr/0015-sd-jwt-construir-o-reutilizar.md` (ADR-0015 Propuesto): adopta la Opción B (construcción nativa en `gravital-id-credential` L2 `#![no_std]` + `alloc` sobre L1).
+    - Indexado ADR-0015 en `docs/adr/README.md`.
+    - Actualizados `CHANGELOG.md` y `docs/STATUS.md`.
 - Pendiente (siguiente paso concreto):
-  - Revisión y cierre formal del Gate G2 por el mantenedor Angel Nereira.
-  - Apertura de Fase F3: Credenciales SD-JWT VC (iniciando con F3.T01: ADR-0015 evaluar construir o reutilizar SD-JWT).
-- Bugs/issues resueltos en la sesión: #34 (cerrado), #35 (cerrado), #36 (cerrado).
-- Decisiones tomadas: Se implementó `TestRng` en `api_coverage.rs` con traits de `p256::elliptic_curve::rand_core` sin añadir crates externos; benchmarks basales documentados en `STATUS.md`.
-- Riesgos o dudas: Ninguno en F2; CI sigue a la espera de desbloqueo de facturación de GitHub.
-- Comprobaciones locales: fmt ✅ clippy ✅ tests ✅ (174) layers ✅ trace ✅ doc ✅ deny ✅ no_std ✅ wasm32 ✅ android ✅ ios ✅ cov (92.46%) ✅
+  - Validación formal del ADR-0015 por el mantenedor.
+  - Iniciar tarea F3.T02: `Emisión SD-JWT` (RFC 9901: divulgaciones de objeto `_sd` y array `...`, digests, `_sd_alg`, decoys, recursión; sal ≥ 128 bits; REQ-CRED-002, REQ-CRED-003).
+- Bugs/issues abiertos durante la sesión: Ninguno.
+- Decisiones tomadas (con enlace a ADR/issue): ADR-0015 (#39) propone construir SD-JWT nativamente en `gravital-id-credential` L2 sin dependencias externas de JWT.
+- Riesgos o dudas: Ninguno; diseño validado contra invariantes INV-01 a INV-16.
+- Comprobaciones locales: fmt ✅ clippy ✅ tests ✅ layers ✅ trace ✅ doc ✅ deny ✅ no_std ✅ wasm32 ✅ android ✅ ios ✅

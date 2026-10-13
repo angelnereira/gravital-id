@@ -24,6 +24,7 @@ Cada componente publicado (SDK, servicios, contratos, especificación) indica su
 - [bench] Suite de benchmarks de primitivas criptográficas base en `gravital-id-crypto` (`benches/crypto_primitives.rs`) midiendo ES256 (RFC 6979), SHA-256 (32B–10KiB), XChaCha20-Poly1305 y HPKE; línea base registrada en `docs/STATUS.md` (F2.T12, REQ-PERF-001; #35).
 - [test] Suite de pruebas de integración de API para `gravital-id-crypto` (`tests/api_coverage.rs`) elevando la cobertura de líneas al 92,46 %, superando el umbral de Gate G2 (F2.T12, REQ-PERF-001; #35).
 - [test] Pruebas Kani de invariantes del catálogo de errores (códigos de 4 dígitos, conservación de código y mensaje) (F1.T14, REQ-SDK-003; #6).
+- [docs] ADR-0015 (Propuesto): Evaluación de construir frente a reutilizar SD-JWT para Capa L2; decisión de implementar nativamente en `gravital-id-credential` (`no_std`, sin PII, delegación a `KeyStore`, mitigaciones DoS) (F3.T01, #39).
 
 - [docs] Paquete documental inicial: `AGENTS.md`, arquitectura, requisitos, estructura del proyecto, hoja de ruta F0–F18, plantillas de issues y PR, índice de ADRs.
 - [docs] ADR-0016 a ADR-0020 (Propuestos): confianza por umbral, manifiesto de estado, emergencia limitada a suspensión, núcleo `no_std` con protocolos sans-I/O y fail-closed por tipos.
