@@ -2,18 +2,19 @@
 //!
 //! Composición **de las primitivas fijadas en ADR-0007** (no es una primitiva
 //! nueva, INV-07):
-//! - KEM: DHKEM(P-256, HKDF-SHA256).
-//! - KDF: HKDF-SHA256.
-//! - AEAD: ChaCha20Poly1305 (via XChaCha20Poly1305 del crate, mismo primitivo).
+//! - KEM: DHKEM(P-256, HKDF-SHA256) (ID: 0x0010).
+//! - KDF: HKDF-SHA256 (ID: 0x0001).
+//! - AEAD: ChaCha20Poly1305 (ID: 0x0003).
 //!
-//! El *suite* no está fijado en `CRYPTO_PROFILES.md` (hueco de especificación
-//! registrado); se usa el suite coherente con el resto del perfil:
+//! Suite coherente con el perfil:
 //! `DHKEM(P-256, HKDF-SHA256) + HKDF-SHA256 + ChaCha20Poly1305`.
 //!
 //! La aleatoriedad efímera del emisor se **inyecta** (INV-11): el llamador pasa
 //! la clave efímera; nunca se genera aquí.
 
 use alloc::vec::Vec;
+use chacha20poly1305::aead::{Aead, KeyInit, Payload};
+use chacha20poly1305::{ChaCha20Poly1305, Nonce};
 use p256::ecdh::EphemeralSecret;
 use p256::elliptic_curve::sec1::ToEncodedPoint;
 use p256::{PublicKey, SecretKey};
@@ -34,36 +35,54 @@ pub const SUITE_AEAD_ID: u16 = 0x0003;
 /// Modo base (sin autenticación del emisor).
 const MODE_BASE: u8 = 0x00;
 
-/// Etiqueta HPKE para el *key schedule* (RFC 9180 §5.1).
+/// Etiqueta HPKE para el *key schedule* (RFC 9180 §4).
 const HPKE_VERSION: &[u8] = b"HPKE-v1";
 
-/// Longitud de la clave AEAD derivada.
-const NK: usize = 32;
+/// Suite ID para KEM (RFC 9180 §4.1): "KEM" || I2OSP(kem_id, 2).
+const KEM_SUITE_ID: &[u8; 5] = b"KEM\x00\x10";
 
-/// Longitud del nonce base derivado.
-const NN: usize = 12;
+/// Suite ID para HPKE (RFC 9180 §5.1): "HPKE" || I2OSP(kem_id, 2) || I2OSP(kdf_id, 2) || I2OSP(aead_id, 2).
+const HPKE_SUITE_ID: &[u8; 10] = b"HPKE\x00\x10\x00\x01\x00\x03";
+
+/// Longitud de la clave AEAD derivada (Nk = 32 para ChaCha20Poly1305).
+pub const NK: usize = 32;
+
+/// Longitud del nonce base derivado (Nn = 12 para ChaCha20Poly1305).
+pub const NN: usize = 12;
 
 fn invalid(reason: &str) -> GidError {
     GidError::new(ErrorCode::MalformedMessage, reason)
 }
 
-/// Etiquetado criptográfico de RFC 9180 §4 (`LabeledExtract`/`LabeledExpand`).
-fn labeled_extract(salt: &[u8], label: &[u8], ikm: &[u8]) -> Result<[u8; 32], GidError> {
+/// Etiquetado criptográfico `LabeledExtract` según RFC 9180 §4.
+/// `LabeledExtract(suite_id, salt, label, ikm) = Extract(salt, "HPKE-v1" || suite_id || label || ikm)`
+fn labeled_extract(
+    suite_id: &[u8],
+    salt: &[u8],
+    label: &[u8],
+    ikm: &[u8],
+) -> Result<[u8; 32], GidError> {
     let mut full_ikm = Vec::with_capacity(
         HPKE_VERSION
             .len()
+            .saturating_add(suite_id.len())
             .saturating_add(label.len())
             .saturating_add(ikm.len()),
     );
     full_ikm.extend_from_slice(HPKE_VERSION);
+    full_ikm.extend_from_slice(suite_id);
     full_ikm.extend_from_slice(label);
     full_ikm.extend_from_slice(ikm);
-    let (prk, _) = hkdf::Hkdf::<sha2::Sha256>::extract(Some(salt), &full_ikm);
+
+    let salt_opt = if salt.is_empty() { None } else { Some(salt) };
+    let (prk, _) = hkdf::Hkdf::<sha2::Sha256>::extract(salt_opt, &full_ikm);
     Ok(prk_into_array(&prk))
 }
 
-/// Igual que `LabeledExtract` seguido de `LabeledExpand` (RFC 9180 §4).
+/// Etiquetado criptográfico `LabeledExpand` según RFC 9180 §4.
+/// `LabeledExpand(suite_id, prk, label, info, L) = Expand(prk, I2OSP(L, 2) || "HPKE-v1" || suite_id || label || info, L)`
 fn labeled_expand(
+    suite_id: &[u8],
     prk: &[u8; 32],
     label: &[u8],
     info: &[u8],
@@ -72,13 +91,16 @@ fn labeled_expand(
     let mut full_info = Vec::with_capacity(
         2usize
             .saturating_add(HPKE_VERSION.len())
+            .saturating_add(suite_id.len())
             .saturating_add(label.len())
             .saturating_add(info.len()),
     );
     full_info.extend_from_slice(&(len as u16).to_be_bytes());
     full_info.extend_from_slice(HPKE_VERSION);
+    full_info.extend_from_slice(suite_id);
     full_info.extend_from_slice(label);
     full_info.extend_from_slice(info);
+
     let hkdf = hkdf::Hkdf::<sha2::Sha256>::from_prk(prk)
         .map_err(|_| invalid("invalid PRK for LabeledExpand"))?;
     let mut okm = alloc::vec![0u8; len];
@@ -87,7 +109,7 @@ fn labeled_expand(
     Ok(okm)
 }
 
-/// Convierte un PRK en array fijo.
+/// Convierte un PRK en array fijo de 32 bytes.
 fn prk_into_array(
     prk: &hkdf::hmac::digest::generic_array::GenericArray<u8, hkdf::hmac::digest::typenum::U32>,
 ) -> [u8; 32] {
@@ -96,113 +118,6 @@ fn prk_into_array(
         slice.copy_from_slice(prk);
     }
     out
-}
-
-/// Resultado del encapsulado: clave pública efímera + contexto de clave.
-pub struct Sealed {
-    /// Clave pública efímera del emisor (SEC1 sin comprimir, 65 bytes).
-    pub enc: [u8; ENC_LEN],
-    /// Clave AEAD derivada.
-    pub key: [u8; NK],
-    /// Nonce base derivado.
-    pub base_nonce: [u8; NN],
-}
-
-/// Deriva el material de clave del *key schedule* RFC 9180 §5.1 en modo base.
-fn key_schedule(
-    shared_secret: &[u8],
-    _kem_context: &[u8],
-    info: &[u8],
-) -> Result<([u8; NK], [u8; NN]), GidError> {
-    let suite_id = {
-        let mut id = Vec::with_capacity(6);
-        id.extend_from_slice(b"HPKE");
-        id.extend_from_slice(&SUITE_KEM_ID.to_be_bytes());
-        id.extend_from_slice(&SUITE_KDF_ID.to_be_bytes());
-        id.extend_from_slice(&SUITE_AEAD_ID.to_be_bytes());
-        id
-    };
-
-    // psk_id_hash = LabeledExtract("", "psk_id_hash", psk_id="")
-    let psk_id_hash = labeled_extract(&suite_id, b"psk_id_hash", &[])?;
-    // info_hash = LabeledExtract("", "info_hash", info)
-    let info_hash = labeled_extract(&suite_id, b"info_hash", info)?;
-
-    // key_schedule_context = mode || psk_id_hash || info_hash
-    let mut context = Vec::with_capacity(
-        1usize
-            .saturating_add(psk_id_hash.len())
-            .saturating_add(info_hash.len()),
-    );
-    context.push(MODE_BASE);
-    context.extend_from_slice(&psk_id_hash);
-    context.extend_from_slice(&info_hash);
-
-    // secret = LabeledExtract(shared_secret, "secret", psk="")
-    let secret = labeled_extract(shared_secret, b"secret", &[])?;
-
-    let key_bytes = labeled_expand(&secret, b"key", &context, NK)?;
-    let nonce_bytes = labeled_expand(&secret, b"base_nonce", &context, NN)?;
-
-    let mut key = [0u8; NK];
-    if let Some(slice) = key.get_mut(..key_bytes.len()) {
-        slice.copy_from_slice(&key_bytes);
-    }
-    let mut base_nonce = [0u8; NN];
-    if let Some(slice) = base_nonce.get_mut(..nonce_bytes.len()) {
-        slice.copy_from_slice(&nonce_bytes);
-    }
-    Ok((key, base_nonce))
-}
-
-/// Encapsula hacia una clave pública y sella `plaintext` (modo base).
-///
-/// Devuelve la clave encapsulada y el sobre `ciphertext || tag`.
-///
-/// # Errores
-/// [`ErrorCode::MalformedMessage`] si la clave pública receptora no es P-256.
-pub fn seal_base(
-    recipient_public: &PublicKey,
-    ephemeral_secret: &SecretKey,
-    info: &[u8],
-    plaintext: &[u8],
-    aad: &[u8],
-) -> Result<([u8; ENC_LEN], Vec<u8>), GidError> {
-    let shared = agree(ephemeral_secret, recipient_public)
-        .map_err(|_| invalid("invalid recipient public key"))?;
-    let enc = sec1_bytes(ephemeral_secret.public_key())?;
-
-    let mut kem_context = Vec::with_capacity(enc.len().saturating_add(ENC_LEN));
-    kem_context.extend_from_slice(&enc);
-    kem_context.extend_from_slice(&sec1_bytes(*recipient_public)?);
-
-    let (key, base_nonce) = key_schedule(&shared, &kem_context, info)?;
-    let sealed = crate::aead::seal(&key, &xnonce(&base_nonce), plaintext, aad)?;
-    Ok((enc, sealed))
-}
-
-/// Desencapsula y abre un sobre (modo base).
-///
-/// # Errores
-/// [`ErrorCode::AeadAuthenticationFailed`] si la etiqueta no verifica;
-/// [`ErrorCode::MalformedMessage`] si la clave encapsulada no es P-256.
-pub fn open_base(
-    recipient_secret: &p256::SecretKey,
-    enc: &[u8],
-    info: &[u8],
-    ciphertext: &[u8],
-    aad: &[u8],
-) -> Result<Vec<u8>, GidError> {
-    let enc_key =
-        PublicKey::from_sec1_bytes(enc).map_err(|_| invalid("invalid encapsulated key"))?;
-    let shared = agree(recipient_secret, &enc_key).map_err(|_| invalid("key agreement failed"))?;
-
-    let mut kem_context = Vec::with_capacity(enc.len().saturating_add(ENC_LEN));
-    kem_context.extend_from_slice(enc);
-    kem_context.extend_from_slice(&sec1_bytes(recipient_secret.public_key())?);
-
-    let (key, base_nonce) = key_schedule(&shared, &kem_context, info)?;
-    crate::aead::open(&key, &xnonce(&base_nonce), ciphertext, aad)
 }
 
 /// Serializa una clave pública en SEC1 sin comprimir (65 bytes).
@@ -219,17 +134,202 @@ fn sec1_bytes(key: PublicKey) -> Result<[u8; ENC_LEN], GidError> {
     Ok(out)
 }
 
-/// Adapta el nonce base de 12 bytes al formato XNonce de 24 (relleno con ceros).
+/// DHKEM Decap (RFC 9180 §4.1): deriva `shared_secret` a partir de `enc` y `skR`.
+fn decap(recipient_secret: &SecretKey, enc_key: &PublicKey) -> Result<[u8; 32], GidError> {
+    let dh = agree(recipient_secret, enc_key).map_err(|_| invalid("key agreement failed"))?;
+    let enc = sec1_bytes(*enc_key)?;
+    let pk_r = sec1_bytes(recipient_secret.public_key())?;
+    let mut kem_context = Vec::with_capacity(ENC_LEN.saturating_mul(2));
+    kem_context.extend_from_slice(&enc);
+    kem_context.extend_from_slice(&pk_r);
+
+    let eae_prk = labeled_extract(KEM_SUITE_ID, &[], b"eae_prk", &dh)?;
+    let shared_secret_vec =
+        labeled_expand(KEM_SUITE_ID, &eae_prk, b"shared_secret", &kem_context, 32)?;
+    let mut shared_secret = [0u8; 32];
+    shared_secret.copy_from_slice(&shared_secret_vec);
+    Ok(shared_secret)
+}
+
+/// DHKEM Encap (RFC 9180 §4.1): deriva `enc` y `shared_secret` a partir de `skE` y `pkR`.
+fn encap(
+    recipient_public: &PublicKey,
+    ephemeral_secret: &SecretKey,
+) -> Result<([u8; ENC_LEN], [u8; 32]), GidError> {
+    let dh =
+        agree(ephemeral_secret, recipient_public).map_err(|_| invalid("key agreement failed"))?;
+    let enc = sec1_bytes(ephemeral_secret.public_key())?;
+    let pk_r = sec1_bytes(*recipient_public)?;
+    let mut kem_context = Vec::with_capacity(ENC_LEN.saturating_mul(2));
+    kem_context.extend_from_slice(&enc);
+    kem_context.extend_from_slice(&pk_r);
+
+    let eae_prk = labeled_extract(KEM_SUITE_ID, &[], b"eae_prk", &dh)?;
+    let shared_secret_vec =
+        labeled_expand(KEM_SUITE_ID, &eae_prk, b"shared_secret", &kem_context, 32)?;
+    let mut shared_secret = [0u8; 32];
+    shared_secret.copy_from_slice(&shared_secret_vec);
+    Ok((enc, shared_secret))
+}
+
+/// Deriva el material de clave del *key schedule* RFC 9180 §5.1 en modo base.
+fn key_schedule(shared_secret: &[u8; 32], info: &[u8]) -> Result<([u8; NK], [u8; NN]), GidError> {
+    let psk_id_hash = labeled_extract(HPKE_SUITE_ID, &[], b"psk_id_hash", &[])?;
+    let info_hash = labeled_extract(HPKE_SUITE_ID, &[], b"info_hash", info)?;
+
+    let mut context = Vec::with_capacity(
+        1usize
+            .saturating_add(psk_id_hash.len())
+            .saturating_add(info_hash.len()),
+    );
+    context.push(MODE_BASE);
+    context.extend_from_slice(&psk_id_hash);
+    context.extend_from_slice(&info_hash);
+
+    let secret = labeled_extract(HPKE_SUITE_ID, shared_secret, b"secret", &[])?;
+    let key_vec = labeled_expand(HPKE_SUITE_ID, &secret, b"key", &context, NK)?;
+    let nonce_vec = labeled_expand(HPKE_SUITE_ID, &secret, b"base_nonce", &context, NN)?;
+
+    let mut key = [0u8; NK];
+    key.copy_from_slice(&key_vec);
+    let mut base_nonce = [0u8; NN];
+    base_nonce.copy_from_slice(&nonce_vec);
+    Ok((key, base_nonce))
+}
+
+/// Cifra con ChaCha20Poly1305 (RFC 9180 AEAD ID 0x0003).
+fn aead_seal_chacha(
+    key: &[u8; NK],
+    nonce: &[u8; NN],
+    plaintext: &[u8],
+    aad: &[u8],
+) -> Result<Vec<u8>, GidError> {
+    let cipher = ChaCha20Poly1305::new(key.into());
+    cipher
+        .encrypt(
+            Nonce::from_slice(nonce),
+            Payload {
+                msg: plaintext,
+                aad,
+            },
+        )
+        .map_err(|_| GidError::new(ErrorCode::AeadAuthenticationFailed, "AEAD seal failed"))
+}
+
+/// Descifra con ChaCha20Poly1305 (RFC 9180 AEAD ID 0x0003).
+fn aead_open_chacha(
+    key: &[u8; NK],
+    nonce: &[u8; NN],
+    ciphertext: &[u8],
+    aad: &[u8],
+) -> Result<Vec<u8>, GidError> {
+    let cipher = ChaCha20Poly1305::new(key.into());
+    cipher
+        .decrypt(
+            Nonce::from_slice(nonce),
+            Payload {
+                msg: ciphertext,
+                aad,
+            },
+        )
+        .map_err(|_| {
+            GidError::new(
+                ErrorCode::AeadAuthenticationFailed,
+                "AEAD authentication failed",
+            )
+        })
+}
+
+/// Configura el contexto del receptor HPKE derivando la clave simétrica y el nonce base (RFC 9180 §5.1).
 ///
-/// Se usa ChaCha20Poly1305 (nonce de 12 bytes, §5.2 de RFC 9180 para el suite
-/// ChaCha20Poly1305) sobre el mismo primitivo XChaCha20-Poly1305 requiriendo 24;
-/// el relleno a ceros es determinista y equivalente para el uso del protocolo.
-fn xnonce(base_nonce: &[u8; NN]) -> [u8; crate::aead::AEAD_NONCE_LEN] {
-    let mut nonce = [0u8; crate::aead::AEAD_NONCE_LEN];
-    if let Some(slice) = nonce.get_mut(..NN) {
-        slice.copy_from_slice(base_nonce);
-    }
-    nonce
+/// # Errores
+/// [`ErrorCode::MalformedMessage`] si la clave encapsulada no es válida.
+pub fn hpke_setup_recipient(
+    recipient_secret: &SecretKey,
+    enc: &[u8],
+    info: &[u8],
+) -> Result<([u8; NK], [u8; NN]), GidError> {
+    let enc_key =
+        PublicKey::from_sec1_bytes(enc).map_err(|_| invalid("invalid encapsulated key"))?;
+    let shared_secret = decap(recipient_secret, &enc_key)?;
+    key_schedule(&shared_secret, info)
+}
+
+/// Encapsula hacia una clave pública y sella `plaintext` en modo base (RFC 9180).
+///
+/// Devuelve la clave encapsulada `enc` (65 bytes) y el sobre `ciphertext || tag`.
+///
+/// # Errores
+/// [`ErrorCode::MalformedMessage`] si las claves no son válidas;
+/// [`ErrorCode::AeadAuthenticationFailed`] si el sellado falla.
+pub fn hpke_seal_base_p256_hkdf_sha256_chacha20poly1305(
+    recipient_public: &[u8; ENC_LEN],
+    ephemeral_secret: &[u8; 32],
+    info: &[u8],
+    plaintext: &[u8],
+    aad: &[u8],
+) -> Result<([u8; ENC_LEN], Vec<u8>), GidError> {
+    let pk = PublicKey::from_sec1_bytes(recipient_public)
+        .map_err(|_| invalid("invalid recipient public key"))?;
+    let sk = SecretKey::from_bytes(ephemeral_secret.into())
+        .map_err(|_| invalid("invalid ephemeral secret key"))?;
+    let (enc, shared_secret) = encap(&pk, &sk)?;
+    let (key, base_nonce) = key_schedule(&shared_secret, info)?;
+    let sealed = aead_seal_chacha(&key, &base_nonce, plaintext, aad)?;
+    Ok((enc, sealed))
+}
+
+/// Desencapsula y abre un sobre en modo base (RFC 9180).
+///
+/// # Errores
+/// [`ErrorCode::AeadAuthenticationFailed`] si la etiqueta no verifica;
+/// [`ErrorCode::MalformedMessage`] si las claves no son válidas.
+pub fn hpke_open_base_p256_hkdf_sha256_chacha20poly1305(
+    recipient_secret: &[u8; 32],
+    enc: &[u8],
+    ciphertext: &[u8],
+    info: &[u8],
+    aad: &[u8],
+) -> Result<Vec<u8>, GidError> {
+    let sk = SecretKey::from_bytes(recipient_secret.into())
+        .map_err(|_| invalid("invalid recipient secret key"))?;
+    let (key, base_nonce) = hpke_setup_recipient(&sk, enc, info)?;
+    aead_open_chacha(&key, &base_nonce, ciphertext, aad)
+}
+
+/// Encapsula hacia una clave pública tipada y sella `plaintext` (modo base).
+///
+/// Devuelve la clave encapsulada y el sobre `ciphertext || tag`.
+///
+/// # Errores
+/// [`ErrorCode::MalformedMessage`] si la clave pública receptora no es P-256.
+pub fn seal_base(
+    recipient_public: &PublicKey,
+    ephemeral_secret: &SecretKey,
+    info: &[u8],
+    plaintext: &[u8],
+    aad: &[u8],
+) -> Result<([u8; ENC_LEN], Vec<u8>), GidError> {
+    let (enc, shared_secret) = encap(recipient_public, ephemeral_secret)?;
+    let (key, base_nonce) = key_schedule(&shared_secret, info)?;
+    let sealed = aead_seal_chacha(&key, &base_nonce, plaintext, aad)?;
+    Ok((enc, sealed))
+}
+
+/// Desencapsula y abre un sobre con clave tipada (modo base).
+///
+/// # Errores
+/// [`ErrorCode::AeadAuthenticationFailed`] si la etiqueta no verifica;
+/// [`ErrorCode::MalformedMessage`] si la clave encapsulada no es P-256.
+pub fn open_base(
+    recipient_secret: &SecretKey,
+    enc: &[u8],
+    info: &[u8],
+    ciphertext: &[u8],
+    aad: &[u8],
+) -> Result<Vec<u8>, GidError> {
+    let (key, base_nonce) = hpke_setup_recipient(recipient_secret, enc, info)?;
+    aead_open_chacha(&key, &base_nonce, ciphertext, aad)
 }
 
 /// Variante efímera del emisor para flujos de un solo uso.
@@ -244,21 +344,25 @@ pub fn seal_base_ephemeral(
     aad: &[u8],
 ) -> Result<([u8; ENC_LEN], Vec<u8>), GidError> {
     let enc_key = ephemeral_secret.public_key();
-    let shared = agree_ephemeral(ephemeral_secret, recipient_public)
-        .map_err(|_| invalid("invalid recipient public key"))?;
     let enc = sec1_bytes(enc_key)?;
-
-    let mut kem_context = Vec::with_capacity(enc.len().saturating_add(ENC_LEN));
+    let pk_r = sec1_bytes(*recipient_public)?;
+    let mut kem_context = Vec::with_capacity(ENC_LEN.saturating_mul(2));
     kem_context.extend_from_slice(&enc);
-    kem_context.extend_from_slice(&sec1_bytes(*recipient_public)?);
+    kem_context.extend_from_slice(&pk_r);
 
-    let (key, base_nonce) = key_schedule(&shared, &kem_context, info)?;
-    let sealed = crate::aead::seal(&key, &xnonce(&base_nonce), plaintext, aad)?;
+    let dh = agree_ephemeral(ephemeral_secret, recipient_public)
+        .map_err(|_| invalid("invalid recipient public key"))?;
+
+    let eae_prk = labeled_extract(KEM_SUITE_ID, &[], b"eae_prk", &dh)?;
+    let shared_secret_vec =
+        labeled_expand(KEM_SUITE_ID, &eae_prk, b"shared_secret", &kem_context, 32)?;
+    let mut shared_secret = [0u8; 32];
+    shared_secret.copy_from_slice(&shared_secret_vec);
+
+    let (key, base_nonce) = key_schedule(&shared_secret, info)?;
+    let sealed = aead_seal_chacha(&key, &base_nonce, plaintext, aad)?;
     Ok((enc, sealed))
 }
-
-#[allow(dead_code)] // Se usará desde F7 (relays y buzones HPKE); se mantiene probado.
-fn unused_placeholder() {}
 
 #[cfg(test)]
 #[allow(clippy::expect_used, clippy::unwrap_used, clippy::panic)] // Pruebas locales deterministas (PROJECT_STRUCTURE.md §5.1).
