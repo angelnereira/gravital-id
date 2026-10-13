@@ -10,7 +10,7 @@
 | Último gate cerrado | **G0** (2026-10-11) |
 | Próximo gate | **G2** (Revisión y cierre formal de Fase F2) |
 | Hito siguiente | M1 · Núcleo offline (al cerrar G5) |
-| Última actualización | 2026-10-13 (F3: T01 completada — ADR-0015 propuesto) |
+| Última actualización | 2026-10-13 (F3: T02 completada — Emisión SD-JWT RFC 9901) |
 
 ## Gates
 
@@ -52,6 +52,7 @@
 | F2.T11 Objetivos de fuzzing | #34 | Antigravity (agente) | Hecha | Un objetivo por parser (`base64url_strict`, `json_bounded`, `cbor_bounded`, `base45_strict`, `deflate_bounded`, `jwk_parser`) con trazabilidad REQ-SEC-005 en `fuzz.yml`; rama `feat/24-types-newtypes` |
 | F2.T12 Benchmarks base | #35 | Antigravity (agente) | Hecha | Suite criterion `crypto_primitives` en `gravital-id-crypto` (ES256, SHA-256, XChaCha20, HPKE); línea base registrada en `STATUS.md` (REQ-PERF-001); cobertura `gravital-id-crypto` al 92,46 %; rama `feat/24-types-newtypes` |
 | F3.T01 ADR-0015 construir o reutilizar | #39 | Antigravity (agente) | Hecha | Evaluación de crates SD-JWT existentes; redactado `ADR-0015` propuesto; decisión Opción B (implementar en L2 `gravital-id-credential`); rama `docs/39-adr-0015-sd-jwt` |
+| F3.T02 Emisión SD-JWT | #41 | Antigravity (agente) | Hecha | Emisión RFC 9901 en `gravital-id-credential` (objetos/arrays, sal ≥ 128b, decoys, anidación, serialización compacta y firma ES256 vía `KeyStore`); rama `feat/41-sd-jwt-emission` |
 
 ## Bloqueos
 
@@ -96,20 +97,21 @@
 
 ## Última nota de traspaso
 
-### Traspaso — 2026-10-13 (F3.T01: ADR-0015 SD-JWT) — Antigravity (agente)
-- Tarea: F3.T01 — #39 — rama `docs/39-adr-0015-sd-jwt`
+### Traspaso — 2026-10-13 (F3.T02: Emisión SD-JWT) — Antigravity (agente)
+- Tarea: F3.T02 — #41 — rama `feat/41-sd-jwt-emission`
 - Estado: **lista para revisión / hecha**
 - Hecho en esta sesión:
-  - F3.T01 (#39):
-    - Investigados y analizados crates existentes de SD-JWT en el ecosistema Rust (`sd-jwt-rs`, `affinidi-sd-jwt`, entre otros).
-    - Detectadas incompatibilidades críticas con invariantes de Gravital ID: dependencia de `std`, acoplamiento a `ring`/OpenSSL (violando INV-01 e INV-07), incapacidad de delegar firmas a hardware sin exponer claves privadas (violando INV-03) y falta de cotas DoS en parsers JSON (violando REQ-CRED-009).
-    - Redactado `docs/adr/0015-sd-jwt-construir-o-reutilizar.md` (ADR-0015 Propuesto): adopta la Opción B (construcción nativa en `gravital-id-credential` L2 `#![no_std]` + `alloc` sobre L1).
-    - Indexado ADR-0015 en `docs/adr/README.md`.
-    - Actualizados `CHANGELOG.md` y `docs/STATUS.md`.
+  - F3.T02 (#41):
+    - Implementado módulo `salt.rs` con validación estricta de entropía $\ge 128$ bits (`MIN_SALT_BYTES = 16`, `// Verifies: REQ-CRED-002`) y rechazo con `ErrorCode::InsufficientEntropy`.
+    - Implementado módulo `json_canonical.rs` para serialización JSON canónica y compacta (RFC 8785) con ordenación lexicográfica de claves de objetos y escapado estricto.
+    - Implementado módulo `decoy.rs` con generación de digests señuelo pseudo-aleatorios indistinguibles y elementos señuelo de array `{"...": "<decoy_digest>"}` (`// Verifies: REQ-CRED-003`).
+    - Implementado módulo `disclosure.rs` con `Disclosure`, `DisclosureDigest`, `DisclosureKind` (objetos y arrays), cálculo de digest SHA-256 en base64url, y parseo con validación de nombres de claim reservados (`_sd`, `...`).
+    - Implementado módulo `issuer.rs` con builders declarativos `SdObjectBuilder`, `SdArrayBuilder`, `SdIssuer`, y `IssuedSdJwt`: ordenación lexicográfica de digests `_sd`, inyección automática de `_sd_alg: "sha-256"`, soporte recursivo de objetos/arrays anidados, firma JWS ES256 delegada a `KeyStore` (INV-03), y serialización compacta `<jwt>~<d1>~...~<dn>~`.
+    - Creada suite de pruebas de integración `tests/sd_jwt_emission.rs` con verificación de casos nominales, anidados, señuelos, firma/verificación ES256 y 7 casos de prueba negativos.
+    - Actualizado `crates/gravital-id-credential/README.md` con documentación y ejemplo de uso.
 - Pendiente (siguiente paso concreto):
-  - Validación formal del ADR-0015 por el mantenedor.
-  - Iniciar tarea F3.T02: `Emisión SD-JWT` (RFC 9901: divulgaciones de objeto `_sd` y array `...`, digests, `_sd_alg`, decoys, recursión; sal ≥ 128 bits; REQ-CRED-002, REQ-CRED-003).
+  - Iniciar tarea F3.T03: `Parseo y verificación SD-JWT` (RFC 9901: separación de componentes, verificación de digests de divulgaciones contra el JWT, detección de digests duplicados, reconstrucción del objeto JSON de claims divulgados, cotas de tamaño y DoS; REQ-CRED-001, REQ-CRED-009).
 - Bugs/issues abiertos durante la sesión: Ninguno.
-- Decisiones tomadas (con enlace a ADR/issue): ADR-0015 (#39) propone construir SD-JWT nativamente en `gravital-id-credential` L2 sin dependencias externas de JWT.
-- Riesgos o dudas: Ninguno; diseño validado contra invariantes INV-01 a INV-16.
-- Comprobaciones locales: fmt ✅ clippy ✅ tests ✅ layers ✅ trace ✅ doc ✅ deny ✅ no_std ✅ wasm32 ✅ android ✅ ios ✅
+- Decisiones tomadas (con enlace a ADR/issue): Se utiliza el trait `KeyStore` para la firma de credenciales asegurando que las claves privadas nunca cruzan FFI ni se custodian en memoria innecesariamente (INV-03).
+- Riesgos o dudas: Ninguno.
+- Comprobaciones locales: fmt ✅ clippy ✅ tests ✅ layers ✅ trace ✅ doc ✅ deny ✅ no_std ✅ wasm32 ✅ bare-metal ✅
