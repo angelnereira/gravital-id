@@ -10,7 +10,7 @@
 | Último gate cerrado | **G0** (2026-10-11) |
 | Próximo gate | G1 |
 | Hito siguiente | M1 · Núcleo offline (al cerrar G5) |
-| Última actualización | 2026-10-12 (F2 iniciada) |
+| Última actualización | 2026-10-12 (F2: T01–T03 hechas) |
 
 ## Gates
 
@@ -18,7 +18,7 @@
 |---|---|---|---|
 | G0 | **Cerrado** | 2026-10-11 | Especificaciones v0.1 completadas, ADRs 0001-0012 y 0016-0020 aceptados, 4 spikes concluidos viables, revisión cruzada F0.T21 aprobada |
 | G1 | En curso | — | Workspace, xtask, CI y gobierno del repositorio implementados en `feat/6-workspace-cargo` (#6, PR #22); pendiente merge del mantenedor |
-| G2 | En curso | — | F2 iniciada en `feat/24-types-newtypes`: F2.T01 y F2.T02 hechas (#24, #25) |
+| G2 | En curso | — | F2 iniciada en `feat/24-types-newtypes`: F2.T01, F2.T02 y F2.T03 hechas (#24, #25, #26) |
 | G2 … G17 | Pendiente | — | — |
 
 ## Tareas en curso
@@ -41,6 +41,7 @@
 | F1.T14 Mutación y Kani | #6 | OpenCode (agente) | Hecha | `cargo-mutants` + pruebas Kani de invariantes; job nocturno |
 | F2.T01 Newtypes validados | #24 | OpenCode (agente) | Hecha | `IssuerId`, `Kid`, `Vct`, `ProfileId`, `UnixTime`, `BundleVersion` + propiedades; rama `feat/24-types-newtypes` |
 | F2.T02 base64url estricto | #25 | OpenCode (agente) | Hecha | Sin relleno, canónica, acotada; fuzzing 6.9M ejecuciones; rama `feat/24-types-newtypes` |
+| F2.T03 JSON acotado | #26 | OpenCode (agente) | Hecha | Límites, duplicados rechazados, UTF-8 estricto, números acotados; diferencial vs serde_json + fuzzing; rama `feat/24-types-newtypes` |
 
 ## Bloqueos
 
@@ -61,18 +62,17 @@
 
 ## Última nota de traspaso
 
-### Traspaso — 2026-10-12 (cierre) — OpenCode (agente)
-- Tareas: F2.T01 (#24) y F2.T02 (#25) — rama `feat/24-types-newtypes`
-- Estado: hechas y pusheadas; #24/#25 con nota de trasparo
-- Hecho en esta sesión (F2):
-  - F2.T01: newtypes validados en `gravital-id-types` (`ids.rs`) con pruebas de propiedades (`proptest =1.5.0`, pin por MSRV).
-  - F2.T02: base64url estricta en `gravital-id-codec` con objetivo de fuzzing de canonicalidad (6.9M ejecuciones sin fallos).
-  - Corregidos 2 bugs propios cazados por las pruebas antes de commitear (guion inicial aceptado por el validador; máscaras ausentes en el encoder).
-  - Job MSRV de CI endurecido a `--all-targets` (detecta incompatibilidades en dev-dependencies).
+### Traspaso — 2026-10-12 (cierre F2.T03) — OpenCode (agente)
+- Tareas: F2.T03 (#26) — rama `feat/24-types-newtypes` (añade a F2.T01/T02 ya entregados)
+- Estado: hecha y pusheada; #26 con nota de traspaso
+- Hecho en esta sesión:
+  - Lector JSON acotado y estricto en `gravital-id-codec` (`json.rs`): límites, duplicados (REQ-CRED-009), UTF-8 estricto y números acotados.
+  - Prueba diferencial frente a `serde_json` (referencia solo en tests) + fuzzing (4.4M ejecuciones).
+  - 3 bugs propios cazados por las pruebas y corregidos antes de commitear.
 - Pendiente (siguiente paso concreto):
-  - F2.T03 JSON acotado (#26): límites de tamaño/profundidad/elementos, rechazo de miembros duplicados (REQ-CRED-009), UTF-8 estricto, fuzzing.
-  - Merge de PR #22 (F1) y apertura del PR de `feat/24-types-newtypes` cuando el mantenedor revise.
-- Bugs/issues abiertos: #7 (decisión Unicode-3.0), #8 (spec-gap PROJECT_STRUCTURE §7), #23 (spec-gap low-S).
-- Decisiones tomadas: la verificación **no** exige low-S (rango 3: ARCHITECTURE/REQ-KEY-010) mientras se resuelve #23; `proptest` fijado por MSRV.
-- Riesgos o dudas: los jobs de CI no arrancan por el bloqueo de facturación de la cuenta de GitHub; toda la evidencia de F2.T01/T02 es local.
-- Comprobaciones locales: fmt ✅ clippy ✅ tests ✅ (54 en workspace) layers ✅ trace ✅ check-error-codes ✅ fuzz ✅
+  - F2.T04 CBOR acotado (#27): límites equivalentes y rechazo de codificaciones no deterministas donde el protocolo lo exija.
+  - F2.T05 DEFLATE + Base45 (#28); F2.T06 CryptoBackend (#29).
+- Bugs/issues abiertos: #7, #8, #23 (decisiones/spec-gaps del mantenedor).
+- Decisiones tomadas: `serde_json` solo como referencia en pruebas; parser propio `no_std` en producción (INV-01); límites de JSON documentados como cota de implementación del perfil.
+- Riesgos o dudas: CI sigue sin arrancar (facturación de la cuenta); todas las comprobaciones son locales.
+- Comprobaciones locales: fmt ✅ clippy ✅ tests ✅ (71) layers ✅ trace ✅ fuzz ✅ no_std ✅ wasm32 ✅
