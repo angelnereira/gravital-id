@@ -15,10 +15,17 @@ arbitrary = { version = "1", features = ["derive"] }
 gravital-id-types = { path = "../crates/gravital-id-types" }
 gravital-id-codec = { path = "../crates/gravital-id-codec" }
 gravital-id-crypto = { path = "../crates/gravital-id-crypto" }
+gravital-id-credential = { path = "../crates/gravital-id-credential" }
 
 # Workspace independiente del principal: cargo-fuzz gestiona aquí sus perfiles.
 [workspace]
 members = ["."]
+
+[[bin]]
+name = "sd_jwt_parser"
+path = "fuzz_targets/sd_jwt_parser.rs"
+test = false
+doc = false
 
 [[bin]]
 name = "gid_error_format"
