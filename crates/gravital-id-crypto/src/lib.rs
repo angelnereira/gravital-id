@@ -17,6 +17,7 @@ pub mod jwk;
 pub mod kdf;
 pub mod mac;
 pub mod rng;
+pub mod secret;
 pub mod sha;
 pub mod sign;
 
@@ -31,6 +32,9 @@ pub use jwk::{jwk_thumbprint_base64url, jwk_thumbprint_sha256, JwkEcP256, ES256_
 pub use kdf::{hkdf_extract_sha256, hkdf_sha256, MAX_HKDF_OUTPUT_LEN};
 pub use mac::{constant_time_eq, hmac_sha256, hmac_sha256_verify, HMAC_OUTPUT_LEN};
 pub use rng::Rng;
+pub use secret::{
+    AeadKeyBytes, HmacKeyBytes, SecretBytes, SecretKeyBytes, SecretVec, SharedSecret,
+};
 pub use sha::{sha256, Sha256Hasher, SHA256_OUTPUT_LEN};
 pub use sign::{
     der_to_p1363, p1363_to_der, sign_es256, verify_es256, verify_es256_der, ES256_PUBLIC_KEY_LEN,
