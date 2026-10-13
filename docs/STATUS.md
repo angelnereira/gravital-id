@@ -10,7 +10,7 @@
 | Último gate cerrado | **G0** (2026-10-11) |
 | Próximo gate | **G2** (Revisión y cierre formal de Fase F2) |
 | Hito siguiente | M1 · Núcleo offline (al cerrar G5) |
-| Última actualización | 2026-10-13 (F3: T03 completada — Parseo y verificación SD-JWT RFC 9901) |
+| Última actualización | 2026-10-13 (F3: T04 completada — Key Binding JWT RFC 9901) |
 
 ## Gates
 
@@ -54,6 +54,7 @@
 | F3.T01 ADR-0015 construir o reutilizar | #39 | Antigravity (agente) | Hecha | Evaluación de crates SD-JWT existentes; redactado `ADR-0015` propuesto; decisión Opción B (implementar en L2 `gravital-id-credential`); rama `docs/39-adr-0015-sd-jwt` |
 | F3.T02 Emisión SD-JWT | #41 | Antigravity (agente) | Hecha | Emisión RFC 9901 en `gravital-id-credential` (objetos/arrays, sal ≥ 128b, decoys, anidación, serialización compacta y firma ES256 vía `KeyStore`); rama `feat/41-sd-jwt-emission` |
 | F3.T03 Parseo y verificación SD-JWT | #43 | Antigravity (agente) | Hecha | Parseo RFC 9901 en `gravital-id-credential` (verificación de digests, rechazo de duplicados, claims reservados, huérfanos, colisión de claves, reconstrucción, firma ES256, límites DoS y fuzzing); rama `feat/43-sd-jwt-parsing-verification` |
+| F3.T04 KB-JWT | #45 | Antigravity (agente) | Hecha | Creación y verificación de KB-JWT (`typ: kb+jwt`, `nonce`, `aud`, `iat`, `sd_hash`; firma delegada al `KeyStore`; REQ-PRES-002, REQ-CRED-001, REQ-VER-003); rama `feat/45-kb-jwt` |
 
 ## Bloqueos
 
@@ -98,23 +99,21 @@
 
 ## Última nota de traspaso
 
-### Traspaso — 2026-10-13 (F3.T03: Parseo y verificación SD-JWT) — Antigravity (agente)
-- Tarea: F3.T03 — #43 — rama `feat/43-sd-jwt-parsing-verification`
+### Traspaso — 2026-10-13 (F3.T04: KB-JWT) — Antigravity (agente)
+- Tarea: F3.T04 — #45 — rama `feat/45-kb-jwt`
 - Estado: **lista para revisión / hecha**
 - Hecho en esta sesión:
-  - F3.T03 (#43):
-    - Implementado módulo `parser.rs` con tipos `ParsedSdJwt` y `SdJwtLimits` (REQ-VER-008).
-    - Parseo estricto del formato compacto RFC 9901 (`<jwt>~<d1>~...~<dn>~[<kb_jwt>]`) con límites acotados de tamaño de entrada, número de divulgaciones y profundidad de recursión.
-    - Verificación biunívoca de digests SHA-256 base64url contra entradas en `_sd` y `...`.
-    - Detección y rechazo fail-closed de: divulgaciones duplicadas, digests duplicados en `_sd`, claims reservados (`_sd`, `...`), colisiones de nombres de miembros en objetos (REQ-CRED-009) y divulgaciones huérfanas/no referenciadas (REQ-VER-003).
-    - Reconstrucción determinista y recursiva del objeto JSON de claims revelados (sustituyendo placeholders en objetos y arrays, omitiendo decoys/claims no revelados, y removiendo metadatos `_sd` y `_sd_alg`).
-    - Verificación de firma JWS ES256 contra clave pública JWK EC P-256 (`verify_issuer_signature`).
-    - Creada suite de pruebas de integración `tests/sd_jwt_parsing_verification.rs` con 11 pruebas exhaustivas (nominales, subconjuntos de presentación selectiva, y matriz completa de rechazo negativo).
-    - Creado objetivo de fuzzing `sd_jwt_parser` en `fuzz/fuzz_targets/sd_jwt_parser.rs` integrado en `fuzz/Cargo.toml` y `.github/workflows/fuzz.yml` (REQ-SEC-005).
-    - Actualizado `crates/gravital-id-credential/README.md` con documentación de parseo/verificación y ejemplos.
+  - F3.T04 (#45):
+    - Implementado módulo `kb.rs` en `gravital-id-credential` con soporte completo de Key Binding JWT (RFC 9901 §6, REQ-PRES-002, REQ-CRED-001, REQ-VER-003).
+    - Implementado cálculo estricto de `sd_hash` (`calculate_sd_hash`) sobre el prefijo de la presentación terminado en `~` (RFC 9901 §6.2) con digest SHA-256 base64url.
+    - Implementado `KbIssuer`: emisión de KB-JWT con cabecera `typ: kb+jwt`, `alg: ES256` y claims canónicos (`iat`, `aud`, `nonce`, `sd_hash`), delegando la firma a `KeyStore::sign` con `KeyHandle<HolderBinding>` (INV-03, REQ-KEY-001).
+    - Implementado `KbJwtVerifier`: verificación fail-closed de formato, cabeceras (`typ: kb+jwt`, `alg: ES256`, prohibiendo `none` y no soportados), coincidencia estricta de `aud`, `nonce` y `sd_hash`, políticas de sesgo de reloj y frescura (`KbVerificationPolicy` sobre `UnixTime` inyectado, INV-11), y verificación de firma criptográfica del titular contra JWK EC P-256.
+    - Integrado método `ParsedSdJwt::verify_key_binding` y exposición del prefijo SD-JWT en `ParsedSdJwt::sd_jwt_prefix()`.
+    - Creada suite de pruebas de integración `tests/kb_jwt_integration.rs` con 6 pruebas exhaustivas (flujo nominal de presentación con KB-JWT, rechazo por manipulación de `sd_hash`, mismatch de `aud`/`nonce`, clave pública de titular errónea, omisión de KB-JWT y rechazo de `typ`/`alg` inválidos).
+    - Actualizado `crates/gravital-id-credential/README.md` y `CHANGELOG.md` con documentación y ejemplos de uso de KB-JWT.
 - Pendiente (siguiente paso concreto):
-  - Iniciar tarea F3.T04: `KB-JWT` (Creación y verificación: `typ: kb+jwt`, `nonce`, `aud`, `iat`, `sd_hash`; firma delegada al `KeyStore`; REQ-PRES-002).
+  - Iniciar tarea F3.T05: `Capa SD-JWT VC` (`typ: dc+sd-jwt`, `vct`, `cnf.jwk`, claim `status`, validez `iat`/`nbf`/`exp`, `iss`; algoritmo list verificación y rechazo de `none`; REQ-CRED-001, REQ-CRED-007, REQ-CRED-008).
 - Bugs/issues abiertos durante la sesión: Ninguno.
-- Decisiones tomadas (con enlace a ADR/issue): Se aplican cotas estrictas de DoS `SdJwtLimits` (REQ-VER-008) y validación fail-closed de integridad de divulgaciones (REQ-VER-003).
+- Decisiones tomadas (con enlace a ADR/issue): Se delega la firma del titular al `KeyStore` con clave de propósito titular `HolderBinding` cumpliendo estrictamente INV-03.
 - Riesgos o dudas: Ninguno.
-- Comprobaciones locales: fmt ✅ clippy ✅ tests ✅ layers ✅ trace ✅ doc ✅ deny ✅ no_std ✅ wasm32 ✅ bare-metal ✅
+- Comprobaciones locales: fmt ✅ clippy ✅ tests ✅ layers ✅ trace ✅ doc ✅ deny ✅ audit ✅ no_std ✅ wasm32 ✅ bare-metal ✅

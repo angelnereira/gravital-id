@@ -10,6 +10,7 @@
 //! - **REQ-CRED-002:** Sal de ≥ 128 bits de CSPRNG para cada divulgación.
 //! - **REQ-CRED-003:** Digests señuelo (decoys) configurables por perfil en objetos y arrays.
 //! - **REQ-CRED-009:** Rechazo de miembros duplicados en JSON y colisiones de claims divulgados.
+//! - **REQ-PRES-002:** Key Binding JWT (KB-JWT) con nonce, aud, iat y sd_hash en presentaciones.
 //! - **REQ-VER-003:** Fail-closed: ante cualquier error o ambigüedad no se acepta.
 //! - **REQ-VER-008:** Límites acotados de tamaño, profundidad y número de elementos.
 
@@ -22,6 +23,7 @@ pub mod decoy;
 pub mod disclosure;
 pub mod issuer;
 pub mod json_canonical;
+pub mod kb;
 pub mod parser;
 pub mod salt;
 
@@ -31,6 +33,10 @@ pub use issuer::{
     EmittedArray, EmittedObject, IssuedSdJwt, JwsHeader, SdArrayBuilder, SdIssuer, SdObjectBuilder,
 };
 pub use json_canonical::to_canonical_json;
+pub use kb::{
+    calculate_sd_hash, KbIssuer, KbJwtClaims, KbJwtVerifier, KbVerificationPolicy, KB_JWT_ALG,
+    KB_JWT_TYP,
+};
 pub use parser::{
     ParsedSdJwt, SdJwtLimits, DEFAULT_MAX_DISCLOSURES, DEFAULT_MAX_ELEMENTS_PER_CONTAINER,
     DEFAULT_MAX_RECURSION_DEPTH, DEFAULT_MAX_SD_JWT_INPUT_BYTES,

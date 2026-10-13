@@ -15,9 +15,10 @@ use core::str;
 use gravital_id_codec::base64url;
 use gravital_id_codec::json::{parse_bytes, Limits as JsonLimits, Value};
 use gravital_id_crypto::{verify_es256_jwk, JwkEcP256, ES256_SIGNATURE_LEN};
-use gravital_id_types::{ErrorCode, GidError};
+use gravital_id_types::{ErrorCode, GidError, UnixTime};
 
 use crate::disclosure::{Disclosure, DisclosureDigest, DisclosureKind};
+use crate::kb::{KbJwtClaims, KbVerificationPolicy};
 
 /// Tamaño máximo de entrada en bytes por defecto (64 KiB, CRYPTO_PROFILES §5.2).
 pub const DEFAULT_MAX_SD_JWT_INPUT_BYTES: usize = 64 * 1024;
@@ -66,6 +67,7 @@ pub struct ParsedSdJwt {
     reconstructed_claims: Value,
     disclosures: Vec<Disclosure>,
     kb_jwt: Option<String>,
+    sd_jwt_prefix: String,
 }
 
 impl ParsedSdJwt {
@@ -116,16 +118,18 @@ impl ParsedSdJwt {
             ));
         };
 
-        let (disclosure_strs, kb_jwt) = if last_part.is_empty() {
+        let (disclosure_strs, kb_jwt, sd_jwt_prefix) = if last_part.is_empty() {
             // Termina en '~': no hay KB-JWT
             let end_idx = parts.len().saturating_sub(1);
             let slice = parts.get(1..end_idx).unwrap_or(&[]);
-            (slice, None)
+            (slice, None, compact.to_string())
         } else {
             // No termina en '~': la última parte es el KB-JWT
             let end_idx = parts.len().saturating_sub(1);
             let slice = parts.get(1..end_idx).unwrap_or(&[]);
-            (slice, Some(last_part))
+            let prefix_len = compact.len().saturating_sub(last_part.len());
+            let prefix = compact.get(..prefix_len).unwrap_or(compact).to_string();
+            (slice, Some(last_part), prefix)
         };
 
         // Valida el formato del KB-JWT si está presente
@@ -363,6 +367,7 @@ impl ParsedSdJwt {
             reconstructed_claims,
             disclosures,
             kb_jwt: kb_jwt.map(ToString::to_string),
+            sd_jwt_prefix,
         })
     }
 
@@ -423,6 +428,39 @@ impl ParsedSdJwt {
     /// Verifica la firma JWS del emisor contra una clave pública JWK EC P-256.
     pub fn verify_issuer_signature(&self, jwk: &JwkEcP256) -> Result<(), GidError> {
         verify_es256_jwk(jwk, self.signing_input.as_bytes(), &self.signature)
+    }
+
+    /// Retorna el prefijo exacto de la presentación SD-JWT hasta el delimitador `~` final.
+    #[must_use]
+    pub fn sd_jwt_prefix(&self) -> &str {
+        &self.sd_jwt_prefix
+    }
+
+    /// Verifica exhaustivamente el Key Binding JWT de la presentación (RFC 9901 §6, REQ-PRES-002, REQ-VER-003).
+    pub fn verify_key_binding(
+        &self,
+        expected_aud: &str,
+        expected_nonce: &str,
+        holder_jwk: &JwkEcP256,
+        current_time: UnixTime,
+        policy: &KbVerificationPolicy,
+    ) -> Result<KbJwtClaims, GidError> {
+        let Some(kb) = self.kb_jwt() else {
+            return Err(GidError::new(
+                ErrorCode::KeyBindingFailed,
+                "presentation does not contain a Key Binding JWT",
+            ));
+        };
+
+        crate::kb::KbJwtVerifier::verify(
+            kb,
+            &self.sd_jwt_prefix,
+            expected_aud,
+            expected_nonce,
+            holder_jwk,
+            current_time,
+            policy,
+        )
     }
 }
 
