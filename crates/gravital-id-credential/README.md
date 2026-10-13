@@ -36,22 +36,40 @@ Emisión, validación y verificación de credenciales SD-JWT y SD-JWT VC para Gr
 - **Verificación criptográfica:** Comprobación de firma JWS ES256 del emisor contra una clave pública JWK EC P-256 (`verify_issuer_signature`).
 - **Límites de complejidad (`SdJwtLimits`):** Cotas para tamaño de entrada, número de divulgaciones, profundidad de recursión y elementos por contenedor (REQ-VER-008).
 
+## Funcionalidades de Key Binding JWT (RFC 9901 §6)
+
+- **Cálculo de `sd_hash` (`calculate_sd_hash`):** Digest SHA-256 base64url calculado sobre el prefijo exacto de la presentación (`<jwt>~<d1>~...~<dn>~`) según RFC 9901 §6.2.
+- **Emisión de KB-JWT (`KbIssuer`):**
+  - Generación de JWT con cabecera `{"alg":"ES256","typ":"kb+jwt"}` y claims tipados (`iat`, `aud`, `nonce`, `sd_hash`).
+  - Firma delegada al `KeyStore` con clave de propósito titular (`KeyHandle<HolderBinding>`), garantizando INV-03.
+  - Creación de presentación completa adjuntando el KB-JWT al final del prefijo: `<prefix><kb_jwt>`.
+- **Verificación de Key Binding (`KbJwtVerifier`, `ParsedSdJwt::verify_key_binding`):**
+  - Verificación fail-closed de cabecera (`typ: kb+jwt`, `alg: ES256`, rechazando `none`).
+  - Validación del claim `sd_hash` contra el digest del prefijo presentado.
+  - Validación de coincidencia de `aud` y `nonce` esperados por el verificador.
+  - Política de frescura y sesgo de reloj (`KbVerificationPolicy` con `clock_skew_seconds` y `max_age_seconds`) evaluada sobre el timestamp inyectado (`UnixTime`).
+  - Verificación criptográfica de firma ES256 contra la clave pública del titular (`JwkEcP256`).
+
 ## Ejemplo de uso
 
 ```rust
 use gravital_id_codec::json::Value;
 use gravital_id_credential::{
-    JwsHeader, ParsedSdJwt, SdIssuer, SdObjectBuilder,
+    calculate_sd_hash, JwsHeader, KbIssuer, KbVerificationPolicy, ParsedSdJwt, SdIssuer,
+    SdObjectBuilder,
 };
-use gravital_id_keys::{IssuerSigning, KeyStore, SoftwareKeyStore};
+use gravital_id_keys::{HolderBinding, IssuerSigning, KeyStore, SoftwareKeyStore};
 use gravital_id_testkit::SeededRng;
+use gravital_id_types::UnixTime;
 
 let rng = SeededRng::new(42);
 let mut key_store = SoftwareKeyStore::new(rng);
-let handle = key_store.generate_key::<IssuerSigning>().unwrap();
-let jwk = key_store.public_key(&handle).unwrap();
+let issuer_handle = key_store.generate_key::<IssuerSigning>().unwrap();
+let issuer_jwk = key_store.public_key(&issuer_handle).unwrap();
+let holder_handle = key_store.generate_key::<HolderBinding>().unwrap();
+let holder_jwk = key_store.public_key(&holder_handle).unwrap();
 
-// Emisión
+// 1. Emisión por parte del Emisor
 let rng_emit = SeededRng::new(100);
 let builder = SdObjectBuilder::new()
     .add_plain_claim("iss", Value::String("https://issuer.example.com".into()))
@@ -61,16 +79,37 @@ let builder = SdObjectBuilder::new()
 let issued = SdIssuer::issue_signed(
     builder,
     &key_store,
-    &handle,
+    &issuer_handle,
     JwsHeader::default(),
     &rng_emit,
 ).unwrap();
 
-let compact = issued.to_compact_serialization();
+let credential_compact = issued.to_compact_serialization();
 
-// Parseo, verificación y reconstrucción
-let parsed = ParsedSdJwt::parse(compact).unwrap();
-parsed.verify_issuer_signature(&jwk).unwrap();
+// 2. Creación de presentación con Key Binding por parte del Titular
+let aud = "https://verifier.example.com";
+let nonce = "session-nonce-xyz-123";
+let now = UnixTime::from_seconds(1_700_000_000);
+
+let presentation = KbIssuer::create_presentation(
+    credential_compact,
+    aud,
+    nonce,
+    now,
+    &key_store,
+    &holder_handle,
+).unwrap();
+
+// 3. Verificación de la presentación por parte del Verificador
+let parsed = ParsedSdJwt::parse(&presentation).unwrap();
+parsed.verify_issuer_signature(&issuer_jwk).unwrap();
+
+let kb_policy = KbVerificationPolicy::default();
+let kb_claims = parsed
+    .verify_key_binding(aud, nonce, &holder_jwk, now, &kb_policy)
+    .unwrap();
+assert_eq!(kb_claims.aud, aud);
+assert_eq!(kb_claims.nonce, nonce);
 
 let claims = parsed.reconstructed_claims();
 assert_eq!(claims.member("given_name"), Some(&Value::String("Alice".into())));
