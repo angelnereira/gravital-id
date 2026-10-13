@@ -28,6 +28,7 @@ jobs:
           base45_strict,
           deflate_bounded,
           jwk_parser,
+          sd_jwt_parser,
         ]
     steps:
       - uses: actions/checkout@v4

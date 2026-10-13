@@ -10,7 +10,7 @@
 | Último gate cerrado | **G0** (2026-10-11) |
 | Próximo gate | **G2** (Revisión y cierre formal de Fase F2) |
 | Hito siguiente | M1 · Núcleo offline (al cerrar G5) |
-| Última actualización | 2026-10-13 (F3: T02 completada — Emisión SD-JWT RFC 9901) |
+| Última actualización | 2026-10-13 (F3: T03 completada — Parseo y verificación SD-JWT RFC 9901) |
 
 ## Gates
 
@@ -53,6 +53,7 @@
 | F2.T12 Benchmarks base | #35 | Antigravity (agente) | Hecha | Suite criterion `crypto_primitives` en `gravital-id-crypto` (ES256, SHA-256, XChaCha20, HPKE); línea base registrada en `STATUS.md` (REQ-PERF-001); cobertura `gravital-id-crypto` al 92,46 %; rama `feat/24-types-newtypes` |
 | F3.T01 ADR-0015 construir o reutilizar | #39 | Antigravity (agente) | Hecha | Evaluación de crates SD-JWT existentes; redactado `ADR-0015` propuesto; decisión Opción B (implementar en L2 `gravital-id-credential`); rama `docs/39-adr-0015-sd-jwt` |
 | F3.T02 Emisión SD-JWT | #41 | Antigravity (agente) | Hecha | Emisión RFC 9901 en `gravital-id-credential` (objetos/arrays, sal ≥ 128b, decoys, anidación, serialización compacta y firma ES256 vía `KeyStore`); rama `feat/41-sd-jwt-emission` |
+| F3.T03 Parseo y verificación SD-JWT | #43 | Antigravity (agente) | Hecha | Parseo RFC 9901 en `gravital-id-credential` (verificación de digests, rechazo de duplicados, claims reservados, huérfanos, colisión de claves, reconstrucción, firma ES256, límites DoS y fuzzing); rama `feat/43-sd-jwt-parsing-verification` |
 
 ## Bloqueos
 
@@ -97,21 +98,23 @@
 
 ## Última nota de traspaso
 
-### Traspaso — 2026-10-13 (F3.T02: Emisión SD-JWT) — Antigravity (agente)
-- Tarea: F3.T02 — #41 — rama `feat/41-sd-jwt-emission`
+### Traspaso — 2026-10-13 (F3.T03: Parseo y verificación SD-JWT) — Antigravity (agente)
+- Tarea: F3.T03 — #43 — rama `feat/43-sd-jwt-parsing-verification`
 - Estado: **lista para revisión / hecha**
 - Hecho en esta sesión:
-  - F3.T02 (#41):
-    - Implementado módulo `salt.rs` con validación estricta de entropía $\ge 128$ bits (`MIN_SALT_BYTES = 16`, `// Verifies: REQ-CRED-002`) y rechazo con `ErrorCode::InsufficientEntropy`.
-    - Implementado módulo `json_canonical.rs` para serialización JSON canónica y compacta (RFC 8785) con ordenación lexicográfica de claves de objetos y escapado estricto.
-    - Implementado módulo `decoy.rs` con generación de digests señuelo pseudo-aleatorios indistinguibles y elementos señuelo de array `{"...": "<decoy_digest>"}` (`// Verifies: REQ-CRED-003`).
-    - Implementado módulo `disclosure.rs` con `Disclosure`, `DisclosureDigest`, `DisclosureKind` (objetos y arrays), cálculo de digest SHA-256 en base64url, y parseo con validación de nombres de claim reservados (`_sd`, `...`).
-    - Implementado módulo `issuer.rs` con builders declarativos `SdObjectBuilder`, `SdArrayBuilder`, `SdIssuer`, y `IssuedSdJwt`: ordenación lexicográfica de digests `_sd`, inyección automática de `_sd_alg: "sha-256"`, soporte recursivo de objetos/arrays anidados, firma JWS ES256 delegada a `KeyStore` (INV-03), y serialización compacta `<jwt>~<d1>~...~<dn>~`.
-    - Creada suite de pruebas de integración `tests/sd_jwt_emission.rs` con verificación de casos nominales, anidados, señuelos, firma/verificación ES256 y 7 casos de prueba negativos.
-    - Actualizado `crates/gravital-id-credential/README.md` con documentación y ejemplo de uso.
+  - F3.T03 (#43):
+    - Implementado módulo `parser.rs` con tipos `ParsedSdJwt` y `SdJwtLimits` (REQ-VER-008).
+    - Parseo estricto del formato compacto RFC 9901 (`<jwt>~<d1>~...~<dn>~[<kb_jwt>]`) con límites acotados de tamaño de entrada, número de divulgaciones y profundidad de recursión.
+    - Verificación biunívoca de digests SHA-256 base64url contra entradas en `_sd` y `...`.
+    - Detección y rechazo fail-closed de: divulgaciones duplicadas, digests duplicados en `_sd`, claims reservados (`_sd`, `...`), colisiones de nombres de miembros en objetos (REQ-CRED-009) y divulgaciones huérfanas/no referenciadas (REQ-VER-003).
+    - Reconstrucción determinista y recursiva del objeto JSON de claims revelados (sustituyendo placeholders en objetos y arrays, omitiendo decoys/claims no revelados, y removiendo metadatos `_sd` y `_sd_alg`).
+    - Verificación de firma JWS ES256 contra clave pública JWK EC P-256 (`verify_issuer_signature`).
+    - Creada suite de pruebas de integración `tests/sd_jwt_parsing_verification.rs` con 11 pruebas exhaustivas (nominales, subconjuntos de presentación selectiva, y matriz completa de rechazo negativo).
+    - Creado objetivo de fuzzing `sd_jwt_parser` en `fuzz/fuzz_targets/sd_jwt_parser.rs` integrado en `fuzz/Cargo.toml` y `.github/workflows/fuzz.yml` (REQ-SEC-005).
+    - Actualizado `crates/gravital-id-credential/README.md` con documentación de parseo/verificación y ejemplos.
 - Pendiente (siguiente paso concreto):
-  - Iniciar tarea F3.T03: `Parseo y verificación SD-JWT` (RFC 9901: separación de componentes, verificación de digests de divulgaciones contra el JWT, detección de digests duplicados, reconstrucción del objeto JSON de claims divulgados, cotas de tamaño y DoS; REQ-CRED-001, REQ-CRED-009).
+  - Iniciar tarea F3.T04: `KB-JWT` (Creación y verificación: `typ: kb+jwt`, `nonce`, `aud`, `iat`, `sd_hash`; firma delegada al `KeyStore`; REQ-PRES-002).
 - Bugs/issues abiertos durante la sesión: Ninguno.
-- Decisiones tomadas (con enlace a ADR/issue): Se utiliza el trait `KeyStore` para la firma de credenciales asegurando que las claves privadas nunca cruzan FFI ni se custodian en memoria innecesariamente (INV-03).
+- Decisiones tomadas (con enlace a ADR/issue): Se aplican cotas estrictas de DoS `SdJwtLimits` (REQ-VER-008) y validación fail-closed de integridad de divulgaciones (REQ-VER-003).
 - Riesgos o dudas: Ninguno.
 - Comprobaciones locales: fmt ✅ clippy ✅ tests ✅ layers ✅ trace ✅ doc ✅ deny ✅ no_std ✅ wasm32 ✅ bare-metal ✅
