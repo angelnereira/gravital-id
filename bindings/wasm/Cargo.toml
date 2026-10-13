@@ -1,0 +1,32 @@
+[package]
+name = "gravital-id-wasm"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.85.0"
+license = "MIT OR Apache-2.0"
+authors = ["Angel Nereira <contact@angelnereira.com>", "Gravital ID Contributors"]
+repository = "https://github.com/angelnereira/gravital-id"
+homepage = "https://github.com/angelnereira/gravital-id"
+readme = "README.md"
+description = "Binding WASM (navegador y Node) del SDK de Gravital ID."
+publish = false
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+# Excluido del workspace principal: depende de wasm-bindgen y solo compila para
+# wasm32-unknown-unknown (F1.T13, PROJECT_STRUCTURE.md §2).
+[workspace]
+
+[dependencies]
+gravital-id-sdk = { path = "../../crates/gravital-id-sdk" }
+wasm-bindgen = "0.2.129"
+
+[dev-dependencies]
+wasm-bindgen-test = "0.3.79"
+
+[profile.release]
+# wasm32-unknown-unknown usa panic=abort: la estrategia de instancia envenenada
+# se documenta en ARCHITECTURE.md §3 y se implementa en F9.T03.
+panic = "abort"
+opt-level = "z"

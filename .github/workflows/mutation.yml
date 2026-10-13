@@ -1,0 +1,35 @@
+name: Mutation and Kani
+
+on:
+  schedule:
+    - cron: "41 3 * * 2,5" # martes y viernes
+  workflow_dispatch:
+
+jobs:
+  cargo-mutants:
+    name: Mutación (cargo-mutants)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.85.0"
+      - uses: Swatinem/rust-cache@v2
+      - uses: taiki-e/install-action@cargo-mutants
+      # Acotado (F1.T14): catálogo de errores y reglas de xtask. Las reglas de
+      # rechazo de credential/status/trust/verifier se mutan desde F4 (F4.T09).
+      - name: Mutantes sobre gravital-id-types
+        run: cargo mutants --no-shuffle --package gravital-id-types
+      - name: Mutantes sobre xtask (reglas de capas y catálogo)
+        run: cargo mutants --no-shuffle --package xtask
+
+  kani:
+    name: Kani (comprobación acotada)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: model-checking/kani-github-action@v1.1
+        with:
+          # Pruebas sobre los crates con invariantes demostrables en F1
+          # (PROJECT_STRUCTURE.md §8; las de codec llegan en F2).
+          command: cargo kani --package gravital-id-types

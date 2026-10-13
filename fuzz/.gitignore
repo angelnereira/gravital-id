@@ -1,0 +1,4 @@
+# Artefactos de ejecución local de cargo-fuzz (regenerables).
+/corpus/
+/artifacts/
+/target/

@@ -1,0 +1,22 @@
+# CODEOWNERS — Rutas sensibles que exigen revisión humana obligatoria (F1.T12, AGENTS.md §6).
+# En régimen de mantenedor único (F0/F1), @angelnereira revisa y decide directamente;
+# ningún agente aprueba unilateralmente decisiones de arquitectura ni relaja invariantes.
+
+# Criptografía, credenciales, confianza y verificación (invariantes núcleo).
+/crates/gravital-id-crypto/        @angelnereira
+/crates/gravital-id-keys/          @angelnereira
+/crates/gravital-id-credential/    @angelnereira
+/crates/gravital-id-trust/         @angelnereira
+/crates/gravital-id-verifier/      @angelnereira
+/crates/gravital-id-status/        @angelnereira
+
+# Contratos, especificaciones, gobierno del repositorio y CI.
+/contracts/                        @angelnereira
+/docs/specs/                       @angelnereira
+/docs/adr/                         @angelnereira
+/docs/REQUIREMENTS.md              @angelnereira
+/docs/ARCHITECTURE.md              @angelnereira
+/AGENTS.md                         @angelnereira
+/.github/                          @angelnereira
+/xtask/                            @angelnereira
+/conformance/vectors/              @angelnereira

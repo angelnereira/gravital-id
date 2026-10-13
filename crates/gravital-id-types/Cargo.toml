@@ -1,0 +1,22 @@
+[package]
+name = "gravital-id-types"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+readme = "README.md"
+description = "Identificadores validados, marcas de tiempo y tipos fundamentales del protocolo Gravital ID."
+
+[lints]
+workspace = true
+
+[dev-dependencies]
+# Benchmarks de ejemplo (F1.T11); los de criptografía llegan en F2.T12.
+criterion = { version = "0.5", default-features = false }
+
+[[bench]]
+name = "error_catalog"
+harness = false

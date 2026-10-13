@@ -1,0 +1,44 @@
+name: Docs
+
+on:
+  pull_request:
+    paths:
+      - "docs/**"
+      - "*.md"
+      - ".github/workflows/docs.yml"
+      - ".markdownlint-cli2.jsonc"
+  push:
+    branches: [main]
+    paths:
+      - "docs/**"
+      - "*.md"
+  workflow_dispatch:
+
+jobs:
+  markdownlint:
+    name: Lint de Markdown
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: npx --yes markdownlint-cli2@0.14.0 "**/*.md" "#target" "#spikes"
+
+  link-check:
+    name: Enlaces rotos
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: lycheeverse/lychee-action@v2
+        with:
+          args: >-
+            --no-progress
+            --exclude-path target
+            --exclude-path spikes
+            "./**/*.md"
+          fail: true
+
+  req-ids:
+    name: IDs de requisitos válidos (REQ-DOC-003)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash .github/scripts/check-req-ids.sh

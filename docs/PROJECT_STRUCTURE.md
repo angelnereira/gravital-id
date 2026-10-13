@@ -21,7 +21,7 @@ Los artefactos se **publican por separado** (crates, paquetes por lenguaje, imá
 ## 2. Árbol del repositorio
 
 ```text
-pip/
+gravital-id/
 ├── AGENTS.md                     # Reglas para agentes y desarrolladores (obligatorio leer)
 ├── CLAUDE.md                     # Importa AGENTS.md (compatibilidad con herramientas)
 ├── README.md                     # Puerta de entrada y mapa de documentación
@@ -75,26 +75,26 @@ pip/
 │   └── legal/                    # (F14) DPIA, análisis regulatorio (sin datos personales)
 │
 ├── crates/                       # Núcleo Rust (ver §3)
-│   ├── pip-types/
-│   ├── pip-codec/
-│   ├── pip-crypto/
-│   ├── pip-keys/
-│   ├── pip-credential/
-│   ├── pip-status/
-│   ├── pip-trust/
-│   ├── pip-verifier/
-│   ├── pip-holder/
-│   ├── pip-issuer/
-│   ├── pip-storage/
-│   ├── pip-storage-sqlite/       # Adaptador L5
-│   ├── pip-protocol/
-│   ├── pip-recovery/
-│   ├── pip-sync/
-│   ├── pip-transport-http/       # Adaptador L5
-│   ├── pip-ledger/
-│   ├── pip-ledger-evm/
-│   ├── pip-sdk/
-│   └── pip-testkit/              # Solo dev-dependency
+│   ├── gravital-id-types/
+│   ├── gravital-id-codec/
+│   ├── gravital-id-crypto/
+│   ├── gravital-id-keys/
+│   ├── gravital-id-credential/
+│   ├── gravital-id-status/
+│   ├── gravital-id-trust/
+│   ├── gravital-id-verifier/
+│   ├── gravital-id-holder/
+│   ├── gravital-id-issuer/
+│   ├── gravital-id-storage/
+│   ├── gravital-id-storage-sqlite/       # Adaptador L5
+│   ├── gravital-id-protocol/
+│   ├── gravital-id-recovery/
+│   ├── gravital-id-sync/
+│   ├── gravital-id-transport-http/       # Adaptador L5
+│   ├── gravital-id-ledger/
+│   ├── gravital-id-ledger-evm/
+│   ├── gravital-id-sdk/
+│   └── gravital-id-testkit/              # Solo dev-dependency
 │
 ├── bindings/
 │   ├── uniffi/                   # Crate pip-ffi-uniffi → Kotlin, Swift, Python
@@ -148,28 +148,28 @@ pip/
 
 | Crate | Capa | Responsabilidad | I/O | WASM | Depende de (internos) |
 |---|---|---|---|---|---|
-| `pip-types` | L1 | Identificadores (`IssuerId`, `Kid`, `Vct`, `ProfileId`), tiempo (`UnixTime`), versiones, newtypes validados | No | Sí | — |
-| `pip-codec` | L1 | base64url estricto, JSON con límites y rechazo de duplicados, CBOR con límites, DEFLATE con límite, Base45 | No | Sí | types |
-| `pip-crypto` | L1 | Trait `CryptoBackend`; ES256, SHA-256, HMAC, HKDF, XChaCha20-Poly1305, ECDH P-256, HPKE, JWK, thumbprints, comparación en tiempo constante | No | Sí | types, codec |
-| `pip-keys` | L1 | `KeyPurpose`, `KeyHandle`, trait `KeyStore` (firma y acuerdo de claves), normalización de firmas DER → P1363, keystore software (feature `software-keystore`) | No | Sí | types, crypto |
-| `pip-credential` | L2 | SD-JWT (RFC 9901), SD-JWT VC, KB-JWT, esquemas de perfil | No | Sí | types, codec, crypto, keys |
-| `pip-status` | L2 | Token Status List: parseo, verificación, índice, frescura | No | Sí | types, codec, crypto |
-| `pip-trust` | L2 | Raíz de confianza, trust bundle multi-firma, manifiesto de estado, anti-rollback, piso de tiempo, `Policy`, trait `VerifierStateStore` | No | Sí | types, codec, crypto, status |
-| `pip-verifier` | L3 | Pipeline de verificación con typestate, caché de nonces (sobre `VerifierStateStore`), `VerificationResult` | No | Sí | credential, status, trust |
-| `pip-holder` | L3 | Gestión de credenciales, lotes, preparar/confirmar presentaciones | No* | Sí | credential, keys, storage (trait) |
-| `pip-issuer` | L3 | Construcción y firma de credenciales, asignación de índices | No | Sí | credential, status, keys |
-| `pip-storage` | L3 | Trait `StorageBackend`, cifrado de sobre, índices ciegos, migraciones, backend en memoria | No | Sí | types, crypto |
-| `pip-recovery` | L3 | Respaldo, código de recuperación, Shamir, migración SAS, solicitudes de re-vinculación | No | Sí | crypto, keys, holder |
-| `pip-protocol` | L4 | Mensajes OID4VCI/OID4VP, perfil offline QR, sobres de operación | No | Sí | credential, verifier, holder, recovery |
-| `pip-sync` | L4 | Cola de operaciones y sincronización como máquina de estado sans-I/O; trait `Transport` (lo implementa L5 o el host) | No | Sí | protocol, trust, status, storage |
-| `pip-ledger` | L4 | Trait `LedgerAdapter`, tipos de eventos, reconstrucción pura del estado, derivación determinista del bundle, contraste bundle ↔ estado | No | Sí | trust, types |
-| `pip-storage-sqlite` | L5 | Backend SQLite (`rusqlite`) de `StorageBackend` y de `VerifierStateStore` | Sí | No | storage, trust |
-| `pip-transport-http` | L5 | Implementación por defecto de `Transport`; conduce las máquinas de `pip-sync` y `pip-protocol` | Sí | No (en web el host inyecta `fetch`) | sync |
-| `pip-ledger-evm` | L5 | Implementación EVM con `alloy`; solo servicios y modo completo | Sí | No | ledger |
-| `pip-sdk` | L6 | API pública estable; fachada sobre L1–L4; features `verifier`, `holder`, `issuer`, `sync`, `full-verification` | Según features | Sí (sin `full-verification`) | todos salvo testkit |
-| `pip-testkit` | — | `FixedClock`, `SeededRng`, emisores y bundles de prueba, generadores proptest | — | Sí | todos (solo dev) |
+| `gravital-id-types` | L1 | Identificadores (`IssuerId`, `Kid`, `Vct`, `ProfileId`), tiempo (`UnixTime`), versiones, newtypes validados | No | Sí | — |
+| `gravital-id-codec` | L1 | base64url estricto, JSON con límites y rechazo de duplicados, CBOR con límites, DEFLATE con límite, Base45 | No | Sí | types |
+| `gravital-id-crypto` | L1 | Trait `CryptoBackend`; ES256, SHA-256, HMAC, HKDF, XChaCha20-Poly1305, ECDH P-256, HPKE, JWK, thumbprints, comparación en tiempo constante | No | Sí | types, codec |
+| `gravital-id-keys` | L1 | `KeyPurpose`, `KeyHandle`, trait `KeyStore` (firma y acuerdo de claves), normalización de firmas DER → P1363, keystore software (feature `software-keystore`) | No | Sí | types, crypto |
+| `gravital-id-credential` | L2 | SD-JWT (RFC 9901), SD-JWT VC, KB-JWT, esquemas de perfil | No | Sí | types, codec, crypto, keys |
+| `gravital-id-status` | L2 | Token Status List: parseo, verificación, índice, frescura | No | Sí | types, codec, crypto |
+| `gravital-id-trust` | L2 | Raíz de confianza, trust bundle multi-firma, manifiesto de estado, anti-rollback, piso de tiempo, `Policy`, trait `VerifierStateStore` | No | Sí | types, codec, crypto, status |
+| `gravital-id-verifier` | L3 | Pipeline de verificación con typestate, caché de nonces (sobre `VerifierStateStore`), `VerificationResult` | No | Sí | credential, status, trust |
+| `gravital-id-holder` | L3 | Gestión de credenciales, lotes, preparar/confirmar presentaciones | No* | Sí | credential, keys, storage (trait) |
+| `gravital-id-issuer` | L3 | Construcción y firma de credenciales, asignación de índices | No | Sí | credential, status, keys |
+| `gravital-id-storage` | L3 | Trait `StorageBackend`, cifrado de sobre, índices ciegos, migraciones, backend en memoria | No | Sí | types, crypto |
+| `gravital-id-recovery` | L3 | Respaldo, código de recuperación, Shamir, migración SAS, solicitudes de re-vinculación | No | Sí | crypto, keys, holder |
+| `gravital-id-protocol` | L4 | Mensajes OID4VCI/OID4VP, perfil offline QR, sobres de operación | No | Sí | credential, verifier, holder, recovery |
+| `gravital-id-sync` | L4 | Cola de operaciones y sincronización como máquina de estado sans-I/O; trait `Transport` (lo implementa L5 o el host) | No | Sí | protocol, trust, status, storage |
+| `gravital-id-ledger` | L4 | Trait `LedgerAdapter`, tipos de eventos, reconstrucción pura del estado, derivación determinista del bundle, contraste bundle ↔ estado | No | Sí | trust, types |
+| `gravital-id-storage-sqlite` | L5 | Backend SQLite (`rusqlite`) de `StorageBackend` y de `VerifierStateStore` | Sí | No | storage, trust |
+| `gravital-id-transport-http` | L5 | Implementación por defecto de `Transport`; conduce las máquinas de `gravital-id-sync` y `gravital-id-protocol` | Sí | No (en web el host inyecta `fetch`) | sync |
+| `gravital-id-ledger-evm` | L5 | Implementación EVM con `alloy`; solo servicios y modo completo | Sí | No | ledger |
+| `gravital-id-sdk` | L6 | API pública estable; fachada sobre L1–L4; features `verifier`, `holder`, `issuer`, `sync`, `full-verification` | Según features | Sí (sin `full-verification`) | todos salvo testkit |
+| `gravital-id-testkit` | — | `FixedClock`, `SeededRng`, emisores y bundles de prueba, generadores proptest | — | Sí | todos (solo dev) |
 
-\* `pip-holder` usa el trait de almacenamiento; el I/O real lo hace el backend.
+\* `gravital-id-holder` usa el trait de almacenamiento; el I/O real lo hace el backend.
 
 Los crates L1–L3 son `#![no_std]` + `alloc` (ADR-0019): no pueden hacer I/O, leer el reloj ni obtener aleatoriedad del sistema, porque esas APIs no existen para ellos. Los crates L4 pueden usar `std`, pero son sans-I/O: exponen máquinas de estado que emiten efectos y consumen resultados. Solo L5 (adaptadores) y el host ejecutan I/O.
 
@@ -179,39 +179,39 @@ Los crates L1–L3 son `#![no_std]` + `alloc` (ADR-0019): no pueden hacer I/O, l
 
 1. Un crate solo puede depender de crates de **su capa o inferiores** según `xtask/layers.toml`.
 2. Los crates L1–L4 **no** pueden depender de: `tokio` ni otro runtime async, `reqwest`, `hyper`, `alloy`, `rusqlite`, ni de ningún crate de `services/`. Los crates L1–L3 son además `#![no_std]`: `check-layers` falla si alguno enlaza `std`.
-3. `pip-verifier` **no** puede depender de `pip-sync`, `pip-ledger*`, `pip-storage*` ni `pip-transport-http` (persiste su estado mediante el trait `VerifierStateStore` de `pip-trust`).
+3. `gravital-id-verifier` **no** puede depender de `gravital-id-sync`, `gravital-id-ledger*`, `gravital-id-storage*` ni `gravital-id-transport-http` (persiste su estado mediante el trait `VerifierStateStore` de `gravital-id-trust`).
 4. Ningún crate de `crates/` puede depender de `bindings/`, `services/`, `apps/` o `spikes/`.
-5. `pip-testkit` solo puede aparecer en `[dev-dependencies]`.
-6. Los bindings solo pueden depender de `pip-sdk` (nunca de crates internos directamente).
-7. Los servicios pueden depender de `pip-sdk` y de los adaptadores L5 (`pip-ledger-evm`, `pip-storage-sqlite`, `pip-transport-http`); no de crates internos salvo que `layers.toml` lo autorice explícitamente con justificación.
+5. `gravital-id-testkit` solo puede aparecer en `[dev-dependencies]`.
+6. Los bindings solo pueden depender de `gravital-id-sdk` (nunca de crates internos directamente).
+7. Los servicios pueden depender de `gravital-id-sdk` y de los adaptadores L5 (`gravital-id-ledger-evm`, `gravital-id-storage-sqlite`, `gravital-id-transport-http`); no de crates internos salvo que `layers.toml` lo autorice explícitamente con justificación.
 
 Violaciones ⇒ CI falla. Cambiar `layers.toml` requiere ADR.
 
 ```mermaid
 flowchart BT
-    types[pip-types] --> codec[pip-codec]
-    codec --> crypto[pip-crypto]
-    crypto --> keys[pip-keys]
-    keys --> credential[pip-credential]
-    crypto --> status[pip-status]
-    status --> trust[pip-trust]
-    credential --> verifier[pip-verifier]
+    types[gravital-id-types] --> codec[gravital-id-codec]
+    codec --> crypto[gravital-id-crypto]
+    crypto --> keys[gravital-id-keys]
+    keys --> credential[gravital-id-credential]
+    crypto --> status[gravital-id-status]
+    status --> trust[gravital-id-trust]
+    credential --> verifier[gravital-id-verifier]
     trust --> verifier
-    credential --> holder[pip-holder]
-    credential --> issuer[pip-issuer]
-    crypto --> storage[pip-storage]
+    credential --> holder[gravital-id-holder]
+    credential --> issuer[gravital-id-issuer]
+    crypto --> storage[gravital-id-storage]
     storage --> holder
-    holder --> recovery[pip-recovery]
-    verifier --> protocol[pip-protocol]
+    holder --> recovery[gravital-id-recovery]
+    verifier --> protocol[gravital-id-protocol]
     holder --> protocol
     recovery --> protocol
-    protocol --> sync[pip-sync]
-    trust --> ledger[pip-ledger]
-    ledger --> evm[pip-ledger-evm]
-    storage --> sqlite[pip-storage-sqlite]
+    protocol --> sync[gravital-id-sync]
+    trust --> ledger[gravital-id-ledger]
+    ledger --> evm[gravital-id-ledger-evm]
+    storage --> sqlite[gravital-id-storage-sqlite]
     trust --> sqlite
-    sync --> http[pip-transport-http]
-    sync --> sdk[pip-sdk]
+    sync --> http[gravital-id-transport-http]
+    sync --> sdk[gravital-id-sdk]
     issuer --> sdk
     ledger --> sdk
 ```
@@ -274,7 +274,7 @@ opt-level = "z"
 ## 6. Estructura interna de cada crate
 
 ```text
-crates/pip-<nombre>/
+crates/gravital-id-<nombre>/
 ├── Cargo.toml          # lints.workspace = true; versión del workspace
 ├── README.md           # Propósito, capa, invariantes, requisitos que implementa
 ├── src/
@@ -297,7 +297,7 @@ Reglas:
 ## 7. Modelo de errores
 
 - Cada crate define su error con `thiserror`. `anyhow` solo en binarios, `xtask` y pruebas.
-- `pip-sdk` define `PipError` con **código estable** `PIP-Exxxx` (catálogo en `docs/specs/ERROR_CODES.md`):
+- `gravital-id-sdk` define `GidError` (y alias `PipError`) con **código estable** `GID-Exxxx` / `PIP-Exxxx` (catálogo en `docs/specs/ERROR_CODES.md`):
 
 | Rango | Área |
 |---|---|
@@ -323,11 +323,11 @@ Reglas:
 | Unitarias | `src/**` (`#[cfg(test)]`) | `cargo test` / `cargo nextest` | Todo crate |
 | Integración y negativas | `crates/*/tests/` | `cargo nextest` | Todo crate L1–L4 |
 | Propiedades | `tests/` | `proptest` | codec, credential, status, trust, verifier, storage |
-| Vectores de conformidad | `conformance/vectors/` | `pip-conformance` | Desde F3 en Rust; desde F9 en cada lenguaje |
-| Vectores externos | `crates/pip-crypto/tests/vectors/` | Project Wycheproof, ejemplos de RFC | pip-crypto, credential |
+| Vectores de conformidad | `conformance/vectors/` | `gravital-id-conformance` | Desde F3 en Rust; desde F9 en cada lenguaje |
+| Vectores externos | `crates/gravital-id-crypto/tests/vectors/` | Project Wycheproof, ejemplos de RFC | gravital-id-crypto, gravital-id-credential |
 | Fuzzing | `fuzz/fuzz_targets/` | `cargo-fuzz` | Todo parser |
 | Mutación | — | `cargo-mutants` | Reglas de rechazo de credential, status, trust y verifier (desde F4) |
-| Comprobación acotada de modelos | `src/**` (`#[cfg(kani)]`) | Kani | pip-codec: ausencia de pánicos y de desbordamientos |
+| Comprobación acotada de modelos | `src/**` (`#[cfg(kani)]`) | Kani | gravital-id-codec: ausencia de pánicos y de desbordamientos |
 | Modelos formales de protocolo | `docs/specs/models/` | Tamarin o ProVerif | Presentación, re-vinculación y migración (F13) |
 | Benchmarks | `benches/` | `criterion` | Desde F2 |
 | Contratos | `contracts/test/` | Foundry (unit, fuzz, invariantes), Slither | F6 |
@@ -336,7 +336,7 @@ Reglas:
 
 Reglas:
 
-- Las pruebas **no** usan red real, reloj real ni aleatoriedad sin semilla (`pip-testkit`).
+- Las pruebas **no** usan red real, reloj real ni aleatoriedad sin semilla (`gravital-id-testkit`).
 - Los vectores en `conformance/vectors/` son **inmutables**: un vector publicado nunca se edita; se añade uno nuevo y el antiguo se marca obsoleto con referencia a ADR.
 - Nombres de prueba: `<comportamiento>_<condición>_<resultado>`, con `// Verifies: REQ-...` cuando aplique.
 

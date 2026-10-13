@@ -1,0 +1,19 @@
+name: Labels
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/labels.yml"
+      - ".github/scripts/sync-labels.sh"
+  workflow_dispatch:
+
+jobs:
+  sync:
+    name: Sincronizar labels (AGENTS.md §8)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: bash .github/scripts/sync-labels.sh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

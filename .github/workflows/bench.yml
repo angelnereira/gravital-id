@@ -1,0 +1,33 @@
+name: Bench
+
+on:
+  schedule:
+    - cron: "53 3 * * 3" # semanal
+  workflow_dispatch:
+  pull_request:
+    types: [labeled]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  criterion:
+    if: github.event_name != 'pull_request' || contains(github.event.pull_request.labels.*.name, 'ci:bench')
+    name: criterion
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.85.0"
+      - uses: Swatinem/rust-cache@v2
+      - name: Ejecutar benchmarks
+        run: cargo bench --workspace --message-format short
+      # La comparación contra main y el gate numérico se activan en F9 (F9.T11).
+      - name: Publicar resultados
+        run: |
+          echo "### criterion" >> "$GITHUB_STEP_SUMMARY"
+          find target/criterion -name "estimates.json" | while read -r f; do
+            echo "- ${f#target/criterion/}" >> "$GITHUB_STEP_SUMMARY"
+          done

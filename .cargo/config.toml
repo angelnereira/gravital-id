@@ -1,0 +1,5 @@
+[alias]
+xtask = "run --package xtask --bin xtask --"
+
+[build]
+# Flags de compilación por defecto si se requieren

@@ -1,0 +1,48 @@
+name: Fuzz
+
+on:
+  schedule:
+    - cron: "23 3 * * *" # nocturno
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - "fuzz/**"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  fuzz:
+    name: cargo fuzz (${{ matrix.target }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Un objetivo por parser desde F2 (F2.T11); en F1 el objetivo de ejemplo.
+        target: [gid_error_format]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@nightly
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: fuzz -> target
+      - uses: taiki-e/install-action@cargo-fuzz
+      # RUSTUP_TOOLCHAIN sobrescribe el pin de rust-toolchain.toml (1.85.0):
+      # cargo-fuzz necesita el sanitizador de nightly.
+      - name: Ejecutar ${{ matrix.target }} durante 10 minutos
+        run: cargo fuzz run ${{ matrix.target }} -- -max_total_time=600
+        working-directory: fuzz
+        env:
+          RUSTUP_TOOLCHAIN: nightly
+      # Un crash se trata como potencial vulnerabilidad (AGENTS.md §7.4):
+      # se conserva el artefacto y el triaje es PRIVADO, nunca un issue público.
+      - name: Conservar artefactos si hay crash
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: fuzz-crash-${{ matrix.target }}
+          path: |
+            fuzz/artifacts/
+            fuzz/corpus/
+          retention-days: 30

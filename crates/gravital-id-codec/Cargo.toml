@@ -1,0 +1,17 @@
+[package]
+name = "gravital-id-codec"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+readme = "README.md"
+description = "Codificación y serialización acotada (base64url, JSON, CBOR, Base45) para Gravital ID."
+
+[lints]
+workspace = true
+
+[dependencies]
+gravital-id-types = { workspace = true }

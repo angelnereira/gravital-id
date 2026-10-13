@@ -1,0 +1,19 @@
+{
+  // Configuración de markdownlint-cli2 para la documentación de Gravital ID.
+  // Las excepciones cubren el estilo establecido en las especificaciones de F0
+  // (párrafos largos en español, tablas anchas, listas compactas bajo
+  // encabezados). El resto de reglas se mantiene activo para documentación nueva.
+  "ignores": ["target/**", "spikes/**", "pip-docs.zip"],
+  "config": {
+    "default": true,
+    "MD013": false, // Longitud de línea: la documentación usa párrafos largos y tablas anchas.
+    "MD032": false, // Líneas en blanco alrededor de listas: las listas compactas bajo encabezados son estilo del proyecto.
+    "MD022": false, // Líneas en blanco alrededor de encabezados (ídem MD032).
+    "MD033": false, // HTML inline: permitido donde la especificación lo usa.
+    "MD004": false, // Estilo de viñetas: se mezclan * y - en documentos heredados.
+    "MD031": false, // Líneas en blanco alrededor de bloques de código (ídem MD032).
+    "MD029": false, // Prefijo de listas ordenadas: se usa numeración explícita por sección.
+    "MD056": false, // Recuento de columnas de tabla: las tablas de ADR tienen celdas descriptivas.
+    "MD041": false // Primera línea como encabezado: varios documentos abren con cita de metadatos.
+  }
+}

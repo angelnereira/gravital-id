@@ -1,0 +1,63 @@
+# deny.toml — Política de cargo-deny para Gravital ID (F1.T06, ADR-0002, REQ-COMP-003)
+#
+# Las dependencias se restringen a licencias permisivas equivalentes a la dual
+# MIT / Apache-2.0 del proyecto (ADR-0002). Todo copyleft fuerte (GPL, AGPL,
+# SSPL) queda prohibido por exclusión.
+
+[graph]
+all-features = true
+
+[advisories]
+# Base de datos de advisories de RustSec. Toda vulnerabilidad emite error por
+# defecto (cargo-deny >= 0.18: las claves vulnerability/unsound/notice se
+# eliminaron; los advisories concretos se excluyen en `ignore` con justificación).
+db-urls = ["https://github.com/RustSec/advisory-db"]
+db-path = "~/.cargo/advisory-dbs"
+unmaintained = "workspace"
+unsound = "workspace"
+yanked = "warn"
+unused-ignored-advisory = "warn"
+ignore = []
+
+[licenses]
+# Allowlist explícita de ADR-0002 (nada fuera de esta lista).
+allow = [
+    "MIT",
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "CC0-1.0",
+    "Unicode-DFS-2016",
+]
+confidence-threshold = 0.8
+
+# Excepción explícita y acotada (pendiente de confirmación del mantenedor en #6
+# para su posible incorporación a ADR-0002): `unicode-ident` llega como
+# dependencia de compilación de `proc-macro2` (serde_derive) y declara
+# `(MIT OR Apache-2.0) AND Unicode-3.0`. Unicode-3.0 es permisiva y OSI-approved
+# (cubre datos Unicode, no código); no es copyleft. No se relaja la allowlist
+# general: la excepción aplica solo a este crate.
+[[licenses.exceptions]]
+name = "unicode-ident"
+version = "*"
+allow = ["Unicode-3.0"]
+
+[bans]
+# Deniega dependencias desde git y versiones comodín (AGENTS.md §13).
+wildcards = "deny"
+# Múltiples versiones del mismo crate: avisar (algunas se justifican en F2+).
+multiple-versions = "warn"
+highlight = "all"
+deny = []
+skip = []
+# Crates prohibidos por invariante (barrera estática tras xtask check-layers).
+# Ejemplos: tokio/reqwest/hyper en capas L1-L4 (INV-01). Se amplían en F2.
+
+[sources]
+# Solo crates.io como fuente de dependencias (AGENTS.md §13).
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]
+allow-git = []

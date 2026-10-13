@@ -1,0 +1,85 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/gravital-id-types",
+    "crates/gravital-id-codec",
+    "crates/gravital-id-crypto",
+    "crates/gravital-id-keys",
+    "crates/gravital-id-credential",
+    "crates/gravital-id-status",
+    "crates/gravital-id-trust",
+    "crates/gravital-id-verifier",
+    "crates/gravital-id-holder",
+    "crates/gravital-id-issuer",
+    "crates/gravital-id-storage",
+    "crates/gravital-id-storage-sqlite",
+    "crates/gravital-id-protocol",
+    "crates/gravital-id-recovery",
+    "crates/gravital-id-sync",
+    "crates/gravital-id-transport-http",
+    "crates/gravital-id-ledger",
+    "crates/gravital-id-ledger-evm",
+    "crates/gravital-id-sdk",
+    "crates/gravital-id-testkit",
+    "xtask",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.85.0"
+license = "MIT OR Apache-2.0"
+authors = ["Angel Nereira <contact@angelnereira.com>", "Gravital ID Contributors"]
+repository = "https://github.com/angelnereira/gravital-id"
+homepage = "https://github.com/angelnereira/gravital-id"
+readme = "README.md"
+
+[workspace.lints.rust]
+unsafe_code = "deny"
+missing_docs = "deny"
+unused_must_use = "deny"
+# Registra el cfg personalizado de Kani (F1.T14, PROJECT_STRUCTURE.md §8) para
+# que rustc y clippy no lo reporten como inesperado.
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(kani)'] }
+
+[workspace.lints.clippy]
+unwrap_used = "deny"
+expect_used = "deny"
+panic = "deny"
+indexing_slicing = "deny"
+todo = "deny"
+unimplemented = "deny"
+dbg_macro = "deny"
+print_stdout = "deny"
+print_stderr = "deny"
+float_arithmetic = "deny"
+arithmetic_side_effects = "deny"
+
+[profile.release]
+lto = "fat"
+codegen-units = 1
+panic = "unwind"
+strip = "symbols"
+
+[profile.release-mobile]
+inherits = "release"
+opt-level = "z"
+
+[workspace.dependencies]
+# Dependencias internas
+gravital-id-types = { path = "crates/gravital-id-types", version = "0.1.0" }
+gravital-id-codec = { path = "crates/gravital-id-codec", version = "0.1.0" }
+gravital-id-crypto = { path = "crates/gravital-id-crypto", version = "0.1.0" }
+gravital-id-keys = { path = "crates/gravital-id-keys", version = "0.1.0" }
+gravital-id-credential = { path = "crates/gravital-id-credential", version = "0.1.0" }
+gravital-id-status = { path = "crates/gravital-id-status", version = "0.1.0" }
+gravital-id-trust = { path = "crates/gravital-id-trust", version = "0.1.0" }
+gravital-id-verifier = { path = "crates/gravital-id-verifier", version = "0.1.0" }
+gravital-id-holder = { path = "crates/gravital-id-holder", version = "0.1.0" }
+gravital-id-issuer = { path = "crates/gravital-id-issuer", version = "0.1.0" }
+gravital-id-storage = { path = "crates/gravital-id-storage", version = "0.1.0" }
+gravital-id-protocol = { path = "crates/gravital-id-protocol", version = "0.1.0" }
+gravital-id-recovery = { path = "crates/gravital-id-recovery", version = "0.1.0" }
+gravital-id-sync = { path = "crates/gravital-id-sync", version = "0.1.0" }
+gravital-id-ledger = { path = "crates/gravital-id-ledger", version = "0.1.0" }
+anyhow = "1.0"

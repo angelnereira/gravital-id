@@ -1,0 +1,18 @@
+[package]
+name = "gravital-id-ledger"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+readme = "README.md"
+description = "Trait de adaptador de ledger y reconstrucción pura de estado para Gravital ID."
+
+[lints]
+workspace = true
+
+[dependencies]
+gravital-id-trust = { workspace = true }
+gravital-id-types = { workspace = true }
