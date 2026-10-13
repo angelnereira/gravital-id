@@ -8,10 +8,10 @@
 | REQ-KEY-004 | F2 | DEBE | T | P-11 | keystore.rs, lib.rs, software.rs, keys_tests.rs | Cubierto |
 | REQ-KEY-005 | F4 | DEBE | T | P-08 | — | Pendiente (Fase futura) |
 | REQ-KEY-006 | F4 | DEBE | T | — | — | Pendiente (Fase futura) |
-| REQ-KEY-007 | F2 | DEBE | T | P-04 | jwk.rs, lib.rs, software.rs, keys_tests.rs | Cubierto |
+| REQ-KEY-007 | F2 | DEBE | T | P-04 | jwk.rs, api_coverage.rs, lib.rs, software.rs, keys_tests.rs | Cubierto |
 | REQ-KEY-008 | F5 | DEBE | T | P-09 | — | Pendiente (Fase futura) |
 | REQ-KEY-009 | F2 | DEBE | T | P-07 | keystore.rs, lib.rs, purpose.rs, compile_fail.rs, keys_tests.rs, agree_with_signing_key.rs, sign_with_hpke_key.rs | Cubierto |
-| REQ-KEY-010 | F2 | DEBE | T | P-11 | sign.rs, lib.rs, signature.rs, keys_tests.rs, ids.rs | Cubierto |
+| REQ-KEY-010 | F2 | DEBE | T | P-11 | sign.rs, api_coverage.rs, lib.rs, signature.rs, keys_tests.rs, ids.rs | Cubierto |
 | REQ-CRED-001 | F3 | DEBE | T | P-04 | — | Pendiente (Fase futura) |
 | REQ-CRED-002 | F3 | DEBE | T, I | P-07 | — | Pendiente (Fase futura) |
 | REQ-CRED-003 | F3 | DEBE | T | P-09 | — | Pendiente (Fase futura) |
@@ -107,8 +107,8 @@
 | REQ-GOV-002 | F14 | DEBE | I, D | P-08 | — | Inspección / Auditoría |
 | REQ-GOV-003 | F14 | DEBE | I | P-12 | — | Inspección / Auditoría |
 | REQ-SEC-001 | F1 | DEBE | T, I | — | layers.rs | Cubierto |
-| REQ-SEC-002 | F2 | DEBE | I | — | aead.rs, ecdh.rs, hpke.rs, kdf.rs, rng.rs, sha.rs, external_vectors.rs | Cubierto |
-| REQ-SEC-003 | F2 | DEBE | T, I | — | aead.rs, secret.rs, secret_hygiene.rs, software.rs | Cubierto |
+| REQ-SEC-002 | F2 | DEBE | I | — | aead.rs, ecdh.rs, hpke.rs, kdf.rs, rng.rs, sha.rs, api_coverage.rs, external_vectors.rs | Cubierto |
+| REQ-SEC-003 | F2 | DEBE | T, I | — | aead.rs, secret.rs, api_coverage.rs, secret_hygiene.rs, software.rs | Cubierto |
 | REQ-SEC-004 | F2 | DEBE | I | — | mac.rs, secret.rs, secret_hygiene.rs | Cubierto |
 | REQ-SEC-005 | F2 | DEBE | F | — | base45_strict.rs, base64url_strict.rs, cbor_bounded.rs, deflate_bounded.rs, json_bounded.rs, jwk_parser.rs, trace.rs | Cubierto |
 | REQ-SEC-006 | F1 | DEBE | T | — | — | Pendiente (Fase futura) |
@@ -130,7 +130,7 @@
 | REQ-REL-002 | F15 | DEBE | I | — | — | Inspección / Auditoría |
 | REQ-REL-003 | F15 | DEBE | D | — | — | Inspección / Auditoría |
 | REQ-REL-004 | F4 | DEBE | T | — | — | Pendiente (Fase futura) |
-| REQ-PERF-001 | F2 | DEBE | T | — | — | Pendiente (Fase futura) |
+| REQ-PERF-001 | F2 | DEBE | T | — | crypto_primitives.rs | Cubierto |
 | REQ-PERF-002 | F9 | DEBE | T | — | — | Pendiente (Fase futura) |
 | REQ-PERF-003 | F5 | DEBE | T | — | — | Pendiente (Fase futura) |
 | REQ-MAINT-001 | F1 | DEBE | T | — | — | Pendiente (Fase futura) |

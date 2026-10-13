@@ -21,6 +21,8 @@ Cada componente publicado (SDK, servicios, contratos, especificación) indica su
 - [governance] `CODEOWNERS` con las rutas sensibles y labels como código (`.github/labels.yml`) con script de sincronización idempotente (F1.T12; #6).
 - [test] Objetivo de fuzzing de ejemplo `fuzz/fuzz_targets/gid_error_format.rs` y benchmarks criterion de ejemplo en `gravital-id-types` (F1.T11; #6).
 - [test] Objetivos de fuzzing normativos para los 6 parsers del núcleo (`base64url_strict`, `json_bounded`, `cbor_bounded`, `base45_strict`, `deflate_bounded`, `jwk_parser`) con trazabilidad REQ-SEC-005 y matriz de ejecución en `fuzz.yml` (F2.T11, #34).
+- [bench] Suite de benchmarks de primitivas criptográficas base en `gravital-id-crypto` (`benches/crypto_primitives.rs`) midiendo ES256 (RFC 6979), SHA-256 (32B–10KiB), XChaCha20-Poly1305 y HPKE; línea base registrada en `docs/STATUS.md` (F2.T12, REQ-PERF-001; #35).
+- [test] Suite de pruebas de integración de API para `gravital-id-crypto` (`tests/api_coverage.rs`) elevando la cobertura de líneas al 92,46 %, superando el umbral de Gate G2 (F2.T12, REQ-PERF-001; #35).
 - [test] Pruebas Kani de invariantes del catálogo de errores (códigos de 4 dígitos, conservación de código y mensaje) (F1.T14, REQ-SDK-003; #6).
 
 - [docs] Paquete documental inicial: `AGENTS.md`, arquitectura, requisitos, estructura del proyecto, hoja de ruta F0–F18, plantillas de issues y PR, índice de ADRs.
