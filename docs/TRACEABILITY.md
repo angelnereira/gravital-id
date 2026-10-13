@@ -11,7 +11,7 @@
 | REQ-KEY-007 | F2 | DEBE | T | P-04 | — | Pendiente (Fase futura) |
 | REQ-KEY-008 | F5 | DEBE | T | P-09 | — | Pendiente (Fase futura) |
 | REQ-KEY-009 | F2 | DEBE | T | P-07 | — | Pendiente (Fase futura) |
-| REQ-KEY-010 | F2 | DEBE | T | P-11 | ids.rs | Cubierto |
+| REQ-KEY-010 | F2 | DEBE | T | P-11 | sign.rs, ids.rs | Cubierto |
 | REQ-CRED-001 | F3 | DEBE | T | P-04 | — | Pendiente (Fase futura) |
 | REQ-CRED-002 | F3 | DEBE | T, I | P-07 | — | Pendiente (Fase futura) |
 | REQ-CRED-003 | F3 | DEBE | T | P-09 | — | Pendiente (Fase futura) |

@@ -6,10 +6,16 @@
 
 Abstracciones y backend criptográfico (ES256, SHA-256, HMAC, XChaCha20-Poly1305, HPKE) para Gravital ID.
 
-## Contenido actual (F1)
+## Contenido (F2.T06)
 
-- Trait `Rng` de inyección de CSPRNG (`rng.rs`, `CRYPTO_PROFILES.md`, INV-11).
-  El backend criptográfico completo llega en F2.T06.
+- **Firmas ES256 (`sign.rs`):** Firma determinista RFC 6979 en IEEE P1363 (`r‖s`, 64 bytes), conversión DER ↔ P1363 y verificación flexible (sin exigir *low-S*, REQ-KEY-010).
+- **Funciones hash (`sha.rs`):** SHA-256 en un solo paso (`sha256`) y streaming (`Sha256Hasher`).
+- **Autenticación de mensajes (`mac.rs`):** HMAC-SHA-256 y comparación en tiempo constante (`constant_time_eq`, `subtle`).
+- **Derivación de claves (`kdf.rs`):** HKDF-SHA256 (`hkdf_sha256`, `hkdf_extract_sha256`, RFC 5869).
+- **Cifrado autenticado (`aead.rs`):** XChaCha20-Poly1305 (`seal`, `open`, REQ-SEC-002).
+- **Acuerdo de claves (`ecdh.rs`):** ECDH P-256 (`agree`, `agree_ephemeral`).
+- **HPKE modo base (`hpke.rs`):** RFC 9180 con `DHKEM(P-256, HKDF-SHA256) + HKDF-SHA256 + ChaCha20Poly1305`.
+- **Aleatoriedad inyectada (`rng.rs`):** Trait `Rng` sin entropía implícita (INV-11).
 
 ## Invariantes aplicables
 

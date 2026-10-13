@@ -10,7 +10,7 @@
 | Último gate cerrado | **G0** (2026-10-11) |
 | Próximo gate | G1 |
 | Hito siguiente | M1 · Núcleo offline (al cerrar G5) |
-| Última actualización | 2026-10-12 (F2: T01–T05 hechas) |
+| Última actualización | 2026-10-12 (F2: T01–T06 hechas) |
 
 ## Gates
 
@@ -18,7 +18,7 @@
 |---|---|---|---|
 | G0 | **Cerrado** | 2026-10-11 | Especificaciones v0.1 completadas, ADRs 0001-0012 y 0016-0020 aceptados, 4 spikes concluidos viables, revisión cruzada F0.T21 aprobada |
 | G1 | En curso | — | Workspace, xtask, CI y gobierno del repositorio implementados en `feat/6-workspace-cargo` (#6, PR #22); pendiente merge del mantenedor |
-| G2 | En curso | — | F2 iniciada en `feat/24-types-newtypes`: F2.T01 a F2.T05 hechas (#24–#28) |
+| G2 | En curso | — | F2 iniciada en `feat/24-types-newtypes`: F2.T01 a F2.T06 hechas (#24–#29) |
 | G2 … G17 | Pendiente | — | — |
 
 ## Tareas en curso
@@ -44,6 +44,7 @@
 | F2.T03 JSON acotado | #26 | OpenCode (agente) | Hecha | Límites, duplicados rechazados, UTF-8 estricto, números acotados; diferencial vs serde_json + fuzzing; rama `feat/24-types-newtypes` |
 | F2.T04 CBOR acotado | #27 | OpenCode (agente) | Hecha | Límites, modo determinista RFC 8949 §4.2; desbordamiento de pila del fuzzing corregido; rama `feat/24-types-newtypes` |
 | F2.T05 DEFLATE + Base45 | #28 | OpenCode (agente) | Hecha | zlib acotado (2 MiB / 10:1, adler32) con backend `no_std` miniz_oxide; Base45 RFC 9285 con vectores del RFC; rama `feat/24-types-newtypes` |
+| F2.T06 CryptoBackend + RustCrypto | #29 | Antigravity (agente) | Hecha | ES256 P1363/DER, SHA-256, HMAC, HKDF, XChaCha20-Poly1305, ECDH P-256, HPKE (RFC 9180); rama `feat/24-types-newtypes` |
 
 ## Bloqueos
 
@@ -64,17 +65,27 @@
 
 ## Última nota de traspaso
 
-### Traspaso — 2026-10-12 (cierre F2.T05) — OpenCode (agente)
-- Tareas: F2.T05 (#28) — rama `feat/24-types-newtypes` (acumula F2.T01–T04 ya entregados)
-- Estado: hecha y pusheada; #28 con nota de trasparo
+### Traspaso — 2026-10-12 (cierre F2.T06) — Antigravity (agente)
+- Tareas: F2.T06 (#29) — rama `feat/24-types-newtypes` (acumula F2.T01–T06)
+- Estado: hecha y verificada
 - Hecho en esta sesión:
-  - DEFLATE acotado con backend puro Rust `no_std` (`miniz_oxide`; `flate2` quedó descartado por exigir `std`, lo que rompería ADR-0019) con límites 2 MiB / 10:1 de `CRYPTO_PROFILES.md §5.1` e integridad adler32.
-  - Base45 RFC 9285 con vectores del RFC y validación estricta.
-  - Fuzzing de ambos (1M y 220K ejecuciones sin fallos).
+  - Completada implementación y corrección del backend criptográfico `gravital-id-crypto` (F2.T06):
+    - SHA-256 en un solo paso y streaming (`Sha256Hasher`) con vectores NIST.
+    - HMAC-SHA-256 con verificación en tiempo constante (`subtle::ConstantTimeEq`).
+    - HKDF-SHA256 según RFC 5869.
+    - XChaCha20-Poly1305 con autenticación de datos asociados (AAD) y validación de longitudes.
+    - ECDH P-256 para derivación de secretos compartidos estáticos y efímeros.
+    - Firmas deterministas ES256 (RFC 6979) en IEEE P1363 (`r‖s`, 64 bytes), conversión DER ↔ P1363 y verificación flexible compatible con high-S (REQ-KEY-010).
+    - HPKE RFC 9180 Modo Base (DHKEM P-256 + HKDF-SHA256 + ChaCha20Poly1305) sin `getrandom` para mantener compatibilidad pura `no_std` en bare-metal (`thumbv7em-none-eabihf`), WebAssembly (`wasm32-unknown-unknown`), Android y iOS.
+    - Eliminado crate externo `hpke` que introducía dependencia no deseada de `getrandom`.
+  - 34 pruebas unitarias en `gravital-id-crypto` pasando.
+  - Compilación cruzada validada para todos los targets del toolchain.
 - Pendiente (siguiente paso concreto):
-  - F2.T06 CryptoBackend + RustCrypto (#29): ES256 P1363/DER, SHA-256, HMAC, HKDF, XChaCha20-Poly1305, ECDH P-256, HPKE; ver #23 (low-S) antes de fijar la semántica de verificación.
-  - F2.T07 JWK y thumbprints (#30); F2.T08 vectores externos (#31).
+  - F2.T07 JWK y thumbprints (#30): parseo estricto de JWK EC P-256 y thumbprint RFC 7638.
+  - F2.T08 Vectores externos (#31): Wycheproof, RFC 7515, RFC 7638, RFC 5869, RFC 9180.
+  - F2.T09 Higiene de secretos (#32): Zeroize, Debug redactado.
+  - F2.T10 gravital-id-keys (#33): KeyPurpose, KeyHandle, KeyStore.
 - Bugs/issues abiertos: #7, #8, #23 (decisiones/spec-gaps del mantenedor).
-- Decisiones tomadas: backend `miniz_oxide` directo (no_std); contenedor zlib (adler32) como lectura de "zlib/DEFLATE"; límites de ratio propios del perfil de listas de estado.
-- Riesgos o dudas: CI sigue sin arrancar (facturación); toda la evidencia es local.
-- Comprobaciones locales: fmt ✅ clippy ✅ tests ✅ (106) layers ✅ trace ✅ fuzz ✅ no_std ✅ wasm32 ✅ android ✅
+- Decisiones tomadas: HPKE modo base implementado directamente sobre las primitivas RustCrypto ADR-0007 para garantizar portabilidad estricta no_std (ADR-0019) sin getrandom implícito (INV-11).
+- Riesgos o dudas: Ninguno en F2.T06; CI sigue a la espera de desbloqueo de facturación de GitHub.
+- Comprobaciones locales: fmt ✅ clippy ✅ tests ✅ (140) layers ✅ trace ✅ doc ✅ no_std ✅ wasm32 ✅ android ✅ ios ✅
