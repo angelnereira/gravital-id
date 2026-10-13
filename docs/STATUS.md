@@ -10,7 +10,7 @@
 | Último gate cerrado | **G0** (2026-10-11) |
 | Próximo gate | G1 |
 | Hito siguiente | M1 · Núcleo offline (al cerrar G5) |
-| Última actualización | 2026-10-12 (F2: T01–T03 hechas) |
+| Última actualización | 2026-10-12 (F2: T01–T04 hechas) |
 
 ## Gates
 
@@ -18,7 +18,7 @@
 |---|---|---|---|
 | G0 | **Cerrado** | 2026-10-11 | Especificaciones v0.1 completadas, ADRs 0001-0012 y 0016-0020 aceptados, 4 spikes concluidos viables, revisión cruzada F0.T21 aprobada |
 | G1 | En curso | — | Workspace, xtask, CI y gobierno del repositorio implementados en `feat/6-workspace-cargo` (#6, PR #22); pendiente merge del mantenedor |
-| G2 | En curso | — | F2 iniciada en `feat/24-types-newtypes`: F2.T01, F2.T02 y F2.T03 hechas (#24, #25, #26) |
+| G2 | En curso | — | F2 iniciada en `feat/24-types-newtypes`: F2.T01 a F2.T04 hechas (#24–#27) |
 | G2 … G17 | Pendiente | — | — |
 
 ## Tareas en curso
@@ -42,6 +42,7 @@
 | F2.T01 Newtypes validados | #24 | OpenCode (agente) | Hecha | `IssuerId`, `Kid`, `Vct`, `ProfileId`, `UnixTime`, `BundleVersion` + propiedades; rama `feat/24-types-newtypes` |
 | F2.T02 base64url estricto | #25 | OpenCode (agente) | Hecha | Sin relleno, canónica, acotada; fuzzing 6.9M ejecuciones; rama `feat/24-types-newtypes` |
 | F2.T03 JSON acotado | #26 | OpenCode (agente) | Hecha | Límites, duplicados rechazados, UTF-8 estricto, números acotados; diferencial vs serde_json + fuzzing; rama `feat/24-types-newtypes` |
+| F2.T04 CBOR acotado | #27 | OpenCode (agente) | Hecha | Límites, modo determinista RFC 8949 §4.2; desbordamiento de pila del fuzzing corregido; rama `feat/24-types-newtypes` |
 
 ## Bloqueos
 
@@ -62,17 +63,17 @@
 
 ## Última nota de traspaso
 
-### Traspaso — 2026-10-12 (cierre F2.T03) — OpenCode (agente)
-- Tareas: F2.T03 (#26) — rama `feat/24-types-newtypes` (añade a F2.T01/T02 ya entregados)
-- Estado: hecha y pusheada; #26 con nota de traspaso
+### Traspaso — 2026-10-12 (cierre F2.T04) — OpenCode (agente)
+- Tareas: F2.T04 (#27) — rama `feat/24-types-newtypes` (acumula F2.T01–T03 ya entregados)
+- Estado: hecha y pusheada; #27 con nota de trasparo
 - Hecho en esta sesión:
-  - Lector JSON acotado y estricto en `gravital-id-codec` (`json.rs`): límites, duplicados (REQ-CRED-009), UTF-8 estricto y números acotados.
-  - Prueba diferencial frente a `serde_json` (referencia solo en tests) + fuzzing (4.4M ejecuciones).
-  - 3 bugs propios cazados por las pruebas y corregidos antes de commitear.
+  - Lector CBOR acotado y modo determinista (RFC 8949 §4.2) en `gravital-id-codec`.
+  - El fuzzing cazó un **desbordamiento de pila real** (fragmentos de cadenas indefinidas sin presupuesto de profundidad): corregido y con prueba de regresión; profundidad por defecto bajada a 32 por seguridad bajo instrumentación.
+  - Fuzzing de canonicalidad: 5.2M ejecuciones sin fallos.
 - Pendiente (siguiente paso concreto):
-  - F2.T04 CBOR acotado (#27): límites equivalentes y rechazo de codificaciones no deterministas donde el protocolo lo exija.
-  - F2.T05 DEFLATE + Base45 (#28); F2.T06 CryptoBackend (#29).
+  - F2.T05 DEFLATE + Base45 (#28): descompresión con límite de salida (ratio 10:1 y 2 MiB de `CRYPTO_PROFILES.md §5.1`) y Base45 RFC 9285 con vectores del RFC.
+  - F2.T06 CryptoBackend + RustCrypto (#29).
 - Bugs/issues abiertos: #7, #8, #23 (decisiones/spec-gaps del mantenedor).
-- Decisiones tomadas: `serde_json` solo como referencia en pruebas; parser propio `no_std` en producción (INV-01); límites de JSON documentados como cota de implementación del perfil.
-- Riesgos o dudas: CI sigue sin arrancar (facturación de la cuenta); todas las comprobaciones son locales.
-- Comprobaciones locales: fmt ✅ clippy ✅ tests ✅ (71) layers ✅ trace ✅ fuzz ✅ no_std ✅ wasm32 ✅
+- Decisiones tomadas: modo determinista de CBOR por defecto (lo exige el perfil offline); profundidad 32 documentada como cota de seguridad.
+- Riesgos o dudas: CI sigue sin arrancar (facturación); toda la evidencia es local.
+- Comprobaciones locales: fmt ✅ clippy ✅ tests ✅ (89) layers ✅ trace ✅ fuzz ✅ no_std ✅ wasm32 ✅
