@@ -10,7 +10,7 @@
 | Último gate cerrado | **G0** (2026-10-11) |
 | Próximo gate | G1 |
 | Hito siguiente | M1 · Núcleo offline (al cerrar G5) |
-| Última actualización | 2026-10-12 (F2: T01–T04 hechas) |
+| Última actualización | 2026-10-12 (F2: T01–T05 hechas) |
 
 ## Gates
 
@@ -18,7 +18,7 @@
 |---|---|---|---|
 | G0 | **Cerrado** | 2026-10-11 | Especificaciones v0.1 completadas, ADRs 0001-0012 y 0016-0020 aceptados, 4 spikes concluidos viables, revisión cruzada F0.T21 aprobada |
 | G1 | En curso | — | Workspace, xtask, CI y gobierno del repositorio implementados en `feat/6-workspace-cargo` (#6, PR #22); pendiente merge del mantenedor |
-| G2 | En curso | — | F2 iniciada en `feat/24-types-newtypes`: F2.T01 a F2.T04 hechas (#24–#27) |
+| G2 | En curso | — | F2 iniciada en `feat/24-types-newtypes`: F2.T01 a F2.T05 hechas (#24–#28) |
 | G2 … G17 | Pendiente | — | — |
 
 ## Tareas en curso
@@ -43,6 +43,7 @@
 | F2.T02 base64url estricto | #25 | OpenCode (agente) | Hecha | Sin relleno, canónica, acotada; fuzzing 6.9M ejecuciones; rama `feat/24-types-newtypes` |
 | F2.T03 JSON acotado | #26 | OpenCode (agente) | Hecha | Límites, duplicados rechazados, UTF-8 estricto, números acotados; diferencial vs serde_json + fuzzing; rama `feat/24-types-newtypes` |
 | F2.T04 CBOR acotado | #27 | OpenCode (agente) | Hecha | Límites, modo determinista RFC 8949 §4.2; desbordamiento de pila del fuzzing corregido; rama `feat/24-types-newtypes` |
+| F2.T05 DEFLATE + Base45 | #28 | OpenCode (agente) | Hecha | zlib acotado (2 MiB / 10:1, adler32) con backend `no_std` miniz_oxide; Base45 RFC 9285 con vectores del RFC; rama `feat/24-types-newtypes` |
 
 ## Bloqueos
 
@@ -63,17 +64,17 @@
 
 ## Última nota de traspaso
 
-### Traspaso — 2026-10-12 (cierre F2.T04) — OpenCode (agente)
-- Tareas: F2.T04 (#27) — rama `feat/24-types-newtypes` (acumula F2.T01–T03 ya entregados)
-- Estado: hecha y pusheada; #27 con nota de trasparo
+### Traspaso — 2026-10-12 (cierre F2.T05) — OpenCode (agente)
+- Tareas: F2.T05 (#28) — rama `feat/24-types-newtypes` (acumula F2.T01–T04 ya entregados)
+- Estado: hecha y pusheada; #28 con nota de trasparo
 - Hecho en esta sesión:
-  - Lector CBOR acotado y modo determinista (RFC 8949 §4.2) en `gravital-id-codec`.
-  - El fuzzing cazó un **desbordamiento de pila real** (fragmentos de cadenas indefinidas sin presupuesto de profundidad): corregido y con prueba de regresión; profundidad por defecto bajada a 32 por seguridad bajo instrumentación.
-  - Fuzzing de canonicalidad: 5.2M ejecuciones sin fallos.
+  - DEFLATE acotado con backend puro Rust `no_std` (`miniz_oxide`; `flate2` quedó descartado por exigir `std`, lo que rompería ADR-0019) con límites 2 MiB / 10:1 de `CRYPTO_PROFILES.md §5.1` e integridad adler32.
+  - Base45 RFC 9285 con vectores del RFC y validación estricta.
+  - Fuzzing de ambos (1M y 220K ejecuciones sin fallos).
 - Pendiente (siguiente paso concreto):
-  - F2.T05 DEFLATE + Base45 (#28): descompresión con límite de salida (ratio 10:1 y 2 MiB de `CRYPTO_PROFILES.md §5.1`) y Base45 RFC 9285 con vectores del RFC.
-  - F2.T06 CryptoBackend + RustCrypto (#29).
+  - F2.T06 CryptoBackend + RustCrypto (#29): ES256 P1363/DER, SHA-256, HMAC, HKDF, XChaCha20-Poly1305, ECDH P-256, HPKE; ver #23 (low-S) antes de fijar la semántica de verificación.
+  - F2.T07 JWK y thumbprints (#30); F2.T08 vectores externos (#31).
 - Bugs/issues abiertos: #7, #8, #23 (decisiones/spec-gaps del mantenedor).
-- Decisiones tomadas: modo determinista de CBOR por defecto (lo exige el perfil offline); profundidad 32 documentada como cota de seguridad.
+- Decisiones tomadas: backend `miniz_oxide` directo (no_std); contenedor zlib (adler32) como lectura de "zlib/DEFLATE"; límites de ratio propios del perfil de listas de estado.
 - Riesgos o dudas: CI sigue sin arrancar (facturación); toda la evidencia es local.
-- Comprobaciones locales: fmt ✅ clippy ✅ tests ✅ (89) layers ✅ trace ✅ fuzz ✅ no_std ✅ wasm32 ✅
+- Comprobaciones locales: fmt ✅ clippy ✅ tests ✅ (106) layers ✅ trace ✅ fuzz ✅ no_std ✅ wasm32 ✅ android ✅
