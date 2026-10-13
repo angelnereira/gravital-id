@@ -43,5 +43,17 @@ path = "fuzz_targets/cbor_bounded.rs"
 test = false
 doc = false
 
+[[bin]]
+name = "base45_strict"
+path = "fuzz_targets/base45_strict.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "deflate_bounded"
+path = "fuzz_targets/deflate_bounded.rs"
+test = false
+doc = false
+
 [profile.release]
 debug = 1

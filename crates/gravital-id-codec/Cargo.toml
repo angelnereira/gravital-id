@@ -15,6 +15,11 @@ workspace = true
 
 [dependencies]
 gravital-id-types = { workspace = true }
+# DEFLATE con backend puro Rust: compatible no_std+alloc, WASM y bare-metal
+# (ADR-0007, ADR-0019; sin C). Requerido por el transporte offline
+# (PROTOCOL.md §3.2) y por las listas de estado (CRYPTO_PROFILES.md §5.1).
+# Es el mismo backend que flate2 usa en modo rust_backend, pero sin exigir std.
+miniz_oxide = "0.8" 
 
 [dev-dependencies]
 # Propiedades y prueba diferencial (F2.T03). Mismo pin por MSRV (ADR-0014).

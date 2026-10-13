@@ -43,7 +43,7 @@
 | REQ-VER-012 | F4 | DEBE | T, I | P-08 | — | Pendiente (Fase futura) |
 | REQ-STAT-001 | F4 | DEBE | T | P-04 | — | Pendiente (Fase futura) |
 | REQ-STAT-002 | F7 | DEBE | T | P-09 | — | Pendiente (Fase futura) |
-| REQ-STAT-003 | F4 | DEBE | T, F | P-08 | — | Pendiente (Fase futura) |
+| REQ-STAT-003 | F4 | DEBE | T, F | P-08 | base45.rs, deflate.rs | Cubierto |
 | REQ-STAT-004 | F4 | DEBE | T | P-05 | — | Pendiente (Fase futura) |
 | REQ-STAT-005 | F7 | DEBE | T | P-10 | — | Pendiente (Fase futura) |
 | REQ-STAT-006 | F7 | DEBE | T | P-14 | — | Pendiente (Fase futura) |

@@ -30,6 +30,16 @@ Codificación y serialización acotada (base64url, JSON, CBOR, Base45) para Grav
   de prueba: apéndice A de RFC 8949 y objetivo de fuzzing
   (`fuzz/fuzz_targets/cbor_bounded.rs`, 5.2M ejecuciones sin fallos).
 
+- DEFLATE acotado (`deflate.rs`, F2.T05): contenedor zlib (RFC 1950/1951) con
+  backend puro Rust `no_std` (`miniz_oxide`, ADR-0007); descompresión con
+  **límite efectivo** = mínimo entre 2 MiB absolutos y ratio 10:1 de la entrada
+  (`CRYPTO_PROFILES.md §5.1`), con verificación de integridad adler32. El
+  perfil predeterminado (`inflate`) es el de listas de estado; el transporte QR
+  usa `inflate_bounded` con sus propios límites.
+- Base45 (`base45.rs`, F2.T05): RFC 9285 con los vectores del RFC ("AB"→"BB8",
+  "Hello!!"→"%69 VD92EX0", "base-45"→"UJCLQE7W581", "QED8WEX0"→"ietf!") y
+  validación estricta §6 (alfabeto, longitudes, tríos ≤ 65535).
+
 ## Invariantes aplicables
 
 - **INV-01:** Cero I/O en L1–L4 (L1–L3 `no_std`, L4 sans-I/O).
