@@ -20,7 +20,7 @@
 | REQ-CRED-006 | F3 | DEBERÍA | T | P-09 | — | Inspección / Auditoría |
 | REQ-CRED-007 | F4 | DEBE | T | P-08 | — | Pendiente (Fase futura) |
 | REQ-CRED-008 | F3 | DEBE | T, F | P-07 | — | Pendiente (Fase futura) |
-| REQ-CRED-009 | F2 | DEBE | T, F | P-08 | — | Pendiente (Fase futura) |
+| REQ-CRED-009 | F2 | DEBE | T, F | P-08 | json.rs, json_bounded.rs | Cubierto |
 | REQ-PRES-001 | F5 | DEBE | T | P-09 | — | Pendiente (Fase futura) |
 | REQ-PRES-002 | F5 | DEBE | T | P-08 | — | Pendiente (Fase futura) |
 | REQ-PRES-003 | F5 | DEBE | T, I | P-09 | — | Pendiente (Fase futura) |
@@ -36,8 +36,8 @@
 | REQ-VER-005 | F4 | DEBE | T | — | — | Pendiente (Fase futura) |
 | REQ-VER-006 | F4 | DEBE | T | P-08 | — | Pendiente (Fase futura) |
 | REQ-VER-007 | F4 | DEBE | I | P-05 | — | Inspección / Auditoría |
-| REQ-VER-008 | F2 | DEBE | T, F | P-08 | base64url.rs, ids.rs, proptest_ids.rs | Cubierto |
-| REQ-VER-009 | F4 | DEBE | T | P-06 | lib.rs, clock.rs | Cubierto |
+| REQ-VER-008 | F2 | DEBE | T, F | P-08 | base64url.rs, json.rs, differential_serde_json.rs, ids.rs, proptest_ids.rs, json_bounded.rs | Cubierto |
+| REQ-VER-009 | F4 | DEBE | T | P-06 | json.rs, differential_serde_json.rs, lib.rs, clock.rs, json_bounded.rs | Cubierto |
 | REQ-VER-010 | F4 | DEBE | T | P-08 | — | Pendiente (Fase futura) |
 | REQ-VER-011 | F4 | DEBE | T | P-08 | — | Pendiente (Fase futura) |
 | REQ-VER-012 | F4 | DEBE | T, I | P-08 | — | Pendiente (Fase futura) |

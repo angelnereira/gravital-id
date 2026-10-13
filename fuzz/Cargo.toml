@@ -31,5 +31,11 @@ path = "fuzz_targets/base64url_strict.rs"
 test = false
 doc = false
 
+[[bin]]
+name = "json_bounded"
+path = "fuzz_targets/json_bounded.rs"
+test = false
+doc = false
+
 [profile.release]
 debug = 1

@@ -20,7 +20,7 @@ jobs:
       fail-fast: false
       matrix:
         # Un objetivo por parser desde F2 (F2.T11).
-        target: [gid_error_format, base64url_strict]
+        target: [gid_error_format, base64url_strict, json_bounded]
     steps:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@nightly

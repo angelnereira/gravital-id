@@ -221,6 +221,8 @@ name = "gravital-id-codec"
 version = "0.1.0"
 dependencies = [
  "gravital-id-types",
+ "proptest",
+ "serde_json",
 ]
 
 [[package]]

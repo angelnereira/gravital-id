@@ -11,8 +11,10 @@
 extern crate alloc;
 
 pub mod base64url;
+pub mod json;
 
 pub use base64url::{decode, decode_bounded, encode, MAX_INPUT_LEN};
+pub use json::{parse, parse_bytes, parse_with_limits, Limits, Number, Value};
 
 /// Versión semántica del crate en compilación.
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");

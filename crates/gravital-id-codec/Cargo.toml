@@ -15,3 +15,10 @@ workspace = true
 
 [dependencies]
 gravital-id-types = { workspace = true }
+
+[dev-dependencies]
+# Propiedades y prueba diferencial (F2.T03). Mismo pin por MSRV (ADR-0014).
+proptest = "=1.5.0"
+# Referencia independiente SOLO para pruebas: nuestro parser es no_std y en
+# producción no depende de serde_json (INV-01).
+serde_json = "1.0"
