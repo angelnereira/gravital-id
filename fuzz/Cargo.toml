@@ -37,5 +37,11 @@ path = "fuzz_targets/json_bounded.rs"
 test = false
 doc = false
 
+[[bin]]
+name = "cbor_bounded"
+path = "fuzz_targets/cbor_bounded.rs"
+test = false
+doc = false
+
 [profile.release]
 debug = 1
