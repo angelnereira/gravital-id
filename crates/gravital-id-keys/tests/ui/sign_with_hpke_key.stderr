@@ -1,0 +1,21 @@
+error[E0277]: the trait bound `gravital_id_keys::HpkeKeyAgreement: SigningPurpose` is not satisfied
+  --> tests/ui/sign_with_hpke_key.rs:10:27
+   |
+10 |     let _ = keystore.sign(handle, &digest);
+   |                      ---- ^^^^^^ the trait `SigningPurpose` is not implemented for `gravital_id_keys::HpkeKeyAgreement`
+   |                      |
+   |                      required by a bound introduced by this call
+   |
+   = help: the following other types implement trait `SigningPurpose`:
+             gravital_id_keys::HolderBinding
+             gravital_id_keys::HolderRecovery
+             gravital_id_keys::IssuerSigning
+             gravital_id_keys::StatusListSigning
+             gravital_id_keys::TrustBundle
+             gravital_id_keys::TrustRoot
+             gravital_id_keys::VerifierRequest
+note: required by a bound in `sign`
+  --> src/keystore.rs
+   |
+   |     fn sign<P: SigningPurpose>(
+   |                ^^^^^^^^^^^^^^ required by this bound in `KeyStore::sign`

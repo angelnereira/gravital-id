@@ -6,10 +6,14 @@
 
 Identificadores validados, marcas de tiempo y tipos fundamentales del protocolo Gravital ID.
 
-## Contenido actual (F1)
+## Contenido actual (F1–F2)
 
 - Catálogo canónico de errores `GidError`/`PipError` (`error.rs`, `ERROR_CODES.md`).
 - Trait `Clock` de inyección de tiempo (`clock.rs`, `SDK_API.md §3.2`, INV-11).
+- Newtypes validados (`ids.rs`, F2.T01): `IssuerId`, `Kid`, `Vct`, `ProfileId`,
+  `UnixTime`, `BundleVersion`. Reglas de formato documentadas en rustdoc con los
+  ejemplos de `TRUST_BUNDLE.md` y de los perfiles; pruebas de propiedades
+  (`tests/proptest_ids.rs`).
 
 ## Invariantes aplicables
 

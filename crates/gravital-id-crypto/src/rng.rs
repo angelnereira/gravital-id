@@ -19,14 +19,14 @@ pub trait Rng {
     /// Rellena `dest` con bytes aleatorios criptográficos.
     ///
     /// # Errores
-    /// [`ErrorCode::InsufficientEntropy`] si la fuente no puede producir la
+    /// [`ErrorCode::InsufficientEntropy`](gravital_id_types::ErrorCode::InsufficientEntropy) si la fuente no puede producir la
     /// cantidad solicitada; en ese caso `dest` queda indeterminado.
     fn fill_bytes(&self, dest: &mut [u8]) -> Result<(), GidError>;
 
     /// Genera exactamente 32 bytes (256 bits) de material aleatorio.
     ///
     /// # Errores
-    /// [`ErrorCode::InsufficientEntropy`] si la fuente falla.
+    /// [`ErrorCode::InsufficientEntropy`](gravital_id_types::ErrorCode::InsufficientEntropy) si la fuente falla.
     fn fill_32_bytes(&self) -> Result<[u8; 32], GidError> {
         let mut out = [0u8; 32];
         self.fill_bytes(&mut out)?;
