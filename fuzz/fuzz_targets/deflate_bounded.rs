@@ -1,6 +1,8 @@
 #![no_main]
 //! Objetivo de fuzzing de la descompresión DEFLATE acotada (F2.T05/F2.T11).
 //!
+//! // Verifies: REQ-SEC-005, REQ-STAT-003
+//!
 //! Propiedades invariantadas:
 //! 1. `inflate_bounded` nunca entra en pánico para ninguna entrada (INV-10),
 //!    incluidos flujos corruptos, truncados y bombas de descompresión.

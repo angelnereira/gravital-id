@@ -1,6 +1,8 @@
 #![no_main]
 //! Objetivo de fuzzing del lector JSON acotado (F2.T03/F2.T11).
 //!
+//! // Verifies: REQ-SEC-005, REQ-CRED-009, REQ-VER-008
+//!
 //! Propiedades invariantadas:
 //! 1. `parse_bytes` y `parse` **nunca** entran en pánico para ninguna entrada
 //!    (INV-10), incluida la que no es UTF-8 válido.

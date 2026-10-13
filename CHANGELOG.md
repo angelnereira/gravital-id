@@ -20,6 +20,7 @@ Cada componente publicado (SDK, servicios, contratos, especificación) indica su
 - [ci] `deny.toml` con la allowlist de licencias de ADR-0002, sin comodines ni fuentes fuera de crates.io (F1.T06, REQ-COMP-003; #6).
 - [governance] `CODEOWNERS` con las rutas sensibles y labels como código (`.github/labels.yml`) con script de sincronización idempotente (F1.T12; #6).
 - [test] Objetivo de fuzzing de ejemplo `fuzz/fuzz_targets/gid_error_format.rs` y benchmarks criterion de ejemplo en `gravital-id-types` (F1.T11; #6).
+- [test] Objetivos de fuzzing normativos para los 6 parsers del núcleo (`base64url_strict`, `json_bounded`, `cbor_bounded`, `base45_strict`, `deflate_bounded`, `jwk_parser`) con trazabilidad REQ-SEC-005 y matriz de ejecución en `fuzz.yml` (F2.T11, #34).
 - [test] Pruebas Kani de invariantes del catálogo de errores (códigos de 4 dígitos, conservación de código y mensaje) (F1.T14, REQ-SDK-003; #6).
 
 - [docs] Paquete documental inicial: `AGENTS.md`, arquitectura, requisitos, estructura del proyecto, hoja de ruta F0–F18, plantillas de issues y PR, índice de ADRs.
@@ -68,5 +69,6 @@ Cada componente publicado (SDK, servicios, contratos, especificación) indica su
 ### Fixed
 - [docs] Contradicción sobre I/O en L3 (`pip-storage`), configuración de lints inaplicable (`forbid` y herencia de workspace), fase de REQ-STAT-002 y dependencia de F6.T08 respecto de F4.T03 (#3, #4, #5).
 - [xtask] `check-error-codes` reportaba duplicados inexistentes porque contaba las menciones de `GID-Exxxx` en doc-comments y pruebas; ahora solo cuenta brazos de `match` de definición y verifica además que los discriminantes del enum coincidan con el catálogo documentado (#6).
+- [xtask] `trace`: soporte para tablas transversales de 5 columnas en `REQUIREMENTS.md` con valor por defecto para el principio arquitectónico (#36).
 
 <!-- Secciones permitidas: Added, Changed, Deprecated, Removed, Fixed, Security -->

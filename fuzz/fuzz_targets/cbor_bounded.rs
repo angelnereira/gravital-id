@@ -1,6 +1,8 @@
 #![no_main]
 //! Objetivo de fuzzing del lector CBOR acotado (F2.T04/F2.T11).
 //!
+//! // Verifies: REQ-SEC-005, REQ-VER-008
+//!
 //! Propiedades invariantadas:
 //! 1. `parse` nunca entra en pánico para ninguna entrada (INV-10).
 //! 2. Determinismo (REQ-VER-009).

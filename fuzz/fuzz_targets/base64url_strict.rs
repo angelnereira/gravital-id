@@ -1,6 +1,8 @@
 #![no_main]
 //! Objetivo de fuzzing del decoder base64url estricto (F2.T02/F2.T11).
 //!
+//! // Verifies: REQ-SEC-005, REQ-VER-008
+//!
 //! Propiedad invariantada: si `decode` acepta una entrada, esa entrada **es** la
 //! codificación canónica de sus bytes (sin relleno y con bits sobrantes cero),
 //! de modo que `encode(decode(s)) == s`. Además, `decode` nunca entra en pánico

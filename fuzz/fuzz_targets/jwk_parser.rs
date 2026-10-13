@@ -1,6 +1,8 @@
 #![no_main]
 //! Objetivo de fuzzing del parser JWK EC P-256 (F2.T07/F2.T11).
 //!
+//! // Verifies: REQ-SEC-005
+//!
 //! Propiedades invariantadas:
 //! 1. `parse_bytes` nunca entra en pánico para ninguna entrada (INV-10).
 //! 2. Determinismo: la misma entrada produce el mismo resultado (REQ-VER-009).

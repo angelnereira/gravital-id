@@ -1,6 +1,8 @@
 #![no_main]
 //! Objetivo de fuzzing de Base45 (F2.T05/F2.T11).
 //!
+//! // Verifies: REQ-SEC-005, REQ-STAT-003
+//!
 //! Propiedades invariantadas:
 //! 1. `decode` nunca entra en pánico para ninguna entrada (INV-10).
 //! 2. Round-trip: `decode(encode(bytes)) == bytes` para bytes arbitrarios.

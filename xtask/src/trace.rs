@@ -41,15 +41,20 @@ pub fn parse_requirements(req_path: &Path) -> Result<Vec<Requirement>> {
                 .filter(|c| !c.is_empty())
                 .collect();
 
-            // Esperamos al menos 6 columnas: ID, Requisito, Nivel, Verif., Fase, P
-            if cols.len() >= 6 && cols[0].starts_with("REQ-") {
+            // Esperamos al menos 5 columnas: ID, Requisito, Nivel, Verif., Fase, [Principio opcional]
+            if cols.len() >= 5 && cols[0].starts_with("REQ-") {
+                let principle = if cols.len() >= 6 {
+                    cols[5].to_string()
+                } else {
+                    "—".to_string()
+                };
                 requirements.push(Requirement {
                     id: cols[0].to_string(),
                     description: cols[1].to_string(),
                     level: cols[2].to_string(),
                     verification: cols[3].to_string(),
                     phase: cols[4].to_string(),
-                    principle: cols[5].to_string(),
+                    principle,
                 });
             }
         }
@@ -250,5 +255,21 @@ mod tests {
         let res = validate_traceability(&reqs, &verifications, &closed);
         assert!(res.is_err());
         assert!(res.unwrap_err().to_string().contains("REQ-MAINT-002"));
+    }
+
+    // Regression: #36 (tablas transversales con 5 columnas deben ser parseadas correctamente)
+    #[test]
+    fn parse_requirements_supports_5_column_transversal_tables() {
+        let temp_dir = std::env::temp_dir().join(format!("trace_test_{}", std::process::id()));
+        let _ = std::fs::create_dir_all(&temp_dir);
+        let req_file = temp_dir.join("REQUIREMENTS.md");
+        let sample = "| ID | Requisito | Nivel | Verif. | Fase |\n|---|---|---|---|---|\n| REQ-SEC-005 | Fuzzing | DEBE | F | F2 |\n";
+        std::fs::write(&req_file, sample).expect("write sample");
+        let reqs = parse_requirements(&req_file).expect("parse requirements");
+        let _ = std::fs::remove_dir_all(&temp_dir);
+
+        assert_eq!(reqs.len(), 1);
+        assert_eq!(reqs[0].id, "REQ-SEC-005");
+        assert_eq!(reqs[0].principle, "—");
     }
 }

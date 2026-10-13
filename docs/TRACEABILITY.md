@@ -36,14 +36,14 @@
 | REQ-VER-005 | F4 | DEBE | T | — | — | Pendiente (Fase futura) |
 | REQ-VER-006 | F4 | DEBE | T | P-08 | — | Pendiente (Fase futura) |
 | REQ-VER-007 | F4 | DEBE | I | P-05 | — | Inspección / Auditoría |
-| REQ-VER-008 | F2 | DEBE | T, F | P-08 | base64url.rs, cbor.rs, json.rs, differential_serde_json.rs, ids.rs, proptest_ids.rs, json_bounded.rs | Cubierto |
+| REQ-VER-008 | F2 | DEBE | T, F | P-08 | base64url.rs, cbor.rs, json.rs, differential_serde_json.rs, ids.rs, proptest_ids.rs, base64url_strict.rs, cbor_bounded.rs, json_bounded.rs | Cubierto |
 | REQ-VER-009 | F4 | DEBE | T | P-06 | cbor.rs, json.rs, differential_serde_json.rs, lib.rs, clock.rs, cbor_bounded.rs, json_bounded.rs, jwk_parser.rs | Cubierto |
 | REQ-VER-010 | F4 | DEBE | T | P-08 | — | Pendiente (Fase futura) |
 | REQ-VER-011 | F4 | DEBE | T | P-08 | — | Pendiente (Fase futura) |
 | REQ-VER-012 | F4 | DEBE | T, I | P-08 | — | Pendiente (Fase futura) |
 | REQ-STAT-001 | F4 | DEBE | T | P-04 | — | Pendiente (Fase futura) |
 | REQ-STAT-002 | F7 | DEBE | T | P-09 | — | Pendiente (Fase futura) |
-| REQ-STAT-003 | F4 | DEBE | T, F | P-08 | base45.rs, deflate.rs | Cubierto |
+| REQ-STAT-003 | F4 | DEBE | T, F | P-08 | base45.rs, deflate.rs, base45_strict.rs, deflate_bounded.rs | Cubierto |
 | REQ-STAT-004 | F4 | DEBE | T | P-05 | — | Pendiente (Fase futura) |
 | REQ-STAT-005 | F7 | DEBE | T | P-10 | — | Pendiente (Fase futura) |
 | REQ-STAT-006 | F7 | DEBE | T | P-14 | — | Pendiente (Fase futura) |
@@ -106,3 +106,46 @@
 | REQ-GOV-001 | F14 | DEBE | I | P-12 | — | Inspección / Auditoría |
 | REQ-GOV-002 | F14 | DEBE | I, D | P-08 | — | Inspección / Auditoría |
 | REQ-GOV-003 | F14 | DEBE | I | P-12 | — | Inspección / Auditoría |
+| REQ-SEC-001 | F1 | DEBE | T, I | — | layers.rs | Cubierto |
+| REQ-SEC-002 | F2 | DEBE | I | — | aead.rs, ecdh.rs, hpke.rs, kdf.rs, rng.rs, sha.rs, external_vectors.rs | Cubierto |
+| REQ-SEC-003 | F2 | DEBE | T, I | — | aead.rs, secret.rs, secret_hygiene.rs, software.rs | Cubierto |
+| REQ-SEC-004 | F2 | DEBE | I | — | mac.rs, secret.rs, secret_hygiene.rs | Cubierto |
+| REQ-SEC-005 | F2 | DEBE | F | — | base45_strict.rs, base64url_strict.rs, cbor_bounded.rs, deflate_bounded.rs, json_bounded.rs, jwk_parser.rs, trace.rs | Cubierto |
+| REQ-SEC-006 | F1 | DEBE | T | — | — | Pendiente (Fase futura) |
+| REQ-SEC-007 | F13 | DEBE | A | — | — | Inspección / Auditoría |
+| REQ-SEC-008 | F13 | DEBE | A | — | — | Inspección / Auditoría |
+| REQ-SEC-009 | F15 | DEBE | T | — | — | Pendiente (Fase futura) |
+| REQ-SEC-010 | F0 | DEBE | I | — | — | Inspección / Auditoría |
+| REQ-SEC-011 | F0 | DEBE | I | — | — | Inspección / Auditoría |
+| REQ-PRIV-001 | F5 | DEBE | I | — | — | Inspección / Auditoría |
+| REQ-PRIV-002 | F4 | DEBE | T | — | — | Pendiente (Fase futura) |
+| REQ-PRIV-003 | F7 | DEBE | T, I | — | — | Pendiente (Fase futura) |
+| REQ-PRIV-004 | F14 | DEBE | A | — | — | Inspección / Auditoría |
+| REQ-PRIV-005 | F5 | DEBE | T | — | — | Pendiente (Fase futura) |
+| REQ-PORT-001 | F9 | DEBE | T | — | lib.rs | Cubierto |
+| REQ-PORT-002 | F2 | DEBE | T | — | — | Pendiente (Fase futura) |
+| REQ-PORT-003 | F2 | DEBE | T, I | — | layers.rs | Cubierto |
+| REQ-PORT-004 | F1 | DEBE | T | — | layers.rs | Cubierto |
+| REQ-REL-001 | F15 | DEBE | A, D | — | — | Inspección / Auditoría |
+| REQ-REL-002 | F15 | DEBE | I | — | — | Inspección / Auditoría |
+| REQ-REL-003 | F15 | DEBE | D | — | — | Inspección / Auditoría |
+| REQ-REL-004 | F4 | DEBE | T | — | — | Pendiente (Fase futura) |
+| REQ-PERF-001 | F2 | DEBE | T | — | — | Pendiente (Fase futura) |
+| REQ-PERF-002 | F9 | DEBE | T | — | — | Pendiente (Fase futura) |
+| REQ-PERF-003 | F5 | DEBE | T | — | — | Pendiente (Fase futura) |
+| REQ-MAINT-001 | F1 | DEBE | T | — | — | Pendiente (Fase futura) |
+| REQ-MAINT-002 | F1 | DEBE | T | — | layers.rs, trace.rs | Cubierto |
+| REQ-MAINT-003 | F4 | DEBE | T | — | — | Pendiente (Fase futura) |
+| REQ-MAINT-004 | F1 | DEBE | T | — | — | Pendiente (Fase futura) |
+| REQ-MAINT-005 | F4 | DEBERÍA | T | — | — | Inspección / Auditoría |
+| REQ-MAINT-006 | F4 | DEBERÍA | T | — | — | Inspección / Auditoría |
+| REQ-COMP-001 | F14 | DEBE | A | — | — | Inspección / Auditoría |
+| REQ-COMP-002 | F14 | DEBE | A | — | — | Inspección / Auditoría |
+| REQ-COMP-003 | F1 | DEBE | T | — | — | Pendiente (Fase futura) |
+| REQ-OBS-001 | F7 | DEBE | T | — | — | Pendiente (Fase futura) |
+| REQ-OBS-002 | F15 | DEBE | D | — | — | Inspección / Auditoría |
+| REQ-OBS-003 | F9 | DEBE | T, I | — | — | Pendiente (Fase futura) |
+| REQ-DOC-001 | F0 | DEBE | I | — | — | Inspección / Auditoría |
+| REQ-DOC-002 | F0 | DEBE | I | — | — | Inspección / Auditoría |
+| REQ-DOC-003 | F1 | DEBE | T | — | trace.rs | Cubierto |
+| REQ-DOC-004 | F17 | DEBE | I | — | — | Inspección / Auditoría |
