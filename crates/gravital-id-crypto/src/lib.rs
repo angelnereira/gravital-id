@@ -13,6 +13,7 @@ extern crate alloc;
 pub mod aead;
 pub mod ecdh;
 pub mod hpke;
+pub mod jwk;
 pub mod kdf;
 pub mod mac;
 pub mod rng;
@@ -21,6 +22,7 @@ pub mod sign;
 
 pub use aead::{open as aead_open, seal as aead_seal, AEAD_KEY_LEN, AEAD_NONCE_LEN, AEAD_TAG_LEN};
 pub use ecdh::{agree as ecdh_agree, ES256_SHARED_SECRET_LEN};
+pub use jwk::{jwk_thumbprint_base64url, jwk_thumbprint_sha256, JwkEcP256, ES256_COORDINATE_LEN};
 pub use kdf::{hkdf_extract_sha256, hkdf_sha256, MAX_HKDF_OUTPUT_LEN};
 pub use mac::{constant_time_eq, hmac_sha256, hmac_sha256_verify, HMAC_OUTPUT_LEN};
 pub use rng::Rng;

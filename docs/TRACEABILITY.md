@@ -8,7 +8,7 @@
 | REQ-KEY-004 | F2 | DEBE | T | P-11 | — | Pendiente (Fase futura) |
 | REQ-KEY-005 | F4 | DEBE | T | P-08 | — | Pendiente (Fase futura) |
 | REQ-KEY-006 | F4 | DEBE | T | — | — | Pendiente (Fase futura) |
-| REQ-KEY-007 | F2 | DEBE | T | P-04 | — | Pendiente (Fase futura) |
+| REQ-KEY-007 | F2 | DEBE | T | P-04 | jwk.rs | Cubierto |
 | REQ-KEY-008 | F5 | DEBE | T | P-09 | — | Pendiente (Fase futura) |
 | REQ-KEY-009 | F2 | DEBE | T | P-07 | — | Pendiente (Fase futura) |
 | REQ-KEY-010 | F2 | DEBE | T | P-11 | sign.rs, ids.rs | Cubierto |
@@ -37,7 +37,7 @@
 | REQ-VER-006 | F4 | DEBE | T | P-08 | — | Pendiente (Fase futura) |
 | REQ-VER-007 | F4 | DEBE | I | P-05 | — | Inspección / Auditoría |
 | REQ-VER-008 | F2 | DEBE | T, F | P-08 | base64url.rs, cbor.rs, json.rs, differential_serde_json.rs, ids.rs, proptest_ids.rs, json_bounded.rs | Cubierto |
-| REQ-VER-009 | F4 | DEBE | T | P-06 | cbor.rs, json.rs, differential_serde_json.rs, lib.rs, clock.rs, cbor_bounded.rs, json_bounded.rs | Cubierto |
+| REQ-VER-009 | F4 | DEBE | T | P-06 | cbor.rs, json.rs, differential_serde_json.rs, lib.rs, clock.rs, cbor_bounded.rs, json_bounded.rs, jwk_parser.rs | Cubierto |
 | REQ-VER-010 | F4 | DEBE | T | P-08 | — | Pendiente (Fase futura) |
 | REQ-VER-011 | F4 | DEBE | T | P-08 | — | Pendiente (Fase futura) |
 | REQ-VER-012 | F4 | DEBE | T, I | P-08 | — | Pendiente (Fase futura) |

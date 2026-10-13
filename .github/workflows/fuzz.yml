@@ -27,6 +27,7 @@ jobs:
           cbor_bounded,
           base45_strict,
           deflate_bounded,
+          jwk_parser,
         ]
     steps:
       - uses: actions/checkout@v4

@@ -6,7 +6,7 @@
 
 Abstracciones y backend criptográfico (ES256, SHA-256, HMAC, XChaCha20-Poly1305, HPKE) para Gravital ID.
 
-## Contenido (F2.T06)
+## Contenido (F2.T06, F2.T07)
 
 - **Firmas ES256 (`sign.rs`):** Firma determinista RFC 6979 en IEEE P1363 (`r‖s`, 64 bytes), conversión DER ↔ P1363 y verificación flexible (sin exigir *low-S*, REQ-KEY-010).
 - **Funciones hash (`sha.rs`):** SHA-256 en un solo paso (`sha256`) y streaming (`Sha256Hasher`).
@@ -16,6 +16,7 @@ Abstracciones y backend criptográfico (ES256, SHA-256, HMAC, XChaCha20-Poly1305
 - **Acuerdo de claves (`ecdh.rs`):** ECDH P-256 (`agree`, `agree_ephemeral`).
 - **HPKE modo base (`hpke.rs`):** RFC 9180 con `DHKEM(P-256, HKDF-SHA256) + HKDF-SHA256 + ChaCha20Poly1305`.
 - **Aleatoriedad inyectada (`rng.rs`):** Trait `Rng` sin entropía implícita (INV-11).
+- **JWK y Thumbprints (`jwk.rs`):** Parseo estricto de JWK EC P-256 con validación de punto en curva, rechazo estricto de parámetros privados (`d`) y cálculo de huellas RFC 7638 en base64url y SHA-256 (REQ-KEY-007).
 
 ## Invariantes aplicables
 

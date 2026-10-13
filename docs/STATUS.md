@@ -10,7 +10,7 @@
 | Último gate cerrado | **G0** (2026-10-11) |
 | Próximo gate | G1 |
 | Hito siguiente | M1 · Núcleo offline (al cerrar G5) |
-| Última actualización | 2026-10-12 (F2: T01–T06 hechas) |
+| Última actualización | 2026-10-12 (F2: T01–T07 hechas) |
 
 ## Gates
 
@@ -18,7 +18,7 @@
 |---|---|---|---|
 | G0 | **Cerrado** | 2026-10-11 | Especificaciones v0.1 completadas, ADRs 0001-0012 y 0016-0020 aceptados, 4 spikes concluidos viables, revisión cruzada F0.T21 aprobada |
 | G1 | En curso | — | Workspace, xtask, CI y gobierno del repositorio implementados en `feat/6-workspace-cargo` (#6, PR #22); pendiente merge del mantenedor |
-| G2 | En curso | — | F2 iniciada en `feat/24-types-newtypes`: F2.T01 a F2.T06 hechas (#24–#29) |
+| G2 | En curso | — | F2 iniciada en `feat/24-types-newtypes`: F2.T01 a F2.T07 hechas (#24–#30) |
 | G2 … G17 | Pendiente | — | — |
 
 ## Tareas en curso
@@ -45,6 +45,7 @@
 | F2.T04 CBOR acotado | #27 | OpenCode (agente) | Hecha | Límites, modo determinista RFC 8949 §4.2; desbordamiento de pila del fuzzing corregido; rama `feat/24-types-newtypes` |
 | F2.T05 DEFLATE + Base45 | #28 | OpenCode (agente) | Hecha | zlib acotado (2 MiB / 10:1, adler32) con backend `no_std` miniz_oxide; Base45 RFC 9285 con vectores del RFC; rama `feat/24-types-newtypes` |
 | F2.T06 CryptoBackend + RustCrypto | #29 | Antigravity (agente) | Hecha | ES256 P1363/DER, SHA-256, HMAC, HKDF, XChaCha20-Poly1305, ECDH P-256, HPKE (RFC 9180); rama `feat/24-types-newtypes` |
+| F2.T07 JWK y thumbprints | #30 | Antigravity (agente) | Hecha | Parseo estricto JWK EC P-256, validación de curva, rechazo miembros privados (d), RFC 7638 thumbprint; rama `feat/24-types-newtypes` |
 
 ## Bloqueos
 
@@ -65,27 +66,27 @@
 
 ## Última nota de traspaso
 
-### Traspaso — 2026-10-12 (cierre F2.T06) — Antigravity (agente)
-- Tareas: F2.T06 (#29) — rama `feat/24-types-newtypes` (acumula F2.T01–T06)
+### Traspaso — 2026-10-12 (cierre F2.T07) — Antigravity (agente)
+- Tareas: F2.T07 (#30) — rama `feat/24-types-newtypes` (acumula F2.T01–T07)
 - Estado: hecha y verificada
 - Hecho en esta sesión:
-  - Completada implementación y corrección del backend criptográfico `gravital-id-crypto` (F2.T06):
-    - SHA-256 en un solo paso y streaming (`Sha256Hasher`) con vectores NIST.
-    - HMAC-SHA-256 con verificación en tiempo constante (`subtle::ConstantTimeEq`).
-    - HKDF-SHA256 según RFC 5869.
-    - XChaCha20-Poly1305 con autenticación de datos asociados (AAD) y validación de longitudes.
-    - ECDH P-256 para derivación de secretos compartidos estáticos y efímeros.
-    - Firmas deterministas ES256 (RFC 6979) en IEEE P1363 (`r‖s`, 64 bytes), conversión DER ↔ P1363 y verificación flexible compatible con high-S (REQ-KEY-010).
-    - HPKE RFC 9180 Modo Base (DHKEM P-256 + HKDF-SHA256 + ChaCha20Poly1305) sin `getrandom` para mantener compatibilidad pura `no_std` en bare-metal (`thumbv7em-none-eabihf`), WebAssembly (`wasm32-unknown-unknown`), Android y iOS.
-    - Eliminado crate externo `hpke` que introducía dependencia no deseada de `getrandom`.
-  - 34 pruebas unitarias en `gravital-id-crypto` pasando.
+  - Completada implementación de F2.T07 (`gravital-id-crypto::jwk`):
+    - Parseo estricto de JWK EC P-256 (`JwkEcP256`) desde cadenas JSON o bytes UTF-8 con límites de tamaño/profundidad.
+    - Validación matemática rigurosa de punto en la curva P-256 (`secp256r1`).
+    - Rechazo estricto de miembros de clave privada (`d`, `p`, `q`, etc.) en contextos públicos ([`ErrorCode::InvalidKeyFormat`]).
+    - Rechazo de tipos de clave o curvas no permitidas (`kty != "EC"`, `crv != "P-256"`).
+    - Serialización canónica según RFC 7638 §3 (`crv`, `kty`, `x`, `y` ordenados lexicográficamente sin espacios).
+    - Cálculo de huellas digitales JWK Thumbprint (SHA-256 binario y base64url unpadded de 43 caracteres) y formato URI RFC 9278.
+    - Vector de prueba oficial RFC 7638 verificado (`w9eYdC6_s_tLQ8lH6PUpc0mddazaqtPgeC2IgWDiqY8`).
+    - Nuevo objetivo de fuzzing `fuzz/fuzz_targets/jwk_parser.rs` añadido a `fuzz/Cargo.toml` y matriz `.github/workflows/fuzz.yml`.
+    - REQ-KEY-007 trazado y cubierto en `docs/TRACEABILITY.md`.
+  - 42 pruebas unitarias en `gravital-id-crypto` pasando.
   - Compilación cruzada validada para todos los targets del toolchain.
 - Pendiente (siguiente paso concreto):
-  - F2.T07 JWK y thumbprints (#30): parseo estricto de JWK EC P-256 y thumbprint RFC 7638.
-  - F2.T08 Vectores externos (#31): Wycheproof, RFC 7515, RFC 7638, RFC 5869, RFC 9180.
-  - F2.T09 Higiene de secretos (#32): Zeroize, Debug redactado.
+  - F2.T08 Vectores externos (#31): Wycheproof, RFC 7515 (ES256), RFC 7638, RFC 5869 (HKDF), RFC 9180 (HPKE).
+  - F2.T09 Higiene de secretos (#32): Zeroize, Debug redactado, comparación subtle.
   - F2.T10 gravital-id-keys (#33): KeyPurpose, KeyHandle, KeyStore.
 - Bugs/issues abiertos: #7, #8, #23 (decisiones/spec-gaps del mantenedor).
-- Decisiones tomadas: HPKE modo base implementado directamente sobre las primitivas RustCrypto ADR-0007 para garantizar portabilidad estricta no_std (ADR-0019) sin getrandom implícito (INV-11).
-- Riesgos o dudas: Ninguno en F2.T06; CI sigue a la espera de desbloqueo de facturación de GitHub.
-- Comprobaciones locales: fmt ✅ clippy ✅ tests ✅ (140) layers ✅ trace ✅ doc ✅ no_std ✅ wasm32 ✅ android ✅ ios ✅
+- Decisiones tomadas: JwkEcP256 almacena internamente la clave pública validada p256::PublicKey para conversiones de costo cero.
+- Riesgos o dudas: Ninguno en F2.T07; CI sigue a la espera de desbloqueo de facturación de GitHub.
+- Comprobaciones locales: fmt ✅ clippy ✅ tests ✅ (148) layers ✅ trace ✅ doc ✅ no_std ✅ wasm32 ✅ android ✅ ios ✅
