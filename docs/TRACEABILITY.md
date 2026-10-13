@@ -2,16 +2,16 @@
 
 | ID | Fase | Nivel | Verificación | Principio | Pruebas / Archivos | Estado |
 |---|---|---|---|---|---|---|
-| REQ-KEY-001 | F2 | DEBE | T, I | P-07 | trace.rs | Cubierto |
+| REQ-KEY-001 | F2 | DEBE | T, I | P-07 | keystore.rs, lib.rs, purpose.rs, compile_fail.rs, keys_tests.rs, agree_with_signing_key.rs, assign_wrong_purpose.rs, sign_with_hpke_key.rs, trace.rs | Cubierto |
 | REQ-KEY-002 | F9 | DEBE | T, D | P-03 | — | Pendiente (Fase futura) |
-| REQ-KEY-003 | F9 | DEBE | I, A | P-03 | — | Inspección / Auditoría |
-| REQ-KEY-004 | F2 | DEBE | T | P-11 | — | Pendiente (Fase futura) |
+| REQ-KEY-003 | F9 | DEBE | I, A | P-03 | keystore.rs | Cubierto |
+| REQ-KEY-004 | F2 | DEBE | T | P-11 | keystore.rs, lib.rs, software.rs, keys_tests.rs | Cubierto |
 | REQ-KEY-005 | F4 | DEBE | T | P-08 | — | Pendiente (Fase futura) |
 | REQ-KEY-006 | F4 | DEBE | T | — | — | Pendiente (Fase futura) |
-| REQ-KEY-007 | F2 | DEBE | T | P-04 | jwk.rs | Cubierto |
+| REQ-KEY-007 | F2 | DEBE | T | P-04 | jwk.rs, lib.rs, software.rs, keys_tests.rs | Cubierto |
 | REQ-KEY-008 | F5 | DEBE | T | P-09 | — | Pendiente (Fase futura) |
-| REQ-KEY-009 | F2 | DEBE | T | P-07 | — | Pendiente (Fase futura) |
-| REQ-KEY-010 | F2 | DEBE | T | P-11 | sign.rs, ids.rs | Cubierto |
+| REQ-KEY-009 | F2 | DEBE | T | P-07 | keystore.rs, lib.rs, purpose.rs, compile_fail.rs, keys_tests.rs, agree_with_signing_key.rs, sign_with_hpke_key.rs | Cubierto |
+| REQ-KEY-010 | F2 | DEBE | T | P-11 | sign.rs, lib.rs, signature.rs, keys_tests.rs, ids.rs | Cubierto |
 | REQ-CRED-001 | F3 | DEBE | T | P-04 | — | Pendiente (Fase futura) |
 | REQ-CRED-002 | F3 | DEBE | T, I | P-07 | — | Pendiente (Fase futura) |
 | REQ-CRED-003 | F3 | DEBE | T | P-09 | — | Pendiente (Fase futura) |

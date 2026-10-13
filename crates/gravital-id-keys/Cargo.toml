@@ -16,3 +16,11 @@ workspace = true
 [dependencies]
 gravital-id-types = { workspace = true }
 gravital-id-crypto = { workspace = true }
+
+[features]
+default = ["software-keystore"]
+software-keystore = []
+
+[dev-dependencies]
+trybuild = "=1.0.101"
+gravital-id-testkit = { path = "../gravital-id-testkit", version = "0.1.0" }

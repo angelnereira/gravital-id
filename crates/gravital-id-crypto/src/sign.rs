@@ -20,6 +20,10 @@ use p256::NistP256;
 
 use gravital_id_types::{ErrorCode, GidError};
 
+use crate::jwk::JwkEcP256;
+use crate::rng::Rng;
+use crate::secret::SecretKeyBytes;
+
 /// Longitud de la firma P1363 (`r‖s`) en bytes.
 pub const ES256_SIGNATURE_LEN: usize = 64;
 
@@ -28,6 +32,34 @@ pub const ES256_SECRET_KEY_LEN: usize = 32;
 
 /// Longitud de la clave pública SEC1 sin comprimir en bytes.
 pub const ES256_PUBLIC_KEY_LEN: usize = 65;
+
+/// Genera una clave secreta P-256 aleatoria y válida utilizando el generador inyectado.
+///
+/// # Errores
+/// [`ErrorCode::InsufficientEntropy`] si el generador no puede proveer suficiente entropía.
+pub fn generate_p256_secret_key(rng: &impl Rng) -> Result<SecretKeyBytes, GidError> {
+    for _ in 0..16 {
+        let bytes = rng.fill_32_bytes()?;
+        if p256::SecretKey::from_slice(&bytes).is_ok() {
+            return Ok(SecretKeyBytes::new(bytes));
+        }
+    }
+    Err(GidError::new(
+        ErrorCode::InsufficientEntropy,
+        "failed to generate valid P-256 scalar from RNG",
+    ))
+}
+
+/// Obtiene la clave pública [`JwkEcP256`] asociada a una clave secreta.
+///
+/// # Errores
+/// [`ErrorCode::InvalidKeyFormat`] si los bytes de la clave secreta son inválidos.
+pub fn public_key_from_secret_key(secret_key: &SecretKeyBytes) -> Result<JwkEcP256, GidError> {
+    let secret = p256::SecretKey::from_slice(secret_key.expose_secret())
+        .map_err(|_| GidError::new(ErrorCode::InvalidKeyFormat, "invalid secret key bytes"))?;
+    let public = secret.public_key();
+    Ok(JwkEcP256::from_public_key(&public))
+}
 
 /// Firma determinista RFC 6979 sobre el prehash SHA-256: sin aleatoriedad
 /// implícita (INV-11).
@@ -52,6 +84,25 @@ pub fn sign_es256(
     message: &[u8],
 ) -> Result<[u8; ES256_SIGNATURE_LEN], GidError> {
     let signature = sign_deterministic_rfc6979(key, message)?;
+    to_p1363(&signature)
+}
+
+/// Firma un digest SHA-256 (32 bytes) precalculado usando una [`SecretKeyBytes`].
+///
+/// Devuelve la firma en formato IEEE P1363 (`r‖s`, 64 bytes) mediante RFC 6979.
+///
+/// # Errores
+/// [`ErrorCode::InvalidKeyFormat`] si la clave secreta es inválida, o
+/// [`ErrorCode::InvalidSignature`] si la firma falla.
+pub fn sign_es256_digest(
+    secret_key: &SecretKeyBytes,
+    digest: &[u8; 32],
+) -> Result<[u8; ES256_SIGNATURE_LEN], GidError> {
+    let signing_key = SigningKey::from_slice(secret_key.expose_secret())
+        .map_err(|_| GidError::new(ErrorCode::InvalidKeyFormat, "invalid secret key"))?;
+    let signature: Signature<NistP256> = signing_key
+        .sign_prehash(digest)
+        .map_err(|_| GidError::new(ErrorCode::InvalidSignature, "prehash signing failed"))?;
     to_p1363(&signature)
 }
 
@@ -82,6 +133,40 @@ pub fn verify_es256_der(
 ) -> Result<(), GidError> {
     let p1363 = der_to_p1363(der)?;
     verify_es256(key, message, &p1363)
+}
+
+/// Verifica una firma ES256 (P1363 o DER) de `message` contra una clave pública [`JwkEcP256`].
+///
+/// # Errores
+/// [`ErrorCode::InvalidSignature`] si la firma es inválida.
+pub fn verify_es256_jwk(jwk: &JwkEcP256, message: &[u8], signature: &[u8]) -> Result<(), GidError> {
+    let key = VerifyingKey::from(jwk.to_public_key());
+    verify_es256(&key, message, signature)
+}
+
+/// Verifica una firma ES256 (P1363 o DER) sobre un digest SHA-256 precalculado contra [`JwkEcP256`].
+///
+/// # Errores
+/// [`ErrorCode::InvalidSignature`] si la firma es inválida.
+pub fn verify_es256_digest_jwk(
+    jwk: &JwkEcP256,
+    digest: &[u8; 32],
+    signature: &[u8],
+) -> Result<(), GidError> {
+    let key = VerifyingKey::from(jwk.to_public_key());
+    let sig = parse_flexible_signature(signature)?;
+    if key.verify_prehash(digest, &sig).is_ok() {
+        return Ok(());
+    }
+    if let Some(normalized) = sig.normalize_s() {
+        if key.verify_prehash(digest, &normalized).is_ok() {
+            return Ok(());
+        }
+    }
+    Err(GidError::new(
+        ErrorCode::InvalidSignature,
+        "signature verification on prehash failed",
+    ))
 }
 
 /// Convierte una firma DER a P1363 (`r‖s`).

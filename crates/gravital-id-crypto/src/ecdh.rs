@@ -49,6 +49,26 @@ pub fn agree_ephemeral(
     Ok(out)
 }
 
+/// Realiza un acuerdo de claves Diffie-Hellman a partir de una [`crate::secret::SecretKeyBytes`]
+/// y una clave pública [`crate::jwk::JwkEcP256`], devolviendo un [`crate::secret::SharedSecret`].
+///
+/// # Errores
+/// [`ErrorCode::InvalidKeyFormat`](gravital_id_types::ErrorCode::InvalidKeyFormat) si la clave privada o la clave pública son inválidas.
+pub fn ecdh_agree_keys(
+    secret_key: &crate::secret::SecretKeyBytes,
+    peer_public_key: &crate::jwk::JwkEcP256,
+) -> Result<crate::secret::SharedSecret, GidError> {
+    let secret = SecretKey::from_slice(secret_key.expose_secret()).map_err(|_| {
+        GidError::new(
+            gravital_id_types::ErrorCode::InvalidKeyFormat,
+            "invalid secret key bytes",
+        )
+    })?;
+    let peer = peer_public_key.to_public_key();
+    let shared = agree(&secret, &peer)?;
+    crate::secret::SharedSecret::from_slice(&shared)
+}
+
 #[cfg(test)]
 #[allow(clippy::expect_used, clippy::unwrap_used, clippy::panic)] // Pruebas locales deterministas (PROJECT_STRUCTURE.md §5.1).
 mod tests {

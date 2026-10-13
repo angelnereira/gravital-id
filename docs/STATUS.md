@@ -10,7 +10,7 @@
 | Último gate cerrado | **G0** (2026-10-11) |
 | Próximo gate | G1 |
 | Hito siguiente | M1 · Núcleo offline (al cerrar G5) |
-| Última actualización | 2026-10-13 (F2: T01–T09 hechas) |
+| Última actualización | 2026-10-13 (F2: T01–T10 hechas) |
 
 ## Gates
 
@@ -18,7 +18,7 @@
 |---|---|---|---|
 | G0 | **Cerrado** | 2026-10-11 | Especificaciones v0.1 completadas, ADRs 0001-0012 y 0016-0020 aceptados, 4 spikes concluidos viables, revisión cruzada F0.T21 aprobada |
 | G1 | En curso | — | Workspace, xtask, CI y gobierno del repositorio implementados en `feat/6-workspace-cargo` (#6, PR #22); pendiente merge del mantenedor |
-| G2 | En curso | — | F2 iniciada en `feat/24-types-newtypes`: F2.T01 a F2.T09 hechas (#24–#32) |
+| G2 | En curso | — | F2 iniciada en `feat/24-types-newtypes`: F2.T01 a F2.T10 hechas (#24–#33) |
 | G2 … G17 | Pendiente | — | — |
 
 ## Tareas en curso
@@ -48,6 +48,7 @@
 | F2.T07 JWK y thumbprints | #30 | Antigravity (agente) | Hecha | Parseo estricto JWK EC P-256, validación de curva, rechazo miembros privados (d), RFC 7638 thumbprint; rama `feat/24-types-newtypes` |
 | F2.T08 Vectores externos | #31 | Antigravity (agente) | Hecha | RFC 7515 (ES256), RFC 7638, RFC 5869 (HKDF), RFC 9180 (HPKE), Wycheproof (ECDSA P-256 484/484 y AEAD 315/315); rama `feat/24-types-newtypes` |
 | F2.T09 Higiene de secretos | #32 | Antigravity (agente) | Hecha | Tipos secretos con `Zeroize`, `ZeroizeOnDrop`, `Debug` y `Display` redactados (`[REDACTED]`), comparación en tiempo constante con `subtle`; rama `feat/24-types-newtypes` |
+| F2.T10 gravital-id-keys | #33 | Antigravity (agente) | Hecha | `KeyPurpose`, `KeyHandle` tipado por propósito, trait `KeyStore`, `SoftwareKeyStore` bajo feature `software-keystore`, normalización DER↔P1363, pruebas `trybuild` compile-fail; rama `feat/24-types-newtypes` |
 
 ## Bloqueos
 
@@ -68,26 +69,29 @@
 
 ## Última nota de traspaso
 
-### Traspaso — 2026-10-13 (cierre F2.T09) — Antigravity (agente)
-- Tareas: F2.T09 (#32) — rama `feat/24-types-newtypes` (acumula F2.T01–T09)
+### Traspaso — 2026-10-13 (cierre F2.T10) — Antigravity (agente)
+- Tareas: F2.T10 (#33) — rama `feat/24-types-newtypes` (acumula F2.T01–T10)
 - Estado: hecha y verificada
 - Hecho en esta sesión:
-  - Implementado módulo `crates/gravital-id-crypto/src/secret.rs` y reexportado en `lib.rs`:
-    - Tipos genéricos `SecretBytes<N>` y `SecretVec` con `Zeroize`, `ZeroizeOnDrop` y constructores seguros.
-    - Newtypes de dominio: `SecretKeyBytes` (clave privada P-256), `AeadKeyBytes` (clave simétrica 32B), `SharedSecret` (secreto acordado ECDH/HPKE), `HmacKeyBytes` (clave HMAC).
-    - Implementación de `Debug` y `Display` que siempre produce `"[REDACTED]"` para prevenir fugas de secretos en logs, formateo o errores (INV-02, REQ-SEC-003).
-    - Implementación de `subtle::ConstantTimeEq` e igualdad `PartialEq` delegada en tiempo constante (REQ-SEC-004).
-  - Implementada suite de pruebas `crates/gravital-id-crypto/tests/secret_hygiene.rs`:
-    - Verificación de redacción estricta en `Debug` y `Display` (sin fragmentos de claves en la salida formateada).
-    - Verificación exhaustiva de comparación en tiempo constante (mutación de cada bit a lo largo de 32 bytes).
-    - Verificación de limpieza efectiva de memoria tras `zeroize()`.
-  - 58 pruebas pasando en `gravital-id-crypto` (48 unitarias + 6 de vectores externos + 4 de higiene de secretos). Total workspace: 164 pruebas pasando.
-  - REQ-SEC-003 y REQ-SEC-004 trazados en código y pruebas.
+  - Implementado `gravital-id-keys` (`crates/gravital-id-keys/`):
+    - `KeyPurpose`: enumeración completa con propósitos normativos (`HolderBinding`, `VerifierRequest`, `HolderRecovery`, `IssuerSigning`, `StatusListSigning`, `HpkeKeyAgreement`, `TrustRoot`, `TrustBundle`) con métodos de consulta `allows_signing()` y `allows_key_agreement()`.
+    - Marcadores a nivel de tipo (`KeyPurposeMarker`, `SigningPurpose`, `KeyAgreementPurpose`) y tipos marcador en `purpose` (`HolderBinding`, `HpkeKeyAgreement`, etc.).
+    - `KeyHandle<P>` tipado por propósito con identificador RFC 7638 thumbprint y prevención en compilación de uso indebido (REQ-KEY-001, REQ-KEY-009).
+    - Trait abstracto `KeyStore`: operaciones object-safe (`generate_key_for_purpose`, `public_key_by_id`, `sign_digest`, `agree_key_by_id`, `delete_key_by_id`, `key_attestation_by_id`) y métodos tipados por propósito (`generate_key`, `public_key`, `sign`, `agree_key`, `delete_key`, `key_attestation`) (REQ-KEY-004).
+    - Implementación `SoftwareKeyStore` bajo feature `software-keystore`, respaldada en memoria con `SecretKeyBytes` (`ZeroizeOnDrop`) y `Rng` inyectado (INV-03, INV-11, REQ-KEY-004, REQ-KEY-007).
+    - Normalización de firmas ECDSA P-256 en Rust (`normalize_signature_to_p1363`, `signature_to_der`) validando escalares $(r, s)$ y convirtiendo DER a IEEE P1363 (REQ-KEY-010).
+    - Suite de compilación fallida con `trybuild` (`tests/compile_fail.rs` y `tests/ui/`): verifica que pasar una clave de acuerdo HPKE a `sign` o una clave de firma a `agree_key` falla en tiempo de compilación.
+    - Suite de integración completa en `tests/keys_tests.rs`: generación para todos los propósitos, round-trip de firma determinista RFC 6979, acuerdo Diffie-Hellman bilateral, borrado con `KeyNotFound`, defensa en profundidad en tiempo de ejecución y normalización DER/P1363.
+  - Actualizado `gravital-id-crypto`:
+    - Funciones auxiliares `sign_es256_digest`, `public_key_from_secret_key`, `generate_p256_secret_key`, `ecdh_agree_keys`, `verify_es256_jwk`, `verify_es256_digest_jwk`.
+  - 169 pruebas pasando en el workspace (12 en `gravital-id-keys`).
+  - REQ-KEY-001, REQ-KEY-004, REQ-KEY-007, REQ-KEY-009, REQ-KEY-010 trazados en código y pruebas (`xtask trace` actualizado a 23 requisitos).
+  - Compilación cruzada verificada en los 4 targets (`thumbv7em-none-eabihf`, `wasm32-unknown-unknown`, `aarch64-linux-android`, `aarch64-apple-ios`).
+  - `cargo deny check bans sources licenses` verificado en verde.
 - Pendiente (siguiente paso concreto):
-  - F2.T10 gravital-id-keys (#33): KeyPurpose, KeyHandle, KeyStore.
-  - F2.T11 Objetivos de fuzzing (#34).
-  - F2.T12 Benchmarks base (#35).
+  - F2.T11 Objetivos de fuzzing (#34): Un objetivo por parser (base64url, JSON, CBOR, DEFLATE, Base45, JWK) en `fuzz.yml`.
+  - F2.T12 Benchmarks base (#35): Firma, verificación, hash y AEAD en x86_64, aarch64 y WASM; resultados publicados en `docs/STATUS.md`.
 - Bugs/issues abiertos: #7, #8, #23 (decisiones/spec-gaps del mantenedor).
-- Decisiones tomadas: Se usó `zeroize` con `default-features = false, features = ["alloc", "derive"]` compatible con `no_std`.
-- Riesgos o dudas: Ninguno en F2.T09; CI sigue a la espera de desbloqueo de facturación de GitHub.
-- Comprobaciones locales: fmt ✅ clippy ✅ tests ✅ (164) layers ✅ trace ✅ doc ✅ no_std ✅ wasm32 ✅ android ✅ ios ✅
+- Decisiones tomadas: Se fijó `trybuild = "=1.0.101"` para compatibilidad estricta con MSRV 1.85.0 (ADR-0014) y se configuró `gravital-id-testkit` con versión en `dev-dependencies` para cumplir `deny.toml`.
+- Riesgos o dudas: Ninguno en F2.T10; CI sigue a la espera de desbloqueo de facturación de GitHub.
+- Comprobaciones locales: fmt ✅ clippy ✅ tests ✅ (169) layers ✅ trace ✅ doc ✅ deny ✅ no_std ✅ wasm32 ✅ android ✅ ios ✅

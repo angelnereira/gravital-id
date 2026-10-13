@@ -22,7 +22,7 @@ pub mod sha;
 pub mod sign;
 
 pub use aead::{open as aead_open, seal as aead_seal, AEAD_KEY_LEN, AEAD_NONCE_LEN, AEAD_TAG_LEN};
-pub use ecdh::{agree as ecdh_agree, ES256_SHARED_SECRET_LEN};
+pub use ecdh::{agree as ecdh_agree, ecdh_agree_keys, ES256_SHARED_SECRET_LEN};
 pub use hpke::{
     hpke_open_base_p256_hkdf_sha256_chacha20poly1305,
     hpke_seal_base_p256_hkdf_sha256_chacha20poly1305, hpke_setup_recipient,
@@ -37,8 +37,9 @@ pub use secret::{
 };
 pub use sha::{sha256, Sha256Hasher, SHA256_OUTPUT_LEN};
 pub use sign::{
-    der_to_p1363, p1363_to_der, sign_es256, verify_es256, verify_es256_der, ES256_PUBLIC_KEY_LEN,
-    ES256_SECRET_KEY_LEN, ES256_SIGNATURE_LEN,
+    der_to_p1363, generate_p256_secret_key, p1363_to_der, public_key_from_secret_key, sign_es256,
+    sign_es256_digest, verify_es256, verify_es256_der, verify_es256_digest_jwk, verify_es256_jwk,
+    ES256_PUBLIC_KEY_LEN, ES256_SECRET_KEY_LEN, ES256_SIGNATURE_LEN,
 };
 
 /// Versión semántica del crate en compilación.
