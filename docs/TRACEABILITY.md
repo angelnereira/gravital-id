@@ -13,8 +13,8 @@
 | REQ-KEY-009 | F2 | DEBE | T | P-07 | keystore.rs, lib.rs, purpose.rs, compile_fail.rs, keys_tests.rs, agree_with_signing_key.rs, sign_with_hpke_key.rs | Cubierto |
 | REQ-KEY-010 | F2 | DEBE | T | P-11 | sign.rs, api_coverage.rs, lib.rs, signature.rs, keys_tests.rs, ids.rs | Cubierto |
 | REQ-CRED-001 | F3 | DEBE | T | P-04 | — | Pendiente (Fase futura) |
-| REQ-CRED-002 | F3 | DEBE | T, I | P-07 | — | Pendiente (Fase futura) |
-| REQ-CRED-003 | F3 | DEBE | T | P-09 | — | Pendiente (Fase futura) |
+| REQ-CRED-002 | F3 | DEBE | T, I | P-07 | disclosure.rs, issuer.rs, lib.rs, salt.rs, sd_jwt_emission.rs | Cubierto |
+| REQ-CRED-003 | F3 | DEBE | T | P-09 | decoy.rs, issuer.rs, lib.rs, sd_jwt_emission.rs | Cubierto |
 | REQ-CRED-004 | F3 | DEBE | T | P-08 | — | Pendiente (Fase futura) |
 | REQ-CRED-005 | F3 | PUEDE | T | P-09 | — | Inspección / Auditoría |
 | REQ-CRED-006 | F3 | DEBERÍA | T | P-09 | — | Inspección / Auditoría |

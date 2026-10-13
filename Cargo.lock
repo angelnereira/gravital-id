@@ -417,6 +417,7 @@ dependencies = [
  "gravital-id-codec",
  "gravital-id-crypto",
  "gravital-id-keys",
+ "gravital-id-testkit",
  "gravital-id-types",
 ]
 
