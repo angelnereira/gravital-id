@@ -11,15 +11,19 @@
 //! - **REQ-STAT-003:** Descompresión acotada (2 MiB de salida, ratio 10:1).
 //! - **REQ-STAT-007:** Estados válido, revocado y suspendido (1 y 2 bits por entrada).
 //! - **REQ-STAT-008:** Manifiesto de estado por emisor con versión monotónica (ADR-0017).
+//! - **REQ-STAT-004:** Frescura por perfil y clase de operación, calculada con el `Clock`
+//!   inyectado.
 
 #![no_std]
 #![forbid(unsafe_code)]
 
 extern crate alloc;
 
+pub mod cache;
 pub mod manifest;
 pub mod status_list;
 
+pub use cache::{FreshnessPolicy, StatusCache, StatusSnapshot, DEFAULT_MAX_CACHED_LISTS};
 pub use manifest::{
     IssuerStatusManifest, ManifestListEntry, StatusManifestVerifier, DEFAULT_MANIFEST_MAX_BYTES,
 };

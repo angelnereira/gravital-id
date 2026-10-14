@@ -381,3 +381,90 @@ fn status_list_parsing_is_deterministic() {
     assert_eq!(first.status_of(2).unwrap(), TokenStatus::Suspended);
     let _ = Value::Number(Number::PosInt(0));
 }
+
+// Verifies: REQ-STAT-004, INV-11
+#[test]
+fn cache_and_snapshot_use_the_injected_clock() {
+    use gravital_id_status::{FreshnessPolicy, StatusCache, StatusSnapshot};
+    use gravital_id_types::Clock;
+
+    // Reloj inyectado por el host: el núcleo nunca lee el reloj del sistema.
+    struct TestClock(u64);
+    impl Clock for TestClock {
+        fn now_seconds(&self) -> u64 {
+            self.0
+        }
+        fn monotonic_elapsed_millis(&self) -> Option<u64> {
+            None
+        }
+    }
+
+    let mut fixture = Fixture::new(8_100);
+    let handle = fixture.store.generate_key::<IssuerSigning>().expect("key");
+    let list_jwt = sign_jwt(
+        &fixture.store,
+        &handle,
+        status_list_header(),
+        &status_list_payload(2, &[0, 1, 2], ""),
+    );
+    let list = gravital_id_status::StatusListVerifier::parse(&list_jwt).expect("parse");
+
+    let clock = TestClock(NOW.as_seconds());
+    let snapshot = StatusSnapshot::new(
+        list.clone(),
+        LIST_URI,
+        UnixTime::from_seconds(clock.now_seconds()),
+    );
+
+    // Antigüedad calculada contra el reloj inyectado.
+    let later = TestClock(NOW.as_seconds().saturating_add(4 * 60 * 60));
+    assert_eq!(
+        snapshot.age_seconds(UnixTime::from_seconds(later.now_seconds())),
+        4 * 60 * 60
+    );
+
+    // Política de consulta del perfil financiero: 4 horas exactas.
+    snapshot
+        .check_freshness(
+            UnixTime::from_seconds(later.now_seconds()),
+            &FreshnessPolicy::FINANCIAL_QUERY,
+        )
+        .expect("consulta dentro de la frescura");
+
+    // Política de transacción: 30 minutos, así que caduca.
+    let error = snapshot
+        .check_freshness(
+            UnixTime::from_seconds(later.now_seconds()),
+            &FreshnessPolicy::FINANCIAL_TRANSACTION,
+        )
+        .unwrap_err();
+    assert_eq!(error.code, ErrorCode::StatusListExpired);
+
+    // La caché solo devuelve el snapshot fresco y conserva la semántica de estados.
+    let mut cache = StatusCache::default();
+    cache.insert(snapshot);
+    let fresh = cache
+        .fresh(
+            LIST_URI,
+            UnixTime::from_seconds(later.now_seconds()),
+            &FreshnessPolicy::FINANCIAL_QUERY,
+        )
+        .expect("snapshot fresco");
+    assert_eq!(
+        fresh.list().status_of(2).unwrap(),
+        gravital_id_status::TokenStatus::Suspended
+    );
+
+    // Tras refrescar la lista (nuevo snapshot con el reloj actual), vuelve a estar fresca
+    // incluso con la política de transacción.
+    let refreshed =
+        StatusSnapshot::new(list, LIST_URI, UnixTime::from_seconds(later.now_seconds()));
+    cache.insert(refreshed);
+    cache
+        .fresh(
+            LIST_URI,
+            UnixTime::from_seconds(later.now_seconds()),
+            &FreshnessPolicy::FINANCIAL_TRANSACTION,
+        )
+        .expect("snapshot recién refrescado");
+}

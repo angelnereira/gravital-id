@@ -44,6 +44,17 @@ Verificación e interpretación de Token Status List para Gravital ID.
   con la entrada firmada; la URI debe estar declarada (REQ-SYNC-004).
 - **Acotado**: 64 KiB por manifiesto (REQ-VER-008) y validación de `sha256` hexadecimal.
 
+### Caché y frescura (`cache.rs`, F4.T02)
+
+- **`StatusSnapshot`**: lista + URI + instante de obtención (del `Clock` del host).
+  `age_seconds(now)` y `check_freshness(now, policy)` calculan la antigíad contra el reloj
+  inyectado, nunca contra el reloj del sistema (INV-11).
+- **`FreshnessPolicy`**: antigíad máxima por perfil y clase de operación, con las
+  constantes normativas `PERSONAL_V1` (7 días), `FINANCIAL_TRANSACTION` (30 min),
+  `FINANCIAL_QUERY` (4 h) y `ENTERPRISE_V1` (8 h) de `docs/specs/profiles/*.md` §2.
+- **`StatusCache`**: caché en memoria acotada (64 listas por defecto) que expulsa la
+  entrada más antigua al llenarse y solo devuelve snapshots frescos (`fresh`).
+
 ## Ejemplo de uso
 
 ```rust,ignore
@@ -65,6 +76,13 @@ match list.status_of(status_idx)? {
 }
 
 // Manifiesto del emisor: versión monotónica y hash de la lista.
+// Caché: el snapshot guarda el instante de obtención y la frescura se evalúa
+// contra el reloj inyectado, con la política del perfil y de la operación.
+let snapshot = StatusSnapshot::new(list, status_uri, clock_now);
+cache.insert(snapshot.clone());
+let fresh = cache.fresh(status_uri, clock_now, &FreshnessPolicy::FINANCIAL_TRANSACTION)?;
+fresh.list().status_of(status_idx)?;
+
 let manifest = StatusManifestVerifier::parse(&manifest_jwt)?;
 StatusManifestVerifier::verify_signature(&manifest_jwt, &issuer_status_key)?;
 manifest.check_freshness(now)?;
