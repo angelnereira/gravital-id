@@ -6,8 +6,8 @@
 | REQ-KEY-002 | F9 | DEBE | T, D | P-03 | — | Pendiente (Fase futura) |
 | REQ-KEY-003 | F9 | DEBE | I, A | P-03 | keystore.rs | Cubierto |
 | REQ-KEY-004 | F2 | DEBE | T | P-11 | keystore.rs, lib.rs, software.rs, keys_tests.rs | Cubierto |
-| REQ-KEY-005 | F4 | DEBE | T | P-08 | — | Pendiente (Fase futura) |
-| REQ-KEY-006 | F4 | DEBE | T | — | — | Pendiente (Fase futura) |
+| REQ-KEY-005 | F4 | DEBE | T | P-08 | bundle.rs, lib.rs | Cubierto |
+| REQ-KEY-006 | F4 | DEBE | T | — | bundle.rs, lib.rs | Cubierto |
 | REQ-KEY-007 | F2 | DEBE | T | P-04 | jwk.rs, api_coverage.rs, lib.rs, software.rs, keys_tests.rs | Cubierto |
 | REQ-KEY-008 | F5 | DEBE | T | P-09 | — | Pendiente (Fase futura) |
 | REQ-KEY-009 | F2 | DEBE | T | P-07 | keystore.rs, lib.rs, purpose.rs, compile_fail.rs, keys_tests.rs, agree_with_signing_key.rs, sign_with_hpke_key.rs | Cubierto |
@@ -36,7 +36,7 @@
 | REQ-VER-005 | F4 | DEBE | T | — | parser.rs | Cubierto |
 | REQ-VER-006 | F4 | DEBE | T | P-08 | cache.rs | Cubierto |
 | REQ-VER-007 | F4 | DEBE | I | P-05 | — | Inspección / Auditoría |
-| REQ-VER-008 | F2 | DEBE | T, F | P-08 | base64url.rs, cbor.rs, json.rs, differential_serde_json.rs, lib.rs, parser.rs, vc.rs, sd_jwt_parsing_verification.rs, sd_jwt_vc_integration.rs, request.rs, cache.rs, manifest.rs, status_list_integration.rs, ids.rs, proptest_ids.rs, base64url_strict.rs, cbor_bounded.rs, json_bounded.rs, sd_jwt_parser.rs | Cubierto |
+| REQ-VER-008 | F2 | DEBE | T, F | P-08 | base64url.rs, cbor.rs, json.rs, differential_serde_json.rs, lib.rs, parser.rs, vc.rs, sd_jwt_parsing_verification.rs, sd_jwt_vc_integration.rs, request.rs, cache.rs, manifest.rs, status_list_integration.rs, bundle.rs, root.rs, ids.rs, proptest_ids.rs, base64url_strict.rs, cbor_bounded.rs, json_bounded.rs, sd_jwt_parser.rs | Cubierto |
 | REQ-VER-009 | F4 | DEBE | T | P-06 | cbor.rs, json.rs, differential_serde_json.rs, issuer_api.rs, status_list_integration.rs, lib.rs, clock.rs, cbor_bounded.rs, json_bounded.rs, jwk_parser.rs, sd_jwt_parser.rs, status_list_parser.rs | Cubierto |
 | REQ-VER-010 | F4 | DEBE | T | P-08 | — | Pendiente (Fase futura) |
 | REQ-VER-011 | F4 | DEBE | T | P-08 | cache.rs | Cubierto |
@@ -49,16 +49,16 @@
 | REQ-STAT-006 | F7 | DEBE | T | P-14 | — | Pendiente (Fase futura) |
 | REQ-STAT-007 | F4 | DEBE | T | — | cache.rs, lib.rs, status_list.rs, status_list_integration.rs | Cubierto |
 | REQ-STAT-008 | F7 | DEBE | T | P-08 | lib.rs, manifest.rs, status_list_integration.rs, status_list_parser.rs | Cubierto |
-| REQ-TRUST-001 | F4 | DEBE | T | P-08 | — | Pendiente (Fase futura) |
-| REQ-TRUST-002 | F4 | DEBE | T | P-08 | — | Pendiente (Fase futura) |
+| REQ-TRUST-001 | F4 | DEBE | T | P-08 | bundle.rs, jws_json.rs, lib.rs, trust_bundle_integration.rs | Cubierto |
+| REQ-TRUST-002 | F4 | DEBE | T | P-08 | bundle.rs, lib.rs, trust_bundle_integration.rs | Cubierto |
 | REQ-TRUST-003 | F7 | DEBE | T | P-14 | — | Pendiente (Fase futura) |
 | REQ-TRUST-004 | F7 | DEBE | T | P-10 | — | Pendiente (Fase futura) |
 | REQ-TRUST-005 | F7 | DEBE | T, I | P-08 | — | Pendiente (Fase futura) |
 | REQ-TRUST-006 | F8 | DEBE | T | P-10 | — | Pendiente (Fase futura) |
-| REQ-TRUST-007 | F6 | DEBERÍA | T | P-09 | — | Inspección / Auditoría |
+| REQ-TRUST-007 | F6 | DEBERÍA | T | P-09 | bundle.rs | Cubierto |
 | REQ-TRUST-008 | F7 | DEBE | T | P-15 | — | Pendiente (Fase futura) |
-| REQ-TRUST-009 | F4 | DEBE | T | P-15 | — | Pendiente (Fase futura) |
-| REQ-TRUST-010 | F4 | DEBE | T | P-14 | manifest.rs | Cubierto |
+| REQ-TRUST-009 | F4 | DEBE | T | P-15 | jws_json.rs, lib.rs, root.rs, trust_bundle_integration.rs | Cubierto |
+| REQ-TRUST-010 | F4 | DEBE | T | P-14 | manifest.rs, bundle.rs, lib.rs, trust_bundle_integration.rs | Cubierto |
 | REQ-LEDG-001 | F6 | DEBE | T, A | P-02 | — | Pendiente (Fase futura) |
 | REQ-LEDG-002 | F6 | DEBE | T, I | P-14 | — | Pendiente (Fase futura) |
 | REQ-LEDG-003 | F6 | DEBE | I, A | — | — | Inspección / Auditoría |
@@ -110,7 +110,7 @@
 | REQ-SEC-002 | F2 | DEBE | I | — | aead.rs, ecdh.rs, hpke.rs, kdf.rs, rng.rs, sha.rs, api_coverage.rs, external_vectors.rs | Cubierto |
 | REQ-SEC-003 | F2 | DEBE | T, I | — | aead.rs, secret.rs, api_coverage.rs, secret_hygiene.rs, software.rs | Cubierto |
 | REQ-SEC-004 | F2 | DEBE | I | — | mac.rs, secret.rs, secret_hygiene.rs | Cubierto |
-| REQ-SEC-005 | F2 | DEBE | F | — | base45_strict.rs, base64url_strict.rs, cbor_bounded.rs, deflate_bounded.rs, json_bounded.rs, jwk_parser.rs, sd_jwt_parser.rs, status_list_parser.rs, trace.rs | Cubierto |
+| REQ-SEC-005 | F2 | DEBE | F | — | trust_bundle_integration.rs, base45_strict.rs, base64url_strict.rs, cbor_bounded.rs, deflate_bounded.rs, json_bounded.rs, jwk_parser.rs, sd_jwt_parser.rs, status_list_parser.rs, trace.rs | Cubierto |
 | REQ-SEC-006 | F1 | DEBE | T | — | — | Pendiente (Fase futura) |
 | REQ-SEC-007 | F13 | DEBE | A | — | — | Inspección / Auditoría |
 | REQ-SEC-008 | F13 | DEBE | A | — | — | Inspección / Auditoría |

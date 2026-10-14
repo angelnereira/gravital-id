@@ -2,7 +2,7 @@
 
 Protocolo de identidad portable con núcleo en Rust: credenciales verificables, divulgación selectiva, **verificación offline sin servidor central**, almacenamiento local cifrado, blockchain pública como registro de confianza compartido y recuperación segura. Integrable como biblioteca o SDK desde Kotlin, Swift, TypeScript/JavaScript, Python, Dart, Go, C# y C/C++.
 
-> **Estado:** Fase **F0 — Fundación y especificación**. Aún no hay código de producción. Ver [`docs/STATUS.md`](docs/STATUS.md).
+> **Estado:** Fase **F4 — Estado, confianza y verificación offline (en curso)**. Fase F3 (credenciales SD-JWT VC) implementada y revisada; el gate G3 está abierto a revisión del mantenedor. Ver [`docs/STATUS.md`](docs/STATUS.md).
 > **Nombre:** "PIP" es provisional (colisiona con el gestor de paquetes de Python). Se decide en ADR-0001.
 
 ## Este proyecto está gobernado por su documentación
@@ -24,6 +24,26 @@ La documentación define principios, requisitos, arquitectura y orden de trabajo
 ## En una frase, cómo funciona
 
 Un **emisor** autorizado firma una credencial SD-JWT VC para el **titular**; el titular la guarda cifrada en su dispositivo y, ante un **verificador**, presenta solo los atributos pedidos, vinculados a esa sesión; el verificador la comprueba **localmente** con un *trust bundle* cofirmado por operadores independientes y derivado de un **registro público en blockchain** que dice qué emisores y claves son válidos. Ningún dato personal toca la cadena.
+
+## Qué hay implementado hoy
+
+Núcleo en Rust (`no_std` + `alloc` en L1–L3, sans-I/O en L4) con 20 crates `gravital-id-*` y verificación automática de capas, trazabilidad y códigos de error.
+
+| Zona | Crates | Estado |
+|---|---|---|
+| Tipos, codec y criptografía | `gravital-id-types`, `-codec`, `-crypto`, `-keys` | **Listos** (F2). Vectores externos RFC 7515/7638/5869/9180 y Wycheproof al 100 %; cobertura de crypto ≥ 90 %. |
+| Credenciales SD-JWT VC | `gravital-id-credential`, `gravital-id-issuer` | **Listos** (F3). Emisión RFC 9901 con divulgación selectiva, capa SD-JWT VC, esquemas de perfil, predicados precomputados, KB-JWT y emisión por lotes. |
+| Estado | `gravital-id-status` | **En curso** (F4.T01–T02 hechos). Token Status List, manifiesto de estado y caché con frescura por perfil. |
+| Confianza y verificación | `gravital-id-trust`, `-verifier` | Pendiente (F4.T03 en adelante). |
+
+**Verificación:** `cargo fmt`, `cargo clippy --workspace --all-targets --all-features -- -D warnings`, suite de pruebas del workspace, `cargo xtask check-layers`, `cargo xtask trace`, `cargo xtask check-error-codes` y `cargo xtask conformance` (24 vectores de conformidad SD-JWT VC).
+
+```bash
+# Compilar y verificar todo
+cargo build --workspace
+cargo test --workspace
+cargo xtask conformance    # vectores de conformidad publicados
+```
 
 ## Empezar a contribuir
 

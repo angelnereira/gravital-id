@@ -10,7 +10,7 @@
 | Último gate cerrado | **G0** (2026-10-11) |
 | Próximo gate | **G3** — revisión formal de Fase F3 (#59); **G2** sigue pendiente de merge/CI |
 | Hito siguiente | M1 · Núcleo offline (al cerrar G5) |
-| Última actualización | 2026-10-14 (F4.T02 completada — `pip-status`: caché y frescura) |
+| Última actualización | 2026-10-14 (F4.T03 completada — Trust bundle y raíz encadenada; README raíz actualizado) |
 
 ## Gates
 
@@ -107,37 +107,43 @@
 
 ## Última nota de traspaso
 
-### Traspaso — 2026-10-14 (F4.T02: `pip-status` — cachía y frescura) — OpenCode (agente)
-- Tarea: F4.T02 — #61 — rama `feat/61-status-cache`
+### Traspaso — 2026-10-14 (F4.T03: Trust bundle) — OpenCode (agente)
+- Tarea: F4.T03 — #62 — rama `feat/62-trust-bundle`
 - Estado: **lista para revisión / hecha**
 - Hecho en esta sesión:
-  - F4.T02 (#61):
-    - `crates/gravital-id-status/src/cache.rs`:
-      - `StatusSnapshot`: lista + URI + instante de obtención; `age_seconds(now)` y
-        `check_freshness(now, policy)` calculan la antigíad **contra el reloj inyectado**
-        (INV-11, REQ-VER-009), sin leer el reloj del sistema.
-      - `FreshnessPolicy`: antigíad máxima por perfil y clase de operación, con las
-        constantes normativas `PERSONAL_V1` (7 días), `FINANCIAL_TRANSACTION` (30 min),
-        `FINANCIAL_QUERY` (4 h) y `ENTERPRISE_V1` (8 h) (`docs/specs/profiles/*.md` §2).
-      - `StatusCache`: caché en memoria acotada (64 listas) con expulsión de la entrada
-        más antigua y `fresh(uri, now, policy)` que solo entrega snapshots vigentes.
-      - Comprobación combinada: el snapshot puede estar fresco y la lista caducada
-        (o viceversa); se rechaza en ambos casos (fail-closed, REQ-VER-003).
-    - 9 pruebas nuevas (5 unitarias + 4 de integración con `Clock` inyectado real),
-      incluida la diferencia entre política de transacción y de consulta del perfil
-      financiero sobre el mismo snapshot.
-    - README del crate, `CHANGELOG.md`, `docs/TRACEABILITY.md` y este `STATUS.md`.
+  - `gravital-id-trust` deja de ser esqueleto:
+    - `jws_json.rs`: parseo de JWS en serialización JSON general (RFC 7515 §7.2) con
+      entrada firmada **por firma** (`protected_b64.payload_b64`), rechazo de `alg: none`,
+      de algoritmos fuera de ES256 y de `kid` duplicados.
+    - `root.rs`: `TrustRoot` completo con `root_keys` (≤ 32), `root_threshold`,
+      `bundle_signers` y `bundle_threshold`, umbrales acotados a `1..=n` (INV-16);
+      `TrustRootVerifier::verify_chain` exige versión creciente, mismo marco, época no
+      decreciente y **ambos umbrales** sobre la entrada firmada del candidato
+      (REQ-TRUST-009); `forces_new_epoch` para la recuperación de avance forzado.
+    - `bundle.rs`: `TrustBundle` con emisores, claves y sus estados
+      (`active`/`retired`/`suspended`/`compromised`; `retired` solo valida `iat <
+      state_since`, REQ-KEY-006), verificadores y políticas, **sin punteros de listas de
+      estado** (REQ-TRUST-010); `TrustBundleVerifier::verify` aplica marco y época,
+      anti-rollback (REQ-TRUST-002), umbral k-de-n de firmantes distintos y ventana de
+      validez.
+  - 18 pruebas (12 unitarias + 6 de integración con JWS firmados reales): cadena con ambos
+    umbrales, cadena rota por umbral insuficiente, rol de época, firma manipulada,
+    `kid` repetido, anti-rollback, fuera de vigencia y ausencia de punteros de estado.
+  - README raíz del proyecto actualizado con el estado real (F4 en curso) y el README del
+    crate con ejemplo de uso.
 - Pendiente (siguiente paso concreto):
-  - F4.T03 `Trust bundle`: modelo de raíz y de bundle, cadena de raíces, umbral k-de-n y
-    anti-rollback por `(bundle_epoch, bundle_version)`.
-- Bugs/issues abiertos durante la sesión: Ninguno.
+  - F4.T04 `Piso de tiempo confiable`: trait `VerifierStateStore` (piso de tiempo,
+    versiones aceptadas, nonces) con detección de retroceso de reloj (REQ-VER-006/011).
+- Bugs/issues abiertos durante la sesión: Ninguno del código.
 - Decisiones tomadas (con enlace a ADR/issue):
-  - La antigíad de un snapshot con reloj atrasado se satura en 0 en lugar de fallar: el
-    endurecimiento corresponde al piso de tiempo confiable (F4.T04, REQ-VER-006), no a la
-    caché.
-  - La caché es en memoria y acotada; la persistencia del estado del verificador llegará
-    con `VerifierStateStore` (F4.T04, REQ-VER-011).
-- Riesgos o dudas: G3 sigue sin cerrar (F3.T10 bloqueada); G4 esperará a G3.
-- Comprobaciones locales: fmt ✅ clippy ✅ tests ✅ (332 pruebas del workspace, 0 fallos)
+  - La verificación de la cadena de raíces comprueba ambos umbrales sobre la entrada
+    firmada del **candidato**: la raíz anterior autoriza el documento nuevo firmándolo.
+- Riesgos / spec-gap encontrado (a resolver, no bloqueante):
+  - `Kid::parse` (`crates/gravital-id-types/src/ids.rs`) solo admite kebab-case, pero
+    REQ-KEY-007 define el `kid` como **JWK Thumbprint RFC 7638**, que es base64url y contiene
+    `_`. En el bundle se usan `kid` kebab conforme a `TRUST_BUNDLE.md` §3.1, pero al resolver
+    claves por thumbprint real el newtype rechazaría el identificador. Registrado como
+    issue `type:spec-gap`.
+- Comprobaciones locales: fmt ✅ clippy ✅ tests ✅ (350 pruebas del workspace, 0 fallos)
   layers ✅ trace ✅ check-error-codes ✅ doc ✅ `xtask conformance` 24/24 ✅ wasm32 ✅
   bare-metal ✅
