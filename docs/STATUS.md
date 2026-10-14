@@ -118,4 +118,4 @@
   - `cnf.jwk` se serializa con los miembros canónicos RFC 7638 (ejemplo de draft-19 §3.2.2.3), no con `kid`/`use`/`alg`.
 - Riesgos o dudas:
   - Posible inconsistencia no bloqueante: `IssuerId::parse` (`crates/gravital-id-types/src/ids.rs`) solo admite kebab-case, mientras que `ARCHITECTURE.md §3` define el identificador de emisor como la URL HTTPS usada en `iss`. En F4 (trust bundle) habrá que decidir si `IssuerId` admite URLs; conviene registrarlo como `type:spec-gap` si F4 lo confirma.
-- Comprobaciones locales: fmt ✅ clippy ✅ tests ✅ layers ✅ trace ✅ check-error-codes ✅ doc ✅ wasm32 ✅ bare-metal ✅ (deny/audit: no ejecutados en esta sesión por el bloqueo de facturación de GitHub Actions; se ejecutaron localmente en sesiones previas)
+- Comprobaciones locales: fmt ✅ clippy ✅ tests ✅ layers ✅ trace ✅ check-error-codes ✅ doc ✅ deny ✅ audit ✅ no_std ✅ wasm32 ✅ bare-metal ✅ (`cargo nextest` no está instalado en este entorno: las 259 pruebas del workspace se ejecutaron con `cargo test --workspace`, 0 fallos)
