@@ -34,6 +34,21 @@ aceptadas y caché de nonces).
   la serializaci\u00f3n can\u00f3nica del estado, cach\u00e9 de nonces acotada (4.096 por defecto) con
   expulsi\u00f3n del que caduca antes, y `raise_time_floor` que nunca baja el piso.
 
+### Política de verificación (`policy.rs`, F4.T05)
+
+- **`VerificationPolicy`**: datos que configura el integrador, no lógica incrustada
+  (REQ-VER-007). El núcleo la aplica de forma mecánica y devuelve evidencia.
+- **Clases de operación** (`OperationClass::Transaction` / `Query` / `Default`) con
+  **frescura máxima de estado** propia: por defecto 30 minutos, 4 horas y 7 días, que son
+  los valores de `docs/specs/profiles/*.md` §2 (REQ-STAT-004).
+- **Tolerancia de reloj configurable y acotada**: sesgo ajustable por el integrador con cota
+  dura por perfil y límite global de 300 s; sesgar por encima de la cota se rechaza
+  (REQ-VER-005).
+- **Emisores y `vct` admitidos** (`IssuerSelection` / `VctSelection`: cualquiera, lista de
+  admisión o lista de denegación) y **requisitos del perfil** (`require_status`,
+  `require_cnf`, `require_exp`, `allowed_algorithms`).
+- `none` **nunca** es admitido, ni configurándolo explícitamente (INV-08, REQ-CRED-008).
+
 ## Ejemplo de uso
 
 ```rust,ignore
@@ -43,6 +58,15 @@ use gravital_id_verifier::{
 use gravital_id_types::UnixTime;
 
 // El host inyecta su clave de integridad y respalda el almac\u00e9n.
+// La política la configura el integrador: el núcleo no decide la aceptación.
+let policy = gravital_id_verifier::VerificationPolicy::default()
+    .with_clock_skew_seconds(120)?
+    .with_status_freshness(
+        gravital_id_verifier::OperationClass::Transaction,
+        gravital_id_verifier::StatusFreshness::new(300),
+    );
+policy.validate()?;
+
 let mut store = InMemoryStateStore::new(StateIntegrityKey::new([/* 32 bytes del host */ 0; 32]));
 
 // Antes de verificar nada, se comprueba el piso de tiempo confiable.

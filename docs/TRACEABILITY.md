@@ -18,8 +18,8 @@
 | REQ-CRED-004 | F3 | DEBE | T | P-08 | lib.rs, parser.rs, profile.rs, vc.rs, profile_schema_integration.rs, lib.rs, request.rs, issuer_api.rs, generate_vectors.rs | Cubierto |
 | REQ-CRED-005 | F3 | PUEDE | T | P-09 | lib.rs, predicate.rs, profile.rs, predicate_integration.rs, lib.rs, issuer_api.rs, generate_vectors.rs | Cubierto |
 | REQ-CRED-006 | F3 | DEBERÍA | T | P-09 | batch.rs, lib.rs, request.rs, issuer_api.rs, generate_vectors.rs | Cubierto |
-| REQ-CRED-007 | F4 | DEBE | T | P-08 | lib.rs, vc.rs, sd_jwt_vc_integration.rs, request.rs, generate_vectors.rs | Cubierto |
-| REQ-CRED-008 | F3 | DEBE | T, F | P-07 | lib.rs, parser.rs, vc.rs, sd_jwt_vc_integration.rs, lib.rs, issuer_api.rs, sd_jwt_parser.rs, generate_vectors.rs | Cubierto |
+| REQ-CRED-007 | F4 | DEBE | T | P-08 | lib.rs, vc.rs, sd_jwt_vc_integration.rs, request.rs, policy.rs, generate_vectors.rs | Cubierto |
+| REQ-CRED-008 | F3 | DEBE | T, F | P-07 | lib.rs, parser.rs, vc.rs, sd_jwt_vc_integration.rs, lib.rs, issuer_api.rs, policy.rs, verifier_policy_integration.rs, sd_jwt_parser.rs, generate_vectors.rs | Cubierto |
 | REQ-CRED-009 | F2 | DEBE | T, F | P-08 | json.rs, lib.rs, parser.rs, sd_jwt_parsing_verification.rs, json_bounded.rs, sd_jwt_parser.rs, generate_vectors.rs | Cubierto |
 | REQ-PRES-001 | F5 | DEBE | T | P-09 | — | Pendiente (Fase futura) |
 | REQ-PRES-002 | F5 | DEBE | T | P-08 | kb.rs, lib.rs, parser.rs, kb_jwt_integration.rs, profile_schema_integration.rs, sd_jwt_vc_integration.rs, generate_vectors.rs | Cubierto |
@@ -33,9 +33,9 @@
 | REQ-VER-002 | F4 | DEBE | T | P-05 | — | Pendiente (Fase futura) |
 | REQ-VER-003 | F4 | DEBE | T, F | P-08 | kb.rs, lib.rs, parser.rs, profile.rs, vc.rs, kb_jwt_integration.rs, predicate_integration.rs, profile_schema_integration.rs, sd_jwt_parsing_verification.rs, sd_jwt_vc_integration.rs, issuer_api.rs, cache.rs, status_list_integration.rs, verifier_state_integration.rs, sd_jwt_parser.rs, status_list_parser.rs | Cubierto |
 | REQ-VER-004 | F4 | DEBE | T | P-08 | — | Pendiente (Fase futura) |
-| REQ-VER-005 | F4 | DEBE | T | — | parser.rs | Cubierto |
+| REQ-VER-005 | F4 | DEBE | T | — | parser.rs, lib.rs, policy.rs, verifier_policy_integration.rs | Cubierto |
 | REQ-VER-006 | F4 | DEBE | T | P-08 | cache.rs, lib.rs, state.rs, verifier_state_integration.rs | Cubierto |
-| REQ-VER-007 | F4 | DEBE | I | P-05 | — | Inspección / Auditoría |
+| REQ-VER-007 | F4 | DEBE | I | P-05 | lib.rs, policy.rs, verifier_policy_integration.rs | Cubierto |
 | REQ-VER-008 | F2 | DEBE | T, F | P-08 | base64url.rs, cbor.rs, json.rs, differential_serde_json.rs, lib.rs, parser.rs, vc.rs, sd_jwt_parsing_verification.rs, sd_jwt_vc_integration.rs, request.rs, cache.rs, manifest.rs, status_list_integration.rs, bundle.rs, root.rs, ids.rs, proptest_ids.rs, state.rs, base64url_strict.rs, cbor_bounded.rs, json_bounded.rs, sd_jwt_parser.rs | Cubierto |
 | REQ-VER-009 | F4 | DEBE | T | P-06 | cbor.rs, json.rs, differential_serde_json.rs, issuer_api.rs, status_list_integration.rs, lib.rs, clock.rs, cbor_bounded.rs, json_bounded.rs, jwk_parser.rs, sd_jwt_parser.rs, status_list_parser.rs | Cubierto |
 | REQ-VER-010 | F4 | DEBE | T | P-08 | — | Pendiente (Fase futura) |
@@ -44,7 +44,7 @@
 | REQ-STAT-001 | F4 | DEBE | T | P-04 | lib.rs, status_list.rs, status_list_integration.rs, status_list_parser.rs | Cubierto |
 | REQ-STAT-002 | F7 | DEBE | T | P-09 | — | Pendiente (Fase futura) |
 | REQ-STAT-003 | F4 | DEBE | T, F | P-08 | base45.rs, deflate.rs, lib.rs, status_list.rs, status_list_integration.rs, base45_strict.rs, deflate_bounded.rs, status_list_parser.rs | Cubierto |
-| REQ-STAT-004 | F4 | DEBE | T | P-05 | cache.rs, lib.rs, manifest.rs, status_list_integration.rs | Cubierto |
+| REQ-STAT-004 | F4 | DEBE | T | P-05 | cache.rs, lib.rs, manifest.rs, status_list_integration.rs, policy.rs, verifier_policy_integration.rs | Cubierto |
 | REQ-STAT-005 | F7 | DEBE | T | P-10 | — | Pendiente (Fase futura) |
 | REQ-STAT-006 | F7 | DEBE | T | P-14 | — | Pendiente (Fase futura) |
 | REQ-STAT-007 | F4 | DEBE | T | — | cache.rs, lib.rs, status_list.rs, status_list_integration.rs | Cubierto |

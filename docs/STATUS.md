@@ -10,7 +10,7 @@
 | Último gate cerrado | **G0** (2026-10-11) |
 | Próximo gate | **G3** — revisión formal de Fase F3 (#59); **G2** sigue pendiente de merge/CI |
 | Hito siguiente | M1 · Núcleo offline (al cerrar G5) |
-| Última actualización | 2026-10-14 (F4.T04 completada — Piso de tiempo confiable) |
+| Última actualización | 2026-10-14 (F4.T05 completada — Policy del verificador) |
 
 ## Gates
 
@@ -107,41 +107,34 @@
 
 ## Última nota de traspaso
 
-### Traspaso — 2026-10-14 (F4.T04: Piso de tiempo confiable) — OpenCode (agente)
-- Tarea: F4.T04 — #64 — rama `feat/64-time-floor`
+### Traspaso — 2026-10-14 (F4.T05: Policy del verificador) — OpenCode (agente)
+- Tarea: F4.T05 — #65 — rama `feat/65-verifier-policy`
 - Estado: **lista para revisión / hecha**
 - Hecho en esta sesión:
-  - F4.T04 (#64):
-    - `crates/gravital-id-verifier/src/state.rs`: trait `VerifierStateStore` (piso de tiempo,
-      último bundle aceptado, caché de nonces con expiración, `integrity_check()` y
-      `reset()`) e `InMemoryStateStore` de referencia con integridad HMAC-SHA256 sobre el
-      estado canónico y caché de nonces acotada con expulsión del más antiguo.
-    - `TimeFloorGuard` con orden fail-closed: integridad ↝ `VerifierStateCorrupted`
-      (`Unverifiable`), retroceso de reloj ↝ `ClockRollbackDetected`, y solo entonces
-      elevación del piso. El monotónico se usa como cota de antigüedad y **nunca** rebaja
-      el piso.
-    - `StateIntegrityKey`: tipo secreto con `Zeroize`/`ZeroizeOnDrop` y `Debug`/`Display`
-      redactados (REQ-SEC-003).
-    - Nuevo `ErrorCode::VerifierStateCorrupted` (5009) añadido al catálogo y a
-      `docs/specs/ERROR_CODES.md` (49 códigos, todos documentados).
-    - 14 pruebas (8 unitarias + 6 de integración): primera ejecución, retroceso de reloj
-      con y sin monotónico, estado corrupto y recuperación por `reset()`, nonces
-      reutilizados y caducados, persistencia de la versión aceptada y no fuga de la clave.
-    - Corrección detectada por `cargo deny`: las dependencias internas de `xtask` se
-      declararon sin `version`, lo que cargo-deny trata como wildcard; ya llevan `version`
-      como el resto del workspace.
+  - F4.T05 (#65):
+    - `crates/gravital-id-verifier/src/policy.rs`: `VerificationPolicy` como **datos** que
+      configura el integrador (REQ-VER-007), con `OperationClass` (transacción / consulta /
+      por defecto) y `StatusFreshness` por clase (30 min, 4 h y 7 días por defecto, los
+      valores de `docs/specs/profiles/*.md` §2), sesgo de reloj configurable con cota dura por
+      perfil y límite global de 300 s (REQ-VER-005), `IssuerSelection`/`VctSelection`
+      (cualquiera, allowlist, denylist) y requisitos del perfil.
+    - `none` nunca es admitido: `with_allowed_algorithms` rechaza la lista vacía o cualquier
+      lista que incluya `none` (INV-08, REQ-CRED-008).
+    - 12 pruebas (6 unitarias + 6 de integración): sesgo fuera de cota, cota endurecida,
+      alg none configurado, selección de emisores y vct, frescura por clase de operación y
+      políticas incoherentes rechazadas (INV-05).
+    - Acceso a la frescura por clase mediante `get`/`get_mut`: clippy detectó indexación
+      directa que podría entrar en pánico (INV-10) y se corrigió.
 - Pendiente (siguiente paso concreto):
-  - F4.T05 `Policy`: estados aceptados por operación, frescura máxima, tolerancia de reloj,
-    emisores y `vct` aceptados, requisitos del perfil (REQ-VER-005, REQ-VER-007).
-- Bugs/issues abiertos durante la sesión:
-  - Corregido en el acto (hallado por `cargo deny check`, no llegó a CI): dependencias
-    wildcard en `xtask/Cargo.toml`. Queda registrado en el `CHANGELOG.md`.
+  - F4.T06 `Pipeline del verificador`: comprobaciones ordenadas con evidencia por paso y
+    typestate que impida evaluar sobre datos no autenticados (REQ-VER-002/004/012).
+- Bugs/issues abiertos durante la sesión: Ninguno.
 - Decisiones tomadas (con enlace a ADR/issue):
-  - El piso de tiempo manda sobre el monotónico: si el reloj de pared retrocede, aunque la
-    plataforma reporte monotónico avanzando, el resultado es retroceso.
-  - La caché de nonces vive en el host (el núcleo no tiene I/O); `InMemoryStateStore` es la
-    implementación de referencia para pruebas y plataformas sin persistencia.
-- Riesgos o dudas: persisten los issues #63 (`kid` thumbprint) y el bloqueo de GitHub Actions.
-- Comprobaciones locales: fmt ✅ clippy ✅ tests ✅ (364 pruebas del workspace, 0 fallos)
-  layers ✅ trace ✅ check-error-codes ✅ doc ✅ deny ✅ audit ✅ `xtask conformance` 24/24 ✅
-  wasm32 ✅ bare-metal ✅
+  - La política es un tipo de datos con validación propia; el núcleo no interpretúa
+    configuraciones laxas ni acepta valores fuera de las cotas (fail-closed).
+- Riesgos o dudas: los valores por defecto de frescura (30 min/4 h/7 días) son los del
+  perfil financiero y personal respectivamente; si el mantenedor prefiere otros, se cambian en
+  un sitio único (`VerificationPolicy::default`).
+- Comprobaciones locales: fmt ✅ clippy ✅ tests ✅ (376 pruebas del workspace, 0 fallos)
+  layers ✅ trace ✅ check-error-codes ✅ doc ✅ deny ✅ `xtask conformance` 24/24 ✅ wasm32 ✅
+  bare-metal ✅
