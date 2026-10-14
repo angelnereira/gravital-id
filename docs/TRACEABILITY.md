@@ -19,7 +19,7 @@
 | REQ-CRED-005 | F3 | PUEDE | T | P-09 | — | Inspección / Auditoría |
 | REQ-CRED-006 | F3 | DEBERÍA | T | P-09 | — | Inspección / Auditoría |
 | REQ-CRED-007 | F4 | DEBE | T | P-08 | lib.rs, vc.rs, sd_jwt_vc_integration.rs | Cubierto |
-| REQ-CRED-008 | F3 | DEBE | T, F | P-07 | lib.rs, parser.rs, vc.rs, sd_jwt_vc_integration.rs | Cubierto |
+| REQ-CRED-008 | F3 | DEBE | T, F | P-07 | lib.rs, parser.rs, vc.rs, sd_jwt_vc_integration.rs, sd_jwt_parser.rs | Cubierto |
 | REQ-CRED-009 | F2 | DEBE | T, F | P-08 | json.rs, lib.rs, parser.rs, sd_jwt_parsing_verification.rs, json_bounded.rs, sd_jwt_parser.rs | Cubierto |
 | REQ-PRES-001 | F5 | DEBE | T | P-09 | — | Pendiente (Fase futura) |
 | REQ-PRES-002 | F5 | DEBE | T | P-08 | kb.rs, lib.rs, parser.rs, kb_jwt_integration.rs, sd_jwt_vc_integration.rs | Cubierto |
