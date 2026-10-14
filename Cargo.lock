@@ -606,8 +606,12 @@ name = "gravital-id-verifier"
 version = "0.1.0"
 dependencies = [
  "gravital-id-credential",
+ "gravital-id-crypto",
  "gravital-id-status",
+ "gravital-id-testkit",
  "gravital-id-trust",
+ "gravital-id-types",
+ "zeroize",
 ]
 
 [[package]]

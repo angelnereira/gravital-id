@@ -93,6 +93,11 @@ pub enum ErrorCode {
     ClockRollbackDetected = 5007,
     /// La nueva raíz no cuenta con las firmas requeridas de la raíz precedente.
     TrustRootChainBroken = 5008,
+    /// El estado persistente del verificador falta, está corrupto o fue restaurado.
+    ///
+    /// `REQ-VER-011`: hasta una reinicialización explícita, el resultado es
+    /// `Unverifiable`.
+    VerifierStateCorrupted = 5009,
 
     // --- Familia 6: Almacenamiento Local Cifrado (6001..6004) ---
     /// Error de lectura física en la base de datos o almacenamiento local.
@@ -175,6 +180,7 @@ impl ErrorCode {
             Self::BundleVersionRollback => "GID-E5006",
             Self::ClockRollbackDetected => "GID-E5007",
             Self::TrustRootChainBroken => "GID-E5008",
+            Self::VerifierStateCorrupted => "GID-E5009",
 
             Self::StorageReadFailed => "GID-E6001",
             Self::StorageWriteFailed => "GID-E6002",
@@ -237,6 +243,7 @@ impl ErrorCode {
             Self::BundleVersionRollback => "PIP-E5006",
             Self::ClockRollbackDetected => "PIP-E5007",
             Self::TrustRootChainBroken => "PIP-E5008",
+            Self::VerifierStateCorrupted => "PIP-E5009",
 
             Self::StorageReadFailed => "PIP-E6001",
             Self::StorageWriteFailed => "PIP-E6002",
@@ -299,6 +306,7 @@ impl ErrorCode {
             Self::BundleVersionRollback => "BundleVersionRollback",
             Self::ClockRollbackDetected => "ClockRollbackDetected",
             Self::TrustRootChainBroken => "TrustRootChainBroken",
+            Self::VerifierStateCorrupted => "VerifierStateCorrupted",
 
             Self::StorageReadFailed => "StorageReadFailed",
             Self::StorageWriteFailed => "StorageWriteFailed",

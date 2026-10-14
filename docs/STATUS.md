@@ -10,7 +10,7 @@
 | Último gate cerrado | **G0** (2026-10-11) |
 | Próximo gate | **G3** — revisión formal de Fase F3 (#59); **G2** sigue pendiente de merge/CI |
 | Hito siguiente | M1 · Núcleo offline (al cerrar G5) |
-| Última actualización | 2026-10-14 (F4.T03 completada — Trust bundle y raíz encadenada; README raíz actualizado) |
+| Última actualización | 2026-10-14 (F4.T04 completada — Piso de tiempo confiable) |
 
 ## Gates
 
@@ -107,43 +107,41 @@
 
 ## Última nota de traspaso
 
-### Traspaso — 2026-10-14 (F4.T03: Trust bundle) — OpenCode (agente)
-- Tarea: F4.T03 — #62 — rama `feat/62-trust-bundle`
+### Traspaso — 2026-10-14 (F4.T04: Piso de tiempo confiable) — OpenCode (agente)
+- Tarea: F4.T04 — #64 — rama `feat/64-time-floor`
 - Estado: **lista para revisión / hecha**
 - Hecho en esta sesión:
-  - `gravital-id-trust` deja de ser esqueleto:
-    - `jws_json.rs`: parseo de JWS en serialización JSON general (RFC 7515 §7.2) con
-      entrada firmada **por firma** (`protected_b64.payload_b64`), rechazo de `alg: none`,
-      de algoritmos fuera de ES256 y de `kid` duplicados.
-    - `root.rs`: `TrustRoot` completo con `root_keys` (≤ 32), `root_threshold`,
-      `bundle_signers` y `bundle_threshold`, umbrales acotados a `1..=n` (INV-16);
-      `TrustRootVerifier::verify_chain` exige versión creciente, mismo marco, época no
-      decreciente y **ambos umbrales** sobre la entrada firmada del candidato
-      (REQ-TRUST-009); `forces_new_epoch` para la recuperación de avance forzado.
-    - `bundle.rs`: `TrustBundle` con emisores, claves y sus estados
-      (`active`/`retired`/`suspended`/`compromised`; `retired` solo valida `iat <
-      state_since`, REQ-KEY-006), verificadores y políticas, **sin punteros de listas de
-      estado** (REQ-TRUST-010); `TrustBundleVerifier::verify` aplica marco y época,
-      anti-rollback (REQ-TRUST-002), umbral k-de-n de firmantes distintos y ventana de
-      validez.
-  - 18 pruebas (12 unitarias + 6 de integración con JWS firmados reales): cadena con ambos
-    umbrales, cadena rota por umbral insuficiente, rol de época, firma manipulada,
-    `kid` repetido, anti-rollback, fuera de vigencia y ausencia de punteros de estado.
-  - README raíz del proyecto actualizado con el estado real (F4 en curso) y el README del
-    crate con ejemplo de uso.
+  - F4.T04 (#64):
+    - `crates/gravital-id-verifier/src/state.rs`: trait `VerifierStateStore` (piso de tiempo,
+      último bundle aceptado, caché de nonces con expiración, `integrity_check()` y
+      `reset()`) e `InMemoryStateStore` de referencia con integridad HMAC-SHA256 sobre el
+      estado canónico y caché de nonces acotada con expulsión del más antiguo.
+    - `TimeFloorGuard` con orden fail-closed: integridad ↝ `VerifierStateCorrupted`
+      (`Unverifiable`), retroceso de reloj ↝ `ClockRollbackDetected`, y solo entonces
+      elevación del piso. El monotónico se usa como cota de antigüedad y **nunca** rebaja
+      el piso.
+    - `StateIntegrityKey`: tipo secreto con `Zeroize`/`ZeroizeOnDrop` y `Debug`/`Display`
+      redactados (REQ-SEC-003).
+    - Nuevo `ErrorCode::VerifierStateCorrupted` (5009) añadido al catálogo y a
+      `docs/specs/ERROR_CODES.md` (49 códigos, todos documentados).
+    - 14 pruebas (8 unitarias + 6 de integración): primera ejecución, retroceso de reloj
+      con y sin monotónico, estado corrupto y recuperación por `reset()`, nonces
+      reutilizados y caducados, persistencia de la versión aceptada y no fuga de la clave.
+    - Corrección detectada por `cargo deny`: las dependencias internas de `xtask` se
+      declararon sin `version`, lo que cargo-deny trata como wildcard; ya llevan `version`
+      como el resto del workspace.
 - Pendiente (siguiente paso concreto):
-  - F4.T04 `Piso de tiempo confiable`: trait `VerifierStateStore` (piso de tiempo,
-    versiones aceptadas, nonces) con detección de retroceso de reloj (REQ-VER-006/011).
-- Bugs/issues abiertos durante la sesión: Ninguno del código.
+  - F4.T05 `Policy`: estados aceptados por operación, frescura máxima, tolerancia de reloj,
+    emisores y `vct` aceptados, requisitos del perfil (REQ-VER-005, REQ-VER-007).
+- Bugs/issues abiertos durante la sesión:
+  - Corregido en el acto (hallado por `cargo deny check`, no llegó a CI): dependencias
+    wildcard en `xtask/Cargo.toml`. Queda registrado en el `CHANGELOG.md`.
 - Decisiones tomadas (con enlace a ADR/issue):
-  - La verificación de la cadena de raíces comprueba ambos umbrales sobre la entrada
-    firmada del **candidato**: la raíz anterior autoriza el documento nuevo firmándolo.
-- Riesgos / spec-gap encontrado (a resolver, no bloqueante):
-  - `Kid::parse` (`crates/gravital-id-types/src/ids.rs`) solo admite kebab-case, pero
-    REQ-KEY-007 define el `kid` como **JWK Thumbprint RFC 7638**, que es base64url y contiene
-    `_`. En el bundle se usan `kid` kebab conforme a `TRUST_BUNDLE.md` §3.1, pero al resolver
-    claves por thumbprint real el newtype rechazaría el identificador. Registrado como
-    issue `type:spec-gap`.
-- Comprobaciones locales: fmt ✅ clippy ✅ tests ✅ (350 pruebas del workspace, 0 fallos)
-  layers ✅ trace ✅ check-error-codes ✅ doc ✅ `xtask conformance` 24/24 ✅ wasm32 ✅
-  bare-metal ✅
+  - El piso de tiempo manda sobre el monotónico: si el reloj de pared retrocede, aunque la
+    plataforma reporte monotónico avanzando, el resultado es retroceso.
+  - La caché de nonces vive en el host (el núcleo no tiene I/O); `InMemoryStateStore` es la
+    implementación de referencia para pruebas y plataformas sin persistencia.
+- Riesgos o dudas: persisten los issues #63 (`kid` thumbprint) y el bloqueo de GitHub Actions.
+- Comprobaciones locales: fmt ✅ clippy ✅ tests ✅ (364 pruebas del workspace, 0 fallos)
+  layers ✅ trace ✅ check-error-codes ✅ doc ✅ deny ✅ audit ✅ `xtask conformance` 24/24 ✅
+  wasm32 ✅ bare-metal ✅

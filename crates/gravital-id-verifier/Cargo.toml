@@ -17,3 +17,9 @@ workspace = true
 gravital-id-credential = { workspace = true }
 gravital-id-status = { workspace = true }
 gravital-id-trust = { workspace = true }
+gravital-id-types = { workspace = true }
+gravital-id-crypto = { workspace = true }
+zeroize = { workspace = true }
+
+[dev-dependencies]
+gravital-id-testkit = { path = "../gravital-id-testkit", version = "0.1.0" }
