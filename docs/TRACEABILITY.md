@@ -12,17 +12,17 @@
 | REQ-KEY-008 | F5 | DEBE | T | P-09 | — | Pendiente (Fase futura) |
 | REQ-KEY-009 | F2 | DEBE | T | P-07 | keystore.rs, lib.rs, purpose.rs, compile_fail.rs, keys_tests.rs, agree_with_signing_key.rs, sign_with_hpke_key.rs | Cubierto |
 | REQ-KEY-010 | F2 | DEBE | T | P-11 | sign.rs, api_coverage.rs, lib.rs, signature.rs, keys_tests.rs, ids.rs | Cubierto |
-| REQ-CRED-001 | F3 | DEBE | T | P-04 | kb.rs, lib.rs, parser.rs, kb_jwt_integration.rs, sd_jwt_parsing_verification.rs, sd_jwt_parser.rs | Cubierto |
+| REQ-CRED-001 | F3 | DEBE | T | P-04 | kb.rs, lib.rs, parser.rs, vc.rs, kb_jwt_integration.rs, sd_jwt_parsing_verification.rs, sd_jwt_vc_integration.rs, sd_jwt_parser.rs | Cubierto |
 | REQ-CRED-002 | F3 | DEBE | T, I | P-07 | disclosure.rs, issuer.rs, lib.rs, salt.rs, sd_jwt_emission.rs | Cubierto |
-| REQ-CRED-003 | F3 | DEBE | T | P-09 | decoy.rs, issuer.rs, lib.rs, sd_jwt_emission.rs | Cubierto |
+| REQ-CRED-003 | F3 | DEBE | T | P-09 | decoy.rs, issuer.rs, lib.rs, vc.rs, sd_jwt_emission.rs | Cubierto |
 | REQ-CRED-004 | F3 | DEBE | T | P-08 | — | Pendiente (Fase futura) |
 | REQ-CRED-005 | F3 | PUEDE | T | P-09 | — | Inspección / Auditoría |
 | REQ-CRED-006 | F3 | DEBERÍA | T | P-09 | — | Inspección / Auditoría |
-| REQ-CRED-007 | F4 | DEBE | T | P-08 | — | Pendiente (Fase futura) |
-| REQ-CRED-008 | F3 | DEBE | T, F | P-07 | — | Pendiente (Fase futura) |
+| REQ-CRED-007 | F4 | DEBE | T | P-08 | lib.rs, vc.rs, sd_jwt_vc_integration.rs | Cubierto |
+| REQ-CRED-008 | F3 | DEBE | T, F | P-07 | lib.rs, parser.rs, vc.rs, sd_jwt_vc_integration.rs | Cubierto |
 | REQ-CRED-009 | F2 | DEBE | T, F | P-08 | json.rs, lib.rs, parser.rs, sd_jwt_parsing_verification.rs, json_bounded.rs, sd_jwt_parser.rs | Cubierto |
 | REQ-PRES-001 | F5 | DEBE | T | P-09 | — | Pendiente (Fase futura) |
-| REQ-PRES-002 | F5 | DEBE | T | P-08 | kb.rs, lib.rs, parser.rs, kb_jwt_integration.rs | Cubierto |
+| REQ-PRES-002 | F5 | DEBE | T | P-08 | kb.rs, lib.rs, parser.rs, kb_jwt_integration.rs, sd_jwt_vc_integration.rs | Cubierto |
 | REQ-PRES-003 | F5 | DEBE | T, I | P-09 | — | Pendiente (Fase futura) |
 | REQ-PRES-004 | F4 | DEBE | T | P-08 | — | Pendiente (Fase futura) |
 | REQ-PRES-005 | F5 | DEBE | T, D | P-01 | — | Pendiente (Fase futura) |
@@ -31,12 +31,12 @@
 | REQ-PRES-008 | F10 | DEBE | T | P-04 | — | Pendiente (Fase futura) |
 | REQ-VER-001 | F4 | DEBE | T, I | P-01 | — | Pendiente (Fase futura) |
 | REQ-VER-002 | F4 | DEBE | T | P-05 | — | Pendiente (Fase futura) |
-| REQ-VER-003 | F4 | DEBE | T, F | P-08 | kb.rs, lib.rs, parser.rs, kb_jwt_integration.rs, sd_jwt_parsing_verification.rs, sd_jwt_parser.rs | Cubierto |
+| REQ-VER-003 | F4 | DEBE | T, F | P-08 | kb.rs, lib.rs, parser.rs, vc.rs, kb_jwt_integration.rs, sd_jwt_parsing_verification.rs, sd_jwt_vc_integration.rs, sd_jwt_parser.rs | Cubierto |
 | REQ-VER-004 | F4 | DEBE | T | P-08 | — | Pendiente (Fase futura) |
-| REQ-VER-005 | F4 | DEBE | T | — | — | Pendiente (Fase futura) |
+| REQ-VER-005 | F4 | DEBE | T | — | parser.rs | Cubierto |
 | REQ-VER-006 | F4 | DEBE | T | P-08 | — | Pendiente (Fase futura) |
 | REQ-VER-007 | F4 | DEBE | I | P-05 | — | Inspección / Auditoría |
-| REQ-VER-008 | F2 | DEBE | T, F | P-08 | base64url.rs, cbor.rs, json.rs, differential_serde_json.rs, lib.rs, parser.rs, sd_jwt_parsing_verification.rs, ids.rs, proptest_ids.rs, base64url_strict.rs, cbor_bounded.rs, json_bounded.rs, sd_jwt_parser.rs | Cubierto |
+| REQ-VER-008 | F2 | DEBE | T, F | P-08 | base64url.rs, cbor.rs, json.rs, differential_serde_json.rs, lib.rs, parser.rs, vc.rs, sd_jwt_parsing_verification.rs, sd_jwt_vc_integration.rs, ids.rs, proptest_ids.rs, base64url_strict.rs, cbor_bounded.rs, json_bounded.rs, sd_jwt_parser.rs | Cubierto |
 | REQ-VER-009 | F4 | DEBE | T | P-06 | cbor.rs, json.rs, differential_serde_json.rs, lib.rs, clock.rs, cbor_bounded.rs, json_bounded.rs, jwk_parser.rs, sd_jwt_parser.rs | Cubierto |
 | REQ-VER-010 | F4 | DEBE | T | P-08 | — | Pendiente (Fase futura) |
 | REQ-VER-011 | F4 | DEBE | T | P-08 | — | Pendiente (Fase futura) |

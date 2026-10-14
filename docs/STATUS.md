@@ -10,7 +10,7 @@
 | Último gate cerrado | **G0** (2026-10-11) |
 | Próximo gate | **G2** (Revisión y cierre formal de Fase F2) |
 | Hito siguiente | M1 · Núcleo offline (al cerrar G5) |
-| Última actualización | 2026-10-13 (F3: T04 completada — Key Binding JWT RFC 9901) |
+| Última actualización | 2026-10-13 (F3: T05 completada — Capa SD-JWT VC) |
 
 ## Gates
 
@@ -55,6 +55,7 @@
 | F3.T02 Emisión SD-JWT | #41 | Antigravity (agente) | Hecha | Emisión RFC 9901 en `gravital-id-credential` (objetos/arrays, sal ≥ 128b, decoys, anidación, serialización compacta y firma ES256 vía `KeyStore`); rama `feat/41-sd-jwt-emission` |
 | F3.T03 Parseo y verificación SD-JWT | #43 | Antigravity (agente) | Hecha | Parseo RFC 9901 en `gravital-id-credential` (verificación de digests, rechazo de duplicados, claims reservados, huérfanos, colisión de claves, reconstrucción, firma ES256, límites DoS y fuzzing); rama `feat/43-sd-jwt-parsing-verification` |
 | F3.T04 KB-JWT | #45 | Antigravity (agente) | Hecha | Creación y verificación de KB-JWT (`typ: kb+jwt`, `nonce`, `aud`, `iat`, `sd_hash`; firma delegada al `KeyStore`; REQ-PRES-002, REQ-CRED-001, REQ-VER-003); rama `feat/45-kb-jwt` |
+| F3.T05 Capa SD-JWT VC | #47 | OpenCode (agente) | Hecha | `typ: dc+sd-jwt`, `iss`/`vct`/`iat`/`nbf`/`exp`, `cnf.jwk` canónico, `status.status_list`, lista de algoritmos del perfil y rechazo de `none`; rama `feat/47-sd-jwt-vc` |
 
 ## Bloqueos
 
@@ -99,21 +100,22 @@
 
 ## Última nota de traspaso
 
-### Traspaso — 2026-10-13 (F3.T04: KB-JWT) — Antigravity (agente)
-- Tarea: F3.T04 — #45 — rama `feat/45-kb-jwt`
+### Traspaso — 2026-10-13 (F3.T05: Capa SD-JWT VC) — OpenCode (agente)
+- Tarea: F3.T05 — #47 — rama `feat/47-sd-jwt-vc`
 - Estado: **lista para revisión / hecha**
 - Hecho en esta sesión:
-  - F3.T04 (#45):
-    - Implementado módulo `kb.rs` en `gravital-id-credential` con soporte completo de Key Binding JWT (RFC 9901 §6, REQ-PRES-002, REQ-CRED-001, REQ-VER-003).
-    - Implementado cálculo estricto de `sd_hash` (`calculate_sd_hash`) sobre el prefijo de la presentación terminado en `~` (RFC 9901 §6.2) con digest SHA-256 base64url.
-    - Implementado `KbIssuer`: emisión de KB-JWT con cabecera `typ: kb+jwt`, `alg: ES256` y claims canónicos (`iat`, `aud`, `nonce`, `sd_hash`), delegando la firma a `KeyStore::sign` con `KeyHandle<HolderBinding>` (INV-03, REQ-KEY-001).
-    - Implementado `KbJwtVerifier`: verificación fail-closed de formato, cabeceras (`typ: kb+jwt`, `alg: ES256`, prohibiendo `none` y no soportados), coincidencia estricta de `aud`, `nonce` y `sd_hash`, políticas de sesgo de reloj y frescura (`KbVerificationPolicy` sobre `UnixTime` inyectado, INV-11), y verificación de firma criptográfica del titular contra JWK EC P-256.
-    - Integrado método `ParsedSdJwt::verify_key_binding` y exposición del prefijo SD-JWT en `ParsedSdJwt::sd_jwt_prefix()`.
-    - Creada suite de pruebas de integración `tests/kb_jwt_integration.rs` con 6 pruebas exhaustivas (flujo nominal de presentación con KB-JWT, rechazo por manipulación de `sd_hash`, mismatch de `aud`/`nonce`, clave pública de titular errónea, omisión de KB-JWT y rechazo de `typ`/`alg` inválidos).
-    - Actualizado `crates/gravital-id-credential/README.md` y `CHANGELOG.md` con documentación y ejemplos de uso de KB-JWT.
+  - F3.T05 (#47):
+    - Completado el módulo `vc.rs` en `gravital-id-credential` con la capa SD-JWT VC (`draft-ietf-oauth-sd-jwt-vc-19`): `StatusListReference`/`StatusClaim` (`idx`+`uri`, ADR-0005), `ConfirmationClaim` (`cnf.jwk` con serialización canónica RFC 7638 sin material privado), `SdJwtVcClaims` y `VcValidityPolicy` (sesgo de reloj, `require_status`/`require_exp`/`require_cnf`, lista de algoritmos del perfil).
+    - `SdJwtVcBuilder`: emite con cabecera `typ: dc+sd-jwt` + `alg: ES256`, valida `iss` como URL HTTPS (ARCHITECTURE §3) con cota de longitud, y rechaza declarar como atributos selectivos los claims siempre visibles (`iss`, `vct`, `iat`, `nbf`, `exp`, `cnf`, `status`; ARCHITECTURE §8.2) o el mismo claim a la vez llano y selectivo.
+    - `SdJwtVcVerifier::verify_header`/`verify_claims` y `ParsedSdJwt::verify_vc`: verificación fail-closed sobre el **payload firmado** (un emisor no puede ocultar metadatos VC tras divulgación selectiva), rechazo de `none` y de algoritmos fuera del perfil (REQ-CRED-008, INV-08), vigencia `iat`/`nbf`/`exp` con reloj inyectado (INV-11, REQ-VER-005) y validación estricta de `status`.
+    - Suite de integración `tests/sd_jwt_vc_integration.rs` (18 pruebas) con matriz positiva y negativa: `typ` incorrecto, `alg: none`, algoritmo fuera del perfil, `iss` no HTTPS/demasiado largo, claims ausentes, `exp` caducada, `nbf` futura, `nbf < iat`, `status` malformado, `cnf` con `d`, claims siempre visibles ocultos, y verificación end-to-end de que `cnf.jwk` es la clave que firma el KB-JWT.
+    - Actualizados `crates/gravital-id-credential/README.md`, `CHANGELOG.md` y `docs/TRACEABILITY.md` (REQ-CRED-007/008 y REQ-VER-005 pasan a *Cubierto*).
 - Pendiente (siguiente paso concreto):
-  - Iniciar tarea F3.T05: `Capa SD-JWT VC` (`typ: dc+sd-jwt`, `vct`, `cnf.jwk`, claim `status`, validez `iat`/`nbf`/`exp`, `iss`; algoritmo list verificación y rechazo de `none`; REQ-CRED-001, REQ-CRED-007, REQ-CRED-008).
+  - Iniciar tarea F3.T06: `Esquemas de perfil` — incorporar los esquemas de `docs/specs/profiles/` en compilación y validar claims en emisión y verificación (REQ-CRED-004).
 - Bugs/issues abiertos durante la sesión: Ninguno.
-- Decisiones tomadas (con enlace a ADR/issue): Se delega la firma del titular al `KeyStore` con clave de propósito titular `HolderBinding` cumpliendo estrictamente INV-03.
-- Riesgos o dudas: Ninguno.
-- Comprobaciones locales: fmt ✅ clippy ✅ tests ✅ layers ✅ trace ✅ doc ✅ deny ✅ audit ✅ no_std ✅ wasm32 ✅ bare-metal ✅
+- Decisiones tomadas (con enlace a ADR/issue):
+  - `iss` se valida como URL HTTPS siguiendo `ARCHITECTURE.md §3` ("la URL HTTPS usada como `iss`"); los metadatos VC se verifican sobre el payload firmado y no sobre la reconstrucción, por fail-closed (REQ-VER-003).
+  - `cnf.jwk` se serializa con los miembros canónicos RFC 7638 (ejemplo de draft-19 §3.2.2.3), no con `kid`/`use`/`alg`.
+- Riesgos o dudas:
+  - Posible inconsistencia no bloqueante: `IssuerId::parse` (`crates/gravital-id-types/src/ids.rs`) solo admite kebab-case, mientras que `ARCHITECTURE.md §3` define el identificador de emisor como la URL HTTPS usada en `iss`. En F4 (trust bundle) habrá que decidir si `IssuerId` admite URLs; conviene registrarlo como `type:spec-gap` si F4 lo confirma.
+- Comprobaciones locales: fmt ✅ clippy ✅ tests ✅ layers ✅ trace ✅ check-error-codes ✅ doc ✅ wasm32 ✅ bare-metal ✅ (deny/audit: no ejecutados en esta sesión por el bloqueo de facturación de GitHub Actions; se ejecutaron localmente en sesiones previas)
