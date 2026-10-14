@@ -10,7 +10,7 @@
 | Último gate cerrado | **G0** (2026-10-11) |
 | Próximo gate | **G2** (Revisión y cierre formal de Fase F2) |
 | Hito siguiente | M1 · Núcleo offline (al cerrar G5) |
-| Última actualización | 2026-10-13 (F3: T01 completada — ADR-0015 propuesto) |
+| Última actualización | 2026-10-13 (F3: T03 completada — Parseo y verificación SD-JWT RFC 9901) |
 
 ## Gates
 
@@ -52,6 +52,8 @@
 | F2.T11 Objetivos de fuzzing | #34 | Antigravity (agente) | Hecha | Un objetivo por parser (`base64url_strict`, `json_bounded`, `cbor_bounded`, `base45_strict`, `deflate_bounded`, `jwk_parser`) con trazabilidad REQ-SEC-005 en `fuzz.yml`; rama `feat/24-types-newtypes` |
 | F2.T12 Benchmarks base | #35 | Antigravity (agente) | Hecha | Suite criterion `crypto_primitives` en `gravital-id-crypto` (ES256, SHA-256, XChaCha20, HPKE); línea base registrada en `STATUS.md` (REQ-PERF-001); cobertura `gravital-id-crypto` al 92,46 %; rama `feat/24-types-newtypes` |
 | F3.T01 ADR-0015 construir o reutilizar | #39 | Antigravity (agente) | Hecha | Evaluación de crates SD-JWT existentes; redactado `ADR-0015` propuesto; decisión Opción B (implementar en L2 `gravital-id-credential`); rama `docs/39-adr-0015-sd-jwt` |
+| F3.T02 Emisión SD-JWT | #41 | Antigravity (agente) | Hecha | Emisión RFC 9901 en `gravital-id-credential` (objetos/arrays, sal ≥ 128b, decoys, anidación, serialización compacta y firma ES256 vía `KeyStore`); rama `feat/41-sd-jwt-emission` |
+| F3.T03 Parseo y verificación SD-JWT | #43 | Antigravity (agente) | Hecha | Parseo RFC 9901 en `gravital-id-credential` (verificación de digests, rechazo de duplicados, claims reservados, huérfanos, colisión de claves, reconstrucción, firma ES256, límites DoS y fuzzing); rama `feat/43-sd-jwt-parsing-verification` |
 
 ## Bloqueos
 
@@ -96,20 +98,23 @@
 
 ## Última nota de traspaso
 
-### Traspaso — 2026-10-13 (F3.T01: ADR-0015 SD-JWT) — Antigravity (agente)
-- Tarea: F3.T01 — #39 — rama `docs/39-adr-0015-sd-jwt`
+### Traspaso — 2026-10-13 (F3.T03: Parseo y verificación SD-JWT) — Antigravity (agente)
+- Tarea: F3.T03 — #43 — rama `feat/43-sd-jwt-parsing-verification`
 - Estado: **lista para revisión / hecha**
 - Hecho en esta sesión:
-  - F3.T01 (#39):
-    - Investigados y analizados crates existentes de SD-JWT en el ecosistema Rust (`sd-jwt-rs`, `affinidi-sd-jwt`, entre otros).
-    - Detectadas incompatibilidades críticas con invariantes de Gravital ID: dependencia de `std`, acoplamiento a `ring`/OpenSSL (violando INV-01 e INV-07), incapacidad de delegar firmas a hardware sin exponer claves privadas (violando INV-03) y falta de cotas DoS en parsers JSON (violando REQ-CRED-009).
-    - Redactado `docs/adr/0015-sd-jwt-construir-o-reutilizar.md` (ADR-0015 Propuesto): adopta la Opción B (construcción nativa en `gravital-id-credential` L2 `#![no_std]` + `alloc` sobre L1).
-    - Indexado ADR-0015 en `docs/adr/README.md`.
-    - Actualizados `CHANGELOG.md` y `docs/STATUS.md`.
+  - F3.T03 (#43):
+    - Implementado módulo `parser.rs` con tipos `ParsedSdJwt` y `SdJwtLimits` (REQ-VER-008).
+    - Parseo estricto del formato compacto RFC 9901 (`<jwt>~<d1>~...~<dn>~[<kb_jwt>]`) con límites acotados de tamaño de entrada, número de divulgaciones y profundidad de recursión.
+    - Verificación biunívoca de digests SHA-256 base64url contra entradas en `_sd` y `...`.
+    - Detección y rechazo fail-closed de: divulgaciones duplicadas, digests duplicados en `_sd`, claims reservados (`_sd`, `...`), colisiones de nombres de miembros en objetos (REQ-CRED-009) y divulgaciones huérfanas/no referenciadas (REQ-VER-003).
+    - Reconstrucción determinista y recursiva del objeto JSON de claims revelados (sustituyendo placeholders en objetos y arrays, omitiendo decoys/claims no revelados, y removiendo metadatos `_sd` y `_sd_alg`).
+    - Verificación de firma JWS ES256 contra clave pública JWK EC P-256 (`verify_issuer_signature`).
+    - Creada suite de pruebas de integración `tests/sd_jwt_parsing_verification.rs` con 11 pruebas exhaustivas (nominales, subconjuntos de presentación selectiva, y matriz completa de rechazo negativo).
+    - Creado objetivo de fuzzing `sd_jwt_parser` en `fuzz/fuzz_targets/sd_jwt_parser.rs` integrado en `fuzz/Cargo.toml` y `.github/workflows/fuzz.yml` (REQ-SEC-005).
+    - Actualizado `crates/gravital-id-credential/README.md` con documentación de parseo/verificación y ejemplos.
 - Pendiente (siguiente paso concreto):
-  - Validación formal del ADR-0015 por el mantenedor.
-  - Iniciar tarea F3.T02: `Emisión SD-JWT` (RFC 9901: divulgaciones de objeto `_sd` y array `...`, digests, `_sd_alg`, decoys, recursión; sal ≥ 128 bits; REQ-CRED-002, REQ-CRED-003).
+  - Iniciar tarea F3.T04: `KB-JWT` (Creación y verificación: `typ: kb+jwt`, `nonce`, `aud`, `iat`, `sd_hash`; firma delegada al `KeyStore`; REQ-PRES-002).
 - Bugs/issues abiertos durante la sesión: Ninguno.
-- Decisiones tomadas (con enlace a ADR/issue): ADR-0015 (#39) propone construir SD-JWT nativamente en `gravital-id-credential` L2 sin dependencias externas de JWT.
-- Riesgos o dudas: Ninguno; diseño validado contra invariantes INV-01 a INV-16.
-- Comprobaciones locales: fmt ✅ clippy ✅ tests ✅ layers ✅ trace ✅ doc ✅ deny ✅ no_std ✅ wasm32 ✅ android ✅ ios ✅
+- Decisiones tomadas (con enlace a ADR/issue): Se aplican cotas estrictas de DoS `SdJwtLimits` (REQ-VER-008) y validación fail-closed de integridad de divulgaciones (REQ-VER-003).
+- Riesgos o dudas: Ninguno.
+- Comprobaciones locales: fmt ✅ clippy ✅ tests ✅ layers ✅ trace ✅ doc ✅ deny ✅ no_std ✅ wasm32 ✅ bare-metal ✅
