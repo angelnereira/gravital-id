@@ -60,7 +60,7 @@ jobs:
           RUSTDOCFLAGS: "-D warnings"
 
   xtask:
-    name: xtask (capas, trazabilidad, códigos de error)
+    name: xtask (capas, trazabilidad, códigos de error, conformidad)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -74,6 +74,8 @@ jobs:
         run: cargo xtask trace
       - name: check-error-codes (REQ-SDK-003)
         run: cargo xtask check-error-codes
+      - name: conformidad SD-JWT VC (REQ-MAINT-003, INV-12)
+        run: cargo xtask conformance
       - name: La matriz de trazabilidad commiteada está actualizada
         run: git diff --exit-code docs/TRACEABILITY.md
 
