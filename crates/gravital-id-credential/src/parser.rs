@@ -462,7 +462,20 @@ impl ParsedSdJwt {
         policy: &VcValidityPolicy,
     ) -> Result<SdJwtVcClaims, GidError> {
         crate::vc::SdJwtVcVerifier::verify_header(&self.header, policy)?;
-        crate::vc::SdJwtVcVerifier::verify_claims(&self.raw_payload, current_time, policy)
+        let claims =
+            crate::vc::SdJwtVcVerifier::verify_claims(&self.raw_payload, current_time, policy)?;
+
+        // REQ-CRED-004: los atributos se validan contra el esquema del perfil y del `vct`
+        // sobre los claims reconstruidos (los atributos divulgados ya quedaron verificados
+        // por digest al parsear). Los metadatos siempre visibles se validan sobre el
+        // payload firmado, más arriba.
+        crate::vc::SdJwtVcVerifier::verify_profile_claims(
+            &self.reconstructed_claims,
+            &claims.vct,
+            policy,
+        )?;
+
+        Ok(claims)
     }
 
     /// Verifica exhaustivamente el Key Binding JWT de la presentación (RFC 9901 §6, REQ-PRES-002, REQ-VER-003).
