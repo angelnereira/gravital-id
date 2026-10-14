@@ -36,8 +36,28 @@ Emisión, validación y verificación de credenciales SD-JWT y SD-JWT VC para Gr
 - **Verificación criptográfica:** Comprobación de firma JWS ES256 del emisor contra una clave pública JWK EC P-256 (`verify_issuer_signature`).
 - **Límites de complejidad (`SdJwtLimits`):** Cotas para tamaño de entrada, número de divulgaciones, profundidad de recursión y elementos por contenedor (REQ-VER-008).
 
-## Funcionalidades de Key Binding JWT (RFC 9901 §6)
+## Funcionalidades de la capa SD-JWT VC (`draft-ietf-oauth-sd-jwt-vc-19`)
 
+- **Cabecera normativa (`SdJwtVcBuilder`):** `typ: dc+sd-jwt` y `alg: ES256`, rechazando `none` y
+  cualquier algoritmo fuera de la lista autorizada por el perfil (REQ-CRED-008, INV-08).
+- **Claims siempre visibles (`ARCHITECTURE.md §8.2`):** `iss` (URL HTTPS del emisor), `vct`,
+  `iat`, y opcionales `nbf`, `exp`, `cnf` y `status`. El constructor tipado impide declararlos
+  como atributos selectivos: ocultarlos rompería la verificación de vigencia y estado.
+- **Vinculación del titular (`cnf.jwk`):** la clave pública del titular se serializa con los
+  miembros canónicos RFC 7638 (`crv`, `kty`, `x`, `y`) y se valida en verificación, rechazando
+  material privado (`d`) con `ErrorCode::InvalidKeyFormat` (INV-02, INV-03). Es la clave contra la
+  que se verifica el KB-JWT de la presentación.
+- **Referencia de estado (`status.status_list`):** `idx` + `uri` conforme a ADR-0005; exigida por
+  defecto (`VcValidityPolicy::require_status`) y relajable para credenciales de vida corta
+  (REQ-CRED-007).
+- **Vigencia temporal (`VcValidityPolicy`):** `iat`/`nbf`/`exp` evaluados con el `Clock`
+  inyectado (`UnixTime`) y tolerancia de sesgo acotada (`DEFAULT_VC_CLOCK_SKEW_SECONDS = 60`),
+  sin `SystemTime` (INV-11, REQ-VER-005). Se rechazan `nbf < iat` y `exp < iat`/`exp < nbf`.
+- **Verificación (`ParsedSdJwt::verify_vc`, `SdJwtVcVerifier`):** fail-closed; los claims de la
+  capa VC se validan sobre el payload firmado por el emisor, de modo que un emisor no pueda
+  ocultarlos tras divulgación selectiva (REQ-VER-003).
+
+## Funcionalidades de Key Binding JWT (RFC 9901 §6)
 - **Cálculo de `sd_hash` (`calculate_sd_hash`):** Digest SHA-256 base64url calculado sobre el prefijo exacto de la presentación (`<jwt>~<d1>~...~<dn>~`) según RFC 9901 §6.2.
 - **Emisión de KB-JWT (`KbIssuer`):**
   - Generación de JWT con cabecera `{"alg":"ES256","typ":"kb+jwt"}` y claims tipados (`iat`, `aud`, `nonce`, `sd_hash`).
@@ -113,4 +133,46 @@ assert_eq!(kb_claims.nonce, nonce);
 
 let claims = parsed.reconstructed_claims();
 assert_eq!(claims.member("given_name"), Some(&Value::String("Alice".into())));
+```
+
+### Ejemplo SD-JWT VC (emisión y verificación)
+
+```rust,ignore
+use gravital_id_codec::json::Value;
+use gravital_id_credential::{ParsedSdJwt, SdJwtVcBuilder, VcValidityPolicy};
+use gravital_id_keys::{IssuerSigning, KeyStore, SoftwareKeyStore};
+use gravital_id_testkit::SeededRng;
+use gravital_id_types::{UnixTime, Vct};
+
+let rng = SeededRng::new(7);
+let mut key_store = SoftwareKeyStore::new(rng);
+let issuer_handle = key_store.generate_key::<IssuerSigning>().unwrap();
+let issuer_jwk = key_store.public_key(&issuer_handle).unwrap();
+
+let now = UnixTime::from_seconds(1_700_000_000);
+let rng_emit = SeededRng::new(8);
+
+// El emisor construye la credencial con la capa SD-JWT VC (typ: dc+sd-jwt, alg: ES256).
+let issued = SdJwtVcBuilder::new(
+    "https://issuer.cedula.example.gov",
+    Vct::parse("https://credentials.gravital.io/vct/personal/id-v1").unwrap(),
+    now,
+)
+.unwrap()
+.exp(UnixTime::from_seconds(1_700_086_400))
+.status_list(7, "https://status.cedula.example.gov/lists/2026-10")
+.unwrap()
+.add_sd_claim("given_name", Value::String("Ana".into()))
+.set_decoys(2)
+.issue_signed(&key_store, &issuer_handle, None, &rng_emit)
+.unwrap();
+
+// El verifiador comprueba la firma del emisor y después la capa VC.
+let parsed = ParsedSdJwt::parse(issued.to_compact_serialization()).unwrap();
+parsed.verify_issuer_signature(&issuer_jwk).unwrap();
+let vc_claims = parsed.verify_vc(now, &VcValidityPolicy::default()).unwrap();
+
+assert_eq!(vc_claims.iss, "https://issuer.cedula.example.gov");
+assert_eq!(vc_claims.iat, now);
+assert!(vc_claims.status.is_some());
 ```

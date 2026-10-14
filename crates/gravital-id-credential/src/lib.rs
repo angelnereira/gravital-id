@@ -6,9 +6,11 @@
 //! - **Garantía no_std:** Sí (`#![no_std]` + `alloc`)
 //!
 //! Trazabilidad:
-//! - **REQ-CRED-001:** Formato normativo SD-JWT según RFC 9901.
+//! - **REQ-CRED-001:** Formato normativo SD-JWT según RFC 9901 y capa SD-JWT VC (`typ: dc+sd-jwt`).
 //! - **REQ-CRED-002:** Sal de ≥ 128 bits de CSPRNG para cada divulgación.
 //! - **REQ-CRED-003:** Digests señuelo (decoys) configurables por perfil en objetos y arrays.
+//! - **REQ-CRED-007:** Referencia de estado obligatoria salvo perfiles de vida corta.
+//! - **REQ-CRED-008:** Rechazo de algoritmos fuera de la lista del perfil, incluido `none`.
 //! - **REQ-CRED-009:** Rechazo de miembros duplicados en JSON y colisiones de claims divulgados.
 //! - **REQ-PRES-002:** Key Binding JWT (KB-JWT) con nonce, aud, iat y sd_hash en presentaciones.
 //! - **REQ-VER-003:** Fail-closed: ante cualquier error o ambigüedad no se acepta.
@@ -26,6 +28,7 @@ pub mod json_canonical;
 pub mod kb;
 pub mod parser;
 pub mod salt;
+pub mod vc;
 
 pub use decoy::{create_array_decoy_element, generate_decoy_digest, generate_decoy_digests};
 pub use disclosure::{Disclosure, DisclosureDigest, DisclosureKind, DIGEST_BASE64URL_LEN};
@@ -42,6 +45,11 @@ pub use parser::{
     DEFAULT_MAX_RECURSION_DEPTH, DEFAULT_MAX_SD_JWT_INPUT_BYTES,
 };
 pub use salt::{Salt, MIN_SALT_BYTES};
+pub use vc::{
+    ConfirmationClaim, SdJwtVcBuilder, SdJwtVcClaims, SdJwtVcVerifier, StatusClaim,
+    StatusListReference, VcValidityPolicy, DEFAULT_VC_CLOCK_SKEW_SECONDS, MAX_STATUS_URI_BYTES,
+    MAX_VC_ISS_BYTES, SD_JWT_VC_DEFAULT_ALG, SD_JWT_VC_TYP, VC_ISS_SCHEME,
+};
 
 /// Versión semántica del crate en compilación.
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");

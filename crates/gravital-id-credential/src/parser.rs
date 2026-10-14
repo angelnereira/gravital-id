@@ -19,6 +19,7 @@ use gravital_id_types::{ErrorCode, GidError, UnixTime};
 
 use crate::disclosure::{Disclosure, DisclosureDigest, DisclosureKind};
 use crate::kb::{KbJwtClaims, KbVerificationPolicy};
+use crate::vc::{SdJwtVcClaims, VcValidityPolicy};
 
 /// Tamaño máximo de entrada en bytes por defecto (64 KiB, CRYPTO_PROFILES §5.2).
 pub const DEFAULT_MAX_SD_JWT_INPUT_BYTES: usize = 64 * 1024;
@@ -434,6 +435,34 @@ impl ParsedSdJwt {
     #[must_use]
     pub fn sd_jwt_prefix(&self) -> &str {
         &self.sd_jwt_prefix
+    }
+
+    /// Verifica la capa SD-JWT VC de la credencial (draft-19, F3.T05).
+    ///
+    /// Comprueba de forma fail-closed:
+    /// - Cabecera: `typ` igual a `dc+sd-jwt` y `alg` dentro de la lista autorizada por el
+    ///   perfil, rechazando siempre `none` (REQ-CRED-008, INV-08).
+    /// - Claims de nivel superior (`iss`, `vct`, `iat`, `nbf`, `exp`, `cnf`, `status`),
+    ///   evaluados sobre el **payload firmado por el emisor**: estos claims son siempre
+    ///   visibles (ARCHITECTURE §8.2), de modo que un emisor no puede ocultarlos tras
+    ///   divulgación selectiva sin que fallen como ausentes (REQ-VER-003).
+    /// - Vigencia temporal (`iat`/`nbf`/`exp`) con el sesgo de reloj de la política y el
+    ///   instante inyectado (INV-11, REQ-VER-005).
+    ///
+    /// No sustituye a [`ParsedSdJwt::verify_issuer_signature`]: el resultado sobre una
+    /// credencial sin firma verificada carece de valor. El pipeline del verificador (F4)
+    /// ordena la comprobación de firma antes que la de vigencia y estado.
+    ///
+    /// # Errores
+    /// Los códigos de [`gravital_id_types::ErrorCode`] descritos en
+    /// [`crate::vc::SdJwtVcVerifier`].
+    pub fn verify_vc(
+        &self,
+        current_time: UnixTime,
+        policy: &VcValidityPolicy,
+    ) -> Result<SdJwtVcClaims, GidError> {
+        crate::vc::SdJwtVcVerifier::verify_header(&self.header, policy)?;
+        crate::vc::SdJwtVcVerifier::verify_claims(&self.raw_payload, current_time, policy)
     }
 
     /// Verifica exhaustivamente el Key Binding JWT de la presentación (RFC 9901 §6, REQ-PRES-002, REQ-VER-003).
