@@ -6,11 +6,11 @@
 
 | Campo | Valor |
 |---|---|
-| Fase actual | **F3 — Credenciales SD-JWT VC (en curso)** |
+| Fase actual | **F4 — Estado, confianza y verificación offline (en curso)** |
 | Último gate cerrado | **G0** (2026-10-11) |
 | Próximo gate | **G3** — revisión formal de Fase F3 (#59); **G2** sigue pendiente de merge/CI |
 | Hito siguiente | M1 · Núcleo offline (al cerrar G5) |
-| Última actualización | 2026-10-14 (F3: pila de ramas revisada y verificada una a una; G3 abierto a revisión del mantenedor) |
+| Última actualización | 2026-10-14 (F4.T01 completada — `pip-status`: listas y manifiesto) |
 
 ## Gates
 
@@ -56,6 +56,7 @@
 | F3.T02 Emisión SD-JWT | #41 | Antigravity (agente) | Hecha | Emisión RFC 9901 en `gravital-id-credential` (objetos/arrays, sal ≥ 128b, decoys, anidación, serialización compacta y firma ES256 vía `KeyStore`); rama `feat/41-sd-jwt-emission` |
 | F3.T03 Parseo y verificación SD-JWT | #43 | Antigravity (agente) | Hecha | Parseo RFC 9901 en `gravital-id-credential` (verificación de digests, rechazo de duplicados, claims reservados, huérfanos, colisión de claves, reconstrucción, firma ES256, límites DoS y fuzzing); rama `feat/43-sd-jwt-parsing-verification` |
 | F3.T04 KB-JWT | #45 | Antigravity (agente) | Hecha | Creación y verificación de KB-JWT (`typ: kb+jwt`, `nonce`, `aud`, `iat`, `sd_hash`; firma delegada al `KeyStore`; REQ-PRES-002, REQ-CRED-001, REQ-VER-003); rama `feat/45-kb-jwt` |
+| F4.T01 `pip-status`: listas | #60 | OpenCode (agente) | Hecha | Token Status List (JWT) con descompresión acotada, 1/2 bits, URI y frescura + `IssuerStatusManifest` con versión monotónica (REQ-STAT-001/003/004/007/008); rama `feat/60-status-lists` |
 | F3.T09 Vectores de conformidad v1 | #58 | OpenCode (agente) | Hecha | 24 vectores en `conformance/vectors/sd-jwt-vc/` (6 positivos, 18 negativos) + runner `cargo xtask conformance`; rama `feat/58-conformance-vectors` |
 | F3.T08 `pip-issuer` | #57 | OpenCode (agente) | Hecha | API de construcción y firma; emisión por lotes con claves, sales e índices distintos (REQ-CRED-006); rama `feat/57-issuer-api` |
 | F3.T07 Claims de predicado | #49 | OpenCode (agente) | Hecha | Predicados precomputados (`age_over_18`/`age_over_21`) con cálculo por calendario y reloj inyectado; rama `feat/49-predicate-claims` |
@@ -105,35 +106,39 @@
 
 ## Última nota de traspaso
 
-### Traspaso — 2026-10-13 (F3 cerrada a falta de F3.T10) — OpenCode (agente)
-- Tarea: F3 — múltiples issues — ramas `feat/47` … `feat/58`
-- Estado: **Fase F3 implementada salvo F3.T10; gate G3 abierto a revisión (#59)**
-- Hecho en la fase F3 (además de lo ya registrado por el agente anterior en F3.T02–T04):
-  - F3.T05 Capa SD-JWT VC (#47): `typ: dc+sd-jwt`, `iss`/`vct`/`iat`/`nbf`/`exp`, `cnf.jwk`
-    canónico, `status.status_list`, lista de algoritmos del perfil y rechazo de `none`.
-  - F3.T06 Esquemas de perfil (#48): esquemas de los tres perfiles en compilación con
-    validación en emisión y verificación.
-  - F3.T07 Claims de predicado (#49): predicados precomputados (`age_over_18`/`age_over_21`)
-    con cálculo por calendario y reloj inyectado.
-  - F3.T08 `pip-issuer` (#57): API de construcción y firma + emisión por lotes con claves,
-    sales e índices distintos por copia.
-  - F3.T09 Vectores de conformidad v1 (#58): 24 vectores publicados (6 positivos, 18
-    negativos, uno por regla de rechazo) + runner `cargo xtask conformance`.
-  - G3 abierto a revisión (#59) con la plantilla del Anexo A: **decisión NO CERRADO**.
+### Traspaso — 2026-10-14 (F4.T01: `pip-status` — listas y manifiesto) — OpenCode (agente)
+- Tarea: F4.T01 — #60 — rama `feat/60-status-lists`
+- Estado: **lista para revisión / hecha**
+- Hecho en esta sesión:
+  - F4.T01 (#60):
+    - `gravital-id-status` deja de ser esqueleto:
+      - `status_list.rs`: parseo y verificación de Token Status List en formato JWT
+        (`typ: statuslist+jwt`, ES256; `CRYPTO_PROFILES.md`), descompresión acotada
+        reutilizando `deflate::inflate_bounded` (2 MiB / ratio 10:1, REQ-STAT-003), lectura de
+        1 y 2 bits con estados válido/revocado/suspendido (REQ-STAT-007), coincidencia de URI,
+        frescura con reloj inyectado (REQ-STAT-004), índice fuera de rango y valores no
+        definidos rechazados (fail-closed).
+      - `manifest.rs`: `IssuerStatusManifest` (ADR-0017, `TRUST_BUNDLE.md` §7) con parseo JWS,
+        validación de entradas (`type`, `sha256` hexadecimal), anti-rollback por
+        `manifest_version` (REQ-STAT-008) y comprobación del hash de cada lista descargada.
+    - 21 pruebas (13 unitarias + 8 de integración con JWT firmados): bomba de descompresión,
+        bits 1 y 2, índice fuera de rango, URI no coincidente, caducidad de lista y manifiesto,
+        rollback de versión, hash manipulado, cabeceras prohibidas y determinismo.
+    - Objetivo de fuzzing `fuzz/fuzz_targets/status_list_parser.rs` (REQ-SEC-005) añadido a
+      `fuzz/Cargo.toml` y verificado que compila.
+    - Documentación: README del crate con ejemplo, `CHANGELOG.md`, `docs/TRACEABILITY.md` y este
+      `docs/STATUS.md`.
 - Pendiente (siguiente paso concreto):
-  - **F3.T10** (interoperabilidad de formato): elegir una implementación externa independiente
-    e intercambiar vectores en ambos sentidos. Bloquea el cierre de G3.
-  - G3 quedará cerrado cuando F3.T10 esté hecho y la campaña de fuzzing nocturna tenga
-    evidencia (requiere GitHub Actions operativo).
+  - F4.T02 `pip-status`: caché y frescura — snapshot con instante firmado y antigüedad
+    calculada con el `Clock` inyectado (REQ-STAT-004).
 - Bugs/issues abiertos durante la sesión: Ninguno.
-- Decisiones tomadas (con enlace a ADR/issue): las documentadas en cada issue de tarea.
-- Revisión de la pila (2026-10-14): cada rama verificada en worktree aislado; fmt, clippy
-  y pruebas en verde en todas (203 → 304 pruebas, crecimiento monotónico). Añadido
-  `cargo xtask conformance` al job `xtask` de CI. Orden de fusión propuesto y sin conflictos
-  por ser pila lineal. Evidencia en el issue del gate (#59).
+- Decisiones tomadas (con enlace a ADR/issue):
+  - El número de entradas de una lista se deriva de los bytes recibidos (el formato no declara
+    un recuento); queda documentado en las pruebas.
+  - Se reutiliza el codec acotado existente en lugar de implementar descompresión propia
+    (INV-07).
 - Riesgos o dudas:
-  - R-01 (cambios en borradores): el corpus v1 es inmutable; un cambio de versión exige
-    vectores v2, nunca editar los publicados.
-  - GitHub Actions bloqueado por facturación: toda la verificación es local.
-- Comprobaciones locales: fmt ✅ clippy ✅ tests ✅ (304 pruebas, 0 fallos) layers ✅ trace ✅
-  check-error-codes ✅ `xtask conformance` 24/24 ✅
+  - G3 sigue sin cerrar (F3.T10 bloqueada); G4 esperará a G3 conforme a `ROADMAP.md §0.3`.
+- Comprobaciones locales: fmt ✅ clippy ✅ tests ✅ (325 pruebas del workspace, 0 fallos)
+  layers ✅ trace ✅ check-error-codes ✅ doc ✅ `xtask conformance` 24/24 ✅ wasm32 ✅
+  bare-metal ✅

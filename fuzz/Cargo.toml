@@ -16,10 +16,17 @@ gravital-id-types = { path = "../crates/gravital-id-types" }
 gravital-id-codec = { path = "../crates/gravital-id-codec" }
 gravital-id-crypto = { path = "../crates/gravital-id-crypto" }
 gravital-id-credential = { path = "../crates/gravital-id-credential" }
+gravital-id-status = { path = "../crates/gravital-id-status" }
 
 # Workspace independiente del principal: cargo-fuzz gestiona aquí sus perfiles.
 [workspace]
 members = ["."]
+
+[[bin]]
+name = "status_list_parser"
+path = "fuzz_targets/status_list_parser.rs"
+test = false
+doc = false
 
 [[bin]]
 name = "sd_jwt_parser"
