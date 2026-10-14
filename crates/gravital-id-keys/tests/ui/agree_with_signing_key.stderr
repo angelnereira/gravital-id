@@ -1,0 +1,14 @@
+error[E0277]: the trait bound `gravital_id_keys::HolderBinding: KeyAgreementPurpose` is not satisfied
+  --> tests/ui/agree_with_signing_key.rs:14:32
+   |
+14 |     let _ = keystore.agree_key(handle, peer_pub);
+   |                      --------- ^^^^^^ the trait `KeyAgreementPurpose` is not implemented for `gravital_id_keys::HolderBinding`
+   |                      |
+   |                      required by a bound introduced by this call
+   |
+   = help: the trait `KeyAgreementPurpose` is implemented for `gravital_id_keys::HpkeKeyAgreement`
+note: required by a bound in `agree_key`
+  --> src/keystore.rs
+   |
+   |     fn agree_key<P: KeyAgreementPurpose>(
+   |                     ^^^^^^^^^^^^^^^^^^^ required by this bound in `KeyStore::agree_key`

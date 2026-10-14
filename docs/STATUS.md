@@ -6,19 +6,20 @@
 
 | Campo | Valor |
 |---|---|
-| Fase actual | **F1 — Infraestructura de ingeniería** |
+| Fase actual | **F3 — Credenciales SD-JWT VC (en curso)** |
 | Último gate cerrado | **G0** (2026-10-11) |
-| Próximo gate | G1 |
+| Próximo gate | **G2** (Revisión y cierre formal de Fase F2) |
 | Hito siguiente | M1 · Núcleo offline (al cerrar G5) |
-| Última actualización | 2026-10-12 |
+| Última actualización | 2026-10-13 (F3: T01 completada — ADR-0015 propuesto) |
 
 ## Gates
 
 | Gate | Estado | Fecha | Evidencia |
 |---|---|---|---|
 | G0 | **Cerrado** | 2026-10-11 | Especificaciones v0.1 completadas, ADRs 0001-0012 y 0016-0020 aceptados, 4 spikes concluidos viables, revisión cruzada F0.T21 aprobada |
-| G1 | En curso | — | Workspace, xtask, CI y gobierno del repositorio implementados en `feat/6-workspace-cargo` (#6); pendiente verificación de CI en GitHub |
-| G2 … G17 | Pendiente | — | — |
+| G1 | En curso | — | Workspace, xtask, CI y gobierno del repositorio implementados en `feat/6-workspace-cargo` (#6, PR #22); pendiente merge del mantenedor |
+| G2 | **Listo para revisión** | — | F2.T01 a F2.T12 completadas en rama `feat/24-types-newtypes` (#24–#35). Vectores externos 100% pasando (RFC 7515/7638/5869/9180, Wycheproof 799/799), 6 parsers fuzzeados en CI (`fuzz.yml`), cobertura `gravital-id-crypto` al 92,46% (≥ 90%), 25 REQ trazados en `docs/TRACEABILITY.md`. |
+| G3 … G17 | Pendiente | — | — |
 
 ## Tareas en curso
 
@@ -38,6 +39,19 @@
 | F1.T12 Gobierno del repo | #6 | OpenCode (agente) | Hecha | `CODEOWNERS` + labels como código con sync idempotente |
 | F1.T13 ADR-0019 + esqueleto vertical | #6 | OpenCode (agente) | Hecha | Fachada mínima del SDK + `bindings/wasm` con pruebas de humo en Node |
 | F1.T14 Mutación y Kani | #6 | OpenCode (agente) | Hecha | `cargo-mutants` + pruebas Kani de invariantes; job nocturno |
+| F2.T01 Newtypes validados | #24 | OpenCode (agente) | Hecha | `IssuerId`, `Kid`, `Vct`, `ProfileId`, `UnixTime`, `BundleVersion` + propiedades; rama `feat/24-types-newtypes` |
+| F2.T02 base64url estricto | #25 | OpenCode (agente) | Hecha | Sin relleno, canónica, acotada; fuzzing 6.9M ejecuciones; rama `feat/24-types-newtypes` |
+| F2.T03 JSON acotado | #26 | OpenCode (agente) | Hecha | Límites, duplicados rechazados, UTF-8 estricto, números acotados; diferencial vs serde_json + fuzzing; rama `feat/24-types-newtypes` |
+| F2.T04 CBOR acotado | #27 | OpenCode (agente) | Hecha | Límites, modo determinista RFC 8949 §4.2; desbordamiento de pila del fuzzing corregido; rama `feat/24-types-newtypes` |
+| F2.T05 DEFLATE + Base45 | #28 | OpenCode (agente) | Hecha | zlib acotado (2 MiB / 10:1, adler32) con backend `no_std` miniz_oxide; Base45 RFC 9285 con vectores del RFC; rama `feat/24-types-newtypes` |
+| F2.T06 CryptoBackend + RustCrypto | #29 | Antigravity (agente) | Hecha | ES256 P1363/DER, SHA-256, HMAC, HKDF, XChaCha20-Poly1305, ECDH P-256, HPKE (RFC 9180); rama `feat/24-types-newtypes` |
+| F2.T07 JWK y thumbprints | #30 | Antigravity (agente) | Hecha | Parseo estricto JWK EC P-256, validación de curva, rechazo miembros privados (d), RFC 7638 thumbprint; rama `feat/24-types-newtypes` |
+| F2.T08 Vectores externos | #31 | Antigravity (agente) | Hecha | RFC 7515 (ES256), RFC 7638, RFC 5869 (HKDF), RFC 9180 (HPKE), Wycheproof (ECDSA P-256 484/484 y AEAD 315/315); rama `feat/24-types-newtypes` |
+| F2.T09 Higiene de secretos | #32 | Antigravity (agente) | Hecha | Tipos secretos con `Zeroize`, `ZeroizeOnDrop`, `Debug` y `Display` redactados (`[REDACTED]`), comparación en tiempo constante con `subtle`; rama `feat/24-types-newtypes` |
+| F2.T10 gravital-id-keys | #33 | Antigravity (agente) | Hecha | `KeyPurpose`, `KeyHandle` tipado por propósito, trait `KeyStore`, `SoftwareKeyStore` bajo feature `software-keystore`, normalización DER↔P1363, pruebas `trybuild` compile-fail; rama `feat/24-types-newtypes` |
+| F2.T11 Objetivos de fuzzing | #34 | Antigravity (agente) | Hecha | Un objetivo por parser (`base64url_strict`, `json_bounded`, `cbor_bounded`, `base45_strict`, `deflate_bounded`, `jwk_parser`) con trazabilidad REQ-SEC-005 en `fuzz.yml`; rama `feat/24-types-newtypes` |
+| F2.T12 Benchmarks base | #35 | Antigravity (agente) | Hecha | Suite criterion `crypto_primitives` en `gravital-id-crypto` (ES256, SHA-256, XChaCha20, HPKE); línea base registrada en `STATUS.md` (REQ-PERF-001); cobertura `gravital-id-crypto` al 92,46 %; rama `feat/24-types-newtypes` |
+| F3.T01 ADR-0015 construir o reutilizar | #39 | Antigravity (agente) | Hecha | Evaluación de crates SD-JWT existentes; redactado `ADR-0015` propuesto; decisión Opción B (implementar en L2 `gravital-id-credential`); rama `docs/39-adr-0015-sd-jwt` |
 
 ## Bloqueos
 
@@ -50,6 +64,30 @@
 
 ## Métricas base (se rellenan desde F2)
 
+### Primitivas criptográficas (F2.T12, REQ-PERF-001)
+
+| Operación | Parámetro | x86_64 (Linux) | aarch64 | wasm32 |
+|---|---|---|---|---|
+| Firma ES256 (`sign_es256`) | Payload 256 B (RFC 6979) | 204 µs (~4.900 op/s) | — | — |
+| Firma ES256 prehash (`sign_es256_digest`) | Digest 32 B | 396 µs (~2.525 op/s) | — | — |
+| Verificación ES256 (`verify_es256`) | Payload 256 B + VerifyingKey | 373 µs (~2.680 op/s) | — | — |
+| Verificación ES256 JWK (`verify_es256_jwk`) | Payload 256 B + JWK EC P-256 | 420 µs (~2.380 op/s) | — | — |
+| Verificación ES256 digest (`verify_es256_digest_jwk`) | Digest 32 B + JWK EC P-256 | 341 µs (~2.930 op/s) | — | — |
+| SHA-256 | 32 B | 105 ns (291 MiB/s) | — | — |
+| SHA-256 | 256 B | 323 ns (757 MiB/s) | — | — |
+| SHA-256 | 1 KiB | 1,04 µs (936 MiB/s) | — | — |
+| SHA-256 | 10 KiB | 9,80 µs (996 MiB/s) | — | — |
+| XChaCha20-Poly1305 seal | 256 B | 2,73 µs (89 MiB/s) | — | — |
+| XChaCha20-Poly1305 open | 256 B | 2,89 µs (84 MiB/s) | — | — |
+| XChaCha20-Poly1305 seal | 1 KiB | 3,79 µs (258 MiB/s) | — | — |
+| XChaCha20-Poly1305 open | 1 KiB | 4,20 µs (232 MiB/s) | — | — |
+| XChaCha20-Poly1305 seal | 8 KiB | 12,65 µs (618 MiB/s) | — | — |
+| XChaCha20-Poly1305 open | 8 KiB | 12,59 µs (621 MiB/s) | — | — |
+| HPKE Base seal (`p256_hkdf_chacha`) | 256 B | 346 µs | — | — |
+| HPKE Base open (`p256_hkdf_chacha`) | 256 B | 361 µs | — | — |
+
+### Métricas de alto nivel
+
 | Métrica | x86_64 | aarch64 | wasm32 | Android | iOS |
 |---|---|---|---|---|---|
 | Verificación de presentación (tiempo) | — | — | — | — | — |
@@ -58,23 +96,20 @@
 
 ## Última nota de traspaso
 
-### Traspaso — 2026-10-12 — OpenCode (agente)
-- Tarea: F1.T01–F1.T14 — #6 — rama `feat/6-workspace-cargo`
-- Estado: lista para revisión (PR contra `main` pendiente de aprobación del mantenedor)
+### Traspaso — 2026-10-13 (F3.T01: ADR-0015 SD-JWT) — Antigravity (agente)
+- Tarea: F3.T01 — #39 — rama `docs/39-adr-0015-sd-jwt`
+- Estado: **lista para revisión / hecha**
 - Hecho en esta sesión:
-  - Verificado y commiteado el WIP previo de F1.T01 (workspace `gravital-id-*`, lints, perfiles) y F1.T02 (ADR-0014, toolchain 1.85.0).
-  - `xtask`: corregido `check-error-codes` (falsos duplicados por menciones en doc-comments; ahora valida también discriminantes del enum) y ampliado `check-layers` con la regla de bindings (solo `gravital-id-sdk`).
-  - F1.T07: traits `Clock` (types) y `Rng` (crypto) + `FixedClock`/`SeededRng` en testkit con pruebas de determinismo.
-  - F1.T05/T06/T10: workflows `ci`, `security`, `docs`, `wasm`, `fuzz`, `mutation`, `bench`; `deny.toml`; compilación cruzada (4 targets) verificada en local.
-  - F1.T11/T14: objetivo de fuzzing de ejemplo (3.9M ejecuciones sin fallos), criterion, cargo-mutants y pruebas Kani.
-  - F1.T12: `CODEOWNERS` y labels como código (56/56 sincronizadas).
-  - F1.T13: fachada mínima del SDK y `bindings/wasm` con pruebas de humo en Node (`wasm-pack test`).
-  - `CHANGELOG.md` y esta nota actualizados.
+  - F3.T01 (#39):
+    - Investigados y analizados crates existentes de SD-JWT en el ecosistema Rust (`sd-jwt-rs`, `affinidi-sd-jwt`, entre otros).
+    - Detectadas incompatibilidades críticas con invariantes de Gravital ID: dependencia de `std`, acoplamiento a `ring`/OpenSSL (violando INV-01 e INV-07), incapacidad de delegar firmas a hardware sin exponer claves privadas (violando INV-03) y falta de cotas DoS en parsers JSON (violando REQ-CRED-009).
+    - Redactado `docs/adr/0015-sd-jwt-construir-o-reutilizar.md` (ADR-0015 Propuesto): adopta la Opción B (construcción nativa en `gravital-id-credential` L2 `#![no_std]` + `alloc` sobre L1).
+    - Indexado ADR-0015 en `docs/adr/README.md`.
+    - Actualizados `CHANGELOG.md` y `docs/STATUS.md`.
 - Pendiente (siguiente paso concreto):
-  - Mantenedor: revisar y mergear el PR de `feat/6-workspace-cargo`; confirmar las dos decisiones pendientes (excepción `Unicode-3.0` y el spec-gap de `PROJECT_STRUCTURE §7`).
-  - Confirmar que GitHub Actions ejecuta los workflows (no se registran runs tras el push).
-  - Cerrar G1 con evidencia (CI verde en todos los targets) y abrir los issues de F2 (`ROADMAP.md §7`, F2.T01…T12).
-- Bugs/issues abiertos durante la sesión: bug corregido en `xtask check-error-codes` (nunca llegó a `main`); issues de decisión y spec-gap creados desde el agente (ver comentarios en #6).
-- Decisiones tomadas (con enlace a ADR/issue): ADR-0014 y ADR-0019 (Aceptados, previos); excepción acotada `unicode-ident` en `deny.toml` (pendiente de confirmación en #6); catálogo de errores en `gravital-id-types` re-exportado por el SDK (spec-gap abierto).
-- Riesgos o dudas: los workflows se ejecutan en GitHub pero los jobs no arrancan por el bloqueo de facturación de la cuenta (pendiente del mantenedor); Kani y los jobs nocturnos pendientes de primera ejecución real.
-- Comprobaciones locales: fmt ✅ clippy ✅ tests ✅ (cargo test; nextest no instalado localmente) layers ✅ trace ✅ check-error-codes ✅ deny ✅ wasm-pack test ✅ cross-compile ✅
+  - Validación formal del ADR-0015 por el mantenedor.
+  - Iniciar tarea F3.T02: `Emisión SD-JWT` (RFC 9901: divulgaciones de objeto `_sd` y array `...`, digests, `_sd_alg`, decoys, recursión; sal ≥ 128 bits; REQ-CRED-002, REQ-CRED-003).
+- Bugs/issues abiertos durante la sesión: Ninguno.
+- Decisiones tomadas (con enlace a ADR/issue): ADR-0015 (#39) propone construir SD-JWT nativamente en `gravital-id-credential` L2 sin dependencias externas de JWT.
+- Riesgos o dudas: Ninguno; diseño validado contra invariantes INV-01 a INV-16.
+- Comprobaciones locales: fmt ✅ clippy ✅ tests ✅ layers ✅ trace ✅ doc ✅ deny ✅ no_std ✅ wasm32 ✅ android ✅ ios ✅
