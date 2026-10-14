@@ -12,17 +12,17 @@
 | REQ-KEY-008 | F5 | DEBE | T | P-09 | — | Pendiente (Fase futura) |
 | REQ-KEY-009 | F2 | DEBE | T | P-07 | keystore.rs, lib.rs, purpose.rs, compile_fail.rs, keys_tests.rs, agree_with_signing_key.rs, sign_with_hpke_key.rs | Cubierto |
 | REQ-KEY-010 | F2 | DEBE | T | P-11 | sign.rs, api_coverage.rs, lib.rs, signature.rs, keys_tests.rs, ids.rs | Cubierto |
-| REQ-CRED-001 | F3 | DEBE | T | P-04 | kb.rs, lib.rs, parser.rs, vc.rs, kb_jwt_integration.rs, sd_jwt_parsing_verification.rs, sd_jwt_vc_integration.rs, sd_jwt_parser.rs | Cubierto |
-| REQ-CRED-002 | F3 | DEBE | T, I | P-07 | disclosure.rs, issuer.rs, lib.rs, salt.rs, sd_jwt_emission.rs, batch.rs, lib.rs, issuer_api.rs | Cubierto |
+| REQ-CRED-001 | F3 | DEBE | T | P-04 | kb.rs, lib.rs, parser.rs, vc.rs, kb_jwt_integration.rs, sd_jwt_parsing_verification.rs, sd_jwt_vc_integration.rs, sd_jwt_parser.rs, generate_vectors.rs | Cubierto |
+| REQ-CRED-002 | F3 | DEBE | T, I | P-07 | disclosure.rs, issuer.rs, lib.rs, salt.rs, sd_jwt_emission.rs, batch.rs, lib.rs, issuer_api.rs, generate_vectors.rs | Cubierto |
 | REQ-CRED-003 | F3 | DEBE | T | P-09 | decoy.rs, issuer.rs, lib.rs, vc.rs, sd_jwt_emission.rs, request.rs, issuer_api.rs | Cubierto |
-| REQ-CRED-004 | F3 | DEBE | T | P-08 | lib.rs, parser.rs, profile.rs, vc.rs, profile_schema_integration.rs, lib.rs, request.rs, issuer_api.rs | Cubierto |
-| REQ-CRED-005 | F3 | PUEDE | T | P-09 | lib.rs, predicate.rs, profile.rs, predicate_integration.rs, lib.rs, issuer_api.rs | Cubierto |
-| REQ-CRED-006 | F3 | DEBERÍA | T | P-09 | batch.rs, lib.rs, request.rs, issuer_api.rs | Cubierto |
-| REQ-CRED-007 | F4 | DEBE | T | P-08 | lib.rs, vc.rs, sd_jwt_vc_integration.rs, request.rs | Cubierto |
-| REQ-CRED-008 | F3 | DEBE | T, F | P-07 | lib.rs, parser.rs, vc.rs, sd_jwt_vc_integration.rs, lib.rs, issuer_api.rs, sd_jwt_parser.rs | Cubierto |
-| REQ-CRED-009 | F2 | DEBE | T, F | P-08 | json.rs, lib.rs, parser.rs, sd_jwt_parsing_verification.rs, json_bounded.rs, sd_jwt_parser.rs | Cubierto |
+| REQ-CRED-004 | F3 | DEBE | T | P-08 | lib.rs, parser.rs, profile.rs, vc.rs, profile_schema_integration.rs, lib.rs, request.rs, issuer_api.rs, generate_vectors.rs | Cubierto |
+| REQ-CRED-005 | F3 | PUEDE | T | P-09 | lib.rs, predicate.rs, profile.rs, predicate_integration.rs, lib.rs, issuer_api.rs, generate_vectors.rs | Cubierto |
+| REQ-CRED-006 | F3 | DEBERÍA | T | P-09 | batch.rs, lib.rs, request.rs, issuer_api.rs, generate_vectors.rs | Cubierto |
+| REQ-CRED-007 | F4 | DEBE | T | P-08 | lib.rs, vc.rs, sd_jwt_vc_integration.rs, request.rs, generate_vectors.rs | Cubierto |
+| REQ-CRED-008 | F3 | DEBE | T, F | P-07 | lib.rs, parser.rs, vc.rs, sd_jwt_vc_integration.rs, lib.rs, issuer_api.rs, sd_jwt_parser.rs, generate_vectors.rs | Cubierto |
+| REQ-CRED-009 | F2 | DEBE | T, F | P-08 | json.rs, lib.rs, parser.rs, sd_jwt_parsing_verification.rs, json_bounded.rs, sd_jwt_parser.rs, generate_vectors.rs | Cubierto |
 | REQ-PRES-001 | F5 | DEBE | T | P-09 | — | Pendiente (Fase futura) |
-| REQ-PRES-002 | F5 | DEBE | T | P-08 | kb.rs, lib.rs, parser.rs, kb_jwt_integration.rs, profile_schema_integration.rs, sd_jwt_vc_integration.rs | Cubierto |
+| REQ-PRES-002 | F5 | DEBE | T | P-08 | kb.rs, lib.rs, parser.rs, kb_jwt_integration.rs, profile_schema_integration.rs, sd_jwt_vc_integration.rs, generate_vectors.rs | Cubierto |
 | REQ-PRES-003 | F5 | DEBE | T, I | P-09 | — | Pendiente (Fase futura) |
 | REQ-PRES-004 | F4 | DEBE | T | P-08 | — | Pendiente (Fase futura) |
 | REQ-PRES-005 | F5 | DEBE | T, D | P-01 | — | Pendiente (Fase futura) |
@@ -135,7 +135,7 @@
 | REQ-PERF-003 | F5 | DEBE | T | — | — | Pendiente (Fase futura) |
 | REQ-MAINT-001 | F1 | DEBE | T | — | — | Pendiente (Fase futura) |
 | REQ-MAINT-002 | F1 | DEBE | T | — | layers.rs, trace.rs | Cubierto |
-| REQ-MAINT-003 | F4 | DEBE | T | — | — | Pendiente (Fase futura) |
+| REQ-MAINT-003 | F4 | DEBE | T | — | conformance.rs | Cubierto |
 | REQ-MAINT-004 | F1 | DEBE | T | — | — | Pendiente (Fase futura) |
 | REQ-MAINT-005 | F4 | DEBERÍA | T | — | — | Inspección / Auditoría |
 | REQ-MAINT-006 | F4 | DEBERÍA | T | — | — | Inspección / Auditoría |

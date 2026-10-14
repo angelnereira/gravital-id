@@ -1331,6 +1331,13 @@ name = "xtask"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "gravital-id-codec",
+ "gravital-id-credential",
+ "gravital-id-crypto",
+ "gravital-id-issuer",
+ "gravital-id-keys",
+ "gravital-id-testkit",
+ "gravital-id-types",
  "serde",
  "toml 1.1.8+spec-1.1.0",
 ]

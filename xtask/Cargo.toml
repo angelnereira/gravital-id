@@ -13,3 +13,11 @@ publish = false
 anyhow = { workspace = true }
 serde = { version = "1.0.229", features = ["derive"] }
 toml = "1.1.8"
+# Dependencias internas: el runner de conformidad ejecuta la implementación real.
+gravital-id-types = { path = "../crates/gravital-id-types" }
+gravital-id-codec = { path = "../crates/gravital-id-codec" }
+gravital-id-crypto = { path = "../crates/gravital-id-crypto" }
+gravital-id-credential = { path = "../crates/gravital-id-credential" }
+gravital-id-keys = { path = "../crates/gravital-id-keys" }
+gravital-id-issuer = { path = "../crates/gravital-id-issuer" }
+gravital-id-testkit = { path = "../crates/gravital-id-testkit" }

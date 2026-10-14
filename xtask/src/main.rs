@@ -4,7 +4,9 @@
 // SAFETY/CLI: xtask es una herramienta de línea de comandos que se comunica con el desarrollador por stdout.
 #![allow(clippy::print_stdout)]
 
+mod conformance;
 mod error_codes;
+mod generate_vectors;
 mod layers;
 mod trace;
 
@@ -25,6 +27,14 @@ fn main() -> anyhow::Result<()> {
             trace::run_trace(workspace_root)?;
             Ok(())
         }
+        Some("gen-conformance-vectors") => {
+            generate_vectors::generate_vectors(workspace_root)?;
+            Ok(())
+        }
+        Some("conformance") => {
+            conformance::run_conformance(workspace_root)?;
+            Ok(())
+        }
         Some("check-error-codes") => {
             error_codes::run_check_error_codes(workspace_root)?;
             Ok(())
@@ -33,7 +43,7 @@ fn main() -> anyhow::Result<()> {
             anyhow::bail!("Comando desconocido en xtask: {cmd}");
         }
         None => {
-            println!("Uso: cargo xtask <check-layers|trace|check-error-codes>");
+            println!("Uso: cargo xtask <check-layers|trace|check-error-codes|conformance|gen-conformance-vectors>");
             Ok(())
         }
     }
