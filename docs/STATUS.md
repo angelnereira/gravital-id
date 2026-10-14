@@ -10,7 +10,7 @@
 | Último gate cerrado | **G0** (2026-10-11) |
 | Próximo gate | **G2** (Revisión y cierre formal de Fase F2) |
 | Hito siguiente | M1 · Núcleo offline (al cerrar G5) |
-| Última actualización | 2026-10-13 (F3: T05 completada — Capa SD-JWT VC) |
+| Última actualización | 2026-10-13 (F3: T06 completada — Esquemas de perfil) |
 
 ## Gates
 
@@ -55,6 +55,7 @@
 | F3.T02 Emisión SD-JWT | #41 | Antigravity (agente) | Hecha | Emisión RFC 9901 en `gravital-id-credential` (objetos/arrays, sal ≥ 128b, decoys, anidación, serialización compacta y firma ES256 vía `KeyStore`); rama `feat/41-sd-jwt-emission` |
 | F3.T03 Parseo y verificación SD-JWT | #43 | Antigravity (agente) | Hecha | Parseo RFC 9901 en `gravital-id-credential` (verificación de digests, rechazo de duplicados, claims reservados, huérfanos, colisión de claves, reconstrucción, firma ES256, límites DoS y fuzzing); rama `feat/43-sd-jwt-parsing-verification` |
 | F3.T04 KB-JWT | #45 | Antigravity (agente) | Hecha | Creación y verificación de KB-JWT (`typ: kb+jwt`, `nonce`, `aud`, `iat`, `sd_hash`; firma delegada al `KeyStore`; REQ-PRES-002, REQ-CRED-001, REQ-VER-003); rama `feat/45-kb-jwt` |
+| F3.T06 Esquemas de perfil | #48 | OpenCode (agente) | Hecha | Esquemas de `pip-personal-v1`, `pip-financial-v1` y `pip-enterprise-v1` en compilación con validación en emisión y verificación (REQ-CRED-004); rama `feat/48-profile-schemas` |
 | F3.T05 Capa SD-JWT VC | #47 | OpenCode (agente) | Hecha | `typ: dc+sd-jwt`, `iss`/`vct`/`iat`/`nbf`/`exp`, `cnf.jwk` canónico, `status.status_list`, lista de algoritmos del perfil y rechazo de `none`; rama `feat/47-sd-jwt-vc` |
 
 ## Bloqueos
@@ -100,23 +101,26 @@
 
 ## Última nota de traspaso
 
-### Traspaso — 2026-10-13 (F3.T05: Capa SD-JWT VC) — OpenCode (agente)
-- Tarea: F3.T05 — #47 — rama `feat/47-sd-jwt-vc`
+### Traspaso — 2026-10-13 (F3.T06: Esquemas de perfil) — OpenCode (agente)
+- Tarea: F3.T06 — #48 — rama `feat/48-profile-schemas`
 - Estado: **lista para revisión / hecha**
 - Hecho en esta sesión:
-  - F3.T05 (#47):
-    - Completado el módulo `vc.rs` en `gravital-id-credential` con la capa SD-JWT VC (`draft-ietf-oauth-sd-jwt-vc-19`): `StatusListReference`/`StatusClaim` (`idx`+`uri`, ADR-0005), `ConfirmationClaim` (`cnf.jwk` con serialización canónica RFC 7638 sin material privado), `SdJwtVcClaims` y `VcValidityPolicy` (sesgo de reloj, `require_status`/`require_exp`/`require_cnf`, lista de algoritmos del perfil).
-    - `SdJwtVcBuilder`: emite con cabecera `typ: dc+sd-jwt` + `alg: ES256`, valida `iss` como URL HTTPS (ARCHITECTURE §3) con cota de longitud, y rechaza declarar como atributos selectivos los claims siempre visibles (`iss`, `vct`, `iat`, `nbf`, `exp`, `cnf`, `status`; ARCHITECTURE §8.2) o el mismo claim a la vez llano y selectivo.
-    - `SdJwtVcVerifier::verify_header`/`verify_claims` y `ParsedSdJwt::verify_vc`: verificación fail-closed sobre el **payload firmado** (un emisor no puede ocultar metadatos VC tras divulgación selectiva), rechazo de `none` y de algoritmos fuera del perfil (REQ-CRED-008, INV-08), vigencia `iat`/`nbf`/`exp` con reloj inyectado (INV-11, REQ-VER-005) y validación estricta de `status`.
-    - Suite de integración `tests/sd_jwt_vc_integration.rs` (18 pruebas) con matriz positiva y negativa: `typ` incorrecto, `alg: none`, algoritmo fuera del perfil, `iss` no HTTPS/demasiado largo, claims ausentes, `exp` caducada, `nbf` futura, `nbf < iat`, `status` malformado, `cnf` con `d`, claims siempre visibles ocultos, y verificación end-to-end de que `cnf.jwk` es la clave que firma el KB-JWT.
-    - Objetivo de fuzzing `fuzz/fuzz_targets/sd_jwt_parser.rs` ampliado para ejercitar `ParsedSdJwt::verify_vc` (pánico y determinismo, REQ-VER-003); verificado que compila con la toolchain fijada (`cargo-fuzz` requiere nightly, por lo que la campaña se ejecuta en `fuzz.yml` de CI).
-    - Actualizados `crates/gravital-id-credential/README.md`, `CHANGELOG.md` y `docs/TRACEABILITY.md` (REQ-CRED-007/008 y REQ-VER-005 pasan a *Cubierto*).
+  - F3.T06 (#48):
+    - Creado `crates/gravital-id-credential/src/profile.rs` con los esquemas de `docs/specs/profiles/*.md` §3 como constantes en compilación (`ProfileSchema`, `ClaimSpec`, `ClaimKind`, `PROFILE_SCHEMAS`) para los tres perfiles normativos, con búsqueda por `ProfileId` y por `vct`.
+    - Palabras clave JSON Schema implementadas: `type` (cadena, booleano, entero, array de cadenas), `enum`, `pattern` (`^[A-Z]{3}$`), `format` (`date` ISO 8601 con calendario real y `date-time` RFC 3339) y `required`. Ampliar el vocabulario exige cambiar `ClaimKind`: nunca se ignora una palabra clave en silencio.
+    - Validación **en emisión**: `SdJwtVcBuilder::profile(...)` valida los atributos (obligatorios + tipos) y exige que el `vct` coincida con el del esquema.
+    - Validación **en verificación**: `VcValidityPolicy::with_profile(...)` + `ParsedSdJwt::verify_vc` comprueban el `vct` y los tipos de los atributos divulgados (`ProfileSchema::validate_disclosed`).
+    - Decisión de seguridad documentada en código: los claims `required` **no** se exigen sobre una presentación. El titular puede divulgar un subconjunto de atributos y el verificador no puede distinguir un atributo no divulgado de un digest señuelo; exigirlos impediría la minimización de datos. La obligación de incluirlos es del emisor y se comprueba al emitir.
+    - Suite de integración `tests/profile_schema_integration.rs` con 12 pruebas (positivas y negativas): esquemas embebidos, credencial válida, claims obligatorios ausentes, tipos incorrectos, valores fuera de `enum`, patrón de país y fecha-hora inválidos, `vct` no coincidente, perfil sin esquema, arrays empresariales y composición con KB-JWT.
+    - Actualizados `crates/gravital-id-credential/README.md` (sección + ejemplo), `CHANGELOG.md`, `docs/TRACEABILITY.md` y `docs/STATUS.md`.
 - Pendiente (siguiente paso concreto):
-  - Iniciar tarea F3.T06: `Esquemas de perfil` — incorporar los esquemas de `docs/specs/profiles/` en compilación y validar claims en emisión y verificación (REQ-CRED-004).
+  - Iniciar tarea F3.T07: `Claims de predicado` — soporte de predicados definidos por perfil (`age_over_18`, `age_over_21`) con pruebas (REQ-CRED-005).
 - Bugs/issues abiertos durante la sesión: Ninguno.
 - Decisiones tomadas (con enlace a ADR/issue):
-  - `iss` se valida como URL HTTPS siguiendo `ARCHITECTURE.md §3` ("la URL HTTPS usada como `iss`"); los metadatos VC se verifican sobre el payload firmado y no sobre la reconstrucción, por fail-closed (REQ-VER-003).
-  - `cnf.jwk` se serializa con los miembros canónicos RFC 7638 (ejemplo de draft-19 §3.2.2.3), no con `kid`/`use`/`alg`.
+  - `required` se valida solo en emisión; en verificación se validan los tipos de lo divulgado (imposible distinguir atributo no divulgado de decoy).
+  - Se reutiliza `ErrorCode::SchemaValidationFailed` (`PIP-E3004`), ya definido en F0.T16, en lugar de añadir un código nuevo.
+  - Los esquemas son constantes del crate (sin I/O, INV-01) y cubren solo las palabras clave que usan las especificaciones.
 - Riesgos o dudas:
-  - Posible inconsistencia no bloqueante: `IssuerId::parse` (`crates/gravital-id-types/src/ids.rs`) solo admite kebab-case, mientras que `ARCHITECTURE.md §3` define el identificador de emisor como la URL HTTPS usada en `iss`. En F4 (trust bundle) habrá que decidir si `IssuerId` admite URLs; conviene registrarlo como `type:spec-gap` si F4 lo confirma.
-- Comprobaciones locales: fmt ✅ clippy ✅ tests ✅ layers ✅ trace ✅ check-error-codes ✅ doc ✅ deny ✅ audit ✅ no_std ✅ wasm32 ✅ bare-metal ✅ (`cargo nextest` no está instalado en este entorno: las 259 pruebas del workspace se ejecutaron con `cargo test --workspace`, 0 fallos)
+  - Los esquemas de referencia de los perfiles son ejemplos («credencial cívica / mayoría de edad»); cuando el mantenedor fije los esquemas definitivos por `vct` (F3.T09/conformance), bastará actualizar `PROFILE_SCHEMAS` y sus vectores.
+  - Persiste el posible `spec-gap` anotado en F3.T05: `IssuerId::parse` (kebab-case) frente a `iss` como URL HTTPS (ARCHITECTURE §3). A resolver en F4.
+- Comprobaciones locales: fmt ✅ clippy ✅ tests ✅ (279 pruebas del workspace, 0 fallos) layers ✅ trace ✅ check-error-codes ✅ doc ✅ deny ✅ audit ✅ wasm32 ✅ bare-metal ✅ (`cargo nextest` no está instalado en este entorno; se usó `cargo test`)

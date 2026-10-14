@@ -57,6 +57,28 @@ Emisión, validación y verificación de credenciales SD-JWT y SD-JWT VC para Gr
   capa VC se validan sobre el payload firmado por el emisor, de modo que un emisor no pueda
   ocultarlos tras divulgación selectiva (REQ-VER-003).
 
+## Funcionalidades de esquemas de perfil (REQ-CRED-004)
+
+- **Esquemas en compilación (`ProfileSchema`, `PROFILE_SCHEMAS`):** traducción literal de la
+  sección §3 ("Esquema JSON Canónico de Referencia") de `docs/specs/profiles/pip-personal-v1.md`,
+  `pip-financial-v1.md` y `pip-enterprise-v1.md` a constantes del crate. No se leen archivos en
+  tiempo de ejecución (INV-01) ni se usa un motor JSON Schema completo.
+- **Palabras clave admitidas:** `type` (cadena, booleano, entero, array de cadenas), `enum`,
+  `pattern` (códigos de país `^[A-Z]{3}$`), `format` (`date` ISO 8601 y `date-time` RFC 3339) y
+  `required`. Cualquier palabra clave nueva obliga a ampliar `ClaimKind`: nunca se ignora en
+  silencio.
+- **Validación en emisión (`SdJwtVcBuilder::profile(...)` + `ProfileSchema::validate`):** exige los
+  claims obligatorios del perfil y sus tipos, y que el `vct` de la credencial coincida con el del
+  esquema. Un perfil sin esquema registrado hace fallar la emisión (INV-05).
+- **Validación en verificación (`VcValidityPolicy::with_profile(...)` + `ParsedSdJwt::verify_vc`):**
+  comprueba el `vct` y los **tipos** de los atributos divulgados
+  (`ProfileSchema::validate_disclosed`). Los claims `required` no se exigen sobre una
+  presentación: el titular puede divulgar un subconjunto de atributos y el verificador no puede
+  distinguir un atributo no divulgado de un digest señuelo; la obligación de incluirlos es del
+  emisor y se comprueba al emitir.
+- **Errores:** todo incumplimiento devuelve `ErrorCode::SchemaValidationFailed` (`PIP-E3004`),
+  ya documentado en `docs/specs/ERROR_CODES.md` (F0.T16).
+
 ## Funcionalidades de Key Binding JWT (RFC 9901 §6)
 - **Cálculo de `sd_hash` (`calculate_sd_hash`):** Digest SHA-256 base64url calculado sobre el prefijo exacto de la presentación (`<jwt>~<d1>~...~<dn>~`) según RFC 9901 §6.2.
 - **Emisión de KB-JWT (`KbIssuer`):**
@@ -175,4 +197,52 @@ let vc_claims = parsed.verify_vc(now, &VcValidityPolicy::default()).unwrap();
 assert_eq!(vc_claims.iss, "https://issuer.cedula.example.gov");
 assert_eq!(vc_claims.iat, now);
 assert!(vc_claims.status.is_some());
+```
+
+### Ejemplo de esquema de perfil (validación en emisión y verificación)
+
+```rust,ignore
+use gravital_id_codec::json::Value;
+use gravital_id_credential::{
+    ParsedSdJwt, ProfileSchema, SdJwtVcBuilder, VcValidityPolicy,
+};
+use gravital_id_keys::{IssuerSigning, KeyStore, SoftwareKeyStore};
+use gravital_id_testkit::SeededRng;
+use gravital_id_types::{ProfileId, UnixTime, Vct};
+
+let rng = SeededRng::new(7);
+let mut key_store = SoftwareKeyStore::new(rng);
+let issuer_handle = key_store.generate_key::<IssuerSigning>().unwrap();
+let issuer_jwk = key_store.public_key(&issuer_handle).unwrap();
+
+let now = UnixTime::from_seconds(1_700_000_000);
+let profile = ProfileId::parse("pip-personal-v1").unwrap();
+let schema = ProfileSchema::lookup(&profile).unwrap();
+let rng_emit = SeededRng::new(8);
+
+// 1. Emisión: los atributos se validan contra el esquema del perfil antes de firmar.
+let issued = SdJwtVcBuilder::new(
+    "https://issuer.cedula.example.gov",
+    Vct::parse("https://credentials.gravital.io/vct/personal/id-v1").unwrap(),
+    now,
+)
+.unwrap()
+.profile(profile.clone())
+.exp(UnixTime::from_seconds(1_700_086_400))
+.status_list(7, "https://status.cedula.example.gov/lists/2026-10")
+.unwrap()
+.add_sd_claim("given_name", Value::String("Ana".into()))
+.add_sd_claim("family_name", Value::String("Perez".into()))
+.add_sd_claim("age_over_18", Value::Bool(true))
+.issue_signed(&key_store, &issuer_handle, None, &rng_emit)
+.unwrap();
+
+// 2. Verificación: la política declara el perfil valida el vct y los atributos divulgados.
+let parsed = ParsedSdJwt::parse(issued.to_compact_serialization()).unwrap();
+parsed.verify_issuer_signature(&issuer_jwk).unwrap();
+let policy = VcValidityPolicy::default().with_profile(profile);
+let claims = parsed.verify_vc(now, &policy).unwrap();
+
+assert_eq!(claims.vct.as_str(), schema.vct);
+assert_eq!(schema.claim("age_over_18").unwrap().kind, gravital_id_credential::ClaimKind::Boolean);
 ```

@@ -9,6 +9,7 @@
 //! - **REQ-CRED-001:** Formato normativo SD-JWT según RFC 9901 y capa SD-JWT VC (`typ: dc+sd-jwt`).
 //! - **REQ-CRED-002:** Sal de ≥ 128 bits de CSPRNG para cada divulgación.
 //! - **REQ-CRED-003:** Digests señuelo (decoys) configurables por perfil en objetos y arrays.
+//! - **REQ-CRED-004:** Validación de claims contra el esquema del perfil y del `vct`.
 //! - **REQ-CRED-007:** Referencia de estado obligatoria salvo perfiles de vida corta.
 //! - **REQ-CRED-008:** Rechazo de algoritmos fuera de la lista del perfil, incluido `none`.
 //! - **REQ-CRED-009:** Rechazo de miembros duplicados en JSON y colisiones de claims divulgados.
@@ -27,6 +28,7 @@ pub mod issuer;
 pub mod json_canonical;
 pub mod kb;
 pub mod parser;
+pub mod profile;
 pub mod salt;
 pub mod vc;
 
@@ -44,6 +46,7 @@ pub use parser::{
     ParsedSdJwt, SdJwtLimits, DEFAULT_MAX_DISCLOSURES, DEFAULT_MAX_ELEMENTS_PER_CONTAINER,
     DEFAULT_MAX_RECURSION_DEPTH, DEFAULT_MAX_SD_JWT_INPUT_BYTES,
 };
+pub use profile::{ClaimKind, ClaimSpec, ProfileSchema, PROFILE_SCHEMAS};
 pub use salt::{Salt, MIN_SALT_BYTES};
 pub use vc::{
     ConfirmationClaim, SdJwtVcBuilder, SdJwtVcClaims, SdJwtVcVerifier, StatusClaim,

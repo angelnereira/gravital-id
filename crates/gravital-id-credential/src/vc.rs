@@ -20,10 +20,11 @@ use core::fmt;
 use gravital_id_codec::json::{parse_bytes, Limits as JsonLimits, Number, Value};
 use gravital_id_crypto::{JwkEcP256, Rng};
 use gravital_id_keys::{KeyHandle, KeyStore, SigningPurpose};
-use gravital_id_types::{ErrorCode, GidError, Kid, UnixTime, Vct};
+use gravital_id_types::{ErrorCode, GidError, Kid, ProfileId, UnixTime, Vct};
 
 use crate::issuer::{IssuedSdJwt, JwsHeader, SdIssuer, SdObjectBuilder};
 use crate::json_canonical::to_canonical_json;
+use crate::profile::ProfileSchema;
 use crate::salt::Salt;
 
 /// Tipo de token normativo para SD-JWT VC (draft-ietf-oauth-sd-jwt-vc-19 §3.2.1, CRYPTO_PROFILES).
@@ -282,6 +283,12 @@ pub struct VcValidityPolicy {
     pub require_cnf: bool,
     /// Lista de algoritmos criptográficos autorizados (REQ-CRED-008). Por defecto `["ES256"]`.
     pub allowed_algorithms: Vec<String>,
+    /// Perfil cuyos esquemas se validan en verificación (REQ-CRED-004). Por defecto `None`.
+    ///
+    /// Si está presente, `verify_vc` exige que el `vct` de la credencial coincida con el
+    /// del esquema y valida los atributos divulgados contra él. Si el perfil no tiene
+    /// esquema registrado en compilación, la verificación falla (fail-closed, INV-05).
+    pub profile: Option<ProfileId>,
 }
 
 impl Default for VcValidityPolicy {
@@ -292,6 +299,7 @@ impl Default for VcValidityPolicy {
             require_exp: false,
             require_cnf: false,
             allowed_algorithms: vec![SD_JWT_VC_DEFAULT_ALG.to_string()],
+            profile: None,
         }
     }
 }
@@ -332,6 +340,20 @@ impl VcValidityPolicy {
         self
     }
 
+    /// Fija el perfil cuyos esquemas se validan en verificación (REQ-CRED-004).
+    #[must_use]
+    pub fn with_profile(mut self, profile_id: ProfileId) -> Self {
+        self.profile = Some(profile_id);
+        self
+    }
+
+    /// Elimina la validación de esquemas de perfil de la política.
+    #[must_use]
+    pub fn without_profile(mut self) -> Self {
+        self.profile = None;
+        self
+    }
+
     /// Comprueba si un algoritmo está autorizado por la política.
     #[must_use]
     pub fn is_algorithm_allowed(&self, alg: &str) -> bool {
@@ -343,6 +365,67 @@ impl VcValidityPolicy {
 pub struct SdJwtVcVerifier;
 
 impl SdJwtVcVerifier {
+    /// Extrae de un objeto de claims los atributos válidos para el esquema del perfil,
+    /// descartando los metadatos siempre visibles de la capa VC (REQ-CRED-004).
+    #[must_use]
+    pub fn profile_attributes(claims: &Value) -> Value {
+        let Value::Object(entries) = claims else {
+            return Value::Object(Vec::new());
+        };
+        Value::Object(
+            entries
+                .iter()
+                .filter(|(k, _)| !is_always_visible_claim(k))
+                .cloned()
+                .collect(),
+        )
+    }
+
+    /// Resuelve el esquema declarado por la política (fail-closed si no está registrado).
+    fn resolve_schema(profile: &ProfileId) -> Result<&'static ProfileSchema, GidError> {
+        ProfileSchema::lookup(profile).ok_or_else(|| {
+            GidError::new(
+                ErrorCode::SchemaValidationFailed,
+                format!("no compile-time schema registered for profile '{profile}'"),
+            )
+        })
+    }
+
+    /// Valida los claims de la capa VC contra el esquema del perfil de la política
+    /// (REQ-CRED-004).
+    ///
+    /// `claims` es el objeto de claims reconstruidos (metadatos siempre visibles más
+    /// atributos divulgados ya verificados por digest). Se validan los **tipos** de los
+    /// atributos divulgados y se comprueba que el `vct` de la credencial coincide con el
+    /// del esquema. Los claims `required` del esquema son una obligación del emisor
+    /// (se comprueban en la emisión): una presentación puede divulgar un subconjunto de
+    /// atributos (la minimización de presentaciones se exige en la fase F5), de modo que
+    /// exigirlos aquí impediría la
+    /// minimización.
+    ///
+    /// # Errores
+    /// [`ErrorCode::SchemaValidationFailed`] (`PIP-E3004`) si el perfil no tiene esquema,
+    /// si el `vct` no coincide o si algún claim divulgado incumple el esquema.
+    pub fn verify_profile_claims(
+        claims: &Value,
+        vct: &Vct,
+        policy: &VcValidityPolicy,
+    ) -> Result<(), GidError> {
+        let Some(profile) = policy.profile.as_ref() else {
+            return Ok(());
+        };
+        let schema = Self::resolve_schema(profile)?;
+
+        if vct.as_str() != schema.vct {
+            return Err(GidError::new(
+                ErrorCode::SchemaValidationFailed,
+                format!("credential vct '{vct}' does not match the vct of profile '{profile}'"),
+            ));
+        }
+
+        schema.validate_disclosed(&Self::profile_attributes(claims))
+    }
+
     /// Valida la cabecera del SD-JWT contra la política del perfil VC.
     ///
     /// # Errores
@@ -580,6 +663,8 @@ pub struct SdJwtVcBuilder {
     sd_builder: SdObjectBuilder,
     plain_names: Vec<String>,
     sd_names: Vec<String>,
+    attributes: Vec<(String, Value)>,
+    profile: Option<ProfileId>,
 }
 
 impl fmt::Debug for SdJwtVcBuilder {
@@ -594,6 +679,7 @@ impl fmt::Debug for SdJwtVcBuilder {
             .field("has_status", &self.status.is_some())
             .field("plain_claims", &self.plain_names.len())
             .field("sd_claims", &self.sd_names.len())
+            .field("profile", &self.profile)
             .finish()
     }
 }
@@ -617,6 +703,8 @@ impl SdJwtVcBuilder {
             sd_builder: SdObjectBuilder::new(),
             plain_names: Vec::new(),
             sd_names: Vec::new(),
+            attributes: Vec::new(),
+            profile: None,
         })
     }
 
@@ -667,6 +755,7 @@ impl SdJwtVcBuilder {
     pub fn add_plain_claim(mut self, name: impl Into<String>, value: Value) -> Self {
         let name = name.into();
         self.plain_names.push(name.clone());
+        self.attributes.push((name.clone(), value.clone()));
         self.sd_builder = self.sd_builder.add_plain_claim(name, value);
         self
     }
@@ -676,6 +765,7 @@ impl SdJwtVcBuilder {
     pub fn add_sd_claim(mut self, name: impl Into<String>, value: Value) -> Self {
         let name = name.into();
         self.sd_names.push(name.clone());
+        self.attributes.push((name.clone(), value.clone()));
         self.sd_builder = self.sd_builder.add_sd_claim(name, value);
         self
     }
@@ -690,7 +780,18 @@ impl SdJwtVcBuilder {
     ) -> Self {
         let name = name.into();
         self.sd_names.push(name.clone());
+        self.attributes.push((name.clone(), value.clone()));
         self.sd_builder = self.sd_builder.add_sd_claim_with_salt(name, value, salt);
+        self
+    }
+
+    /// Fija el perfil cuyos esquemas se validan **en emisión** (REQ-CRED-004).
+    ///
+    /// El perfil determina el `vct` esperado y el conjunto de claims obligatorios con
+    /// sus tipos; la credencial se rechaza antes de firmarse si no los cumple.
+    #[must_use]
+    pub fn profile(mut self, profile_id: ProfileId) -> Self {
+        self.profile = Some(profile_id);
         self
     }
 
@@ -750,6 +851,26 @@ impl SdJwtVcBuilder {
                     ));
                 }
             }
+        }
+
+        // REQ-CRED-004: validación de los atributos contra el esquema del perfil en emisión.
+        if let Some(profile) = self.profile.as_ref() {
+            let schema = ProfileSchema::lookup(profile).ok_or_else(|| {
+                GidError::new(
+                    ErrorCode::SchemaValidationFailed,
+                    format!("no compile-time schema registered for profile '{profile}'"),
+                )
+            })?;
+            if self.vct.as_str() != schema.vct {
+                return Err(GidError::new(
+                    ErrorCode::SchemaValidationFailed,
+                    format!(
+                        "credential vct '{}' does not match the vct of profile '{profile}'",
+                        self.vct
+                    ),
+                ));
+            }
+            schema.validate(&Value::Object(self.attributes.clone()))?;
         }
 
         let mut builder = self.sd_builder;
