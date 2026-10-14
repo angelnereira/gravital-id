@@ -454,9 +454,13 @@ dependencies = [
 name = "gravital-id-issuer"
 version = "0.1.0"
 dependencies = [
+ "gravital-id-codec",
  "gravital-id-credential",
+ "gravital-id-crypto",
  "gravital-id-keys",
  "gravital-id-status",
+ "gravital-id-testkit",
+ "gravital-id-types",
 ]
 
 [[package]]

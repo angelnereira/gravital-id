@@ -9,6 +9,7 @@
 //!
 //! Trazabilidad:
 //! - **REQ-CRED-005:** Los perfiles PUEDEN definir claims de predicado precomputados.
+//!
 //! El SDK no decide por el valor del predicado: expone los hechos para que la `Policy`
 //! del integrador acepte o rechace (P-05).
 //! - **INV-11:** La edad se calcula contra el instante que pasa el llamador.

@@ -10,7 +10,7 @@
 | Último gate cerrado | **G0** (2026-10-11) |
 | Próximo gate | **G2** (Revisión y cierre formal de Fase F2) |
 | Hito siguiente | M1 · Núcleo offline (al cerrar G5) |
-| Última actualización | 2026-10-13 (F3: T07 completada — Claims de predicado) |
+| Última actualización | 2026-10-13 (F3: T08 completada — `pip-issuer`) |
 
 ## Gates
 
@@ -55,6 +55,7 @@
 | F3.T02 Emisión SD-JWT | #41 | Antigravity (agente) | Hecha | Emisión RFC 9901 en `gravital-id-credential` (objetos/arrays, sal ≥ 128b, decoys, anidación, serialización compacta y firma ES256 vía `KeyStore`); rama `feat/41-sd-jwt-emission` |
 | F3.T03 Parseo y verificación SD-JWT | #43 | Antigravity (agente) | Hecha | Parseo RFC 9901 en `gravital-id-credential` (verificación de digests, rechazo de duplicados, claims reservados, huérfanos, colisión de claves, reconstrucción, firma ES256, límites DoS y fuzzing); rama `feat/43-sd-jwt-parsing-verification` |
 | F3.T04 KB-JWT | #45 | Antigravity (agente) | Hecha | Creación y verificación de KB-JWT (`typ: kb+jwt`, `nonce`, `aud`, `iat`, `sd_hash`; firma delegada al `KeyStore`; REQ-PRES-002, REQ-CRED-001, REQ-VER-003); rama `feat/45-kb-jwt` |
+| F3.T08 `pip-issuer` | #57 | OpenCode (agente) | Hecha | API de construcción y firma; emisión por lotes con claves, sales e índices distintos (REQ-CRED-006); rama `feat/57-issuer-api` |
 | F3.T07 Claims de predicado | #49 | OpenCode (agente) | Hecha | Predicados precomputados (`age_over_18`/`age_over_21`) con cálculo por calendario y reloj inyectado; rama `feat/49-predicate-claims` |
 | F3.T06 Esquemas de perfil | #48 | OpenCode (agente) | Hecha | Esquemas de `pip-personal-v1`, `pip-financial-v1` y `pip-enterprise-v1` en compilación con validación en emisión y verificación (REQ-CRED-004); rama `feat/48-profile-schemas` |
 | F3.T05 Capa SD-JWT VC | #47 | OpenCode (agente) | Hecha | `typ: dc+sd-jwt`, `iss`/`vct`/`iat`/`nbf`/`exp`, `cnf.jwk` canónico, `status.status_list`, lista de algoritmos del perfil y rechazo de `none`; rama `feat/47-sd-jwt-vc` |
@@ -102,43 +103,45 @@
 
 ## Última nota de traspaso
 
-### Traspaso — 2026-10-13 (F3.T07: Claims de predicado) — OpenCode (agente)
-- Tarea: F3.T07 — #49 — rama `feat/49-predicate-claims`
+### Traspaso — 2026-10-13 (F3.T08: `pip-issuer`) — OpenCode (agente)
+- Tarea: F3.T08 — #57 — rama `feat/57-issuer-api`
 - Estado: **lista para revisión / hecha**
 - Hecho en esta sesión:
-  - F3.T07 (#49):
-    - Nuevo `ClaimKind::Predicate { min_age_years }` en los esquemas en compilación; `age_over_18`
-      y `age_over_21` del perfil personal quedan marcados como predicados. El cable no cambia:
-      siguen siendo booleanos según `docs/specs/profiles/*.md` §3.
-    - Nuevo módulo `crates/gravital-id-credential/src/predicate.rs`:
-      - `age_years`: edad por **calendario real** (bisiestos incluidos; quien nace el 29/02 cumple
-        el 1 de marzo), proyectando `UnixTime` a fecha de calendario sin leer el reloj (INV-11).
-        Rechaza fechas de nacimiento futuras (`CredentialNotYetValid`) y formatos inválidos.
-      - `profile_age_predicates`: predicados que el emisor declara a partir de `birth_date` en un
-        instante dado, siguiendo el orden del esquema.
-      - `disclosed_predicates`: expone al verificador los predicados divulgados con su valor
-        firmado; la decisión de aceptación es de la `Policy` del integrador (P-05).
-    - Semántica documentada y probada: el núcleo **nunca** recalcula un predicado en
-      verificación. Una credencial con `age_over_18 = true` sigue afirmando eso años después.
-    - Suite `tests/predicate_integration.rs` (6 pruebas) + 7 pruebas unitarias: umbrales,
-      cumpleaños exacto, 29/02, edad máxima, fechas inválidas, predicado no booleano
-      rechazado por el esquema, flujo emisor→verificador con presentación minimizada y no
-      recálculo a los cinco años.
-    - Actualizados README del crate, `CHANGELOG.md`, `docs/TRACEABILITY.md` (REQ-CRED-005 pasa a
-      *Cubierto*) y `docs/STATUS.md`.
+  - F3.T08 (#57):
+    - `gravital-id-issuer` (L3) deja de ser un esqueleto: `CredentialRequest`
+      (perfil, atributos llanos o selectivos, `exp`, `status`, `cnf.jwk`, señuelos),
+      `StatusAllocation`, `Attribute` y `IssuedCredential` con los metadatos operables
+      (serialización compacta, divulgaciones, índice de estado, `iat`/`exp`).
+    - `Issuer::issue`: valida la solicitud (atributos duplicados, claims siempre visibles,
+      ventana de vigencia), resuelve el esquema del perfil, **precomputa los predicados**
+      declarados a partir de `birth_date` (REQ-CRED-005) y delega la firma al `KeyStore`
+      (INV-03) con `typ: dc+sd-jwt` + `ES256` (INV-08).
+    - `Issuer::issue_batch` + `BatchPlan`: N copias con **clave de vinculación, sales e
+      índice de estado distintos por copia** (ARCHITECTURE §8.3, REQ-CRED-006). El plan
+      rechaza claves repetidas, índices repetidos, desajustes de tamaño, lote vacío y lotes
+      de más de `MAX_BATCH_COPIES` (64). Si una copia falla, el lote entero falla (INV-05).
+    - Suite `crates/gravital-id-issuer/tests/issuer_api.rs` (7 pruebas): credencial nominal
+      verificada contra el esquema y con predicado precomputado, unicidad de claves/sales/
+      índices en el lote, validez individual de cada copia, planes inválidos, solicitud de
+      lote con clave propia o sin URI de lista, violaciones de esquema y determinismo con
+      RNG sembrada (REQ-VER-009).
+    - `crates/gravital-id-credential/src/vc.rs`: `is_always_visible_claim` pasa a ser pública
+      para que la API de emisión rechace esos claims como atributos.
+    - Añadidas las dependencias del crate (`gravital-id-types`, `-codec`, `-crypto`) y
+      `gravital-id-testkit` en dev-dependencies.
+    - Documentación: README del crate (funcionalidades + ejemplo), `CHANGELOG.md`,
+      `docs/TRACEABILITY.md` (REQ-CRED-006 pasa a *Cubierto*) y `docs/STATUS.md`.
 - Pendiente (siguiente paso concreto):
-  - Iniciar tarea F3.T08: `pip-issuer` — API de construcción y firma; emisión por lotes con
-    claves, sales e índices distintos (REQ-CRED-006).
-- Bugs/issues abiertos durante la sesión:
-  - **Corregido en el acto (no requiere issue):** un script auxiliar de esta sesión truncó
-    accidentalmente `crates/gravital-id-codec/src/json.rs` al reescribir secuencias de escape
-    literales; se restauró con `git checkout` antes de commit, sin cambios residuales
-    (`git diff` vacío). Lección operativa: no reescribir ficheros con expresiones regulares
-    amplias sobre `\uXXXX`.
+  - Iniciar tarea F3.T09: `Vectores de conformidad v1` — `conformance/vectors/sd-jwt-vc/`
+    con positivos y negativos (al menos uno por regla de rechazo, REQ-MAINT-003).
+- Bugs/issues abiertos durante la sesión: Ninguno.
 - Decisiones tomadas (con enlace a ADR/issue):
-  - El predicado se precomputa en emisión y no se recalcula nunca en verificación (semántica
-    de credencial firmada); la `Policy` del integrador decide la aceptación (P-05, REQ-VER-007).
-  - Los esquemas añaden metadato de umbral sin cambiar el formato de cable.
-- Riesgos o dudas: Ninguno nuevo. Persisten los anotados en F3.T05 (`IssuerId` kebab vs URL HTTPS).
-- Comprobaciones locales: fmt ✅ clippy ✅ tests ✅ (292 pruebas del workspace, 0 fallos) layers ✅
-  trace ✅ check-error-codes ✅ doc ✅ wasm32 ✅ bare-metal ✅
+  - La solicitud de lote no admite clave de titular propia: cada copia fija la suya para
+    evitar correlación (ARCHITECTURE §8.3).
+  - La URI de la lista de estado es común al lote y el índice se reparte una entrada por copia.
+- Riesgos o dudas:
+  - La asignación real de índices vive en el servicio de emisión (F7.T05); aquí solo se
+    exige unicidad dentro del lote.
+- Comprobaciones locales: fmt ✅ clippy ✅ tests ✅ (299 pruebas del workspace, 0 fallos)
+  layers ✅ trace ✅ check-error-codes ✅ doc ✅ deny ✅ wasm32 ✅ bare-metal ✅
+  (`cargo nextest` no está instalado en este entorno; se usó `cargo test`)
