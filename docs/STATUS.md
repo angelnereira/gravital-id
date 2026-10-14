@@ -10,7 +10,7 @@
 | Último gate cerrado | **G0** (2026-10-11) |
 | Próximo gate | **G3** — revisión formal de Fase F3 (#59); **G2** sigue pendiente de merge/CI |
 | Hito siguiente | M1 · Núcleo offline (al cerrar G5) |
-| Última actualización | 2026-10-13 (F3: T01–T09 implementadas; gate G3 abierto a revisión, decisión NO CERRADO por F3.T10) |
+| Última actualización | 2026-10-14 (F3: pila de ramas revisada y verificada una a una; G3 abierto a revisión del mantenedor) |
 
 ## Gates
 
@@ -127,6 +127,10 @@
     evidencia (requiere GitHub Actions operativo).
 - Bugs/issues abiertos durante la sesión: Ninguno.
 - Decisiones tomadas (con enlace a ADR/issue): las documentadas en cada issue de tarea.
+- Revisión de la pila (2026-10-14): cada rama verificada en worktree aislado; fmt, clippy
+  y pruebas en verde en todas (203 → 304 pruebas, crecimiento monotónico). Añadido
+  `cargo xtask conformance` al job `xtask` de CI. Orden de fusión propuesto y sin conflictos
+  por ser pila lineal. Evidencia en el issue del gate (#59).
 - Riesgos o dudas:
   - R-01 (cambios en borradores): el corpus v1 es inmutable; un cambio de versión exige
     vectores v2, nunca editar los publicados.
