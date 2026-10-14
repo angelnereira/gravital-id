@@ -22,8 +22,10 @@ use gravital_id_types::{ErrorCode, GidError, ProfileId, Vct};
 /// Tipo admitido por los esquemas normativos de `docs/specs/profiles/`.
 ///
 /// Cubre exactamente las palabras clave JSON Schema que usan las especificaciones
-/// (`type`, `enum`, `pattern`, `format`, `items`). Cualquier palabra clave no
-/// representable aquí obliga a ampliar este `enum`; nunca se ignora en silencio.
+/// (`type`, `enum`, `pattern`, `format`, `items`) más los claims de predicado, que
+/// en el cable son booleanos y en el perfil tienen semántica de umbral (F3.T07).
+/// Cualquier palabra clave no representable aquí obliga a ampliar este `enum`;
+/// nunca se ignora en silencio.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ClaimKind {
     /// `{"type": "string"}`.
@@ -38,6 +40,15 @@ pub enum ClaimKind {
     CountryCode,
     /// `{"type": "boolean"}`.
     Boolean,
+    /// Claim de predicado precomputado por el emisor (F3.T07, REQ-CRED-005), p. ej.
+    /// `age_over_18`. En el cable es un booleano (`{"type": "boolean"}` en el esquema
+    /// del perfil); `min_age_years` documenta el umbral que el emisor evaluó en el
+    /// momento de la emisión. El verificador NUNCA lo recalcula: el titular puede
+    /// presentarlo años después y el valor vigente es el que firmó el emisor.
+    Predicate {
+        /// Umbral en años que el emisor evaluó al precomputar el predicado.
+        min_age_years: u8,
+    },
     /// `{"type": "number"}` restringido a enteros sin signo (`u64`).
     Uint,
     /// `{"type": "array", "items": {"type": "string"}}`.
@@ -51,7 +62,7 @@ impl ClaimKind {
         match self {
             Self::String | Self::StringDate | Self::StringDateTime | Self::CountryCode => "string",
             Self::StringEnum(_) => "string",
-            Self::Boolean => "boolean",
+            Self::Boolean | Self::Predicate { .. } => "boolean",
             Self::Uint => "number",
             Self::StringArray => "array",
         }
@@ -94,7 +105,7 @@ impl ClaimKind {
                 )),
                 _ => Err(self.type_error(name, value)),
             },
-            Self::Boolean => match value {
+            Self::Boolean | Self::Predicate { .. } => match value {
                 Value::Bool(_) => Ok(()),
                 _ => Err(self.type_error(name, value)),
             },
@@ -349,7 +360,7 @@ fn is_valid_calendar_date(year: u32, month: u32, day: u32) -> bool {
 }
 
 /// Analiza una fecha ISO 8601 (`YYYY-MM-DD`) y valida el calendario.
-fn parse_iso_date(value: &str) -> Option<(u32, u32, u32)> {
+pub(crate) fn parse_iso_date(value: &str) -> Option<(u32, u32, u32)> {
     let bytes = value.as_bytes();
     if bytes.len() != 10 {
         return None;
@@ -458,8 +469,16 @@ pub const PROFILE_SCHEMAS: &[ProfileSchema] = &[
             ClaimSpec::new("given_name", ClaimKind::String, true),
             ClaimSpec::new("family_name", ClaimKind::String, true),
             ClaimSpec::new("birth_date", ClaimKind::StringDate, false),
-            ClaimSpec::new("age_over_18", ClaimKind::Boolean, true),
-            ClaimSpec::new("age_over_21", ClaimKind::Boolean, false),
+            ClaimSpec::new(
+                "age_over_18",
+                ClaimKind::Predicate { min_age_years: 18 },
+                true,
+            ),
+            ClaimSpec::new(
+                "age_over_21",
+                ClaimKind::Predicate { min_age_years: 21 },
+                false,
+            ),
             ClaimSpec::new("nationality", ClaimKind::CountryCode, false),
             ClaimSpec::new("document_number", ClaimKind::String, false),
         ],

@@ -10,7 +10,7 @@
 | Último gate cerrado | **G0** (2026-10-11) |
 | Próximo gate | **G2** (Revisión y cierre formal de Fase F2) |
 | Hito siguiente | M1 · Núcleo offline (al cerrar G5) |
-| Última actualización | 2026-10-13 (F3: T06 completada — Esquemas de perfil) |
+| Última actualización | 2026-10-13 (F3: T07 completada — Claims de predicado) |
 
 ## Gates
 
@@ -55,6 +55,7 @@
 | F3.T02 Emisión SD-JWT | #41 | Antigravity (agente) | Hecha | Emisión RFC 9901 en `gravital-id-credential` (objetos/arrays, sal ≥ 128b, decoys, anidación, serialización compacta y firma ES256 vía `KeyStore`); rama `feat/41-sd-jwt-emission` |
 | F3.T03 Parseo y verificación SD-JWT | #43 | Antigravity (agente) | Hecha | Parseo RFC 9901 en `gravital-id-credential` (verificación de digests, rechazo de duplicados, claims reservados, huérfanos, colisión de claves, reconstrucción, firma ES256, límites DoS y fuzzing); rama `feat/43-sd-jwt-parsing-verification` |
 | F3.T04 KB-JWT | #45 | Antigravity (agente) | Hecha | Creación y verificación de KB-JWT (`typ: kb+jwt`, `nonce`, `aud`, `iat`, `sd_hash`; firma delegada al `KeyStore`; REQ-PRES-002, REQ-CRED-001, REQ-VER-003); rama `feat/45-kb-jwt` |
+| F3.T07 Claims de predicado | #49 | OpenCode (agente) | Hecha | Predicados precomputados (`age_over_18`/`age_over_21`) con cálculo por calendario y reloj inyectado; rama `feat/49-predicate-claims` |
 | F3.T06 Esquemas de perfil | #48 | OpenCode (agente) | Hecha | Esquemas de `pip-personal-v1`, `pip-financial-v1` y `pip-enterprise-v1` en compilación con validación en emisión y verificación (REQ-CRED-004); rama `feat/48-profile-schemas` |
 | F3.T05 Capa SD-JWT VC | #47 | OpenCode (agente) | Hecha | `typ: dc+sd-jwt`, `iss`/`vct`/`iat`/`nbf`/`exp`, `cnf.jwk` canónico, `status.status_list`, lista de algoritmos del perfil y rechazo de `none`; rama `feat/47-sd-jwt-vc` |
 
@@ -101,26 +102,43 @@
 
 ## Última nota de traspaso
 
-### Traspaso — 2026-10-13 (F3.T06: Esquemas de perfil) — OpenCode (agente)
-- Tarea: F3.T06 — #48 — rama `feat/48-profile-schemas`
+### Traspaso — 2026-10-13 (F3.T07: Claims de predicado) — OpenCode (agente)
+- Tarea: F3.T07 — #49 — rama `feat/49-predicate-claims`
 - Estado: **lista para revisión / hecha**
 - Hecho en esta sesión:
-  - F3.T06 (#48):
-    - Creado `crates/gravital-id-credential/src/profile.rs` con los esquemas de `docs/specs/profiles/*.md` §3 como constantes en compilación (`ProfileSchema`, `ClaimSpec`, `ClaimKind`, `PROFILE_SCHEMAS`) para los tres perfiles normativos, con búsqueda por `ProfileId` y por `vct`.
-    - Palabras clave JSON Schema implementadas: `type` (cadena, booleano, entero, array de cadenas), `enum`, `pattern` (`^[A-Z]{3}$`), `format` (`date` ISO 8601 con calendario real y `date-time` RFC 3339) y `required`. Ampliar el vocabulario exige cambiar `ClaimKind`: nunca se ignora una palabra clave en silencio.
-    - Validación **en emisión**: `SdJwtVcBuilder::profile(...)` valida los atributos (obligatorios + tipos) y exige que el `vct` coincida con el del esquema.
-    - Validación **en verificación**: `VcValidityPolicy::with_profile(...)` + `ParsedSdJwt::verify_vc` comprueban el `vct` y los tipos de los atributos divulgados (`ProfileSchema::validate_disclosed`).
-    - Decisión de seguridad documentada en código: los claims `required` **no** se exigen sobre una presentación. El titular puede divulgar un subconjunto de atributos y el verificador no puede distinguir un atributo no divulgado de un digest señuelo; exigirlos impediría la minimización de datos. La obligación de incluirlos es del emisor y se comprueba al emitir.
-    - Suite de integración `tests/profile_schema_integration.rs` con 12 pruebas (positivas y negativas): esquemas embebidos, credencial válida, claims obligatorios ausentes, tipos incorrectos, valores fuera de `enum`, patrón de país y fecha-hora inválidos, `vct` no coincidente, perfil sin esquema, arrays empresariales y composición con KB-JWT.
-    - Actualizados `crates/gravital-id-credential/README.md` (sección + ejemplo), `CHANGELOG.md`, `docs/TRACEABILITY.md` y `docs/STATUS.md`.
+  - F3.T07 (#49):
+    - Nuevo `ClaimKind::Predicate { min_age_years }` en los esquemas en compilación; `age_over_18`
+      y `age_over_21` del perfil personal quedan marcados como predicados. El cable no cambia:
+      siguen siendo booleanos según `docs/specs/profiles/*.md` §3.
+    - Nuevo módulo `crates/gravital-id-credential/src/predicate.rs`:
+      - `age_years`: edad por **calendario real** (bisiestos incluidos; quien nace el 29/02 cumple
+        el 1 de marzo), proyectando `UnixTime` a fecha de calendario sin leer el reloj (INV-11).
+        Rechaza fechas de nacimiento futuras (`CredentialNotYetValid`) y formatos inválidos.
+      - `profile_age_predicates`: predicados que el emisor declara a partir de `birth_date` en un
+        instante dado, siguiendo el orden del esquema.
+      - `disclosed_predicates`: expone al verificador los predicados divulgados con su valor
+        firmado; la decisión de aceptación es de la `Policy` del integrador (P-05).
+    - Semántica documentada y probada: el núcleo **nunca** recalcula un predicado en
+      verificación. Una credencial con `age_over_18 = true` sigue afirmando eso años después.
+    - Suite `tests/predicate_integration.rs` (6 pruebas) + 7 pruebas unitarias: umbrales,
+      cumpleaños exacto, 29/02, edad máxima, fechas inválidas, predicado no booleano
+      rechazado por el esquema, flujo emisor→verificador con presentación minimizada y no
+      recálculo a los cinco años.
+    - Actualizados README del crate, `CHANGELOG.md`, `docs/TRACEABILITY.md` (REQ-CRED-005 pasa a
+      *Cubierto*) y `docs/STATUS.md`.
 - Pendiente (siguiente paso concreto):
-  - Iniciar tarea F3.T07: `Claims de predicado` — soporte de predicados definidos por perfil (`age_over_18`, `age_over_21`) con pruebas (REQ-CRED-005).
-- Bugs/issues abiertos durante la sesión: Ninguno.
+  - Iniciar tarea F3.T08: `pip-issuer` — API de construcción y firma; emisión por lotes con
+    claves, sales e índices distintos (REQ-CRED-006).
+- Bugs/issues abiertos durante la sesión:
+  - **Corregido en el acto (no requiere issue):** un script auxiliar de esta sesión truncó
+    accidentalmente `crates/gravital-id-codec/src/json.rs` al reescribir secuencias de escape
+    literales; se restauró con `git checkout` antes de commit, sin cambios residuales
+    (`git diff` vacío). Lección operativa: no reescribir ficheros con expresiones regulares
+    amplias sobre `\uXXXX`.
 - Decisiones tomadas (con enlace a ADR/issue):
-  - `required` se valida solo en emisión; en verificación se validan los tipos de lo divulgado (imposible distinguir atributo no divulgado de decoy).
-  - Se reutiliza `ErrorCode::SchemaValidationFailed` (`PIP-E3004`), ya definido en F0.T16, en lugar de añadir un código nuevo.
-  - Los esquemas son constantes del crate (sin I/O, INV-01) y cubren solo las palabras clave que usan las especificaciones.
-- Riesgos o dudas:
-  - Los esquemas de referencia de los perfiles son ejemplos («credencial cívica / mayoría de edad»); cuando el mantenedor fije los esquemas definitivos por `vct` (F3.T09/conformance), bastará actualizar `PROFILE_SCHEMAS` y sus vectores.
-  - Persiste el posible `spec-gap` anotado en F3.T05: `IssuerId::parse` (kebab-case) frente a `iss` como URL HTTPS (ARCHITECTURE §3). A resolver en F4.
-- Comprobaciones locales: fmt ✅ clippy ✅ tests ✅ (279 pruebas del workspace, 0 fallos) layers ✅ trace ✅ check-error-codes ✅ doc ✅ deny ✅ audit ✅ wasm32 ✅ bare-metal ✅ (`cargo nextest` no está instalado en este entorno; se usó `cargo test`)
+  - El predicado se precomputa en emisión y no se recalcula nunca en verificación (semántica
+    de credencial firmada); la `Policy` del integrador decide la aceptación (P-05, REQ-VER-007).
+  - Los esquemas añaden metadato de umbral sin cambiar el formato de cable.
+- Riesgos o dudas: Ninguno nuevo. Persisten los anotados en F3.T05 (`IssuerId` kebab vs URL HTTPS).
+- Comprobaciones locales: fmt ✅ clippy ✅ tests ✅ (292 pruebas del workspace, 0 fallos) layers ✅
+  trace ✅ check-error-codes ✅ doc ✅ wasm32 ✅ bare-metal ✅
