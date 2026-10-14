@@ -8,9 +8,9 @@
 |---|---|
 | Fase actual | **F3 — Credenciales SD-JWT VC (en curso)** |
 | Último gate cerrado | **G0** (2026-10-11) |
-| Próximo gate | **G2** (Revisión y cierre formal de Fase F2) |
+| Próximo gate | **G3** — revisión formal de Fase F3 (#59); **G2** sigue pendiente de merge/CI |
 | Hito siguiente | M1 · Núcleo offline (al cerrar G5) |
-| Última actualización | 2026-10-13 (F3: T09 completada — Vectores de conformidad v1) |
+| Última actualización | 2026-10-13 (F3: T01–T09 implementadas; gate G3 abierto a revisión, decisión NO CERRADO por F3.T10) |
 
 ## Gates
 
@@ -19,7 +19,8 @@
 | G0 | **Cerrado** | 2026-10-11 | Especificaciones v0.1 completadas, ADRs 0001-0012 y 0016-0020 aceptados, 4 spikes concluidos viables, revisión cruzada F0.T21 aprobada |
 | G1 | En curso | — | Workspace, xtask, CI y gobierno del repositorio implementados en `feat/6-workspace-cargo` (#6, PR #22); pendiente merge del mantenedor |
 | G2 | **Listo para revisión** | — | F2.T01 a F2.T12 completadas en rama `feat/24-types-newtypes` (#24–#35). Vectores externos 100% pasando (RFC 7515/7638/5869/9180, Wycheproof 799/799), 6 parsers fuzzeados en CI (`fuzz.yml`), cobertura `gravital-id-crypto` al 92,46% (≥ 90%), 25 REQ trazados en `docs/TRACEABILITY.md`. |
-| G3 … G17 | Pendiente | — | — |
+| G3 | **Abierto a revisión** (#59) | — | F3.T01–T09 implementadas y trazadas (24 vectores de conformidad, 304 pruebas). **Decisión: NO CERRADO**: F3.T10 (interoperabilidad bidireccional) está bloqueada por depender de una implementación externa, y la campaña de fuzzing nocturna no puede ejecutarse mientras GitHub Actions esté bloqueado por facturación. |
+| G4 … G17 | Pendiente | — | — |
 
 ## Tareas en curso
 
@@ -104,42 +105,31 @@
 
 ## Última nota de traspaso
 
-### Traspaso — 2026-10-13 (F3.T09: Vectores de conformidad v1) — OpenCode (agente)
-- Tarea: F3.T09 — #58 — rama `feat/58-conformance-vectors`
-- Estado: **lista para revisión / hecha**
-- Hecho en esta sesión:
-  - `conformance/vectors/sd-jwt-vc/`: 24 vectores JSON con el formato documentado en su
-    `README.md` (entrada, política, `now`, expectativa y `verifies`), todos con datos
-    sintéticos (INV-02) y claves públicas deterministas.
-    - 6 positivos: credencial nominal de los tres perfiles, presentación **minimizada** con
-      KB-JWT (solo `age_over_18`) y dos copias de un lote con clave e índice distintos.
-    - 18 negativos, uno por regla de rechazo: `alg: none`, algoritmo fuera del perfil,
-      `typ` incorrecto, `iss` no HTTPS, `vct` ausente, `status` ausente, `exp` caducada,
-      `nbf` futura, `iat` futura, `status_list` malformado, `cnf.jwk` con `d`, divulgación
-      duplicada, divulgación no referenciada, miembro JSON duplicado, atributo fuera del
-      esquema, `vct` no coincidente con el perfil, firma manipulada y `_sd_alg` no soportado.
-  - `cargo xtask conformance`: runner que parsea, verifica la firma del emisor, ejecuta
-    `verify_vc` (y el KB-JWT en presentaciones) y compara con la expectativa; falla con
-    código no cero y mensaje por vector.
-  - `cargo xtask gen-conformance-vectors`: generador determinista (`SeededRng` con semillas
-    fijas, REQ-VER-009) **solo para vectores nuevos**; el README declara la inmutabilidad
-    (INV-12) y el procedimiento si un vector publicado discrepa.
-  - Pruebas del runner en `xtask/src/conformance.rs`: los 24 vectores pasan, y tres pruebas
-    negativas comprueban que el runner **detecta** expectativas manipuladas (un runner que
-    siempre da verde no serviría, INV-05).
+### Traspaso — 2026-10-13 (F3 cerrada a falta de F3.T10) — OpenCode (agente)
+- Tarea: F3 — múltiples issues — ramas `feat/47` … `feat/58`
+- Estado: **Fase F3 implementada salvo F3.T10; gate G3 abierto a revisión (#59)**
+- Hecho en la fase F3 (además de lo ya registrado por el agente anterior en F3.T02–T04):
+  - F3.T05 Capa SD-JWT VC (#47): `typ: dc+sd-jwt`, `iss`/`vct`/`iat`/`nbf`/`exp`, `cnf.jwk`
+    canónico, `status.status_list`, lista de algoritmos del perfil y rechazo de `none`.
+  - F3.T06 Esquemas de perfil (#48): esquemas de los tres perfiles en compilación con
+    validación en emisión y verificación.
+  - F3.T07 Claims de predicado (#49): predicados precomputados (`age_over_18`/`age_over_21`)
+    con cálculo por calendario y reloj inyectado.
+  - F3.T08 `pip-issuer` (#57): API de construcción y firma + emisión por lotes con claves,
+    sales e índices distintos por copia.
+  - F3.T09 Vectores de conformidad v1 (#58): 24 vectores publicados (6 positivos, 18
+    negativos, uno por regla de rechazo) + runner `cargo xtask conformance`.
+  - G3 abierto a revisión (#59) con la plantilla del Anexo A: **decisión NO CERRADO**.
 - Pendiente (siguiente paso concreto):
-  - Cerrar F3 con el gate G3: revisión de las tareas F3.T01–F3.T09 y evidencia de
-    trazabilidad; después iniciar F4.T01 (`pip-status`: listas).
+  - **F3.T10** (interoperabilidad de formato): elegir una implementación externa independiente
+    e intercambiar vectores en ambos sentidos. Bloquea el cierre de G3.
+  - G3 quedará cerrado cuando F3.T10 esté hecho y la campaña de fuzzing nocturna tenga
+    evidencia (requiere GitHub Actions operativo).
 - Bugs/issues abiertos durante la sesión: Ninguno.
-- Decisiones tomadas (con enlace a ADR/issue):
-  - El runner vive en `xtask` (herramienta de workspace) y usa `gravital-id-codec` para el
-    JSON, evitando una dependencia externa nueva (§13).
-  - La JWK del emisor del vector hace el papel de la entrada del trust bundle local
-    (REQ-VER-004 se prueba en F4 con el bundle real).
+- Decisiones tomadas (con enlace a ADR/issue): las documentadas en cada issue de tarea.
 - Riesgos o dudas:
-  - El corpus es v1 y queda **inmutable** desde su primer commit; los esquemas de perfil son
-    los de referencia, así que si el mantenedor los cambia habrá que publicar vectores v2
-    (nunca editar los v1).
-- Comprobaciones locales: fmt ✅ clippy ✅ tests ✅ (304 pruebas del workspace, 0 fallos)
-  layers ✅ trace ✅ check-error-codes ✅ xtask conformance 24/24 ✅ (wasm/bare-metal/deny/audit
-  pendientes de reejecución en esta rama; se ejecutaron en las ramas previas sin cambios en capas L1–L3)
+  - R-01 (cambios en borradores): el corpus v1 es inmutable; un cambio de versión exige
+    vectores v2, nunca editar los publicados.
+  - GitHub Actions bloqueado por facturación: toda la verificación es local.
+- Comprobaciones locales: fmt ✅ clippy ✅ tests ✅ (304 pruebas, 0 fallos) layers ✅ trace ✅
+  check-error-codes ✅ `xtask conformance` 24/24 ✅
