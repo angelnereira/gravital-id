@@ -15,13 +15,14 @@
 //!   redactado.
 //! - **INV-05:** ante cualquier duda sobre el estado, nunca se acepta.
 
-use alloc::collections::BTreeMap;
 use alloc::format;
-use alloc::string::{String, ToString};
+use alloc::string::String;
 use alloc::vec::Vec;
 
 use gravital_id_trust::AcceptedBundleState;
 use gravital_id_types::{ErrorCode, GidError, UnixTime};
+
+use crate::nonce::{InMemoryNonceCache, NonceCache};
 
 /// Número máximo de nonces recordados por defecto (REQ-VER-008).
 pub const DEFAULT_MAX_NONCES: usize = 4_096;
@@ -107,6 +108,27 @@ pub trait VerifierStateStore {
     /// # Errores
     /// [`ErrorCode::VerifierStateCorrupted`] si el estado no puede escribirse.
     fn remember_nonce(&mut self, nonce: &str, expires_at: UnixTime) -> Result<(), GidError>;
+
+    /// Comprueba de forma atómica si un nonce ya fue utilizado; si es fresco, lo registra
+    /// hasta su instante de expiración (REQ-PRES-004, SDK_API §3.3).
+    ///
+    /// Devuelve `Ok(true)` si el nonce era fresco y fue registrado.
+    /// Devuelve `Ok(false)` si el nonce ya existía y sigue vigente (replay detectado).
+    ///
+    /// # Errores
+    /// [`ErrorCode::VerifierStateCorrupted`] si el estado no puede leerse o escribirse.
+    fn check_and_consume_nonce(
+        &mut self,
+        nonce: &str,
+        expires_at: UnixTime,
+        now: UnixTime,
+    ) -> Result<bool, GidError> {
+        if self.nonce_seen(nonce, now)? {
+            return Ok(false);
+        }
+        self.remember_nonce(nonce, expires_at)?;
+        Ok(true)
+    }
 
     /// Comprueba la integridad del estado persistente.
     ///
@@ -215,8 +237,7 @@ pub struct InMemoryStateStore {
     key: StateIntegrityKey,
     time_floor: Option<UnixTime>,
     accepted_bundle: Option<AcceptedBundleState>,
-    nonces: BTreeMap<String, RememberedNonce>,
-    max_nonces: usize,
+    nonce_cache: InMemoryNonceCache,
 }
 
 impl InMemoryStateStore {
@@ -227,16 +248,26 @@ impl InMemoryStateStore {
             key,
             time_floor: None,
             accepted_bundle: None,
-            nonces: BTreeMap::new(),
-            max_nonces: DEFAULT_MAX_NONCES,
+            nonce_cache: InMemoryNonceCache::new(),
         }
     }
 
     /// Configura el límite de nonces recordados.
     #[must_use]
     pub fn with_max_nonces(mut self, max_nonces: usize) -> Self {
-        self.max_nonces = max_nonces;
+        self.nonce_cache = InMemoryNonceCache::with_capacity(max_nonces);
         self
+    }
+
+    /// Acceso a la caché de nonces subyacente.
+    #[must_use]
+    pub fn nonce_cache(&self) -> &InMemoryNonceCache {
+        &self.nonce_cache
+    }
+
+    /// Acceso mutable a la caché de nonces subyacente.
+    pub fn nonce_cache_mut(&mut self) -> &mut InMemoryNonceCache {
+        &mut self.nonce_cache
     }
 
     /// Serialización canónica del estado, protegida por el MAC.
@@ -251,7 +282,7 @@ impl InMemoryStateStore {
                 format!("|bundle:{}/{}", bundle.bundle_epoch, bundle.bundle_version).as_bytes(),
             );
         }
-        for (nonce, entry) in &self.nonces {
+        for (nonce, entry) in self.nonce_cache.iter() {
             out.extend_from_slice(
                 format!("|nonce:{nonce}:{}", entry.expires_at.as_seconds()).as_bytes(),
             );
@@ -272,21 +303,16 @@ impl InMemoryStateStore {
         accepted_bundle: Option<AcceptedBundleState>,
         nonces: &[(String, UnixTime)],
     ) -> Result<[u8; 32], GidError> {
-        let mut probe = Self {
+        let mut nonce_cache = InMemoryNonceCache::new();
+        for (nonce, expires_at) in nonces {
+            nonce_cache.remember(nonce, *expires_at)?;
+        }
+        let probe = Self {
             key: key.clone(),
             time_floor,
             accepted_bundle,
-            nonces: BTreeMap::new(),
-            max_nonces: DEFAULT_MAX_NONCES,
+            nonce_cache,
         };
-        for (nonce, expires_at) in nonces {
-            probe.nonces.insert(
-                nonce.clone(),
-                RememberedNonce {
-                    expires_at: *expires_at,
-                },
-            );
-        }
         probe.mac()
     }
 }
@@ -316,30 +342,20 @@ impl VerifierStateStore for InMemoryStateStore {
     }
 
     fn nonce_seen(&self, nonce: &str, now: UnixTime) -> Result<bool, GidError> {
-        match self.nonces.get(nonce) {
-            Some(entry) if entry.expires_at.as_seconds() >= now.as_seconds() => Ok(true),
-            _ => Ok(false),
-        }
+        self.nonce_cache.is_seen(nonce, now)
     }
 
     fn remember_nonce(&mut self, nonce: &str, expires_at: UnixTime) -> Result<(), GidError> {
-        if self.nonces.len() >= self.max_nonces && !self.nonces.contains_key(nonce) {
-            // Expulsa el nonce que caduca antes (los más antiguos dejan de bloquear).
-            let mut oldest: Option<(UnixTime, String)> = None;
-            for (candidate, entry) in self.nonces.iter() {
-                let pair = (entry.expires_at, candidate.clone());
-                match oldest {
-                    Some((current, _)) if current <= pair.0 => {}
-                    _ => oldest = Some(pair),
-                }
-            }
-            if let Some((_, victim)) = oldest {
-                self.nonces.remove(&victim);
-            }
-        }
-        self.nonces
-            .insert(nonce.to_string(), RememberedNonce { expires_at });
-        Ok(())
+        self.nonce_cache.remember(nonce, expires_at)
+    }
+
+    fn check_and_consume_nonce(
+        &mut self,
+        nonce: &str,
+        expires_at: UnixTime,
+        now: UnixTime,
+    ) -> Result<bool, GidError> {
+        self.nonce_cache.check_and_consume(nonce, expires_at, now)
     }
 
     fn integrity_check(&self) -> Result<(), GidError> {
@@ -351,7 +367,42 @@ impl VerifierStateStore for InMemoryStateStore {
     fn reset(&mut self) {
         self.time_floor = None;
         self.accepted_bundle = None;
-        self.nonces.clear();
+        self.nonce_cache.clear();
+    }
+}
+
+impl NonceCache for InMemoryStateStore {
+    fn is_seen(&self, nonce: &str, now: UnixTime) -> Result<bool, GidError> {
+        self.nonce_cache.is_seen(nonce, now)
+    }
+
+    fn remember(&mut self, nonce: &str, expires_at: UnixTime) -> Result<(), GidError> {
+        self.nonce_cache.remember(nonce, expires_at)
+    }
+
+    fn check_and_consume(
+        &mut self,
+        nonce: &str,
+        expires_at: UnixTime,
+        now: UnixTime,
+    ) -> Result<bool, GidError> {
+        self.nonce_cache.check_and_consume(nonce, expires_at, now)
+    }
+
+    fn purge_expired(&mut self, now: UnixTime) {
+        self.nonce_cache.purge_expired(now);
+    }
+
+    fn len(&self) -> usize {
+        self.nonce_cache.len()
+    }
+
+    fn capacity(&self) -> usize {
+        self.nonce_cache.capacity()
+    }
+
+    fn clear(&mut self) {
+        self.nonce_cache.clear();
     }
 }
 
@@ -364,6 +415,7 @@ impl VerifierStateStore for InMemoryStateStore {
 )]
 mod tests {
     use super::*;
+    use alloc::string::ToString;
 
     fn key() -> StateIntegrityKey {
         StateIntegrityKey::new([7u8; 32])
@@ -450,7 +502,7 @@ mod tests {
         store
             .remember_nonce("nonce-c", UnixTime::from_seconds(3_000))
             .unwrap();
-        assert_eq!(store.nonces.len(), 2);
+        assert_eq!(store.nonce_cache.len(), 2);
     }
 
     #[test]

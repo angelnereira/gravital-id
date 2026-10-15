@@ -24,7 +24,7 @@
 | REQ-PRES-001 | F5 | DEBE | T | P-09 | — | Pendiente (Fase futura) |
 | REQ-PRES-002 | F5 | DEBE | T | P-08 | kb.rs, lib.rs, parser.rs, kb_jwt_integration.rs, profile_schema_integration.rs, sd_jwt_vc_integration.rs, pipeline.rs, generate_vectors.rs | Cubierto |
 | REQ-PRES-003 | F5 | DEBE | T, I | P-09 | — | Pendiente (Fase futura) |
-| REQ-PRES-004 | F4 | DEBE | T | P-08 | lib.rs, pipeline.rs, state.rs, verifier_pipeline_integration.rs, verifier_state_integration.rs | Cubierto |
+| REQ-PRES-004 | F4 | DEBE | T | P-08 | lib.rs, nonce.rs, pipeline.rs, state.rs, verifier_nonce_integration.rs, verifier_pipeline_integration.rs, verifier_state_integration.rs | Cubierto |
 | REQ-PRES-005 | F5 | DEBE | T, D | P-01 | — | Pendiente (Fase futura) |
 | REQ-PRES-006 | F5 | DEBE | T, D | P-01 | — | Pendiente (Fase futura) |
 | REQ-PRES-007 | F5 | DEBE | T | P-09 | — | Pendiente (Fase futura) |
@@ -36,7 +36,7 @@
 | REQ-VER-005 | F4 | DEBE | T | — | parser.rs, lib.rs, policy.rs, verifier_policy_integration.rs | Cubierto |
 | REQ-VER-006 | F4 | DEBE | T | P-08 | cache.rs, lib.rs, pipeline.rs, state.rs, verifier_pipeline_integration.rs, verifier_state_integration.rs | Cubierto |
 | REQ-VER-007 | F4 | DEBE | I | P-05 | lib.rs, policy.rs, verifier_policy_integration.rs | Cubierto |
-| REQ-VER-008 | F2 | DEBE | T, F | P-08 | base64url.rs, cbor.rs, json.rs, differential_serde_json.rs, lib.rs, parser.rs, vc.rs, sd_jwt_parsing_verification.rs, sd_jwt_vc_integration.rs, request.rs, cache.rs, manifest.rs, status_list_integration.rs, bundle.rs, root.rs, ids.rs, proptest_ids.rs, state.rs, base64url_strict.rs, cbor_bounded.rs, json_bounded.rs, sd_jwt_parser.rs | Cubierto |
+| REQ-VER-008 | F2 | DEBE | T, F | P-08 | base64url.rs, cbor.rs, json.rs, differential_serde_json.rs, lib.rs, parser.rs, vc.rs, sd_jwt_parsing_verification.rs, sd_jwt_vc_integration.rs, request.rs, cache.rs, manifest.rs, status_list_integration.rs, bundle.rs, root.rs, ids.rs, proptest_ids.rs, nonce.rs, state.rs, verifier_nonce_integration.rs, base64url_strict.rs, cbor_bounded.rs, json_bounded.rs, sd_jwt_parser.rs | Cubierto |
 | REQ-VER-009 | F4 | DEBE | T | P-06 | cbor.rs, json.rs, differential_serde_json.rs, issuer_api.rs, status_list_integration.rs, lib.rs, clock.rs, cbor_bounded.rs, json_bounded.rs, jwk_parser.rs, sd_jwt_parser.rs, status_list_parser.rs | Cubierto |
 | REQ-VER-010 | F4 | DEBE | T | P-08 | pipeline.rs, result.rs, verifier_pipeline_integration.rs | Cubierto |
 | REQ-VER-011 | F4 | DEBE | T | P-08 | cache.rs, error.rs, lib.rs, pipeline.rs, state.rs, verifier_pipeline_integration.rs, verifier_state_integration.rs | Cubierto |
