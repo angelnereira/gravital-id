@@ -277,6 +277,7 @@ dependencies = [
  "gravital-id-codec",
  "gravital-id-credential",
  "gravital-id-crypto",
+ "gravital-id-status",
  "gravital-id-types",
  "libfuzzer-sys",
 ]
@@ -285,6 +286,15 @@ dependencies = [
 name = "gravital-id-keys"
 version = "0.1.0"
 dependencies = [
+ "gravital-id-crypto",
+ "gravital-id-types",
+]
+
+[[package]]
+name = "gravital-id-status"
+version = "0.1.0"
+dependencies = [
+ "gravital-id-codec",
  "gravital-id-crypto",
  "gravital-id-types",
 ]

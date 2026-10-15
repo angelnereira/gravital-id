@@ -51,8 +51,13 @@ pub const MAX_STATUS_URI_BYTES: usize = 512;
 /// y rompería la verificación de vigencia, estado y vinculación (fail-closed, REQ-VER-003).
 const ALWAYS_VISIBLE_CLAIMS: [&str; 7] = ["iss", "vct", "iat", "nbf", "exp", "cnf", "status"];
 
-/// Comprueba si un nombre de claim es de nivel superior y por tanto siempre visible.
-fn is_always_visible_claim(name: &str) -> bool {
+/// Comprueba si un nombre de claim es de nivel superior y por tanto siempre visible
+/// (ARCHITECTURE §8.2: `iss`, `vct`, `iat`, `nbf`, `exp`, `cnf`, `status`).
+///
+/// Lo usa el constructor de credenciales para impedir que estos claims se declaren como
+/// atributos, y la API de emisión para validar solicitudes del emisor.
+#[must_use]
+pub fn is_always_visible_claim(name: &str) -> bool {
     ALWAYS_VISIBLE_CLAIMS.contains(&name)
 }
 

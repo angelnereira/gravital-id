@@ -454,9 +454,13 @@ dependencies = [
 name = "gravital-id-issuer"
 version = "0.1.0"
 dependencies = [
+ "gravital-id-codec",
  "gravital-id-credential",
+ "gravital-id-crypto",
  "gravital-id-keys",
  "gravital-id-status",
+ "gravital-id-testkit",
+ "gravital-id-types",
 ]
 
 [[package]]
@@ -530,6 +534,8 @@ version = "0.1.0"
 dependencies = [
  "gravital-id-codec",
  "gravital-id-crypto",
+ "gravital-id-keys",
+ "gravital-id-testkit",
  "gravital-id-types",
 ]
 
@@ -579,8 +585,11 @@ name = "gravital-id-trust"
 version = "0.1.0"
 dependencies = [
  "gravital-id-codec",
+ "gravital-id-credential",
  "gravital-id-crypto",
+ "gravital-id-keys",
  "gravital-id-status",
+ "gravital-id-testkit",
  "gravital-id-types",
 ]
 
@@ -596,9 +605,16 @@ dependencies = [
 name = "gravital-id-verifier"
 version = "0.1.0"
 dependencies = [
+ "gravital-id-codec",
  "gravital-id-credential",
+ "gravital-id-crypto",
+ "gravital-id-keys",
  "gravital-id-status",
+ "gravital-id-testkit",
  "gravital-id-trust",
+ "gravital-id-types",
+ "trybuild",
+ "zeroize",
 ]
 
 [[package]]
@@ -1327,6 +1343,13 @@ name = "xtask"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "gravital-id-codec",
+ "gravital-id-credential",
+ "gravital-id-crypto",
+ "gravital-id-issuer",
+ "gravital-id-keys",
+ "gravital-id-testkit",
+ "gravital-id-types",
  "serde",
  "toml 1.1.8+spec-1.1.0",
 ]

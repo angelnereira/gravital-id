@@ -79,6 +79,22 @@ Emisión, validación y verificación de credenciales SD-JWT y SD-JWT VC para Gr
 - **Errores:** todo incumplimiento devuelve `ErrorCode::SchemaValidationFailed` (`PIP-E3004`),
   ya documentado en `docs/specs/ERROR_CODES.md` (F0.T16).
 
+## Funcionalidades de claims de predicado (REQ-CRED-005)
+
+- **Predicados precomputados (`predicate.rs`):** los esquemas marcan los claims de predicado
+  del perfil (`age_over_18`, `age_over_21`) con `ClaimKind::Predicate { min_age_years }`. En el
+  cable siguen siendo booleanos (`{"type": "boolean"}` en `docs/specs/profiles/*.md` §3): no hay
+  cambio de formato.
+- **Cálculo de edad (`age_years`, `profile_age_predicates`):** edad por calendario real
+  (años bisiestos; quien nace el 29/02 cumple el 1 de marzo), **sin leer el reloj**: el
+  instante de referencia lo pasa el llamador (INV-11).
+- **Decisión fuera del núcleo (`disclosed_predicates`):** el verificador recibe los predicados
+  divulgados con su valor firmado; la `Policy` del integrador decide si `age_over_18 == true`
+  basta (P-05).
+- **Semántica deliberada:** el núcleo **nunca** recalcula un predicado en verificación. El
+  valor vigente es el que firmó el emisor al emitir; una credencial con
+  `age_over_18 = true` sigue afirmando eso años después.
+
 ## Funcionalidades de Key Binding JWT (RFC 9901 §6)
 - **Cálculo de `sd_hash` (`calculate_sd_hash`):** Digest SHA-256 base64url calculado sobre el prefijo exacto de la presentación (`<jwt>~<d1>~...~<dn>~`) según RFC 9901 §6.2.
 - **Emisión de KB-JWT (`KbIssuer`):**

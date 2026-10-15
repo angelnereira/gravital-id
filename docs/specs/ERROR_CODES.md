@@ -97,6 +97,7 @@ pub struct PipError {
 | `PIP-E5006` | `BundleVersionRollback` | Intento de cargar un bundle con versión inferior a la aceptada (anti-rollback). |
 | `PIP-E5007` | `ClockRollbackDetected` | El reloj local es anterior al piso de tiempo confiable observado. |
 | `PIP-E5008` | `TrustRootChainBroken` | La nueva raíz no cuenta con las firmas requeridas de la raíz precedente. |
+| `PIP-E5009` | `VerifierStateCorrupted` | El estado persistente del verificador (piso de tiempo, versiones aceptadas, caché de nonces) falta, está corrupto o fue restaurado; resultado `Unverifiable` hasta reinicialización explícita (REQ-VER-011). |
 
 ---
 
