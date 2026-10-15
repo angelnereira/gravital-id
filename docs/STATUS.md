@@ -10,7 +10,7 @@
 | Último gate cerrado | **G0** (2026-10-11) |
 | Próximo gate | **G3** — revisión formal de Fase F3 (#59); **G2** sigue pendiente de merge/CI |
 | Hito siguiente | M1 · Núcleo offline (al cerrar G5) |
-| Última actualización | 2026-10-14 (F4.T05 completada — Policy del verificador) |
+| Última actualización | 2026-10-15 (F4.T06 completada — Pipeline del verificador con typestate) |
 
 ## Gates
 
@@ -26,6 +26,10 @@
 
 | Tarea | Issue | Responsable | Estado | Siguiente paso |
 |---|---|---|---|---|
+| F4.T06 Pipeline del verificador | #66 | Antigravity (agente) | Hecha | Pipeline typestate con 11 comprobaciones ordenadas, evidencia y testigo compile-fail; rama `feat/66-verifier-pipeline` |
+| F4.T05 Policy del verificador | #65 | OpenCode (agente) | Hecha | `VerificationPolicy`, frescura por operación, sesgo acotado, allowlist/denylist; rama `feat/65-verifier-policy` |
+| F4.T04 Estado del verificador | #64 | OpenCode (agente) | Hecha | `VerifierStateStore`, `TimeFloorGuard`, `InMemoryStateStore` con HMAC-SHA256; rama `feat/64-verifier-state` |
+| F4.T03 Trust bundle | #62 | OpenCode (agente) | Hecha | Multi-firma k-de-n, anti-rollback `(bundle_epoch, bundle_version)` y estados de clave; rama `feat/62-trust-bundle` |
 | F1.T01 Workspace Cargo | #6 | OpenCode (agente) | Hecha | 20 crates `gravital-id-*` con lints estrictos y perfiles; PR contra `main` |
 | F1.T02 Toolchain/MSRV (ADR-0014) | #6 | OpenCode (agente) | Hecha | Rust 1.85.0 fijado en `rust-toolchain.toml`; ADR-0014 Aceptado |
 | F1.T03 `xtask check-layers` | #6 | OpenCode (agente) | Hecha | Capas, `no_std`, aislamiento del verificador y bindings; casos negativos probados |
@@ -107,34 +111,25 @@
 
 ## Última nota de traspaso
 
-### Traspaso — 2026-10-14 (F4.T05: Policy del verificador) — OpenCode (agente)
-- Tarea: F4.T05 — #65 — rama `feat/65-verifier-policy`
+### Traspaso — 2026-10-15 (F4.T06: Pipeline del verificador) — Antigravity (agente)
+- Tarea: F4.T06 — #66 — rama `feat/66-verifier-pipeline`
 - Estado: **lista para revisión / hecha**
 - Hecho en esta sesión:
-  - F4.T05 (#65):
-    - `crates/gravital-id-verifier/src/policy.rs`: `VerificationPolicy` como **datos** que
-      configura el integrador (REQ-VER-007), con `OperationClass` (transacción / consulta /
-      por defecto) y `StatusFreshness` por clase (30 min, 4 h y 7 días por defecto, los
-      valores de `docs/specs/profiles/*.md` §2), sesgo de reloj configurable con cota dura por
-      perfil y límite global de 300 s (REQ-VER-005), `IssuerSelection`/`VctSelection`
-      (cualquiera, allowlist, denylist) y requisitos del perfil.
-    - `none` nunca es admitido: `with_allowed_algorithms` rechaza la lista vacía o cualquier
-      lista que incluya `none` (INV-08, REQ-CRED-008).
-    - 12 pruebas (6 unitarias + 6 de integración): sesgo fuera de cota, cota endurecida,
-      alg none configurado, selección de emisores y vct, frescura por clase de operación y
-      políticas incoherentes rechazadas (INV-05).
-    - Acceso a la frescura por clase mediante `get`/`get_mut`: clippy detectó indexación
-      directa que podría entrar en pánico (INV-10) y se corrigió.
+  - Root `README.md` reescrito integralmente reflejando la denominación definitiva Gravital ID, principios fundamentales (verificación offline sans-I/O, cero PII, sin custodia de claves, multi-firma por umbral k-de-n), tabla completa de 20 crates (L1–L6), catálogo de las 16 invariantes no negociables (INV-01 a INV-16), comandos normativos de verificación y arquitectura spec-first.
+  - `crates/gravital-id-verifier/src/result.rs`: implementado el modelo normativo cerrado de cuatro estados (`Valid`, `ValidWithStaleStatus`, `Unverifiable`, `Invalid`, INV-04), enumeración ordenada de las 11 comprobaciones (`CheckKind`), estados de comprobación (`CheckStatus`: `Passed`, `Failed`, `Indeterminate`, `Skipped`), estructura exhaustiva de evidencia (`CheckEvidence`), testigo tipado `AllMandatoryPassed` que impide la construcción externa no autorizada de `Valid` (`REQ-VER-012`, `ADR-0020`), y métodos de consulta seguros.
+  - `crates/gravital-id-verifier/src/pipeline.rs`: implementada la máquina de estados typestate (`StageUnchecked`, `StageStructureChecked`, `StageIssuerResolved`, `StageAuthenticated`) y el método `VerifierPipeline::verify(...)` ejecutando determinísticamente las 11 comprobaciones normativas en orden estricto (Structure ↝ IssuerAuthorized ↝ KeyState ↝ Signature ↝ Validity ↝ Disclosures ↝ Schema ↝ KeyBinding ↝ Nonce ↝ Status ↝ Policy).
+  - Typestate fail-closed: si la firma criptográfica del emisor falla en el paso 4, las 7 comprobaciones subsiguientes basadas en claims no autenticados (`Validity`, `Disclosures`, `Schema`, `KeyBinding`, `Nonce`, `Status`, `Policy`) quedan marcadas irreversiblemente como `CheckStatus::Skipped` (`REQ-VER-012`).
+  - Resolución con precedencia normativa de estados (REQ-VER-010): `Invalid` > `Unverifiable` > `ValidWithStaleStatus` > `Valid`.
+  - Prueba de compilación fallida con `trybuild` (`tests/compile_fail.rs` y `tests/ui/cannot_construct_valid_directly.rs`) demostrando formalmente que `VerificationResult::Valid` no puede ser fabricado saltándose las comprobaciones obligatorias.
+  - Suite exhaustiva de pruebas de integración (`tests/verifier_pipeline_integration.rs`) con 9 casos cubriendo: presentación nominal válida completa, omisión estricta de comprobaciones ante firma manipulada (`Skipped`), snapshot caducado que produce `ValidWithStaleStatus`, estado revocado que produce `Invalid`, emisor desconocido que produce `Unverifiable`, clave comprometida que produce `Invalid`, detección y bloqueo de replay por nonce, detección de retroceso de reloj confiable y rechazo tajante de `alg: none`.
+  - Documentación de `crates/gravital-id-verifier/README.md` y `CHANGELOG.md` actualizada.
 - Pendiente (siguiente paso concreto):
-  - F4.T06 `Pipeline del verificador`: comprobaciones ordenadas con evidencia por paso y
-    typestate que impida evaluar sobre datos no autenticados (REQ-VER-002/004/012).
+  - F4.T07 `Caché de nonces`: trait + implementación en memoria con expiración, límite de tamaño y rechazo de reutilización (`REQ-PRES-004`).
 - Bugs/issues abiertos durante la sesión: Ninguno.
 - Decisiones tomadas (con enlace a ADR/issue):
-  - La política es un tipo de datos con validación propia; el núcleo no interpretúa
-    configuraciones laxas ni acepta valores fuera de las cotas (fail-closed).
-- Riesgos o dudas: los valores por defecto de frescura (30 min/4 h/7 días) son los del
-  perfil financiero y personal respectivamente; si el mantenedor prefiere otros, se cambian en
-  un sitio único (`VerificationPolicy::default`).
-- Comprobaciones locales: fmt ✅ clippy ✅ tests ✅ (376 pruebas del workspace, 0 fallos)
+  - Inconstruibilidad de `Valid` reforzada por tipo testigo `AllMandatoryPassed` y validada con `trybuild` en CI (`ADR-0020`, `REQ-VER-012`).
+  - Las 7 comprobaciones sobre datos no autenticados se marcan normativamente como `Skipped` ante fallo de firma, evitando cualquier filtración o evaluación de datos fabricados.
+- Riesgos o dudas: Ninguno.
+- Comprobaciones locales: fmt ✅ clippy ✅ tests ✅ (386 pruebas del workspace, 0 fallos)
   layers ✅ trace ✅ check-error-codes ✅ doc ✅ deny ✅ `xtask conformance` 24/24 ✅ wasm32 ✅
-  bare-metal ✅
+  bare-metal ✅ audit ✅

@@ -18,12 +18,22 @@
 
 extern crate alloc;
 
+pub mod pipeline;
 pub mod policy;
+pub mod result;
 pub mod state;
 
+pub use pipeline::{
+    StageAuthenticated, StageIssuerResolved, StageStructureChecked, StageUnchecked,
+    VerificationRequest, VerifierPipeline,
+};
 pub use policy::{
     IssuerSelection, OperationClass, StatusFreshness, VctSelection, VerificationPolicy,
     MAX_CLOCK_SKEW_SECONDS,
+};
+pub use result::{
+    AllMandatoryPassed, CheckEvidence, CheckKind, CheckStatus, VerificationResult,
+    VerificationStatus,
 };
 pub use state::{
     InMemoryStateStore, RememberedNonce, StateIntegrityKey, TimeFloorCheck, TimeFloorGuard,
