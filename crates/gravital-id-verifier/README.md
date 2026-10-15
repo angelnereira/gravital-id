@@ -42,6 +42,13 @@ Pipeline de verificación offline para Gravital ID. Implementa el flujo completo
 - **Precedencia normativa de estados (REQ-VER-010)**:
   `Invalid` > `Unverifiable` > `ValidWithStaleStatus` > `Valid`.
 
+- **Semántica de estados de clave del emisor (REQ-KEY-005, REQ-KEY-006, ARCHITECTURE.md §11.6)**:
+  - `active`: Comprobación `KeyState` pasa; emisión válida.
+  - `retired`: Comprobación `KeyState` pasa; comprobación `Validity` verifica que `iat < state_since` (REQ-KEY-006). Emisiones con `iat >= state_since` fallan `Validity` con `ErrorCode::IssuerKeyRetired` produciendo estado `Invalid`.
+  - `suspended`: Comprobación `KeyState` queda `Indeterminate` con `ErrorCode::IssuerSuspended`, omitiendo comprobaciones subsiguientes y produciendo estado `Unverifiable`.
+  - `compromised`: Comprobación `KeyState` falla con `ErrorCode::IssuerKeyCompromised`, omitiendo comprobaciones subsiguientes y produciendo estado irreversible `Invalid` (INV-05).
+  - Suspensión administrativa del emisor (`IssuerState::Suspended`): Comprobación `IssuerAuthorized` queda `Indeterminate` con `ErrorCode::IssuerSuspended` produciendo `Unverifiable`.
+
 ### 2. Estado del verificador (`state.rs`, F4.T04)
 
 - **`VerifierStateStore`**: Trait que implementa el host (SQLite, IndexedDB, fichero cifrado) con piso de tiempo, último bundle aceptado, caché de nonces con expiración, `integrity_check()` y `reset()`.

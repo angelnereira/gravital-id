@@ -26,7 +26,7 @@ use gravital_id_crypto::{sha256, JwkEcP256};
 use gravital_id_keys::{IssuerSigning, KeyStore, SoftwareKeyStore};
 use gravital_id_testkit::SeededRng;
 use gravital_id_trust::{
-    AcceptedBundleState, TrustBundle, TrustBundleVerifier, TrustRoot, TrustRootVerifier,
+    AcceptedBundleState, KeyState, TrustBundle, TrustBundleVerifier, TrustRoot, TrustRootVerifier,
 };
 use gravital_id_types::{ErrorCode, UnixTime};
 
@@ -649,4 +649,151 @@ fn duplicate_signatures_from_the_same_signer_are_rejected() {
     assert_eq!(error.code, ErrorCode::MalformedSdJwt);
     assert!(error.message.contains("duplicate"));
     let _ = &fixture.keys;
+}
+
+// Verifies: REQ-KEY-005, REQ-KEY-006 (Semántica de estados de clave en el trust bundle)
+#[test]
+fn issuer_key_states_in_verified_bundle_respect_semantics() {
+    let mut fixture = build_root(6_213, "pip-global", 1, 1, &["root-0", "root-1"]);
+    fixture.keys.generate("active-key");
+    fixture.keys.generate("retired-key");
+    fixture.keys.generate("suspended-key");
+    fixture.keys.generate("compromised-key");
+
+    let retired_since = 1_700_000_000u64;
+
+    let keys = Value::Array(vec![
+        issuer_key_entry("active-key", fixture.keys.jwk("active-key"), "active", 0),
+        issuer_key_entry(
+            "retired-key",
+            fixture.keys.jwk("retired-key"),
+            "retired",
+            retired_since,
+        ),
+        issuer_key_entry(
+            "suspended-key",
+            fixture.keys.jwk("suspended-key"),
+            "suspended",
+            1_750_000_000,
+        ),
+        issuer_key_entry(
+            "compromised-key",
+            fixture.keys.jwk("compromised-key"),
+            "compromised",
+            1_760_000_000,
+        ),
+    ]);
+
+    let payload = Value::Object(vec![
+        (
+            "framework_id".to_string(),
+            Value::String("pip-global".to_string()),
+        ),
+        ("bundle_epoch".to_string(), Value::Number(Number::PosInt(1))),
+        (
+            "bundle_version".to_string(),
+            Value::Number(Number::PosInt(1)),
+        ),
+        ("chain_id".to_string(), Value::Number(Number::PosInt(1))),
+        (
+            "registry_address".to_string(),
+            Value::String("0xabc".to_string()),
+        ),
+        (
+            "finalized_block_number".to_string(),
+            Value::Number(Number::PosInt(100)),
+        ),
+        (
+            "finalized_block_hash".to_string(),
+            Value::String("0x123".to_string()),
+        ),
+        (
+            "issued_at".to_string(),
+            Value::Number(Number::PosInt(1_700_000_000)),
+        ),
+        (
+            "valid_until".to_string(),
+            Value::Number(Number::PosInt(1_900_000_000)),
+        ),
+        (
+            "issuers".to_string(),
+            Value::Array(vec![Value::Object(vec![
+                (
+                    "issuer_id".to_string(),
+                    Value::String("iss-example".to_string()),
+                ),
+                (
+                    "profiles".to_string(),
+                    Value::Array(vec![Value::String("pip-personal-v1".to_string())]),
+                ),
+                (
+                    "vcts".to_string(),
+                    Value::Array(vec![Value::String("https://example.com/vct".to_string())]),
+                ),
+                (
+                    "valid_from".to_string(),
+                    Value::Number(Number::PosInt(1_700_000_000)),
+                ),
+                ("state".to_string(), Value::String("active".to_string())),
+                ("status_keys".to_string(), Value::Array(vec![])),
+                ("keys".to_string(), keys),
+            ])]),
+        ),
+        ("verifiers".to_string(), Value::Array(vec![])),
+        ("policies".to_string(), Value::Array(vec![])),
+    ]);
+
+    let (_json, payload_b64) = canonical(&payload);
+    let (bundle_doc, _input) = sign_document(
+        &fixture.keys,
+        &payload_b64,
+        &["signer-0".to_string(), "signer-1".to_string()],
+    );
+
+    let (bundle, jws) = TrustBundle::parse(&bundle_doc).expect("bundle parse");
+    TrustBundleVerifier::verify(&bundle, &jws, &fixture.root, None, NOW).expect("verify");
+
+    let issuer = bundle.issuer("iss-example").expect("issuer");
+    assert_eq!(issuer.keys.len(), 4);
+
+    // active
+    let active = issuer.find_key("active-key").expect("active-key");
+    assert_eq!(active.state, KeyState::Active);
+    assert!(active.is_active());
+    assert!(!active.is_retired());
+    assert!(!active.is_suspended());
+    assert!(!active.is_compromised());
+    assert!(active.could_sign_at(UnixTime::from_seconds(1_600_000_000)));
+    assert!(active.could_sign_at(UnixTime::from_seconds(1_800_000_000)));
+
+    // retired (REQ-KEY-006: valid if iat < state_since, false if >= state_since)
+    let retired = issuer.find_key("retired-key").expect("retired-key");
+    assert_eq!(retired.state, KeyState::Retired);
+    assert!(!retired.is_active());
+    assert!(retired.is_retired());
+    assert!(!retired.is_suspended());
+    assert!(!retired.is_compromised());
+    assert!(retired.could_sign_at(UnixTime::from_seconds(retired_since.saturating_sub(1))));
+    assert!(!retired.could_sign_at(UnixTime::from_seconds(retired_since)));
+    assert!(!retired.could_sign_at(UnixTime::from_seconds(retired_since.saturating_add(1))));
+
+    // suspended (no verificable mientras dure la suspensión)
+    let suspended = issuer.find_key("suspended-key").expect("suspended-key");
+    assert_eq!(suspended.state, KeyState::Suspended);
+    assert!(!suspended.is_active());
+    assert!(!suspended.is_retired());
+    assert!(suspended.is_suspended());
+    assert!(!suspended.is_compromised());
+    assert!(!suspended.could_sign_at(UnixTime::from_seconds(1_600_000_000)));
+    assert!(!suspended.could_sign_at(UnixTime::from_seconds(1_800_000_000)));
+
+    // compromised (inválidas todas)
+    let compromised = issuer.find_key("compromised-key").expect("compromised-key");
+    assert_eq!(compromised.state, KeyState::Compromised);
+    assert!(!compromised.is_active());
+    assert!(!compromised.is_retired());
+    assert!(!compromised.is_suspended());
+    assert!(compromised.is_compromised());
+    assert!(!compromised.could_sign_at(UnixTime::from_seconds(1_600_000_000)));
+    assert!(!compromised.could_sign_at(UnixTime::from_seconds(1_800_000_000)));
 }

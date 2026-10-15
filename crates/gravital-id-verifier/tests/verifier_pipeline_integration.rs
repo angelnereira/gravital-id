@@ -230,16 +230,25 @@ impl VerificationFixture {
 
     /// Emite y presenta un SD-JWT VC con Key Binding JWT completo.
     fn issue_presentation(&self, now: UnixTime) -> String {
+        self.issue_presentation_with_times(now, now)
+    }
+
+    /// Emite credencial en cred_iat y genera KB-JWT en presentation_time.
+    fn issue_presentation_with_times(
+        &self,
+        cred_iat: UnixTime,
+        presentation_time: UnixTime,
+    ) -> String {
         let rng = SeededRng::new(999);
         let parsed_kid = Kid::parse(&self.issuer_kid).expect("kid");
         let builder = gravital_id_credential::SdJwtVcBuilder::new(
             ISSUER_URI,
             Vct::parse(PERSONAL_VCT).expect("vct"),
-            now,
+            cred_iat,
         )
         .expect("builder")
         .exp(UnixTime::from_seconds(
-            now.as_seconds().saturating_add(86_400),
+            presentation_time.as_seconds().saturating_add(86_400),
         ))
         .status_list(7, STATUS_LIST_URI)
         .expect("status list")
@@ -270,7 +279,7 @@ impl VerificationFixture {
             &prefix,
             VERIFIER_AUDIENCE,
             NONCE,
-            now,
+            presentation_time,
             &self.holder_store,
             &self.holder_handle,
         )
@@ -801,4 +810,256 @@ fn alg_none_is_strictly_rejected_at_structure_stage() {
         structure_check.error_code,
         Some(ErrorCode::UnsupportedAlgorithm)
     );
+}
+
+// Verifies: REQ-KEY-005, REQ-KEY-006, INV-04 (Retired key: credentials issued before retirement remain valid)
+#[test]
+fn retired_key_before_retirement_date_passes_verification() {
+    let mut fixture = VerificationFixture::new(8001);
+    let cred_iat = UnixTime::from_seconds(NOW.as_seconds().saturating_sub(7_200)); // 2 hours ago
+    let retirement_time = NOW.as_seconds().saturating_sub(3_600); // 1 hour ago
+    let presentation = fixture.issue_presentation_with_times(cred_iat, NOW);
+
+    // Clave retirada hace 1 hora; credencial emitida hace 2 horas (iat < state_since)
+    let bundle = build_trust_bundle(
+        ISSUER_URI,
+        "active",
+        &fixture.issuer_kid,
+        &fixture.issuer_jwk,
+        "retired",
+        retirement_time,
+    );
+
+    let request = VerificationRequest::new(
+        NONCE,
+        VERIFIER_AUDIENCE,
+        UnixTime::from_seconds(NOW.as_seconds().saturating_add(300)),
+        OperationClass::Default,
+    );
+
+    let mut values = vec![0u32; 16];
+    values[7] = 0; // Valid
+    let snapshot = build_status_snapshot(2, &values, STATUS_LIST_URI, NOW);
+
+    let policy = VerificationPolicy::default();
+
+    let result = VerifierPipeline::verify(
+        &presentation,
+        Some(&request),
+        &bundle,
+        Some(&snapshot),
+        &mut fixture.state_store,
+        &policy,
+        NOW,
+        None,
+    );
+
+    assert_eq!(result.status(), VerificationStatus::Valid);
+    assert!(result.is_valid());
+
+    let key_check = &result.checks()[2];
+    assert_eq!(key_check.kind, CheckKind::KeyState);
+    assert_eq!(key_check.status, CheckStatus::Passed);
+
+    let validity_check = &result.checks()[4];
+    assert_eq!(validity_check.kind, CheckKind::Validity);
+    assert_eq!(validity_check.status, CheckStatus::Passed);
+}
+
+// Verifies: REQ-KEY-005, REQ-KEY-006, INV-05 (Retired key: credentials issued at or after retirement date are Invalid)
+#[test]
+fn retired_key_after_retirement_date_yields_invalid() {
+    let mut fixture = VerificationFixture::new(8002);
+    let cred_iat = UnixTime::from_seconds(NOW.as_seconds().saturating_sub(1_800)); // 30 min ago
+    let retirement_time = NOW.as_seconds().saturating_sub(3_600); // 1 hour ago (retired before issuance)
+    let presentation = fixture.issue_presentation_with_times(cred_iat, NOW);
+
+    let bundle = build_trust_bundle(
+        ISSUER_URI,
+        "active",
+        &fixture.issuer_kid,
+        &fixture.issuer_jwk,
+        "retired",
+        retirement_time,
+    );
+
+    let request = VerificationRequest::new(
+        NONCE,
+        VERIFIER_AUDIENCE,
+        UnixTime::from_seconds(NOW.as_seconds().saturating_add(300)),
+        OperationClass::Default,
+    );
+
+    let policy = VerificationPolicy::default();
+
+    let result = VerifierPipeline::verify(
+        &presentation,
+        Some(&request),
+        &bundle,
+        None,
+        &mut fixture.state_store,
+        &policy,
+        NOW,
+        None,
+    );
+
+    assert_eq!(result.status(), VerificationStatus::Invalid);
+    assert!(!result.is_valid());
+
+    let key_check = &result.checks()[2];
+    assert_eq!(key_check.kind, CheckKind::KeyState);
+    assert_eq!(key_check.status, CheckStatus::Passed);
+
+    let sig_check = &result.checks()[3];
+    assert_eq!(sig_check.kind, CheckKind::Signature);
+    assert_eq!(sig_check.status, CheckStatus::Passed);
+
+    let validity_check = &result.checks()[4];
+    assert_eq!(validity_check.kind, CheckKind::Validity);
+    assert_eq!(validity_check.status, CheckStatus::Failed);
+    assert_eq!(validity_check.error_code, Some(ErrorCode::IssuerKeyRetired));
+}
+
+// Verifies: REQ-KEY-005, REQ-KEY-006, INV-05 (Boundary: retired key with iat == state_since yields Invalid)
+#[test]
+fn retired_key_at_exact_retirement_instant_yields_invalid() {
+    let mut fixture = VerificationFixture::new(8003);
+    let boundary_time = NOW.as_seconds().saturating_sub(3_600);
+    let cred_iat = UnixTime::from_seconds(boundary_time);
+    let presentation = fixture.issue_presentation_with_times(cred_iat, NOW);
+
+    let bundle = build_trust_bundle(
+        ISSUER_URI,
+        "active",
+        &fixture.issuer_kid,
+        &fixture.issuer_jwk,
+        "retired",
+        boundary_time,
+    );
+
+    let request = VerificationRequest::new(
+        NONCE,
+        VERIFIER_AUDIENCE,
+        UnixTime::from_seconds(NOW.as_seconds().saturating_add(300)),
+        OperationClass::Default,
+    );
+
+    let policy = VerificationPolicy::default();
+
+    let result = VerifierPipeline::verify(
+        &presentation,
+        Some(&request),
+        &bundle,
+        None,
+        &mut fixture.state_store,
+        &policy,
+        NOW,
+        None,
+    );
+
+    assert_eq!(result.status(), VerificationStatus::Invalid);
+    assert!(!result.is_valid());
+
+    let validity_check = &result.checks()[4];
+    assert_eq!(validity_check.kind, CheckKind::Validity);
+    assert_eq!(validity_check.status, CheckStatus::Failed);
+    assert_eq!(validity_check.error_code, Some(ErrorCode::IssuerKeyRetired));
+}
+
+// Verifies: REQ-KEY-005, INV-04, INV-05 (Suspended key yields Unverifiable with evidence)
+#[test]
+fn suspended_key_yields_unverifiable() {
+    let mut fixture = VerificationFixture::new(8004);
+    let presentation = fixture.issue_presentation(NOW);
+
+    let bundle = build_trust_bundle(
+        ISSUER_URI,
+        "active",
+        &fixture.issuer_kid,
+        &fixture.issuer_jwk,
+        "suspended",
+        NOW.as_seconds().saturating_sub(86_400),
+    );
+
+    let request = VerificationRequest::new(
+        NONCE,
+        VERIFIER_AUDIENCE,
+        UnixTime::from_seconds(NOW.as_seconds().saturating_add(300)),
+        OperationClass::Default,
+    );
+
+    let policy = VerificationPolicy::default();
+
+    let result = VerifierPipeline::verify(
+        &presentation,
+        Some(&request),
+        &bundle,
+        None,
+        &mut fixture.state_store,
+        &policy,
+        NOW,
+        None,
+    );
+
+    assert_eq!(result.status(), VerificationStatus::Unverifiable);
+    assert!(!result.is_valid());
+
+    let key_check = &result.checks()[2];
+    assert_eq!(key_check.kind, CheckKind::KeyState);
+    assert_eq!(key_check.status, CheckStatus::Indeterminate);
+    assert_eq!(key_check.error_code, Some(ErrorCode::IssuerSuspended));
+
+    // Comprobaciones subsiguientes no autenticadas quedan Skipped
+    for check in &result.checks()[3..] {
+        assert_eq!(check.status, CheckStatus::Skipped);
+    }
+}
+
+// Verifies: REQ-KEY-005, INV-04, INV-05 (Administratively suspended issuer entry yields Unverifiable)
+#[test]
+fn administratively_suspended_issuer_entry_yields_unverifiable() {
+    let mut fixture = VerificationFixture::new(8005);
+    let presentation = fixture.issue_presentation(NOW);
+
+    let bundle = build_trust_bundle(
+        ISSUER_URI,
+        "suspended", // Emisor administrativamente suspendido en el bundle
+        &fixture.issuer_kid,
+        &fixture.issuer_jwk,
+        "active",
+        NOW.as_seconds().saturating_sub(86_400),
+    );
+
+    let request = VerificationRequest::new(
+        NONCE,
+        VERIFIER_AUDIENCE,
+        UnixTime::from_seconds(NOW.as_seconds().saturating_add(300)),
+        OperationClass::Default,
+    );
+
+    let policy = VerificationPolicy::default();
+
+    let result = VerifierPipeline::verify(
+        &presentation,
+        Some(&request),
+        &bundle,
+        None,
+        &mut fixture.state_store,
+        &policy,
+        NOW,
+        None,
+    );
+
+    assert_eq!(result.status(), VerificationStatus::Unverifiable);
+    assert!(!result.is_valid());
+
+    let issuer_check = &result.checks()[1];
+    assert_eq!(issuer_check.kind, CheckKind::IssuerAuthorized);
+    assert_eq!(issuer_check.status, CheckStatus::Indeterminate);
+    assert_eq!(issuer_check.error_code, Some(ErrorCode::IssuerSuspended));
+
+    // Comprobaciones subsiguientes quedan Skipped
+    for check in &result.checks()[2..] {
+        assert_eq!(check.status, CheckStatus::Skipped);
+    }
 }

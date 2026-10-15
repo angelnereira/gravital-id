@@ -6,8 +6,8 @@
 | REQ-KEY-002 | F9 | DEBE | T, D | P-03 | — | Pendiente (Fase futura) |
 | REQ-KEY-003 | F9 | DEBE | I, A | P-03 | keystore.rs | Cubierto |
 | REQ-KEY-004 | F2 | DEBE | T | P-11 | keystore.rs, lib.rs, software.rs, keys_tests.rs | Cubierto |
-| REQ-KEY-005 | F4 | DEBE | T | P-08 | bundle.rs, lib.rs, verifier_pipeline_integration.rs | Cubierto |
-| REQ-KEY-006 | F4 | DEBE | T | — | bundle.rs, lib.rs, pipeline.rs | Cubierto |
+| REQ-KEY-005 | F4 | DEBE | T | P-08 | bundle.rs, lib.rs, trust_bundle_integration.rs, verifier_pipeline_integration.rs | Cubierto |
+| REQ-KEY-006 | F4 | DEBE | T | — | bundle.rs, lib.rs, trust_bundle_integration.rs, pipeline.rs, verifier_pipeline_integration.rs | Cubierto |
 | REQ-KEY-007 | F2 | DEBE | T | P-04 | jwk.rs, api_coverage.rs, lib.rs, software.rs, keys_tests.rs | Cubierto |
 | REQ-KEY-008 | F5 | DEBE | T | P-09 | — | Pendiente (Fase futura) |
 | REQ-KEY-009 | F2 | DEBE | T | P-07 | keystore.rs, lib.rs, purpose.rs, compile_fail.rs, keys_tests.rs, agree_with_signing_key.rs, sign_with_hpke_key.rs | Cubierto |

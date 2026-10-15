@@ -10,7 +10,7 @@
 | Último gate cerrado | **G0** (2026-10-11) |
 | Próximo gate | **G3** — revisión formal de Fase F3 (#59); **G2** sigue pendiente de merge/CI |
 | Hito siguiente | M1 · Núcleo offline (al cerrar G5) |
-| Última actualización | 2026-10-15 (F4.T07 completada — Caché de nonces anti-replay) |
+| Última actualización | 2026-10-15 (F4.T08 completada — Estados de clave del emisor) |
 
 ## Gates
 
@@ -26,6 +26,7 @@
 
 | Tarea | Issue | Responsable | Estado | Siguiente paso |
 |---|---|---|---|---|
+| F4.T08 Estados de clave del emisor | #71 | Antigravity (agente) | Hecha | Semántica `active`/`retired`/`suspended`/`compromised` (`ARCHITECTURE.md §11.6`, REQ-KEY-005, REQ-KEY-006); rama `feat/71-issuer-key-states` |
 | F4.T07 Caché de nonces | #68 | Antigravity (agente) | Hecha | Trait `NonceCache`, `InMemoryNonceCache` acotada (4.096), evicción determinista por expiración, `proptest`; rama `feat/68-nonce-cache` |
 | F4.T06 Pipeline del verificador | #66 | Antigravity (agente) | Hecha | Pipeline typestate con 11 comprobaciones ordenadas, evidencia y testigo compile-fail; rama `feat/66-verifier-pipeline` |
 | F4.T05 Policy del verificador | #65 | OpenCode (agente) | Hecha | `VerificationPolicy`, frescura por operación, sesgo acotado, allowlist/denylist; rama `feat/65-verifier-policy` |
@@ -112,22 +113,28 @@
 
 ## Última nota de traspaso
 
-### Traspaso — 2026-10-15 (F4.T07: Caché de nonces anti-replay) — Antigravity (agente)
-- Tarea: F4.T07 — #68 — rama `feat/68-nonce-cache`
+### Traspaso — 2026-10-15 (F4.T08: Estados de clave del emisor) — Antigravity (agente)
+- Tarea: F4.T08 — #71 — rama `feat/71-issuer-key-states`
 - Estado: **lista para revisión / hecha**
 - Hecho en esta sesión:
-  - `crates/gravital-id-verifier/src/nonce.rs`: diseñado e implementado el trait `NonceCache` con consumo atómico `check_and_consume` (`REQ-PRES-004`), prevención de condiciones de carrera y consulta no destructiva `contains`.
-  - Implementado `InMemoryNonceCache` acotado a `DEFAULT_MAX_NONCES = 4.096` entradas (`REQ-VER-008`), con poda de nonces caducados y evicción determinista por expiración más temprana ante saturación de capacidad.
-  - `crates/gravital-id-verifier/src/state.rs`: integrado `InMemoryNonceCache` como componente interno de `InMemoryStateStore`, delegando `check_and_consume_nonce` de `VerifierStateStore` e implementando `NonceCache` directamente sobre `InMemoryStateStore` manteniendo la serialización e integridad HMAC-SHA256 del estado canónico.
-  - `crates/gravital-id-verifier/tests/verifier_nonce_integration.rs`: suite de 7 pruebas unitarias y de propiedades con `proptest = "=1.5.0"` (fijado según MSRV Rust 1.85.0 y ADR-0014), verificando aceptación de nonces frescos, rechazo fail-closed de reutilización (`ErrorCode::NonceReused`, INV-05), rechazo de nonces ya expirados, reaprovechamiento tras expiración, acotamiento estricto de capacidad máxima (4.096) y ordenación determinista por expiración más temprana.
-  - Actualizada la documentación técnica en `crates/gravital-id-verifier/README.md` (Sección 4: Caché de Nonces y Protección Anti-Replay).
-  - Actualizado `CHANGELOG.md` con la entrada de F4.T07.
+  - `crates/gravital-id-trust/src/bundle.rs`: enriquecidos `KeyState`, `IssuerKey`, `IssuerState` e `IssuerEntry` con métodos de consulta normativos (`is_active`, `is_retired`, `is_suspended`, `is_compromised`, `find_key`).
+  - Desarrollada suite exhaustiva de pruebas unitarias en `crates/gravital-id-trust/src/bundle.rs` validando `KeyState` (todos los estados, parseo estricto, rechazo de estados desconocidos con `ErrorCode::MalformedSdJwt`), `IssuerState` y `could_sign_at` para todos los estados temporales y límites frontera.
+  - `crates/gravital-id-trust/tests/trust_bundle_integration.rs`: añadida prueba de integración `issuer_key_states_in_verified_bundle_respect_semantics` demostrando el parseo, verificación criptográfica multi-firma de bundle y consulta de claves en los 4 estados normativos (`active`, `retired`, `suspended`, `compromised`).
+  - `crates/gravital-id-verifier/tests/verifier_pipeline_integration.rs`: añadido soporte en `VerificationFixture` para emitir credenciales con `cred_iat` desacoplado del tiempo de presentación (`issue_presentation_with_times`).
+  - Implementadas 5 pruebas de integración de pipeline cubriendo todas las reglas de `ARCHITECTURE.md §11.6`:
+    - `retired_key_before_retirement_date_passes_verification`: credenciales emitidas antes del retiro (`iat < state_since`) se verifican como `Valid` (`REQ-KEY-006`).
+    - `retired_key_after_retirement_date_yields_invalid`: credenciales emitidas tras retiro (`iat > state_since`) fallan `Validity` con `ErrorCode::IssuerKeyRetired` produciendo `Invalid`.
+    - `retired_key_at_exact_retirement_instant_yields_invalid`: condición límite exacta (`iat == state_since`) rechazada con `ErrorCode::IssuerKeyRetired` (`Invalid`).
+    - `suspended_key_yields_unverifiable`: clave en estado `suspended` produce `CheckStatus::Indeterminate` en `KeyState` con `ErrorCode::IssuerSuspended`, omitiendo pasos no autenticados (`Skipped`) y produciendo `Unverifiable`.
+    - `administratively_suspended_issuer_entry_yields_unverifiable`: emisor en estado `suspended` produce `CheckStatus::Indeterminate` en `IssuerAuthorized` con `ErrorCode::IssuerSuspended` produciendo `Unverifiable`.
+  - Documentación técnica actualizada en `crates/gravital-id-trust/README.md` y `crates/gravital-id-verifier/README.md`.
+  - Actualizado `CHANGELOG.md` con la entrada de F4.T08.
 - Pendiente (siguiente paso concreto):
-  - F4.T08 `Estados de clave del emisor`: `active`, `retired`, `suspended`, `compromised` con verificación de firmas según instante de emisión vs fecha de retiro/suspensión (`REQ-KEY-005`, `REQ-KEY-006`).
+  - F4.T09 `Matriz negativa y cobertura`: un vector por cada comprobación que falla; pruebas de precedencia de estados; cobertura de líneas en crates críticos; pruebas de mutación sobre las reglas de rechazo (`REQ-MAINT-003`, `REQ-MAINT-005`, `REQ-MAINT-006`, `REQ-VER-010`).
 - Bugs/issues abiertos durante la sesión: Ninguno.
 - Decisiones tomadas (con enlace a ADR/issue):
-  - Evicción en saturación: cuando no hay entradas caducadas y se excede la capacidad máxima, se expulsa la entrada con el `expires_at` más temprano de la caché, preservando las entradas de mayor longevidad y garantizando que el tamaño nunca supera el límite configurado (`REQ-VER-008`).
+  - Rotación no retroactiva: se verifica que la fecha de retiro de una clave solo invalida credenciales con `iat >= state_since`, garantizando interoperabilidad y longevidad de credenciales emitidas legalmente antes del retiro (`REQ-KEY-006`, `ARCHITECTURE.md §11.6`).
 - Riesgos o dudas: Ninguno.
-- Comprobaciones locales: fmt ✅ clippy ✅ tests ✅ (393 pruebas del workspace, 0 fallos)
+- Comprobaciones locales: fmt ✅ clippy ✅ tests ✅ (402 pruebas del workspace, 0 fallos)
   layers ✅ trace ✅ check-error-codes ✅ doc ✅ deny ✅ `xtask conformance` 24/24 ✅ wasm32 ✅
   bare-metal ✅ audit ✅

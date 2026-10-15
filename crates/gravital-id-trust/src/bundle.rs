@@ -66,6 +66,18 @@ impl IssuerState {
             Self::Suspended => "suspended",
         }
     }
+
+    /// Comprueba si el emisor está administrativamente activo.
+    #[must_use]
+    pub const fn is_active(&self) -> bool {
+        matches!(self, Self::Active)
+    }
+
+    /// Comprueba si el emisor está administrativamente suspendido.
+    #[must_use]
+    pub const fn is_suspended(&self) -> bool {
+        matches!(self, Self::Suspended)
+    }
 }
 
 /// Estado de una clave de emisor (`ARCHITECTURE.md §11.6`).
@@ -109,6 +121,30 @@ impl KeyState {
             Self::Compromised => "compromised",
         }
     }
+
+    /// Comprueba si la clave está activa.
+    #[must_use]
+    pub const fn is_active(&self) -> bool {
+        matches!(self, Self::Active)
+    }
+
+    /// Comprueba si la clave está retirada.
+    #[must_use]
+    pub const fn is_retired(&self) -> bool {
+        matches!(self, Self::Retired)
+    }
+
+    /// Comprueba si la clave está suspendida.
+    #[must_use]
+    pub const fn is_suspended(&self) -> bool {
+        matches!(self, Self::Suspended)
+    }
+
+    /// Comprueba si la clave está comprometida.
+    #[must_use]
+    pub const fn is_compromised(&self) -> bool {
+        matches!(self, Self::Compromised)
+    }
 }
 
 /// Clave de emisor declarada en el bundle.
@@ -136,6 +172,30 @@ impl IssuerKey {
             KeyState::Retired => at.as_seconds() < self.state_since.as_seconds(),
             KeyState::Suspended | KeyState::Compromised => false,
         }
+    }
+
+    /// Comprueba si la clave está activa.
+    #[must_use]
+    pub const fn is_active(&self) -> bool {
+        self.state.is_active()
+    }
+
+    /// Comprueba si la clave está retirada.
+    #[must_use]
+    pub const fn is_retired(&self) -> bool {
+        self.state.is_retired()
+    }
+
+    /// Comprueba si la clave está suspendida.
+    #[must_use]
+    pub const fn is_suspended(&self) -> bool {
+        self.state.is_suspended()
+    }
+
+    /// Comprueba si la clave está comprometida.
+    #[must_use]
+    pub const fn is_compromised(&self) -> bool {
+        self.state.is_compromised()
     }
 }
 
@@ -167,6 +227,14 @@ pub struct IssuerEntry {
     pub status_keys: Vec<StatusKey>,
     /// Claves de firma del emisor.
     pub keys: Vec<IssuerKey>,
+}
+
+impl IssuerEntry {
+    /// Busca una clave de firma del emisor por su `kid`.
+    #[must_use]
+    pub fn find_key(&self, kid: &str) -> Option<&IssuerKey> {
+        self.keys.iter().find(|key| key.kid.as_str() == kid)
+    }
 }
 
 /// Verificador registrado (opcional por perfil, REQ-TRUST-007).
@@ -1001,5 +1069,120 @@ mod tests {
         assert!(!text.contains("status_lists"));
         assert!(!text.contains("status_uri"));
         assert!(!text.contains("list_uri"));
+    }
+
+    #[test]
+    fn key_state_semantics_all_variants_and_predicates() {
+        // REQ-KEY-005, ARCHITECTURE.md §11.6
+        let active = KeyState::parse("active").expect("active");
+        assert_eq!(active, KeyState::Active);
+        assert_eq!(active.as_str(), "active");
+        assert!(active.is_active());
+        assert!(!active.is_retired());
+        assert!(!active.is_suspended());
+        assert!(!active.is_compromised());
+
+        let retired = KeyState::parse("retired").expect("retired");
+        assert_eq!(retired, KeyState::Retired);
+        assert_eq!(retired.as_str(), "retired");
+        assert!(!retired.is_active());
+        assert!(retired.is_retired());
+        assert!(!retired.is_suspended());
+        assert!(!retired.is_compromised());
+
+        let suspended = KeyState::parse("suspended").expect("suspended");
+        assert_eq!(suspended, KeyState::Suspended);
+        assert_eq!(suspended.as_str(), "suspended");
+        assert!(!suspended.is_active());
+        assert!(!suspended.is_retired());
+        assert!(suspended.is_suspended());
+        assert!(!suspended.is_compromised());
+
+        let compromised = KeyState::parse("compromised").expect("compromised");
+        assert_eq!(compromised, KeyState::Compromised);
+        assert_eq!(compromised.as_str(), "compromised");
+        assert!(!compromised.is_active());
+        assert!(!compromised.is_retired());
+        assert!(!compromised.is_suspended());
+        assert!(compromised.is_compromised());
+
+        let err = KeyState::parse("invalid_state").unwrap_err();
+        assert_eq!(err.code, ErrorCode::MalformedSdJwt);
+    }
+
+    #[test]
+    fn issuer_state_semantics_and_predicates() {
+        let active = IssuerState::parse("active").expect("active");
+        assert_eq!(active, IssuerState::Active);
+        assert_eq!(active.as_str(), "active");
+        assert!(active.is_active());
+        assert!(!active.is_suspended());
+
+        let suspended = IssuerState::parse("suspended").expect("suspended");
+        assert_eq!(suspended, IssuerState::Suspended);
+        assert_eq!(suspended.as_str(), "suspended");
+        assert!(!suspended.is_active());
+        assert!(suspended.is_suspended());
+
+        let err = IssuerState::parse("banned").unwrap_err();
+        assert_eq!(err.code, ErrorCode::MalformedSdJwt);
+    }
+
+    #[test]
+    fn issuer_key_could_sign_at_all_states() {
+        // REQ-KEY-005, REQ-KEY-006:
+        // - active: siempre true
+        // - retired: true estrictamente si at < state_since
+        // - suspended: siempre false
+        // - compromised: siempre false
+        let kid = Kid::parse("k1").expect("kid");
+        let mut store = SoftwareKeyStore::new(SeededRng::new(42));
+        let handle = store.generate_key::<IssuerSigning>().expect("key");
+        let jwk = store.public_key(&handle).expect("jwk");
+        let state_since = UnixTime::from_seconds(1_000_000);
+
+        let active_key = IssuerKey {
+            kid: kid.clone(),
+            jwk: jwk.clone(),
+            state: KeyState::Active,
+            state_since,
+        };
+        assert!(active_key.is_active());
+        assert!(active_key.could_sign_at(UnixTime::from_seconds(500_000)));
+        assert!(active_key.could_sign_at(UnixTime::from_seconds(1_000_000)));
+        assert!(active_key.could_sign_at(UnixTime::from_seconds(2_000_000)));
+
+        let retired_key = IssuerKey {
+            kid: kid.clone(),
+            jwk: jwk.clone(),
+            state: KeyState::Retired,
+            state_since,
+        };
+        assert!(retired_key.is_retired());
+        assert!(retired_key.could_sign_at(UnixTime::from_seconds(999_999)));
+        assert!(!retired_key.could_sign_at(UnixTime::from_seconds(1_000_000)));
+        assert!(!retired_key.could_sign_at(UnixTime::from_seconds(1_000_001)));
+
+        let suspended_key = IssuerKey {
+            kid: kid.clone(),
+            jwk: jwk.clone(),
+            state: KeyState::Suspended,
+            state_since,
+        };
+        assert!(suspended_key.is_suspended());
+        assert!(!suspended_key.could_sign_at(UnixTime::from_seconds(500_000)));
+        assert!(!suspended_key.could_sign_at(UnixTime::from_seconds(1_000_000)));
+        assert!(!suspended_key.could_sign_at(UnixTime::from_seconds(2_000_000)));
+
+        let compromised_key = IssuerKey {
+            kid,
+            jwk,
+            state: KeyState::Compromised,
+            state_since,
+        };
+        assert!(compromised_key.is_compromised());
+        assert!(!compromised_key.could_sign_at(UnixTime::from_seconds(500_000)));
+        assert!(!compromised_key.could_sign_at(UnixTime::from_seconds(1_000_000)));
+        assert!(!compromised_key.could_sign_at(UnixTime::from_seconds(2_000_000)));
     }
 }

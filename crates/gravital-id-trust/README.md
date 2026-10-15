@@ -43,9 +43,12 @@ Raíz de confianza, trust bundle multi-firma y políticas de verificación para 
 
 - `TrustBundle` con emisores (perfiles, `vct`, estados, `status_keys`, claves con
   `state`/`state_since`), verificadores y políticas, derivado de un bloque finalizado.
-- **Estados de clave** (`ARCHITECTURE.md §11.6`): `active`, `retired` (solo valida
-  credenciales con `iat < state_since`, REQ-KEY-006), `suspended` y `compromised`
-  (nunca válidas).
+- **Estados de clave** (`ARCHITECTURE.md §11.6`, REQ-KEY-005, REQ-KEY-006):
+  - `active`: Clave plenamente vigente para emisión y verificación (`could_sign_at` siempre `true`).
+  - `retired` (desde T): Retirada ordenadamente. Válida exclusivamente para credenciales emitidas antes del retiro (`iat < state_since`, REQ-KEY-006); emisiones con `iat >= state_since` son rechazadas.
+  - `suspended` (desde T): En suspensión técnica o administrativa temporal. No verificable mientras dure (`Unverifiable`, `could_sign_at` = `false`).
+  - `compromised` (desde T): Irrevocablemente comprometida (`could_sign_at` = `false`). Todas las credenciales firmadas son inválidas (`Invalid`, INV-05).
+  - Métodos auxiliares de consulta: `is_active()`, `is_retired()`, `is_suspended()`, `is_compromised()` en `KeyState` e `IssuerKey`, y `IssuerEntry::find_key(kid)`.
 - **Cofirma k-de-n de firmantes distintos** (`TrustBundleVerifier::verify`): marco y época
   coincidentes con la raíz, anti-rollback por `(bundle_epoch, bundle_version)`
   (REQ-TRUST-002), umbral de operadores distintos y ventana de validez.
