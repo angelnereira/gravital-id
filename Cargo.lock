@@ -605,12 +605,15 @@ dependencies = [
 name = "gravital-id-verifier"
 version = "0.1.0"
 dependencies = [
+ "gravital-id-codec",
  "gravital-id-credential",
  "gravital-id-crypto",
+ "gravital-id-keys",
  "gravital-id-status",
  "gravital-id-testkit",
  "gravital-id-trust",
  "gravital-id-types",
+ "trybuild",
  "zeroize",
 ]
 

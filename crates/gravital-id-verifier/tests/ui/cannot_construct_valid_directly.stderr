@@ -1,0 +1,5 @@
+error[E0451]: field `_private` of struct `AllMandatoryPassed` is private
+ --> tests/ui/cannot_construct_valid_directly.rs:6:40
+  |
+6 |     let witness = AllMandatoryPassed { _private: () };
+  |                                        ^^^^^^^^^^^^ private field

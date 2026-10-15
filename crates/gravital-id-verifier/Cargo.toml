@@ -14,6 +14,7 @@ description = "Pipeline de verificación offline con typestate para Gravital ID.
 workspace = true
 
 [dependencies]
+gravital-id-codec = { workspace = true }
 gravital-id-credential = { workspace = true }
 gravital-id-status = { workspace = true }
 gravital-id-trust = { workspace = true }
@@ -22,4 +23,6 @@ gravital-id-crypto = { workspace = true }
 zeroize = { workspace = true }
 
 [dev-dependencies]
+gravital-id-keys = { workspace = true }
+trybuild = "=1.0.101"
 gravital-id-testkit = { path = "../gravital-id-testkit", version = "0.1.0" }
