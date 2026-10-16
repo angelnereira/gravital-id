@@ -10,7 +10,7 @@
 | Último gate cerrado | **G4** (2026-10-16) · **G19** (2026-10-15) · **G0** (2026-10-11) |
 | Próximo gate | **G5** — almacenamiento local de la wallet; **G3** (#59) y **G2** pendientes de CI |
 | Hito siguiente | M1 · Núcleo offline (al cerrar G5) · MP1 · Tap offline (al cerrar G21) |
-| Última actualización | 2026-10-16 (F5.T07 y F5.T08 completadas — gravital-id-holder, gestión de credenciales, DCQL, planes de divulgación, presentaciones con KB-JWT y auditoría local sin PII con 90,15% de cobertura; #85 resuelto) |
+| Última actualización | 2026-10-16 (F5.T09 y F5.T10 completadas — gravital-id-protocol, perfil offline QR, transcodificación binaria sin pérdida SD-JWT <-> CBOR, fragmentación Multi-QR y verificación CI de presupuesto de tamaño con 90,58% de cobertura; #86 resuelto) |
 
 ## Gates
 
@@ -28,6 +28,7 @@
 
 | Tarea | Issue | Responsable | Estado | Siguiente paso |
 |---|---|---|---|---|
+| F5.T09-T10 Perfil offline QR y presupuestos | #86 | Antigravity (agente) | Hecha | Perfil offline QR, VerificationRequest, transcodificación sin pérdida CBOR, compresión Base45, segmentación Multi-QR y presupuesto de tamaño (90,58% cobertura); resuelto #86 |
 | F5.T07-T08 Gestión wallet y presentación | #85 | Antigravity (agente) | Hecha | Modelado completo de WalletCredential, HolderWallet, DCQL query, DisclosurePlan y KB-JWT en gravital-id-holder (90,15% de cobertura de líneas); resuelto #85 |
 | F5.T04-T06 SQLite y migraciones | #84 | Antigravity (agente) | Hecha | SqliteStorage implementando StorageBackend y VerifierStateStore, WAL, BEGIN IMMEDIATE, migraciones V1/V2, reversión atómica y 92,38% de cobertura; integrada en main |
 | F5.T01-T03 Almacenamiento local | #83 | Antigravity (agente) | Hecha | Trait StorageBackend, InMemoryStorageBackend, cifrado de sobre DEK/KEK, formato canónico PIP$, AAD e índices ciegos HMAC-SHA-256 probados con 92,22% de cobertura; integrada en main |
@@ -137,6 +138,24 @@
 | Tamaño binario del SDK | — | — | — | — | — |
 
 ## Última nota de traspaso
+
+### Traspaso — 2026-10-16 (F5.T09 / F5.T10: Perfil Offline QR, Transcodificación Binaria, Multi-QR y Presupuesto de Tamaño) — Antigravity (agente)
+- Tarea: F5.T09 / F5.T10 — #86 — rama `main`
+- Estado: **hecha**
+- Hecho en esta sesión:
+  - **F5.T09 (`offline_request.rs`, `offline_transcoding.rs`, `offline_multi_qr.rs`):** Implementación de `gravital-id-protocol` (Capa L4 sans-I/O).
+    - `VerificationRequest`: Estructura canónica JSON (`PROTOCOL.md §3.1`) de solicitud offline del verificador, validación estricta de límites (nonce $\ge 16$ bytes, verifier_id $\le 128$, audience $\le 256$), consulta DCQL normada, clave pública efímera opcional `eph_pub` (`ADR-0023`), y validación temporal (`validate_timing`) contra reloj inyectado (`UnixTime`, `INV-11`) con sesgo de reloj acotado (`REQ-PRES-005`).
+    - `TranscodedPresentation`: Transcodificación biyectiva sin pérdida entre serialización compacta SD-JWT y tupla CBOR determinista de 8 elementos (`[version, issuer_h, issuer_p, issuer_sig, disclosures, kb_h, kb_p, kb_sig]`, `PROTOCOL.md §3.2`), compresión zlib/DEFLATE (nivel 9) con mitigación DoS por descompresión acotada (ratio $\le 10:1$, máx 64 KiB), codificación alfanumérica Base45 con prefijo canónico `GID1:` (y compatibilidad heredada con `PIP1:`).
+    - `Multi-QR`: Segmentación determinista (`segment_presentation`) para presentaciones Base45 que excedan 1.200 caracteres (`PROTOCOL.md §3.3`, `ADR-0011`) en 2..=8 fragmentos de $\le 900$ caracteres con cabecera normada `GID01/P<index>/<total>/<hash8>/<chunk>` (y compatibilidad heredada `PIP1/M/`); acumulador `MultiQrCollector` con ensamblado fuera de orden, idempotencia y verificación de integridad criptográfica SHA-256 (`hash8`).
+  - **F5.T10 (`protocol_multi_qr_and_budgets.rs`):** Verificación automatizada en CI del presupuesto de tamaño (`REQ-PERF-003`): presentación de referencia `pip-personal-v1` con 2 atributos selectivos divulgados (`given_name`, `age_over_18`), 1 no divulgado (`family_name`), referencia de estado y KB-JWT firmado produce 1.150 caracteres Base45, encajando holgadamente en el límite de 1.200 caracteres de un único código QR.
+  - **Cobertura de código (`llvm-cov`):** 90,58% de cobertura de líneas en `gravital-id-protocol` (754 líneas evaluadas, 683 cubiertas; `offline_request.rs`: 93,03%, `offline_transcoding.rs`: 91,42%, `offline_multi_qr.rs`: 86,98%).
+  - **Trazabilidad:** REQ-PRES-005, REQ-PERF-003, REQ-MAINT-005 verificados y actualizados en `docs/TRACEABILITY.md` (79 requisitos referenciados en total en el workspace).
+- Pendiente (siguiente paso concreto):
+  - Iniciar `F5.T11`–`F5.T12`: Validación de solicitud de verificación en la wallet (`F5.T11`) y flujo CLI integral emisor -> holder -> verifier offline (`F5.T12`).
+- Bugs/issues abiertos durante la sesión: ninguno.
+- Decisiones tomadas (con enlace a ADR/issue): Implementado perfil offline QR en Capa L4 según `PROTOCOL.md §3.1`, `§3.2`, `§3.3` y `ADR-0011` (#86).
+- Riesgos o dudas: ninguna.
+- Comprobaciones locales: fmt ✅ clippy ✅ tests (100% verde en todo el workspace) ✅ layers ✅ trace (79 REQs) ✅ check-error-codes (59) ✅ check-req-ids (167) ✅ llvm-cov (90,58% protocol) ✅
 
 ### Traspaso — 2026-10-16 (F5.T07 / F5.T08: Wallet, DCQL, Planes de Divulgación y Presentaciones KB-JWT) — Antigravity (agente)
 - Tarea: F5.T07 / F5.T08 — #85 — rama `main`

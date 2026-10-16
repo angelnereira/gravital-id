@@ -44,7 +44,9 @@ fn create_test_credential(now: UnixTime, holder_jwk: JwkEcP256) -> String {
     let rng_emit = SeededRng::new(2222);
     let builder = SdJwtVcBuilder::new(ISSUER_URI, Vct::parse(TEST_VCT).expect("vct"), now)
         .expect("builder")
-        .exp(UnixTime::from_seconds(now.as_seconds().saturating_add(3600)))
+        .exp(UnixTime::from_seconds(
+            now.as_seconds().saturating_add(3600),
+        ))
         .cnf_jwk(holder_jwk)
         .status_list(1, STATUS_LIST_URI)
         .expect("status")

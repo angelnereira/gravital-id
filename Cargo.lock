@@ -537,9 +537,15 @@ dependencies = [
 name = "gravital-id-protocol"
 version = "0.1.0"
 dependencies = [
+ "gravital-id-codec",
  "gravital-id-credential",
+ "gravital-id-crypto",
  "gravital-id-holder",
+ "gravital-id-keys",
  "gravital-id-recovery",
+ "gravital-id-storage",
+ "gravital-id-testkit",
+ "gravital-id-types",
  "gravital-id-verifier",
 ]
 

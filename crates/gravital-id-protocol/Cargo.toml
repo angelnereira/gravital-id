@@ -14,7 +14,15 @@ description = "Máquinas de estado de protocolo (OID4VCI, OID4VP, QR offline) sa
 workspace = true
 
 [dependencies]
+gravital-id-types = { workspace = true }
+gravital-id-codec = { workspace = true }
+gravital-id-crypto = { workspace = true }
 gravital-id-credential = { workspace = true }
 gravital-id-verifier = { workspace = true }
 gravital-id-holder = { workspace = true }
 gravital-id-recovery = { workspace = true }
+
+[dev-dependencies]
+gravital-id-testkit = { path = "../gravital-id-testkit", version = "0.1.0" }
+gravital-id-keys = { workspace = true }
+gravital-id-storage = { workspace = true }
