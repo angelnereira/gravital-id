@@ -10,7 +10,7 @@
 | Último gate cerrado | **G0** (2026-10-11) |
 | Próximo gate | **G3** — revisión formal de Fase F3 (#59); **G2** sigue pendiente de merge/CI |
 | Hito siguiente | M1 · Núcleo offline (al cerrar G5) |
-| Última actualización | 2026-10-15 (F4.T06 completada — Pipeline del verificador con typestate) |
+| Última actualización | 2026-10-15 (F4.T07 completada — Caché de nonces anti-replay) |
 
 ## Gates
 
@@ -26,6 +26,7 @@
 
 | Tarea | Issue | Responsable | Estado | Siguiente paso |
 |---|---|---|---|---|
+| F4.T07 Caché de nonces | #68 | Antigravity (agente) | Hecha | Trait `NonceCache`, `InMemoryNonceCache` acotada (4.096), evicción determinista por expiración, `proptest`; rama `feat/68-nonce-cache` |
 | F4.T06 Pipeline del verificador | #66 | Antigravity (agente) | Hecha | Pipeline typestate con 11 comprobaciones ordenadas, evidencia y testigo compile-fail; rama `feat/66-verifier-pipeline` |
 | F4.T05 Policy del verificador | #65 | OpenCode (agente) | Hecha | `VerificationPolicy`, frescura por operación, sesgo acotado, allowlist/denylist; rama `feat/65-verifier-policy` |
 | F4.T04 Estado del verificador | #64 | OpenCode (agente) | Hecha | `VerifierStateStore`, `TimeFloorGuard`, `InMemoryStateStore` con HMAC-SHA256; rama `feat/64-verifier-state` |
@@ -111,25 +112,22 @@
 
 ## Última nota de traspaso
 
-### Traspaso — 2026-10-15 (F4.T06: Pipeline del verificador) — Antigravity (agente)
-- Tarea: F4.T06 — #66 — rama `feat/66-verifier-pipeline`
+### Traspaso — 2026-10-15 (F4.T07: Caché de nonces anti-replay) — Antigravity (agente)
+- Tarea: F4.T07 — #68 — rama `feat/68-nonce-cache`
 - Estado: **lista para revisión / hecha**
 - Hecho en esta sesión:
-  - Root `README.md` reescrito integralmente reflejando la denominación definitiva Gravital ID, principios fundamentales (verificación offline sans-I/O, cero PII, sin custodia de claves, multi-firma por umbral k-de-n), tabla completa de 20 crates (L1–L6), catálogo de las 16 invariantes no negociables (INV-01 a INV-16), comandos normativos de verificación y arquitectura spec-first.
-  - `crates/gravital-id-verifier/src/result.rs`: implementado el modelo normativo cerrado de cuatro estados (`Valid`, `ValidWithStaleStatus`, `Unverifiable`, `Invalid`, INV-04), enumeración ordenada de las 11 comprobaciones (`CheckKind`), estados de comprobación (`CheckStatus`: `Passed`, `Failed`, `Indeterminate`, `Skipped`), estructura exhaustiva de evidencia (`CheckEvidence`), testigo tipado `AllMandatoryPassed` que impide la construcción externa no autorizada de `Valid` (`REQ-VER-012`, `ADR-0020`), y métodos de consulta seguros.
-  - `crates/gravital-id-verifier/src/pipeline.rs`: implementada la máquina de estados typestate (`StageUnchecked`, `StageStructureChecked`, `StageIssuerResolved`, `StageAuthenticated`) y el método `VerifierPipeline::verify(...)` ejecutando determinísticamente las 11 comprobaciones normativas en orden estricto (Structure ↝ IssuerAuthorized ↝ KeyState ↝ Signature ↝ Validity ↝ Disclosures ↝ Schema ↝ KeyBinding ↝ Nonce ↝ Status ↝ Policy).
-  - Typestate fail-closed: si la firma criptográfica del emisor falla en el paso 4, las 7 comprobaciones subsiguientes basadas en claims no autenticados (`Validity`, `Disclosures`, `Schema`, `KeyBinding`, `Nonce`, `Status`, `Policy`) quedan marcadas irreversiblemente como `CheckStatus::Skipped` (`REQ-VER-012`).
-  - Resolución con precedencia normativa de estados (REQ-VER-010): `Invalid` > `Unverifiable` > `ValidWithStaleStatus` > `Valid`.
-  - Prueba de compilación fallida con `trybuild` (`tests/compile_fail.rs` y `tests/ui/cannot_construct_valid_directly.rs`) demostrando formalmente que `VerificationResult::Valid` no puede ser fabricado saltándose las comprobaciones obligatorias.
-  - Suite exhaustiva de pruebas de integración (`tests/verifier_pipeline_integration.rs`) con 9 casos cubriendo: presentación nominal válida completa, omisión estricta de comprobaciones ante firma manipulada (`Skipped`), snapshot caducado que produce `ValidWithStaleStatus`, estado revocado que produce `Invalid`, emisor desconocido que produce `Unverifiable`, clave comprometida que produce `Invalid`, detección y bloqueo de replay por nonce, detección de retroceso de reloj confiable y rechazo tajante de `alg: none`.
-  - Documentación de `crates/gravital-id-verifier/README.md` y `CHANGELOG.md` actualizada.
+  - `crates/gravital-id-verifier/src/nonce.rs`: diseñado e implementado el trait `NonceCache` con consumo atómico `check_and_consume` (`REQ-PRES-004`), prevención de condiciones de carrera y consulta no destructiva `contains`.
+  - Implementado `InMemoryNonceCache` acotado a `DEFAULT_MAX_NONCES = 4.096` entradas (`REQ-VER-008`), con poda de nonces caducados y evicción determinista por expiración más temprana ante saturación de capacidad.
+  - `crates/gravital-id-verifier/src/state.rs`: integrado `InMemoryNonceCache` como componente interno de `InMemoryStateStore`, delegando `check_and_consume_nonce` de `VerifierStateStore` e implementando `NonceCache` directamente sobre `InMemoryStateStore` manteniendo la serialización e integridad HMAC-SHA256 del estado canónico.
+  - `crates/gravital-id-verifier/tests/verifier_nonce_integration.rs`: suite de 7 pruebas unitarias y de propiedades con `proptest = "=1.5.0"` (fijado según MSRV Rust 1.85.0 y ADR-0014), verificando aceptación de nonces frescos, rechazo fail-closed de reutilización (`ErrorCode::NonceReused`, INV-05), rechazo de nonces ya expirados, reaprovechamiento tras expiración, acotamiento estricto de capacidad máxima (4.096) y ordenación determinista por expiración más temprana.
+  - Actualizada la documentación técnica en `crates/gravital-id-verifier/README.md` (Sección 4: Caché de Nonces y Protección Anti-Replay).
+  - Actualizado `CHANGELOG.md` con la entrada de F4.T07.
 - Pendiente (siguiente paso concreto):
-  - F4.T07 `Caché de nonces`: trait + implementación en memoria con expiración, límite de tamaño y rechazo de reutilización (`REQ-PRES-004`).
+  - F4.T08 `Estados de clave del emisor`: `active`, `retired`, `suspended`, `compromised` con verificación de firmas según instante de emisión vs fecha de retiro/suspensión (`REQ-KEY-005`, `REQ-KEY-006`).
 - Bugs/issues abiertos durante la sesión: Ninguno.
 - Decisiones tomadas (con enlace a ADR/issue):
-  - Inconstruibilidad de `Valid` reforzada por tipo testigo `AllMandatoryPassed` y validada con `trybuild` en CI (`ADR-0020`, `REQ-VER-012`).
-  - Las 7 comprobaciones sobre datos no autenticados se marcan normativamente como `Skipped` ante fallo de firma, evitando cualquier filtración o evaluación de datos fabricados.
+  - Evicción en saturación: cuando no hay entradas caducadas y se excede la capacidad máxima, se expulsa la entrada con el `expires_at` más temprano de la caché, preservando las entradas de mayor longevidad y garantizando que el tamaño nunca supera el límite configurado (`REQ-VER-008`).
 - Riesgos o dudas: Ninguno.
-- Comprobaciones locales: fmt ✅ clippy ✅ tests ✅ (386 pruebas del workspace, 0 fallos)
+- Comprobaciones locales: fmt ✅ clippy ✅ tests ✅ (393 pruebas del workspace, 0 fallos)
   layers ✅ trace ✅ check-error-codes ✅ doc ✅ deny ✅ `xtask conformance` 24/24 ✅ wasm32 ✅
   bare-metal ✅ audit ✅

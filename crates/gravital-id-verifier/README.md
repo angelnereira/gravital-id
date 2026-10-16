@@ -55,6 +55,14 @@ Pipeline de verificación offline para Gravital ID. Implementa el flujo completo
 - **Clases de operación** (`OperationClass::Transaction` / `Query` / `Default`) con frescura máxima de estado normativo por perfil.
 - **Sesgo de reloj acotado**: Hasta 300 segundos, rechazando excesos por encima del perfil.
 
+### 4. Caché de nonces anti-replay (`nonce.rs`, F4.T07)
+
+- **`NonceCache`**: Trait abstracto para gestión de nonces de sesión (`is_seen`, `remember`, `check_and_consume`, `purge_expired`, `len`, `capacity`).
+- **`InMemoryNonceCache`**: Implementación en memoria (`no_std` + `alloc`) con capacidad acotada (`DEFAULT_MAX_NONCES` = 4.096, REQ-VER-008).
+- **Consumo atómico (`check_and_consume`)**: Consulta y registra el nonce en una sola operación atómica contra replay (REQ-PRES-004, SDK_API §3.3).
+- **Evicción determinista y purga**: Desalojo FIFO por expiración más temprana ante saturación de capacidad; purga explícita de entradas caducadas sin tocar nonces vigentes.
+- **Integración con `VerifierStateStore`**: `InMemoryStateStore` delega su gestión de nonces a `InMemoryNonceCache` e implementa `NonceCache`.
+
 ## Ejemplo de uso
 
 ```rust,ignore
