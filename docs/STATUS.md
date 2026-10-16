@@ -10,7 +10,7 @@
 | Último gate cerrado | **G0** (2026-10-11) |
 | Próximo gate | **G3** — revisión formal de Fase F3 (#59); **G2** sigue pendiente de merge/CI |
 | Hito siguiente | M1 · Núcleo offline (al cerrar G5) · MP1 · Tap offline (al cerrar G21) |
-| Última actualización | 2026-10-15 (F19.T01, F19.T02 y F19.T08 completadas — ADR-0021 Aceptado y documentos base actualizados) |
+| Última actualización | 2026-10-15 (F19.T03–F19.T07 completadas — ADR-0022 a ADR-0026 redactados; #74 y #77 resueltos) |
 
 ## Gates
 
@@ -26,6 +26,11 @@
 
 | Tarea | Issue | Responsable | Estado | Siguiente paso |
 |---|---|---|---|---|
+| F19.T07 ADR-0026: perfil de identidad y retrato | #79 | Antigravity (agente) | Hecha | `docs/adr/0026-perfil-identidad-retrato.md` redactado (`pip-identity-v1` con `vct` oficial/derivado y retrato JPEG $\le 16\text{ KiB}$ solo por NFC/BLE) |
+| F19.T06 ADR-0025: identificadores numéricos | #79 | Antigravity (agente) | Hecha | `docs/adr/0025-identificadores-numericos-sesion.md` redactado (`SessionCode` 10 dígitos + Damm en línea, número por emisor opcional); resuelve `#77` |
+| F19.T05 ADR-0024: tarjeta física Java Card | #79 | Antigravity (agente) | Hecha | `docs/adr/0024-tarjeta-fisica-javacard.md` redactado (Java Card 3.0.5+, P-256 en hardware, PIN niveles 0/1, `gid-perso` y vectores en `jCardSim`) |
+| F19.T04 ADR-0023: cifrado de sesión y transcrito | #79 | Antigravity (agente) | Hecha | `docs/adr/0023-cifrado-sesion-proximidad-transcrito.md` y `CRYPTO_PROFILES.md` actualizados (HPKE RFC 9180 + `SessionTranscript` como AAD y `nonce` del KB-JWT) |
+| F19.T03 ADR-0022: transporte de proximidad | #79 | Antigravity (agente) | Hecha | `docs/adr/0022-transporte-proximidad-gid-apdu.md` y `ADR-0011` actualizados (`GID-APDU` ISO 7816-4, AID `F0475241564954414C01`, capas L4/L5); resuelve `#74` |
 | F19.T08 Requisitos PROX, CARD, CODE, IDDOC | #78 | Antigravity (agente) | Hecha | 20 nuevos requisitos (`REQ-PROX-001..008`, `REQ-CARD-001..005`, `REQ-CODE-001..004`, `REQ-IDDOC-001..003`) incorporados a `REQUIREMENTS.md` v0.3 y trazados en `TRACEABILITY.md` (167 REQ totales) |
 | F19.T01 ADR-0021: ampliación de alcance | #78 | Antigravity (agente) | Hecha | `ADR-0021` **Aceptado** por el mantenedor; `ROADMAP.md` v0.3 (`F19`–`F25`, `MP1`–`MP3`, `R-15`–`R-23`), `ARCHITECTURE.md` v0.3, `PROJECT_STRUCTURE.md` y `CODEOWNERS` actualizados |
 | F19.T02 Registrar discrepancias (§5.3) | #78 | Antigravity (agente) | Hecha | 5 issues `type:spec-gap` registrados (`#73` multi-QR, `#74` calendario BLE/NFC, `#75` estado en README, `#76` reproducibilidad spikes, `#77` código numérico vs P-09) |
@@ -82,7 +87,7 @@
 1. Excepción de licencia `Unicode-3.0` para `unicode-ident` (dependencia de compilación de `proc-macro2`): registrada como excepción acotada en `deny.toml`; falta confirmar si se incorpora a la allowlist de ADR-0002 (#7).
 2. `PROJECT_STRUCTURE.md §7` contradice a `ERROR_CODES.md` en los rangos de códigos y sitúa `GidError` en `gravital-id-sdk` (L6) cuando el catálogo canónico vive en `gravital-id-types` (L1) y el SDK lo re-exporta: registrado como `type:spec-gap` (#8).
 3. **Presupuesto y cabecera Multi-QR (#73):** contradicción entre `ADR-0011` (1.200 caracteres, `GID01/P...`), `PROTOCOL.md §3.3` (800 caracteres, `PIP1/M/...`) y `spikes/qr/REPORT.md` (fragmentos de 900 caracteres, `GID01/P...`); bloquea `F5.T09`.
-4. **ADRs de detalle de la ampliación (`ADR-0022` a `ADR-0026`, `F19.T03`–`F19.T07`):** requeridos para cerrar `G19` antes de iniciar `F20`–`F25`.
+4. **Aprobación formal de `ADR-0022` a `ADR-0026` (`F19.T03`–`F19.T07`):** redactados en estado **Propuesto** (#79); sujetos a revisión del mantenedor humano y a las mediciones en hardware de `F19.T12`–`F19.T13` para cerrar `G19`.
 
 ## Métricas base (se rellenan desde F2)
 
@@ -118,19 +123,22 @@
 
 ## Última nota de traspaso
 
-### Traspaso — 2026-10-15 (F19.T01 / F19.T02 / F19.T08: ADR-0021 Aceptado y documentos normativos v0.3) — Antigravity (agente)
-- Tarea: F19.T01 / F19.T02 / F19.T08 — #78 — rama `main`
+### Traspaso — 2026-10-15 (F19.T03–F19.T07: ADR-0022 a ADR-0026 redactados) — Antigravity (agente)
+- Tarea: F19.T03 / F19.T04 / F19.T05 / F19.T06 / F19.T07 — #79 — rama `main`
 - Estado: **hecha**
 - Hecho en esta sesión:
-  - `ADR-0021` aprobado por el mantenedor humano (`Angel Nereira`) y actualizado a estado **Aceptado** en `docs/adr/0021-ampliacion-alcance-identidad-portable.md` y `docs/adr/README.md`.
-  - Actualizado `docs/ROADMAP.md` (v0.3) con las fases `F19`–`F25`, puertas `G19`–`G25`, hitos `MP1`–`MP3`, notas de adelanto en `F9` / `F18.T04` y riesgos `R-15`–`R-23`.
-  - Actualizado `docs/ARCHITECTURE.md` (v0.3) con los límites de viabilidad de proximidad/código/cédula, capa L4 `gravital-id-proximity`, adaptador L5 `gravital-id-transport-pcsc`, perfil `pip-identity-v1`, prioridad de bindings y tabla de ADRs `0021`–`0026`.
-  - Actualizados `docs/REQUIREMENTS.md` (v0.3, incorporando los 20 requisitos de las familias `PROX`, `CARD`, `CODE` e `IDDOC`), `docs/TRACEABILITY.md` (167 requisitos verificados), `docs/PROJECT_STRUCTURE.md` y `.github/CODEOWNERS`.
+  - Redactados los 5 ADRs técnicos de la ampliación en `docs/adr/`:
+    - `0022-transporte-proximidad-gid-apdu.md` (`F19.T03`, resuelve `#74` junto con la actualización de `ADR-0011`),
+    - `0023-cifrado-sesion-proximidad-transcrito.md` (`F19.T04`, junto con la referencia explícita a RFC 9180 HPKE en `CRYPTO_PROFILES.md`),
+    - `0024-tarjeta-fisica-javacard.md` (`F19.T05`),
+    - `0025-identificadores-numericos-sesion.md` (`F19.T06`, resuelve `#77`),
+    - `0026-perfil-identidad-retrato.md` (`F19.T07`).
+  - Actualizado `docs/adr/README.md` enlazando los cinco ADRs.
 - Pendiente (siguiente paso concreto):
-  - En `F19`: redactar `ADR-0022` a `ADR-0026` (`F19.T03`–`F19.T07`) y especificaciones asociadas (`F19.T09`–`F19.T11`, `F19.T15`).
-  - En `F4`: completar `F4.T09` (`Matriz negativa y cobertura`), `F4.T10` (`Verificación sin red`), `F4.T11` (`Determinismo`) y `F4.T12` (`pip-cli offline`).
-- Bugs/issues abiertos durante la sesión: `#73`, `#74`, `#75`, `#76`, `#77`, `#78` (cerrado).
-- Decisiones tomadas (con enlace a ADR/issue): `ADR-0021` **Aceptado** (`docs/adr/0021-ampliacion-alcance-identidad-portable.md`, #78).
-- Riesgos o dudas: `R-15` a `R-23` incorporados a `docs/ROADMAP.md §33`.
+  - En `F19`: completar `F19.T09` (`PROTOCOL.md §7` + `ERROR_CODES.md` familia 8 + resolver `#73`), `F19.T10` (adenda `THREAT_MODEL.md`), `F19.T11` (`docs/specs/profiles/pip-identity-v1.md`) y `F19.T15` (adenda legal en `docs/legal/`).
+  - En `F4`: completar `F4.T09`–`F4.T12`.
+- Bugs/issues abiertos durante la sesión: `#79` (cerrado); cerrados los `spec-gap` `#74` y `#77`.
+- Decisiones tomadas (con enlace a ADR/issue): propuestas documentadas en `ADR-0022` a `ADR-0026` (#79).
+- Riesgos o dudas: `R-16` (soporte AEAD en tarjeta Java Card) queda sujeto a mediciones del spike `F19.T13`.
 - Comprobaciones locales: fmt ✅ clippy ✅ tests ✅ (402 pruebas) layers ✅ trace ✅ check-error-codes ✅ check-req-ids ✅
 

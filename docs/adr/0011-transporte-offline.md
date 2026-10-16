@@ -50,7 +50,7 @@ Se adopta la **Opción C**:
 2. Las presentaciones en código QR se procesan obligatoriamente mediante el esquema de compresión **transcodificación binaria CBOR + DEFLATE + Base45**.
 3. Se fija un **presupuesto máximo de 1200 caracteres Base45** para códigos QR individuales con corrección de errores nivel M (15 %).
 4. Toda presentación que exceda 1200 caracteres activa automáticamente la fragmentación multi-QR indexada.
-5. Los canales BLE / NFC se consideran extensiones secundarias para fases futuras (F11), preservando siempre el canal QR como base universal de interoperabilidad.
+5. Los canales de proximidad por radiofrecuencia (NFC `GID-APDU` para teléfonos Android y tarjetas físicas Java Card, y BLE condicional) se especifican en la Fase `F19` (**ADR-0022**, **ADR-0023**, **ADR-0024**) y se implementan en `F20`–`F22` (con interoperabilidad `mdoc` ISO/IEC 18013-5 en `F25`/`F18`), preservando siempre el canal QR como base universal de interoperabilidad óptica.
 
 ---
 

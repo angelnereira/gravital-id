@@ -32,6 +32,7 @@ Para evitar divergencias de interoperabilidad entre implementaciones:
 | **JSON Web Key (JWK)** | RFC 7517 | RFC 7517 (Formatos de clave pública). |
 | **JWK Thumbprint** | RFC 7638 | RFC 7638 (Huellas canónicas de clave calculadas con SHA-256). |
 | **JSON Canonicalization (JCS)** | RFC 8785 | RFC 8785 (Canonicalización de payloads para multifiirma determinista). |
+| **Hybrid Public Key Encryption (HPKE)** | RFC 9180 | IETF RFC 9180 (febrero de 2022): cifrado híbrido en modo base para relay y sesiones de proximidad. |
 | **High Assurance Interop (HAIP)** | Versión 1.0 | OpenID HAIP 1.0 (Final, diciembre de 2025). |
 | **Post-Quantum JOSE (F18)** | RFC 9964 | RFC 9964 (mayo de 2026): ML-DSA en JOSE y COSE (referencia futura). |
 
@@ -55,6 +56,13 @@ Para evitar divergencias de interoperabilidad entre implementaciones:
 #### Cifrado Autenticado en Reposo y Local (AEAD)
 * **`XChaCha20-Poly1305`:** AEAD con clave de 256 bits y nonce extendido de 192 bits (24 bytes). Algoritmo prioritario para almacenamiento local cifrado en dispositivos de titular.
 * **`AES-256-GCM`:** Clave de 256 bits con nonce de 96 bits (12 bytes). Soportado cuando el hardware host provee aceleración criptográfica AES-NI / ARM Crypto Extensions.
+
+#### Cifrado Híbrido de Clave Pública para Transporte y Proximidad (HPKE, RFC 9180)
+* **Modo Base (`mode_base = 0x00`):**
+  * **KEM:** `DHKEM(P-256, HKDF-SHA256)` (`0x0010`), clave encapsulada SEC1 sin comprimir de 65 bytes.
+  * **KDF:** `HKDF-SHA256` (`0x0001`).
+  * **AEAD primario (móvil, escritorio, relay, proximidad):** `ChaCha20Poly1305` (`0x0003`, clave de 32 bytes, nonce de 12 bytes, tag de 16 bytes; implementado en `gravital-id-crypto::hpke`).
+  * **AEAD alternativo para elementos seguros de tarjeta física (según ADR-0024):** `AES-128-GCM` (`0x0001`) o `AES-256-GCM` (`0x0002`) cuando sea ejecutado íntegramente por el coprocesador criptográfico del chip Java Card.
 
 #### Derivación de Claves (KDF) y Funciones de Contraseña
 * **`HKDF-SHA256` (RFC 5869):** Derivación de claves de sesión efímeras y segmentación de almacén.
