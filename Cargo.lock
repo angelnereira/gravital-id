@@ -613,6 +613,7 @@ dependencies = [
  "gravital-id-testkit",
  "gravital-id-trust",
  "gravital-id-types",
+ "proptest",
  "trybuild",
  "zeroize",
 ]

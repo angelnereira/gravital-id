@@ -25,4 +25,5 @@ zeroize = { workspace = true }
 [dev-dependencies]
 gravital-id-keys = { workspace = true }
 trybuild = "=1.0.101"
+proptest = "=1.5.0"
 gravital-id-testkit = { path = "../gravital-id-testkit", version = "0.1.0" }

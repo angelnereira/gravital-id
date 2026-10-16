@@ -18,11 +18,13 @@
 
 extern crate alloc;
 
+pub mod nonce;
 pub mod pipeline;
 pub mod policy;
 pub mod result;
 pub mod state;
 
+pub use nonce::{InMemoryNonceCache, NonceCache};
 pub use pipeline::{
     StageAuthenticated, StageIssuerResolved, StageStructureChecked, StageUnchecked,
     VerificationRequest, VerifierPipeline,
