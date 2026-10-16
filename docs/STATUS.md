@@ -10,7 +10,7 @@
 | Último gate cerrado | **G4** (2026-10-16) · **G19** (2026-10-15) · **G0** (2026-10-11) |
 | Próximo gate | **G5** — almacenamiento local de la wallet; **G3** (#59) y **G2** pendientes de CI |
 | Hito siguiente | M1 · Núcleo offline (al cerrar G5) · MP1 · Tap offline (al cerrar G21) |
-| Última actualización | 2026-10-16 (F5.T04, F5.T05 y F5.T06 completadas — gravital-id-storage-sqlite, migraciones de esquema y consistencia ante fallos con 92,38% de cobertura; #84 resuelto) |
+| Última actualización | 2026-10-16 (F5.T07 y F5.T08 completadas — gravital-id-holder, gestión de credenciales, DCQL, planes de divulgación, presentaciones con KB-JWT y auditoría local sin PII con 90,15% de cobertura; #85 resuelto) |
 
 ## Gates
 
@@ -28,6 +28,7 @@
 
 | Tarea | Issue | Responsable | Estado | Siguiente paso |
 |---|---|---|---|---|
+| F5.T07-T08 Gestión wallet y presentación | #85 | Antigravity (agente) | Hecha | Modelado completo de WalletCredential, HolderWallet, DCQL query, DisclosurePlan y KB-JWT en gravital-id-holder (90,15% de cobertura de líneas); resuelto #85 |
 | F5.T04-T06 SQLite y migraciones | #84 | Antigravity (agente) | Hecha | SqliteStorage implementando StorageBackend y VerifierStateStore, WAL, BEGIN IMMEDIATE, migraciones V1/V2, reversión atómica y 92,38% de cobertura; integrada en main |
 | F5.T01-T03 Almacenamiento local | #83 | Antigravity (agente) | Hecha | Trait StorageBackend, InMemoryStorageBackend, cifrado de sobre DEK/KEK, formato canónico PIP$, AAD e índices ciegos HMAC-SHA-256 probados con 92,22% de cobertura; integrada en main |
 | F4.T12 `pip-cli` offline | #82 | Antigravity (agente) | Hecha | Binario CLI `pip-cli` / `gid-cli` con subcomandos `demo-offline` (reproduce deterministamente los 4 estados), `dev-issuer`, `dev-bundle`, `dev-status`, `issue`, `verify`; integrada en `main` |
@@ -136,6 +137,21 @@
 | Tamaño binario del SDK | — | — | — | — | — |
 
 ## Última nota de traspaso
+
+### Traspaso — 2026-10-16 (F5.T07 / F5.T08: Wallet, DCQL, Planes de Divulgación y Presentaciones KB-JWT) — Antigravity (agente)
+- Tarea: F5.T07 / F5.T08 — #85 — rama `main`
+- Estado: **hecha**
+- Hecho en esta sesión:
+  - **F5.T07 (`credential.rs`, `wallet.rs`, `audit.rs`):** Modelado e implementación de `gravital-id-holder` (Capa L4 sans-I/O). Gestión integral de credenciales del titular (`WalletCredential`, `WalletCredentialSummary`) con importación pre-validada contra formato SD-JWT VC (`typ: dc+sd-jwt`), confirmación criptográfica de clave pública `cnf.jwk` contra `p256::PublicKey` del titular, asociación y validación de `KeyHandle<HolderBinding>` (`REQ-KEY-008`), prevención estricta de sustitución no autenticada de claves, indizado ciego HMAC-SHA-256 (`vct`, `issuer`, `key_id`), borrado individual e idempotente, borrado por lotes atómicos (`REQ-STOR-004`) y registro inmutable de auditoría local sin datos personales (`REQ-STOR-006`, `INV-02`) con retención y purga configurable.
+  - **F5.T08 (`query.rs`, `plan.rs`, `presentation.rs`):** Subconjunto normativo de DCQL (`DcqlQuery`, `CredentialQuery`, `RequestedClaim`, `PROTOCOL.md §7.2.2`, `§3.1`). Preparación de plan de divulgación con inspección de valores y consentimiento explícito del titular (`DisclosurePlan`, `REQ-PRES-001`, `REQ-PRIV-001`), selección de claims requeridos/opcionales con rechazo fail-closed de exclusión de obligatorios, ensamblaje de presentaciones compactas con divulgación selectiva y firma de `KB-JWT` (`aud`, `nonce`, `iat`, `sd_hash`) con prueba de posesión delegada al `KeyStore` (`REQ-PRES-002`, `INV-03`), y cero persistencia en almacenamiento de presentaciones o nonces del verificador (`REQ-PRIV-005`).
+  - **Pruebas forenses y cobertura de código (`llvm-cov`):** 90,15% de cobertura de líneas en `gravital-id-holder` (1.046 líneas, 943 cubiertas; `presentation.rs` 91,67%, `credential.rs` 92,52%, `wallet.rs` 91,80%). Inspección forense automatizada en disco SQLite verificando que ni nonces ni presentaciones finales se persisten (`REQ-PRIV-005`).
+  - **Trazabilidad:** REQ-PRES-001, REQ-PRES-002, REQ-PRES-003, REQ-PRIV-001, REQ-PRIV-005, REQ-KEY-008, REQ-STOR-001, REQ-STOR-006 verificados y actualizados en `docs/TRACEABILITY.md` (76 requisitos totales cubiertos).
+- Pendiente (siguiente paso concreto):
+  - Iniciar `F5.T09`–`F5.T10`: Perfil offline QR (transcodificación binaria sin pérdida + compresión DEFLATE + codificación Base45, fragmentación multi-QR y verificación de presupuesto de tamaño, `ADR-0011`, `REQ-PRES-003`, `REQ-PRES-004`).
+- Bugs/issues abiertos durante la sesión: ninguno.
+- Decisiones tomadas (con enlace a ADR/issue): Modelado de `gravital-id-holder` completado de acuerdo a `PROTOCOL.md §7.2.2`, `REQ-PRES-*` y `REQ-STOR-*` (#85).
+- Riesgos o dudas: ninguna.
+- Comprobaciones locales: fmt ✅ clippy ✅ tests (100% verde en todo el workspace) ✅ layers ✅ trace (76 REQs) ✅ check-error-codes (59) ✅ check-req-ids (167) ✅ llvm-cov (90,15% holder) ✅
 
 ### Traspaso — 2026-10-16 (F5.T04 / F5.T05 / F5.T06: SQLite StorageBackend, Migraciones y Consistencia ante Fallos) — Antigravity (agente)
 - Tarea: F5.T04 / F5.T05 / F5.T06 — #84 — rama `main`
