@@ -12,6 +12,7 @@ publish = false
 [dependencies]
 anyhow = { workspace = true }
 serde = { version = "1.0.229", features = ["derive"] }
+serde_json = "1.0.154"
 toml = "1.1.8"
 # Dependencias internas: el runner de conformidad ejecuta la implementación real.
 gravital-id-types = { path = "../crates/gravital-id-types", version = "0.1.0" }

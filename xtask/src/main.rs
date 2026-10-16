@@ -5,6 +5,7 @@
 #![allow(clippy::print_stdout)]
 
 mod conformance;
+mod contracts_privacy;
 mod error_codes;
 mod generate_vectors;
 mod layers;
@@ -39,11 +40,15 @@ fn main() -> anyhow::Result<()> {
             error_codes::run_check_error_codes(workspace_root)?;
             Ok(())
         }
+        Some("check-contracts-privacy") => {
+            contracts_privacy::run_check_contracts_privacy(workspace_root)?;
+            Ok(())
+        }
         Some(cmd) => {
             anyhow::bail!("Comando desconocido en xtask: {cmd}");
         }
         None => {
-            println!("Uso: cargo xtask <check-layers|trace|check-error-codes|conformance|gen-conformance-vectors>");
+            println!("Uso: cargo xtask <check-layers|trace|check-error-codes|conformance|gen-conformance-vectors|check-contracts-privacy>");
             Ok(())
         }
     }

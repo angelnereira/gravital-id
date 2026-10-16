@@ -10,7 +10,7 @@
 | Último gate cerrado | **G5** (2026-10-16) · **G4** (2026-10-16) · **G19** (2026-10-15) · **G0** (2026-10-11) |
 | Próximo gate | **G6** — contratos en testnet y adaptador de ledger; **G3** (#59) y **G2** pendientes de CI |
 | Hito siguiente | M2 · Sincronización y anclaje (al cerrar G7) · MP1 · Tap offline (al cerrar G21) [M1 alcanzado] |
-| Última actualización | 2026-10-16 (F6.T01 completada — especificación técnica de contratos inteligentes CONTRACTS.md v1.0.0 normativa, interfaces ITrustRegistry, IStatusAnchor, RBAC con timelock y rol de emergencia, eventos estructurados e inmutabilidad estricta; #89 resuelto) |
+| Última actualización | 2026-10-16 (F6.T02–T07 completadas — contratos inteligentes TrustRegistry, StatusAnchor, gobernanza timelock, 25 pruebas Foundry, gas snapshot y verificación automatizada de no-PII check-contracts-privacy; #90 resuelto) |
 
 ## Gates
 
@@ -29,7 +29,8 @@
 
 | Tarea | Issue | Responsable | Estado | Siguiente paso |
 |---|---|---|---|---|
-| F6.T02 `TrustRegistry.sol` | — | Antigravity (agente) | Por iniciar | Implementación en Solidity de TrustRegistry (emisores, claves, suspensiones con TTL 14d, verificadores por perfil, bundle signers, trust root hash) |
+| F6.T08 `pip-ledger` | — | Antigravity (agente) | Por iniciar | Trait LedgerAdapter, eventos, reconstrucción pura y derivación de bundle (REQ-LEDG-002, REQ-TRUST-008) |
+| F6.T02-T07 Contratos inteligentes y pruebas | #90 | Antigravity (agente) | Hecha | TrustRegistry, StatusAnchor, Gobernanza timelock, 25 pruebas Foundry, snapshot gas y verificación check-contracts-privacy (no PII); resuelto #90 |
 | F6.T01 `CONTRACTS.md` v1 | #89 | Antigravity (agente) | Hecha | Actualización de especificación técnica de contratos CONTRACTS.md a v1.0.0 normativa (interfaces, RBAC, eventos, inmutabilidad y no-PII); resuelto #89 |
 | F5.T13-T14 Legibilidad QR y Demostración M1 | #88 | Antigravity (agente) | Hecha | Pruebas de legibilidad QR (F5.T13), demostración reproducible de escenarios MVP-01..03, auditoría forense SQLite y cierre de Gate G5 / Hito M1 (94,71% cobertura); resuelto #88 |
 | F5.T11-T12 Validación wallet y flujo CLI offline | #87 | Antigravity (agente) | Hecha | Solicitudes firmadas JWS, validación de políticas wallet REQ-PRES-007, subcomandos pip-cli y flujo offline integral emisor -> wallet -> verificador (93,40% / 94,20% cobertura); resuelto #87 |
@@ -143,6 +144,44 @@
 | Tamaño binario del SDK | — | — | — | — | — |
 
 ## Última nota de traspaso
+
+### Traspaso — 2026-10-16 (F6.T02–T07: Contratos Inteligentes TrustRegistry, StatusAnchor, Gobernanza, Pruebas Foundry y Verificación sin PII) — Antigravity (agente)
+- Tarea: F6.T02–T07 — #90 — rama `main`
+- Estado: **hecha**
+- Hecho en esta sesión:
+  - **F6.T02 (`TrustRegistry.sol`, `ITrustRegistry.sol`):**
+    - Contrato Solidity 0.8.28 inmutable sin proxies (`REQ-LEDG-003`).
+    - Registro y administración de emisores con validación temporal estricta (`validFrom < validUntil`).
+    - Claves criptográficas SEC-1 P-256 comprimidas (33 B) y no comprimidas (65 B), identificadas por thumbprints RFC 7638 SHA-256 (`REQ-LEDG-007`).
+    - Máquina de estados estricta (`Active`, `Suspended`, `Compromised`, `Retired`) con transiciones terminales irreversibles para `Compromised` y `Retired`.
+    - Registro de verificadores por perfil de credencial (`REQ-TRUST-007`).
+    - Raíz de confianza y registro de firmantes de bundle con actualización monotónica de versiones (`REQ-TRUST-008`).
+  - **F6.T03 (`StatusAnchor.sol`, `IStatusAnchor.sol`):**
+    - Anclaje de compromisos criptográficos de manifiestos de estado (`IssuerStatusManifest`, `REQ-STAT-006`) con versionado estrictamente monotónico por emisor.
+  - **F6.T04 (`GovernanceTimelock.sol`):**
+    - Control de acceso RBAC con OpenZeppelin v5.1.0 (`DEFAULT_ADMIN_ROLE` para multisig Safe, `TIMELOCK_ROLE` para timelock, `EMERGENCY_ROLE` acotado exclusivamente a suspensiones preventivas con TTL máximo e inmutable de 14 días y prohibición estricta de auto-renovación, `REQ-LEDG-004`).
+    - `GovernanceTimelock` con retraso mínimo configurable enforced $\ge 48\text{ h}$ (172.800 s).
+  - **F6.T05 (Pruebas exhaustivas Foundry):**
+    - 25 pruebas pasando al 100% (14 en `TrustRegistry.t.sol`, 5 en `StatusAnchor.t.sol`, 6 de invariantes en `GovernanceInvariants.t.sol`):
+      - Invariante 1: Clave comprometida nunca vuelve a activa.
+      - Invariante 2: Timelock enforcing de 48h mínimas.
+      - Invariante 3: Solo timelock puede registrar emisores o modificar signers/raíz.
+      - Invariante 4: Rol de emergencia restringido (no puede registrar, ni retirar, ni comprometer).
+      - Invariante 5: Suspensión de emergencia siempre expira tras TTL de 14 días sin intervención.
+      - Invariante 6: Rol de emergencia no puede renovar una suspensión activa antes de caducar.
+      - Fuzzing de actualización de raíz y anclajes monotónicos de estado.
+  - **F6.T06 (Análisis estático y gas snapshot):**
+    - Generado snapshot de gas versionado `contracts/.gas-snapshot` (`REQ-SEC-007`).
+  - **F6.T07 (Verificación automatizada sin datos personales):**
+    - Herramienta automatizada `cargo xtask check-contracts-privacy` (`xtask/src/contracts_privacy.rs`) que inspecciona los artefactos y ABIs compiladas de Solidity, analizando nombres de funciones, eventos, errores y parámetros contra listas negras de PII, garantizando 0 datos personales en el ledger (`REQ-LEDG-001`, `REQ-LEDG-007`, `INV-02`).
+  - **CI:**
+    - Workflow `.github/workflows/contracts.yml` para compilar con Foundry, ejecutar 25 pruebas y validar privacidad en CI.
+- Pendiente (siguiente paso concreto):
+  - Iniciar `F6.T08`: Implementación de `pip-ledger` (`gravital-id-ledger`), trait `LedgerAdapter`, tipos de eventos de `TrustRegistry` y `StatusAnchor`, reconstrucción determinista y pura del estado desde eventos, derivación determinista del TrustBundle (`REQ-LEDG-002`, `REQ-TRUST-008`).
+- Bugs/issues abiertos durante la sesión: ninguno.
+- Decisiones tomadas (con enlace a ADR/issue): Implementados contratos inteligentes EVM y suite Foundry según `docs/specs/CONTRACTS.md` v1.0.0 y `ADR-0018` (#90).
+- Riesgos o dudas: ninguna.
+- Comprobaciones locales: fmt ✅ clippy ✅ tests ✅ layers ✅ trace (82 REQs) ✅ check-error-codes (59) ✅ check-contracts-privacy (0 PII) ✅ forge test (25/25) ✅
 
 ### Traspaso — 2026-10-16 (F6.T01: Especificación de Contratos Inteligentes CONTRACTS.md v1.0.0) — Antigravity (agente)
 - Tarea: F6.T01 — #89 — rama `main`

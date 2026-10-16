@@ -59,13 +59,13 @@
 | REQ-TRUST-008 | F7 | DEBE | T | P-15 | — | Pendiente (Fase futura) |
 | REQ-TRUST-009 | F4 | DEBE | T | P-15 | verifier_state.rs, sqlite_storage_integration.rs, jws_json.rs, lib.rs, root.rs, trust_bundle_integration.rs | Cubierto |
 | REQ-TRUST-010 | F4 | DEBE | T | P-14 | manifest.rs, bundle.rs, lib.rs, trust_bundle_integration.rs | Cubierto |
-| REQ-LEDG-001 | F6 | DEBE | T, A | P-02 | — | Pendiente (Fase futura) |
+| REQ-LEDG-001 | F6 | DEBE | T, A | P-02 | contracts_privacy.rs | Cubierto |
 | REQ-LEDG-002 | F6 | DEBE | T, I | P-14 | — | Pendiente (Fase futura) |
 | REQ-LEDG-003 | F6 | DEBE | I, A | — | — | Inspección / Auditoría |
 | REQ-LEDG-004 | F6 | DEBE | T | P-10 | — | Pendiente (Fase futura) |
 | REQ-LEDG-005 | F7 | DEBE | T | P-08 | — | Pendiente (Fase futura) |
 | REQ-LEDG-006 | F7 | DEBE | T | P-10 | — | Pendiente (Fase futura) |
-| REQ-LEDG-007 | F6 | DEBE | I | P-02 | — | Inspección / Auditoría |
+| REQ-LEDG-007 | F6 | DEBE | I | P-02 | contracts_privacy.rs | Cubierto |
 | REQ-SYNC-001 | F7 | DEBE | T | P-01 | — | Pendiente (Fase futura) |
 | REQ-SYNC-002 | F7 | DEBE | T | — | — | Pendiente (Fase futura) |
 | REQ-SYNC-003 | F7 | DEBE | T | — | — | Pendiente (Fase futura) |

@@ -7,6 +7,17 @@ Cada componente publicado (SDK, servicios, contratos, especificación) indica su
 ## [Unreleased]
 
 ### Added
+- [contracts, governance, test] Contratos inteligentes `TrustRegistry`, `StatusAnchor`, `GovernanceTimelock`, pruebas Foundry unitarias/fuzz/invariantes, gas snapshot y verificación de ausencia de datos personales en ABIs (`F6.T02`, `F6.T03`, `F6.T04`, `F6.T05`, `F6.T06`, `F6.T07`, `REQ-LEDG-001`, `REQ-LEDG-003`, `REQ-LEDG-004`, `REQ-LEDG-007`, `REQ-TRUST-007`, `REQ-STAT-006`, `REQ-SEC-007`, `INV-02`, `INV-16`; #90):
+  - `contracts/src/TrustRegistry.sol`: Implementación inmutable de `ITrustRegistry` con RBAC (`AccessControl`), gestión de emisores (`IssuerRecord`), estados y claves P-256 SEC-1 (`IssuerKey`), máquina de estados con inmutabilidad de estados terminales (`Compromised` y `Retired`), registro de verificadores por perfil (`REQ-TRUST-007`), compromiso de raíz de confianza y bundle signers.
+  - `contracts/src/StatusAnchor.sol`: Implementación de `IStatusAnchor` con verificación monotónica de versión de manifiestos y anclaje descentralizado de compromisos de listas de estado (`IssuerStatusManifest`, `REQ-STAT-006`).
+  - `contracts/src/GovernanceTimelock.sol`: Controlador timelock normativo derivado de OpenZeppelin `TimelockController` que exige un retardo mínimo inmutable de 48 horas (`REQ-LEDG-004`).
+  - `contracts/test/`: Suite exhaustiva de 25 pruebas Foundry:
+    - 14 pruebas unitarias y fuzz en `TrustRegistry.t.sol` (256 runs).
+    - 5 pruebas unitarias y fuzz en `StatusAnchor.t.sol` (256 runs).
+    - 6 pruebas de invariantes de seguridad en `GovernanceInvariants.t.sol`: terminalidad absoluta de claves comprometidas, aislamiento de registro solo a timelock, restricción estricta de `EMERGENCY_ROLE` exclusivamente a suspensiones, mitigación de DoS persistente por prohibición de auto-renovación, caducidad determinista a los 14 días y retardo mínimo de 48h.
+  - `contracts/.gas-snapshot`: Línea base de gas versionada para todas las transacciones (`REQ-SEC-007`).
+  - `xtask check-contracts-privacy`: Verificación automatizada de privacidad en ABIs compiladas que audita 3 contratos y 140 elementos de ABI comprobando la ausencia total de nombres o campos de datos personales (`REQ-LEDG-001`, `REQ-LEDG-007`, `INV-02`).
+  - `.github/workflows/contracts.yml`: Pipeline de CI para contratos con `forge build`, `forge test -vvv`, `forge snapshot --check` y `cargo xtask check-contracts-privacy`.
 - [specs, contracts] Especificación normativa de contratos inteligentes y gobernanza v1.0.0 (`docs/specs/CONTRACTS.md`, `F6.T01`, `REQ-LEDG-001`, `REQ-LEDG-002`, `REQ-LEDG-003`, `REQ-LEDG-004`, `REQ-LEDG-007`, `REQ-TRUST-007`, `REQ-STAT-006`, `INV-02`, `INV-16`; #89):
   - `docs/specs/CONTRACTS.md`: Actualización integral de la especificación técnica de contratos EVM a versión `1.0.0` normativa, detallando:
     - `ITrustRegistry`: Interfaces completas para gestión de emisores institucionales (`IssuerRecord`), estados y claves públicas P-256 SEC-1 (`IssuerKey`), transiciones de máquina de estados de clave con inmutabilidad de estados terminales (`Compromised` y `Retired`), registro de verificadores por perfil (`REQ-TRUST-007`), compromiso de raíz de confianza (`TrustRootCommitment`) y operadores firmantes de bundles (`BundleSigner`).

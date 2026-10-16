@@ -1,0 +1,41 @@
+name: Smart Contracts CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'contracts/**'
+      - '.github/workflows/contracts.yml'
+  pull_request:
+    paths:
+      - 'contracts/**'
+      - '.github/workflows/contracts.yml'
+
+jobs:
+  test:
+    name: Foundry Tests & Invariants
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Run Forge build
+        working-directory: contracts
+        run: forge build --sizes
+
+      - name: Run Forge tests
+        working-directory: contracts
+        run: forge test -vvv
+
+      - name: Check Gas Snapshot
+        working-directory: contracts
+        run: forge snapshot --check
+
+      - name: Check Privacy on ABIs
+        run: cargo xtask check-contracts-privacy
