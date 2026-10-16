@@ -52,7 +52,9 @@ gravital-id/
 │   ├── PROJECT_STRUCTURE.md      # Este documento
 │   ├── ROADMAP.md
 │   ├── STATUS.md                 # Estado vivo: fase, tareas en curso, bloqueos, traspaso
+│   ├── TRACEABILITY.md           # Matriz generada requisito → pruebas (cargo xtask trace)
 │   ├── adr/                      # Architecture Decision Records (NNNN-titulo.md)
+│   ├── proposals/                # Propuestas de alcance y planes de implementación
 │   ├── specs/                    # Especificaciones normativas (creadas en F0)
 │   │   ├── THREAT_MODEL.md
 │   │   ├── CRYPTO_PROFILES.md

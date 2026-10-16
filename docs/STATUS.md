@@ -6,11 +6,11 @@
 
 | Campo | Valor |
 |---|---|
-| Fase actual | **F4 — Estado, confianza y verificación offline (en curso)** |
+| Fase actual | **F4 — Estado, confianza y verificación offline (en curso)** · **F19 — Especificación de la ampliación (en paralelo, propuesta)** |
 | Último gate cerrado | **G0** (2026-10-11) |
 | Próximo gate | **G3** — revisión formal de Fase F3 (#59); **G2** sigue pendiente de merge/CI |
 | Hito siguiente | M1 · Núcleo offline (al cerrar G5) |
-| Última actualización | 2026-10-15 (F4.T08 completada — Estados de clave del emisor) |
+| Última actualización | 2026-10-15 (F19.T01 / F19.T02 completadas — ADR-0021 Propuesto y registro de spec-gaps #73–#77) |
 
 ## Gates
 
@@ -26,12 +26,14 @@
 
 | Tarea | Issue | Responsable | Estado | Siguiente paso |
 |---|---|---|---|---|
-| F4.T08 Estados de clave del emisor | #71 | Antigravity (agente) | Hecha | Semántica `active`/`retired`/`suspended`/`compromised` (`ARCHITECTURE.md §11.6`, REQ-KEY-005, REQ-KEY-006); rama `feat/71-issuer-key-states` |
-| F4.T07 Caché de nonces | #68 | Antigravity (agente) | Hecha | Trait `NonceCache`, `InMemoryNonceCache` acotada (4.096), evicción determinista por expiración, `proptest`; rama `feat/68-nonce-cache` |
-| F4.T06 Pipeline del verificador | #66 | Antigravity (agente) | Hecha | Pipeline typestate con 11 comprobaciones ordenadas, evidencia y testigo compile-fail; rama `feat/66-verifier-pipeline` |
-| F4.T05 Policy del verificador | #65 | OpenCode (agente) | Hecha | `VerificationPolicy`, frescura por operación, sesgo acotado, allowlist/denylist; rama `feat/65-verifier-policy` |
-| F4.T04 Estado del verificador | #64 | OpenCode (agente) | Hecha | `VerifierStateStore`, `TimeFloorGuard`, `InMemoryStateStore` con HMAC-SHA256; rama `feat/64-verifier-state` |
-| F4.T03 Trust bundle | #62 | OpenCode (agente) | Hecha | Multi-firma k-de-n, anti-rollback `(bundle_epoch, bundle_version)` y estados de clave; rama `feat/62-trust-bundle` |
+| F19.T01 ADR-0021: ampliación de alcance | #78 | Antigravity (agente) | Lista para revisión del mantenedor | `ADR-0021` redactado en estado **Propuesto** (`docs/adr/0021-ampliacion-alcance-identidad-portable.md`); tras su aceptación por el mantenedor, actualizar `ROADMAP.md` y `ARCHITECTURE.md` |
+| F19.T02 Registrar discrepancias (§5.3) | #78 | Antigravity (agente) | Hecha | 5 issues `type:spec-gap` registrados (`#73` multi-QR, `#74` calendario BLE/NFC, `#75` estado en README, `#76` reproducibilidad spikes, `#77` código numérico vs P-09) |
+| F4.T08 Estados de clave del emisor | #71 | Antigravity (agente) | Hecha | Semántica `active`/`retired`/`suspended`/`compromised` (`ARCHITECTURE.md §11.6`, REQ-KEY-005, REQ-KEY-006); integrada en `main` (`cbecf33`) |
+| F4.T07 Caché de nonces | #68 | Antigravity (agente) | Hecha | Trait `NonceCache`, `InMemoryNonceCache` acotada (4.096), evicción determinista por expiración, `proptest`; integrada en `main` |
+| F4.T06 Pipeline del verificador | #66 | Antigravity (agente) | Hecha | Pipeline typestate con 11 comprobaciones ordenadas, evidencia y testigo compile-fail; integrada en `main` |
+| F4.T05 Policy del verificador | #65 | OpenCode (agente) | Hecha | `VerificationPolicy`, frescura por operación, sesgo acotado, allowlist/denylist; integrada en `main` |
+| F4.T04 Estado del verificador | #64 | OpenCode (agente) | Hecha | `VerifierStateStore`, `TimeFloorGuard`, `InMemoryStateStore` con HMAC-SHA256; integrada en `main` |
+| F4.T03 Trust bundle | #62 | OpenCode (agente) | Hecha | Multi-firma k-de-n, anti-rollback `(bundle_epoch, bundle_version)` y estados de clave; integrada en `main` |
 | F1.T01 Workspace Cargo | #6 | OpenCode (agente) | Hecha | 20 crates `gravital-id-*` con lints estrictos y perfiles; PR contra `main` |
 | F1.T02 Toolchain/MSRV (ADR-0014) | #6 | OpenCode (agente) | Hecha | Rust 1.85.0 fijado en `rust-toolchain.toml`; ADR-0014 Aceptado |
 | F1.T03 `xtask check-layers` | #6 | OpenCode (agente) | Hecha | Capas, `no_std`, aislamiento del verificador y bindings; casos negativos probados |
@@ -46,29 +48,29 @@
 | F1.T12 Gobierno del repo | #6 | OpenCode (agente) | Hecha | `CODEOWNERS` + labels como código con sync idempotente |
 | F1.T13 ADR-0019 + esqueleto vertical | #6 | OpenCode (agente) | Hecha | Fachada mínima del SDK + `bindings/wasm` con pruebas de humo en Node |
 | F1.T14 Mutación y Kani | #6 | OpenCode (agente) | Hecha | `cargo-mutants` + pruebas Kani de invariantes; job nocturno |
-| F2.T01 Newtypes validados | #24 | OpenCode (agente) | Hecha | `IssuerId`, `Kid`, `Vct`, `ProfileId`, `UnixTime`, `BundleVersion` + propiedades; rama `feat/24-types-newtypes` |
-| F2.T02 base64url estricto | #25 | OpenCode (agente) | Hecha | Sin relleno, canónica, acotada; fuzzing 6.9M ejecuciones; rama `feat/24-types-newtypes` |
-| F2.T03 JSON acotado | #26 | OpenCode (agente) | Hecha | Límites, duplicados rechazados, UTF-8 estricto, números acotados; diferencial vs serde_json + fuzzing; rama `feat/24-types-newtypes` |
-| F2.T04 CBOR acotado | #27 | OpenCode (agente) | Hecha | Límites, modo determinista RFC 8949 §4.2; desbordamiento de pila del fuzzing corregido; rama `feat/24-types-newtypes` |
-| F2.T05 DEFLATE + Base45 | #28 | OpenCode (agente) | Hecha | zlib acotado (2 MiB / 10:1, adler32) con backend `no_std` miniz_oxide; Base45 RFC 9285 con vectores del RFC; rama `feat/24-types-newtypes` |
-| F2.T06 CryptoBackend + RustCrypto | #29 | Antigravity (agente) | Hecha | ES256 P1363/DER, SHA-256, HMAC, HKDF, XChaCha20-Poly1305, ECDH P-256, HPKE (RFC 9180); rama `feat/24-types-newtypes` |
-| F2.T07 JWK y thumbprints | #30 | Antigravity (agente) | Hecha | Parseo estricto JWK EC P-256, validación de curva, rechazo miembros privados (d), RFC 7638 thumbprint; rama `feat/24-types-newtypes` |
-| F2.T08 Vectores externos | #31 | Antigravity (agente) | Hecha | RFC 7515 (ES256), RFC 7638, RFC 5869 (HKDF), RFC 9180 (HPKE), Wycheproof (ECDSA P-256 484/484 y AEAD 315/315); rama `feat/24-types-newtypes` |
-| F2.T09 Higiene de secretos | #32 | Antigravity (agente) | Hecha | Tipos secretos con `Zeroize`, `ZeroizeOnDrop`, `Debug` y `Display` redactados (`[REDACTED]`), comparación en tiempo constante con `subtle`; rama `feat/24-types-newtypes` |
-| F2.T10 gravital-id-keys | #33 | Antigravity (agente) | Hecha | `KeyPurpose`, `KeyHandle` tipado por propósito, trait `KeyStore`, `SoftwareKeyStore` bajo feature `software-keystore`, normalización DER↔P1363, pruebas `trybuild` compile-fail; rama `feat/24-types-newtypes` |
-| F2.T11 Objetivos de fuzzing | #34 | Antigravity (agente) | Hecha | Un objetivo por parser (`base64url_strict`, `json_bounded`, `cbor_bounded`, `base45_strict`, `deflate_bounded`, `jwk_parser`) con trazabilidad REQ-SEC-005 en `fuzz.yml`; rama `feat/24-types-newtypes` |
-| F2.T12 Benchmarks base | #35 | Antigravity (agente) | Hecha | Suite criterion `crypto_primitives` en `gravital-id-crypto` (ES256, SHA-256, XChaCha20, HPKE); línea base registrada en `STATUS.md` (REQ-PERF-001); cobertura `gravital-id-crypto` al 92,46 %; rama `feat/24-types-newtypes` |
-| F3.T01 ADR-0015 construir o reutilizar | #39 | Antigravity (agente) | Hecha | Evaluación de crates SD-JWT existentes; redactado `ADR-0015` propuesto; decisión Opción B (implementar en L2 `gravital-id-credential`); rama `docs/39-adr-0015-sd-jwt` |
-| F3.T02 Emisión SD-JWT | #41 | Antigravity (agente) | Hecha | Emisión RFC 9901 en `gravital-id-credential` (objetos/arrays, sal ≥ 128b, decoys, anidación, serialización compacta y firma ES256 vía `KeyStore`); rama `feat/41-sd-jwt-emission` |
-| F3.T03 Parseo y verificación SD-JWT | #43 | Antigravity (agente) | Hecha | Parseo RFC 9901 en `gravital-id-credential` (verificación de digests, rechazo de duplicados, claims reservados, huérfanos, colisión de claves, reconstrucción, firma ES256, límites DoS y fuzzing); rama `feat/43-sd-jwt-parsing-verification` |
-| F3.T04 KB-JWT | #45 | Antigravity (agente) | Hecha | Creación y verificación de KB-JWT (`typ: kb+jwt`, `nonce`, `aud`, `iat`, `sd_hash`; firma delegada al `KeyStore`; REQ-PRES-002, REQ-CRED-001, REQ-VER-003); rama `feat/45-kb-jwt` |
-| F4.T02 `pip-status`: cachía y frescura | #61 | OpenCode (agente) | Hecha | `StatusSnapshot` + `FreshnessPolicy` (7 días personal, 30 min/4 h financiero, 8 h empresarial) + `StatusCache` acotada, con reloj inyectado; rama `feat/61-status-cache` |
-| F4.T01 `pip-status`: listas | #60 | OpenCode (agente) | Hecha | Token Status List (JWT) con descompresión acotada, 1/2 bits, URI y frescura + `IssuerStatusManifest` con versión monotónica (REQ-STAT-001/003/004/007/008); rama `feat/60-status-lists` |
-| F3.T09 Vectores de conformidad v1 | #58 | OpenCode (agente) | Hecha | 24 vectores en `conformance/vectors/sd-jwt-vc/` (6 positivos, 18 negativos) + runner `cargo xtask conformance`; rama `feat/58-conformance-vectors` |
-| F3.T08 `pip-issuer` | #57 | OpenCode (agente) | Hecha | API de construcción y firma; emisión por lotes con claves, sales e índices distintos (REQ-CRED-006); rama `feat/57-issuer-api` |
-| F3.T07 Claims de predicado | #49 | OpenCode (agente) | Hecha | Predicados precomputados (`age_over_18`/`age_over_21`) con cálculo por calendario y reloj inyectado; rama `feat/49-predicate-claims` |
-| F3.T06 Esquemas de perfil | #48 | OpenCode (agente) | Hecha | Esquemas de `pip-personal-v1`, `pip-financial-v1` y `pip-enterprise-v1` en compilación con validación en emisión y verificación (REQ-CRED-004); rama `feat/48-profile-schemas` |
-| F3.T05 Capa SD-JWT VC | #47 | OpenCode (agente) | Hecha | `typ: dc+sd-jwt`, `iss`/`vct`/`iat`/`nbf`/`exp`, `cnf.jwk` canónico, `status.status_list`, lista de algoritmos del perfil y rechazo de `none`; rama `feat/47-sd-jwt-vc` |
+| F2.T01 Newtypes validados | #24 | OpenCode (agente) | Hecha | `IssuerId`, `Kid`, `Vct`, `ProfileId`, `UnixTime`, `BundleVersion` + propiedades; integrada en `main` |
+| F2.T02 base64url estricto | #25 | OpenCode (agente) | Hecha | Sin relleno, canónica, acotada; fuzzing 6.9M ejecuciones; integrada en `main` |
+| F2.T03 JSON acotado | #26 | OpenCode (agente) | Hecha | Límites, duplicados rechazados, UTF-8 estricto, números acotados; diferencial vs serde_json + fuzzing; integrada en `main` |
+| F2.T04 CBOR acotado | #27 | OpenCode (agente) | Hecha | Límites, modo determinista RFC 8949 §4.2; desbordamiento de pila del fuzzing corregido; integrada en `main` |
+| F2.T05 DEFLATE + Base45 | #28 | OpenCode (agente) | Hecha | zlib acotado (2 MiB / 10:1, adler32) con backend `no_std` miniz_oxide; Base45 RFC 9285 con vectores del RFC; integrada en `main` |
+| F2.T06 CryptoBackend + RustCrypto | #29 | Antigravity (agente) | Hecha | ES256 P1363/DER, SHA-256, HMAC, HKDF, XChaCha20-Poly1305, ECDH P-256, HPKE (RFC 9180); integrada en `main` |
+| F2.T07 JWK y thumbprints | #30 | Antigravity (agente) | Hecha | Parseo estricto JWK EC P-256, validación de curva, rechazo miembros privados (d), RFC 7638 thumbprint; integrada en `main` |
+| F2.T08 Vectores externos | #31 | Antigravity (agente) | Hecha | RFC 7515 (ES256), RFC 7638, RFC 5869 (HKDF), RFC 9180 (HPKE), Wycheproof (ECDSA P-256 484/484 y AEAD 315/315); integrada en `main` |
+| F2.T09 Higiene de secretos | #32 | Antigravity (agente) | Hecha | Tipos secretos con `Zeroize`, `ZeroizeOnDrop`, `Debug` y `Display` redactados (`[REDACTED]`), comparación en tiempo constante con `subtle`; integrada en `main` |
+| F2.T10 gravital-id-keys | #33 | Antigravity (agente) | Hecha | `KeyPurpose`, `KeyHandle` tipado por propósito, trait `KeyStore`, `SoftwareKeyStore` bajo feature `software-keystore`, normalización DER↔P1363, pruebas `trybuild` compile-fail; integrada en `main` |
+| F2.T11 Objetivos de fuzzing | #34 | Antigravity (agente) | Hecha | Un objetivo por parser (`base64url_strict`, `json_bounded`, `cbor_bounded`, `base45_strict`, `deflate_bounded`, `jwk_parser`) con trazabilidad REQ-SEC-005 en `fuzz.yml`; integrada en `main` |
+| F2.T12 Benchmarks base | #35 | Antigravity (agente) | Hecha | Suite criterion `crypto_primitives` en `gravital-id-crypto` (ES256, SHA-256, XChaCha20, HPKE); línea base registrada en `STATUS.md` (REQ-PERF-001); cobertura `gravital-id-crypto` al 92,46 %; integrada en `main` |
+| F3.T01 ADR-0015 construir o reutilizar | #39 | Antigravity (agente) | Hecha | Evaluación de crates SD-JWT existentes; redactado `ADR-0015` propuesto; decisión Opción B (implementar en L2 `gravital-id-credential`); integrada en `main` |
+| F3.T02 Emisión SD-JWT | #41 | Antigravity (agente) | Hecha | Emisión RFC 9901 en `gravital-id-credential` (objetos/arrays, sal ≥ 128b, decoys, anidación, serialización compacta y firma ES256 vía `KeyStore`); integrada en `main` |
+| F3.T03 Parseo y verificación SD-JWT | #43 | Antigravity (agente) | Hecha | Parseo RFC 9901 en `gravital-id-credential` (verificación de digests, rechazo de duplicados, claims reservados, huérfanos, colisión de claves, reconstrucción, firma ES256, límites DoS y fuzzing); integrada en `main` |
+| F3.T04 KB-JWT | #45 | Antigravity (agente) | Hecha | Creación y verificación de KB-JWT (`typ: kb+jwt`, `nonce`, `aud`, `iat`, `sd_hash`; firma delegada al `KeyStore`; REQ-PRES-002, REQ-CRED-001, REQ-VER-003); integrada en `main` |
+| F4.T02 `pip-status`: caché y frescura | #61 | OpenCode (agente) | Hecha | `StatusSnapshot` + `FreshnessPolicy` (7 días personal, 30 min/4 h financiero, 8 h empresarial) + `StatusCache` acotada, con reloj inyectado; integrada en `main` |
+| F4.T01 `pip-status`: listas | #60 | OpenCode (agente) | Hecha | Token Status List (JWT) con descompresión acotada, 1/2 bits, URI y frescura + `IssuerStatusManifest` con versión monotónica (REQ-STAT-001/003/004/007/008); integrada en `main` |
+| F3.T09 Vectores de conformidad v1 | #58 | OpenCode (agente) | Hecha | 24 vectores en `conformance/vectors/sd-jwt-vc/` (6 positivos, 18 negativos) + runner `cargo xtask conformance`; integrada en `main` |
+| F3.T08 `pip-issuer` | #57 | OpenCode (agente) | Hecha | API de construcción y firma; emisión por lotes con claves, sales e índices distintos (REQ-CRED-006); integrada en `main` |
+| F3.T07 Claims de predicado | #49 | OpenCode (agente) | Hecha | Predicados precomputados (`age_over_18`/`age_over_21`) con cálculo por calendario y reloj inyectado; integrada en `main` |
+| F3.T06 Esquemas de perfil | #48 | OpenCode (agente) | Hecha | Esquemas de `pip-personal-v1`, `pip-financial-v1` y `pip-enterprise-v1` en compilación con validación en emisión y verificación (REQ-CRED-004); integrada en `main` |
+| F3.T05 Capa SD-JWT VC | #47 | OpenCode (agente) | Hecha | `typ: dc+sd-jwt`, `iss`/`vct`/`iat`/`nbf`/`exp`, `cnf.jwk` canónico, `status.status_list`, lista de algoritmos del perfil y rechazo de `none`; integrada en `main` |
 
 ## Bloqueos
 
@@ -76,8 +78,10 @@
 
 ## Decisiones pendientes que bloquean la fase actual
 
-1. Excepción de licencia `Unicode-3.0` para `unicode-ident` (dependencia de compilación de `proc-macro2`): registrada como excepción acotada en `deny.toml`; falta confirmar si se incorpora a la allowlist de ADR-0002 (issue abierto por el agente).
-2. `PROJECT_STRUCTURE.md §7` contradice a `ERROR_CODES.md` en los rangos de códigos y sitúa `GidError` en `gravital-id-sdk` (L6) cuando el catálogo canónico vive en `gravital-id-types` (L1) y el SDK lo re-exporta: registrado como `type:spec-gap`.
+1. Excepción de licencia `Unicode-3.0` para `unicode-ident` (dependencia de compilación de `proc-macro2`): registrada como excepción acotada en `deny.toml`; falta confirmar si se incorpora a la allowlist de ADR-0002 (#7).
+2. `PROJECT_STRUCTURE.md §7` contradice a `ERROR_CODES.md` en los rangos de códigos y sitúa `GidError` en `gravital-id-sdk` (L6) cuando el catálogo canónico vive en `gravital-id-types` (L1) y el SDK lo re-exporta: registrado como `type:spec-gap` (#8).
+3. **Revisión y aceptación de `ADR-0021` por el mantenedor humano (#78):** `docs/adr/0021-ampliacion-alcance-identidad-portable.md` está en estado **Propuesto**; bloquea la incorporación oficial de `F19`–`F25` a `ROADMAP.md` y `ARCHITECTURE.md` y el inicio de código de `F20`–`F25`.
+4. **Presupuesto y cabecera Multi-QR (#73):** contradicción entre `ADR-0011` (1.200 caracteres, `GID01/P...`), `PROTOCOL.md §3.3` (800 caracteres, `PIP1/M/...`) y `spikes/qr/REPORT.md` (fragmentos de 900 caracteres, `GID01/P...`); bloquea `F5.T09`.
 
 ## Métricas base (se rellenan desde F2)
 
@@ -113,28 +117,19 @@
 
 ## Última nota de traspaso
 
-### Traspaso — 2026-10-15 (F4.T08: Estados de clave del emisor) — Antigravity (agente)
-- Tarea: F4.T08 — #71 — rama `feat/71-issuer-key-states`
-- Estado: **lista para revisión / hecha**
+### Traspaso — 2026-10-15 (F19.T01 / F19.T02: Plan de ampliación y ADR-0021) — Antigravity (agente)
+- Tarea: F19.T01 / F19.T02 — #78 — rama `main`
+- Estado: **lista para revisión del mantenedor**
 - Hecho en esta sesión:
-  - `crates/gravital-id-trust/src/bundle.rs`: enriquecidos `KeyState`, `IssuerKey`, `IssuerState` e `IssuerEntry` con métodos de consulta normativos (`is_active`, `is_retired`, `is_suspended`, `is_compromised`, `find_key`).
-  - Desarrollada suite exhaustiva de pruebas unitarias en `crates/gravital-id-trust/src/bundle.rs` validando `KeyState` (todos los estados, parseo estricto, rechazo de estados desconocidos con `ErrorCode::MalformedSdJwt`), `IssuerState` y `could_sign_at` para todos los estados temporales y límites frontera.
-  - `crates/gravital-id-trust/tests/trust_bundle_integration.rs`: añadida prueba de integración `issuer_key_states_in_verified_bundle_respect_semantics` demostrando el parseo, verificación criptográfica multi-firma de bundle y consulta de claves en los 4 estados normativos (`active`, `retired`, `suspended`, `compromised`).
-  - `crates/gravital-id-verifier/tests/verifier_pipeline_integration.rs`: añadido soporte en `VerificationFixture` para emitir credenciales con `cred_iat` desacoplado del tiempo de presentación (`issue_presentation_with_times`).
-  - Implementadas 5 pruebas de integración de pipeline cubriendo todas las reglas de `ARCHITECTURE.md §11.6`:
-    - `retired_key_before_retirement_date_passes_verification`: credenciales emitidas antes del retiro (`iat < state_since`) se verifican como `Valid` (`REQ-KEY-006`).
-    - `retired_key_after_retirement_date_yields_invalid`: credenciales emitidas tras retiro (`iat > state_since`) fallan `Validity` con `ErrorCode::IssuerKeyRetired` produciendo `Invalid`.
-    - `retired_key_at_exact_retirement_instant_yields_invalid`: condición límite exacta (`iat == state_since`) rechazada con `ErrorCode::IssuerKeyRetired` (`Invalid`).
-    - `suspended_key_yields_unverifiable`: clave en estado `suspended` produce `CheckStatus::Indeterminate` en `KeyState` con `ErrorCode::IssuerSuspended`, omitiendo pasos no autenticados (`Skipped`) y produciendo `Unverifiable`.
-    - `administratively_suspended_issuer_entry_yields_unverifiable`: emisor en estado `suspended` produce `CheckStatus::Indeterminate` en `IssuerAuthorized` con `ErrorCode::IssuerSuspended` produciendo `Unverifiable`.
-  - Documentación técnica actualizada en `crates/gravital-id-trust/README.md` y `crates/gravital-id-verifier/README.md`.
-  - Actualizado `CHANGELOG.md` con la entrada de F4.T08.
+  - Integrado el commit pendiente de `F4.T08` (`#71`) en `main` y eliminadas las 18 ramas locales y remotas ya fusionadas.
+  - Incorporado el documento de propuesta de alcance en `docs/proposals/2026-10-15-alcance-identidad-portable.md` y registrado `docs/proposals/` en `docs/PROJECT_STRUCTURE.md`.
+  - `ADR-0021` redactado en estado **Propuesto** (`docs/adr/0021-ampliacion-alcance-identidad-portable.md`) e indexado en `docs/adr/README.md` (`F19.T01`).
+  - 5 spec-gaps registrados en GitHub con plantilla completa (`F19.T02`): `#73` (presupuesto y cabecera multi-QR), `#74` (calendario BLE/NFC), `#75` (estado de SDK/WASM en README), `#76` (reproducibilidad de spikes de F0) y `#77` (identificador numérico vs no correlación).
 - Pendiente (siguiente paso concreto):
-  - F4.T09 `Matriz negativa y cobertura`: un vector por cada comprobación que falla; pruebas de precedencia de estados; cobertura de líneas en crates críticos; pruebas de mutación sobre las reglas de rechazo (`REQ-MAINT-003`, `REQ-MAINT-005`, `REQ-MAINT-006`, `REQ-VER-010`).
-- Bugs/issues abiertos durante la sesión: Ninguno.
-- Decisiones tomadas (con enlace a ADR/issue):
-  - Rotación no retroactiva: se verifica que la fecha de retiro de una clave solo invalida credenciales con `iat >= state_since`, garantizando interoperabilidad y longevidad de credenciales emitidas legalmente antes del retiro (`REQ-KEY-006`, `ARCHITECTURE.md §11.6`).
-- Riesgos o dudas: Ninguno.
-- Comprobaciones locales: fmt ✅ clippy ✅ tests ✅ (402 pruebas del workspace, 0 fallos)
-  layers ✅ trace ✅ check-error-codes ✅ doc ✅ deny ✅ `xtask conformance` 24/24 ✅ wasm32 ✅
-  bare-metal ✅ audit ✅
+  - Aceptación de `ADR-0021` por el mantenedor humano (Angel Nereira) para actualizar `ROADMAP.md` y `ARCHITECTURE.md`; luego redactar `ADR-0022` a `ADR-0026` (`F19.T03`–`F19.T07`).
+  - En paralelo en la pista principal de código: `F4.T09` (`Matriz negativa y cobertura`: un vector por cada comprobación que falla, precedencia de estados, cobertura y mutación).
+- Bugs/issues abiertos durante la sesión: `#73`, `#74`, `#75`, `#76`, `#77`, `#78`.
+- Decisiones tomadas (con enlace a ADR/issue): ninguna (todo queda en estado **Propuesto** en `ADR-0021` a la espera del mantenedor humano, conforme a `AGENTS.md §12` y `§0` del plan).
+- Riesgos o dudas: `R-15` (iPhone sin HCE en Panamá), `R-16` (soporte AEAD en chips Java Card), `R-19` (validez legal de cédula oficial vs credencial derivada), `R-23` (spikes F0 sin código versionado).
+- Comprobaciones locales: fmt ✅ clippy ✅ tests ✅ (402 pruebas del workspace, 0 fallos) layers ✅ trace ✅ check-error-codes ✅ doc ✅ deny ✅
+
