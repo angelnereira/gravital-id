@@ -9,6 +9,8 @@
 /crates/gravital-id-trust/         @angelnereira
 /crates/gravital-id-verifier/      @angelnereira
 /crates/gravital-id-status/        @angelnereira
+/crates/gravital-id-proximity/     @angelnereira
+/cards/                            @angelnereira
 
 # Contratos, especificaciones, gobierno del repositorio y CI.
 /contracts/                        @angelnereira

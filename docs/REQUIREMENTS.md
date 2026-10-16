@@ -1,7 +1,7 @@
 # REQUIREMENTS.md — Requisitos del sistema
 
-> **Estado:** Borrador normativo v0.2 · **Depende de:** `ARCHITECTURE.md`
-> **Revisión v0.2 (2026-10-10):** incorpora la revisión de arquitectura (ADR-0016 a ADR-0020, en estado **Propuesto**); lo que depende de ellos es propuesta hasta su aceptación por un mantenedor humano.
+> **Estado:** Borrador normativo v0.3 · **Depende de:** `ARCHITECTURE.md`
+> **Revisión v0.3 (2026-10-15):** incorpora ADR-0021 (**Aceptado**): familias de requisitos `PROX`, `CARD`, `CODE` e `IDDOC` para las fases F20–F24 (sujetas al detalle de ADR-0022 a ADR-0026 en F19).
 > Cada requisito tiene un ID estable. Los IDs **nunca se reutilizan**: un requisito retirado se marca `RETIRADO` con el ADR que lo retiró.
 
 ## Cómo leer este documento
@@ -188,6 +188,46 @@
 | REQ-GOV-001 | DEBE existir un marco de confianza documentado: roles, alta/baja de emisores, emergencias. | DEBE | I | F14 | P-12 |
 | REQ-GOV-002 | Las ceremonias de claves DEBEN estar documentadas, ensayadas y ser auditables. | DEBE | I, D | F14 | P-08 |
 | REQ-GOV-003 | DEBE existir un proceso público de propuestas de cambio del protocolo. | DEBE | I | F14 | P-12 |
+
+### 1.14 Proximidad (PROX) — ADR-0021 / ADR-0022 / ADR-0023
+
+| ID | Requisito | Nivel | Verif. | Fase | P |
+|---|---|---|---|---|---|
+| REQ-PROX-001 | La respuesta de proximidad (NFC/BLE) DEBE cifrarse extremo a extremo con HPKE hacia una clave efímera del verificador, con la suite de `CRYPTO_PROFILES.md`. | DEBE | T | F20 | P-09 |
+| REQ-PROX-002 | La presentación DEBE vincularse al transcrito de la sesión; una respuesta reenviada a otra sesión u otro verificador DEBE resultar `Invalid`. | DEBE | T | F20 | P-08 |
+| REQ-PROX-003 | Los mensajes de proximidad DEBEN ser independientes del medio y reutilizar la transcodificación de `PROTOCOL.md`. | DEBE | T | F20 | P-06 |
+| REQ-PROX-004 | Los parsers de APDU y de mensajes de proximidad DEBEN ser acotados y tener objetivo de fuzzing. | DEBE | T, F | F20 | P-08 |
+| REQ-PROX-005 | La verificación por proximidad NO DEBE requerir red y DEBE producir el mismo `VerificationResult` que la ruta QR para la misma presentación. | DEBE | T, D | F20 | P-01 |
+| REQ-PROX-006 | El titular DEBE consentir antes de cada respuesta; el perfil DEFINE si se exige presencia de usuario por toque. | DEBE | T, I | F21 | P-09 |
+| REQ-PROX-007 | Ningún log de transporte DEBE contener payloads, claims, nonces completos ni identificadores. | DEBE | T, I | F20 | P-09 |
+| REQ-PROX-008 | Los adaptadores de plataforma (HCE, Core NFC, PC/SC, BLE) NO DEBEN contener lógica de protocolo. | DEBE | I | F21 | P-11 |
+
+### 1.15 Tarjeta física (CARD) — ADR-0021 / ADR-0024
+
+| ID | Requisito | Nivel | Verif. | Fase | P |
+|---|---|---|---|---|---|
+| REQ-CARD-001 | La clave de vinculación de la tarjeta DEBE generarse dentro del elemento seguro y NO DEBE ser exportable. | DEBE | T, I | F22 | P-03 |
+| REQ-CARD-002 | La tarjeta DEBE aceptar escritura de credenciales solo en estado de personalización autenticado por el emisor. | DEBE | T | F22 | P-08 |
+| REQ-CARD-003 | Los claims que el perfil marque como sensibles DEBEN requerir PIN; el contador de intentos DEBE bloquear tras el máximo fijado. | DEBE | T | F22 | P-08 |
+| REQ-CARD-004 | El applet DEBE superar los vectores de conformidad de proximidad con resultados idénticos al núcleo Rust. | DEBE | T | F22 | P-11 |
+| REQ-CARD-005 | Una tarjeta perdida DEBE poder revocarse por lista de estado sin contacto con la tarjeta. | DEBE | T, D | F22 | P-08 |
+
+### 1.16 Códigos numéricos (CODE) — ADR-0021 / ADR-0025
+
+| ID | Requisito | Nivel | Verif. | Fase | P |
+|---|---|---|---|---|---|
+| REQ-CODE-001 | Un código numérico corto DEBE identificar una sesión, nunca a un titular; DEBE caducar y ser de un solo uso. | DEBE | T | F23 | P-09 |
+| REQ-CODE-002 | El código DEBE incluir dígito de control y el servicio DEBE limitar intentos. | DEBE | T, F | F23 | P-08 |
+| REQ-CODE-003 | La seguridad del flujo por código NO DEBE depender del secreto del código. | DEBE | T, I | F23 | P-08 |
+| REQ-CODE-004 | Si se adopta, el número por emisor DEBE tratarse como dato personal (fuera de ledger, logs, métricas y errores) y su resolución DEBE requerir consentimiento del titular. | DEBE | T, I | F23 | P-02 |
+
+### 1.17 Documento de identidad (IDDOC) — ADR-0021 / ADR-0026
+
+| ID | Requisito | Nivel | Verif. | Fase | P |
+|---|---|---|---|---|---|
+| REQ-IDDOC-001 | El perfil de identidad DEBE distinguir con `vct` distintos la credencial oficial de la derivada. | DEBE | T | F24 | P-08 |
+| REQ-IDDOC-002 | El retrato DEBE validarse en formato y tamaño, viajar solo por los transportes que el perfil permita y no persistirse en el verificador salvo base legal. | DEBE | T, I | F24 | P-09 |
+| REQ-IDDOC-003 | El número de documento DEBE ser de divulgación selectiva y nunca usarse como identificador de correlación del protocolo. | DEBE | T, I | F24 | P-09 |
 
 ---
 

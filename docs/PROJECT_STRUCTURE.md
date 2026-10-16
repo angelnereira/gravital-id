@@ -55,7 +55,7 @@ gravital-id/
 │   ├── TRACEABILITY.md           # Matriz generada requisito → pruebas (cargo xtask trace)
 │   ├── adr/                      # Architecture Decision Records (NNNN-titulo.md)
 │   ├── proposals/                # Propuestas de alcance y planes de implementación
-│   ├── specs/                    # Especificaciones normativas (creadas en F0)
+│   ├── specs/                    # Especificaciones normativas (creadas en F0 / F19)
 │   │   ├── THREAT_MODEL.md
 │   │   ├── CRYPTO_PROFILES.md
 │   │   ├── PROTOCOL.md
@@ -70,8 +70,9 @@ gravital-id/
 │   │   └── profiles/
 │   │       ├── pip-personal-v1.md
 │   │       ├── pip-financial-v1.md
-│   │       └── pip-enterprise-v1.md
-│   ├── guides/                   # (F9) Integración por lenguaje
+│   │       ├── pip-enterprise-v1.md
+│   │       └── pip-identity-v1.md            # (F19, según ADR-0021 / ADR-0026)
+│   ├── guides/                   # (F9 / F24) Integración por lenguaje y caso de uso
 │   ├── runbooks/                 # (F15) Operación, incidentes, ceremonias
 │   ├── postmortems/              # Análisis de incidentes y bugs S0/S1
 │   └── legal/                    # (F14) DPIA, análisis regulatorio (sin datos personales)
@@ -90,13 +91,19 @@ gravital-id/
 │   ├── gravital-id-storage/
 │   ├── gravital-id-storage-sqlite/       # Adaptador L5
 │   ├── gravital-id-protocol/
+│   ├── gravital-id-proximity/            # (F20, L4 sans-I/O, según ADR-0021 / ADR-0022)
 │   ├── gravital-id-recovery/
 │   ├── gravital-id-sync/
 │   ├── gravital-id-transport-http/       # Adaptador L5
+│   ├── gravital-id-transport-pcsc/       # (F21, Adaptador L5 PC/SC, según ADR-0021)
 │   ├── gravital-id-ledger/
 │   ├── gravital-id-ledger-evm/
 │   ├── gravital-id-sdk/
 │   └── gravital-id-testkit/              # Solo dev-dependency
+│
+├── cards/                        # (F22, según ADR-0021 / ADR-0024)
+│   └── javacard/
+│       └── gid-applet/           # Applet Java Card con pruebas en jCardSim
 │
 ├── bindings/
 │   ├── uniffi/                   # Crate pip-ffi-uniffi → Kotlin, Swift, Python
@@ -124,12 +131,13 @@ gravital-id/
 │
 ├── apps/
 │   ├── pip-cli/                  # Herramienta de desarrollo y operación
+│   ├── gid-perso/                # (F22) Herramienta de personalización de tarjetas físicas
 │   ├── reference-wallet/         # (F11) Wallet de referencia
 │   ├── reference-verifier/       # (F11) Verificador de referencia
 │   └── issuer-console/           # (F11) Consola mínima de emisor
 │
 ├── conformance/
-│   ├── vectors/                  # Vectores JSON inmutables, versionados por perfil
+│   ├── vectors/                  # Vectores JSON inmutables, versionados por perfil (incl. proximity/ en F20)
 │   ├── suites/                   # Definición de casos (positivos y negativos)
 │   ├── runner/                   # Crate pip-conformance (ejecuta vectores contra cualquier SDK)
 │   └── interop/                  # Adaptadores a implementaciones externas
@@ -140,7 +148,7 @@ gravital-id/
 │   ├── docker/                   # Dockerfiles reproducibles
 │   ├── iac/                      # OpenTofu/Terraform por entorno
 │   └── environments/             # dev, testnet, pilot, production (sin secretos)
-├── spikes/                       # PoCs de F0. Código desechable: NUNCA importado por crates/
+├── spikes/                       # PoCs de F0 / F19. Código desechable: NUNCA importado por crates/
 └── xtask/                        # Automatización: check-layers, trace, bindgen, vectors, release
 ```
 
@@ -150,7 +158,7 @@ gravital-id/
 
 | Crate | Capa | Responsabilidad | I/O | WASM | Depende de (internos) |
 |---|---|---|---|---|---|
-| `gravital-id-types` | L1 | Identificadores (`IssuerId`, `Kid`, `Vct`, `ProfileId`), tiempo (`UnixTime`), versiones, newtypes validados | No | Sí | — |
+| `gravital-id-types` | L1 | Identificadores (`IssuerId`, `Kid`, `Vct`, `ProfileId`), tiempo (`UnixTime`), versiones, `SessionCode` (F23), newtypes validados | No | Sí | — |
 | `gravital-id-codec` | L1 | base64url estricto, JSON con límites y rechazo de duplicados, CBOR con límites, DEFLATE con límite, Base45 | No | Sí | types |
 | `gravital-id-crypto` | L1 | Trait `CryptoBackend`; ES256, SHA-256, HMAC, HKDF, XChaCha20-Poly1305, ECDH P-256, HPKE, JWK, thumbprints, comparación en tiempo constante | No | Sí | types, codec |
 | `gravital-id-keys` | L1 | `KeyPurpose`, `KeyHandle`, trait `KeyStore` (firma y acuerdo de claves), normalización de firmas DER → P1363, keystore software (feature `software-keystore`) | No | Sí | types, crypto |
@@ -163,12 +171,14 @@ gravital-id/
 | `gravital-id-storage` | L3 | Trait `StorageBackend`, cifrado de sobre, índices ciegos, migraciones, backend en memoria | No | Sí | types, crypto |
 | `gravital-id-recovery` | L3 | Respaldo, código de recuperación, Shamir, migración SAS, solicitudes de re-vinculación | No | Sí | crypto, keys, holder |
 | `gravital-id-protocol` | L4 | Mensajes OID4VCI/OID4VP, perfil offline QR, sobres de operación | No | Sí | credential, verifier, holder, recovery |
+| `gravital-id-proximity` | L4 | (F20, ADR-0021) Sesión cifrada HPKE, transcrito, fragmentación por MTU, codec `GID-APDU`, máquinas de estado sans-I/O | No | Sí | types, codec, crypto, keys, credential, verifier, holder, protocol |
 | `gravital-id-sync` | L4 | Cola de operaciones y sincronización como máquina de estado sans-I/O; trait `Transport` (lo implementa L5 o el host) | No | Sí | protocol, trust, status, storage |
 | `gravital-id-ledger` | L4 | Trait `LedgerAdapter`, tipos de eventos, reconstrucción pura del estado, derivación determinista del bundle, contraste bundle ↔ estado | No | Sí | trust, types |
 | `gravital-id-storage-sqlite` | L5 | Backend SQLite (`rusqlite`) de `StorageBackend` y de `VerifierStateStore` | Sí | No | storage, trust |
 | `gravital-id-transport-http` | L5 | Implementación por defecto de `Transport`; conduce las máquinas de `gravital-id-sync` y `gravital-id-protocol` | Sí | No (en web el host inyecta `fetch`) | sync |
+| `gravital-id-transport-pcsc` | L5 | (F21, ADR-0021) Adaptador PC/SC para lectores USB ISO/IEC 14443 / 7816 que conduce `gravital-id-proximity` | Sí | No | proximity |
 | `gravital-id-ledger-evm` | L5 | Implementación EVM con `alloy`; solo servicios y modo completo | Sí | No | ledger |
-| `gravital-id-sdk` | L6 | API pública estable; fachada sobre L1–L4; features `verifier`, `holder`, `issuer`, `sync`, `full-verification` | Según features | Sí (sin `full-verification`) | todos salvo testkit |
+| `gravital-id-sdk` | L6 | API pública estable; fachada sobre L1–L4; features `verifier`, `holder`, `issuer`, `sync`, `proximity`, `full-verification` | Según features | Sí (sin `full-verification`) | todos salvo testkit |
 | `gravital-id-testkit` | — | `FixedClock`, `SeededRng`, emisores y bundles de prueba, generadores proptest | — | Sí | todos (solo dev) |
 
 \* `gravital-id-holder` usa el trait de almacenamiento; el I/O real lo hace el backend.
@@ -311,6 +321,7 @@ Reglas:
 | E5000–E5999 | Sincronización y transporte |
 | E6000–E6999 | Ledger |
 | E7000–E7999 | Recuperación |
+| E8000–E8999 | Proximidad (NFC/BLE), tarjeta física y código de sesión (F19–F23, ADR-0021) |
 | E9000–E9999 | Interno (E9999 = pánico capturado en FFI) |
 
 - **Los resultados de verificación no son errores**: `Invalid` o `Unverifiable` son valores de `VerificationResult`, no `Err`. `Err` se reserva para fallos de uso de la API o del entorno.
@@ -324,8 +335,8 @@ Reglas:
 |---|---|---|---|
 | Unitarias | `src/**` (`#[cfg(test)]`) | `cargo test` / `cargo nextest` | Todo crate |
 | Integración y negativas | `crates/*/tests/` | `cargo nextest` | Todo crate L1–L4 |
-| Propiedades | `tests/` | `proptest` | codec, credential, status, trust, verifier, storage |
-| Vectores de conformidad | `conformance/vectors/` | `gravital-id-conformance` | Desde F3 en Rust; desde F9 en cada lenguaje |
+| Propiedades | `tests/` | `proptest` | codec, credential, status, trust, verifier, storage, proximity |
+| Vectores de conformidad | `conformance/vectors/` | `gravital-id-conformance` | Desde F3 en Rust; desde F9 en cada lenguaje; desde F22 en applet |
 | Vectores externos | `crates/gravital-id-crypto/tests/vectors/` | Project Wycheproof, ejemplos de RFC | gravital-id-crypto, gravital-id-credential |
 | Fuzzing | `fuzz/fuzz_targets/` | `cargo-fuzz` | Todo parser |
 | Mutación | — | `cargo-mutants` | Reglas de rechazo de credential, status, trust y verifier (desde F4) |
@@ -333,6 +344,7 @@ Reglas:
 | Modelos formales de protocolo | `docs/specs/models/` | Tamarin o ProVerif | Presentación, re-vinculación y migración (F13) |
 | Benchmarks | `benches/` | `criterion` | Desde F2 |
 | Contratos | `contracts/test/` | Foundry (unit, fuzz, invariantes), Slither | F6 |
+| Tarjeta física (applet) | `cards/javacard/gid-applet/` | jCardSim + vectores `conformance/vectors/proximity/` | F22 |
 | Servicios | `services/*/tests/` | Testcontainers (PostgreSQL, nodo EVM local) | F7 |
 | End-to-end | `apps/*/tests/`, `conformance/e2e/` | Escenarios scripted | F11 |
 
@@ -353,6 +365,7 @@ Reglas:
 | `mobile.yml` | Push a `main` + nocturno + PR con label `ci:mobile` | Android (cargo-ndk, todas las ABIs) e iOS (XCFramework); pruebas de bindings en emulador/simulador |
 | `wasm.yml` | PR que toque `bindings/wasm` o crates L1–L4 | wasm-pack, pruebas en Node y navegador headless |
 | `contracts.yml` | PR que toque `contracts/` | `forge build/test`, fuzz, invariantes, gas snapshot, Slither |
+| `cards.yml` | PR que toque `cards/` o `conformance/vectors/proximity/` (desde F22) | Compilación reproducible del applet Java Card y ejecución de vectores de proximidad en jCardSim |
 | `fuzz.yml` | Nocturno | Cada objetivo durante un tiempo fijo; corpus persistido; un crash ⇒ issue automático `type:bug` + `area:security` **privado** |
 | `bench.yml` | Nocturno + PR con label `ci:bench` | criterion con comparación contra `main` (gate desde G9) |
 | `release.yml` | Tag | Builds reproducibles, firma de artefactos, SBOM, publicación por canal |

@@ -1,9 +1,9 @@
 # ADR-0021: Ampliación de alcance y hoja de ruta para identidad portable por NFC, tarjeta física, código numérico y perfil de documento de identidad
 
-- **Estado:** Propuesto
+- **Estado:** Aceptado
 - **Fecha:** 2026-10-15
 - **Autores:** Antigravity (agente), a petición de Angel Nereira
-- **Aprobado por:** Angel Nereira (pendiente de aceptación formal del mantenedor humano)
+- **Aprobado por:** Angel Nereira (2026-10-15)
 - **Issue:** #78
 - **Requisitos y principios afectados:** REQ-DOC-001, REQ-DOC-002, REQ-KEY-002, REQ-KEY-003, REQ-PRES-001..008, REQ-SDK-001..009, REQ-VER-001..012; candidatos `REQ-PROX-001..008`, `REQ-CARD-001..005`, `REQ-CODE-001..004`, `REQ-IDDOC-001..003`; P-01..P-15; INV-01..INV-16
 - **Fase:** F19 (F19.T01)

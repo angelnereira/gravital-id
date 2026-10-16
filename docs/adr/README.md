@@ -31,6 +31,11 @@ Un ADR registra una decisión difícil de revertir: contexto, opciones, decisió
 | [0018](0018-emergencia-solo-suspension.md) | Alcance del rol de emergencia | Aceptado | Solo suspensión reversible con caducidad | F0 |
 | [0019](0019-nucleo-no-std-y-sans-io.md) | Núcleo `no_std` y protocolos sans-I/O | Aceptado | L1–L3 `no_std` + `alloc`; L4 sans-I/O; adaptadores en L5 | F1 |
 | [0020](0020-fail-closed-por-tipos.md) | Fail-closed por tipos y resultado por comprobación | Aceptado | Typestate + `Passed`/`Failed`/`Indeterminate`/`Skipped` | F0 |
-| [0021](0021-ampliacion-alcance-identidad-portable.md) | Ampliación de alcance: NFC, tarjeta física, código numérico e identidad portable | Propuesto | Añadir pista F19–F25 (hitos MP1–MP3), adelantar subconjuntos F9 y mover NFC a F21 | F19 |
+| [0021](0021-ampliacion-alcance-identidad-portable.md) | Ampliación de alcance: NFC, tarjeta física, código numérico e identidad portable | Aceptado | Añadir pista F19–F25 (hitos MP1–MP3), adelantar subconjuntos F9 y mover NFC a F21 | F19 |
+| 0022 | Transporte de proximidad y protocolo GID-APDU | Propuesto | GID-APDU (ISO 7816-4) vs mdoc (ISO 18013-5) vs BLE con traspaso NFC | F19 |
+| 0023 | Cifrado de sesión de proximidad y vinculación al transcrito | Propuesto | Respuesta sellada con HPKE + AAD ligada al transcrito de sesión | F19 |
+| 0024 | Arquitectura de tarjeta física Java Card y personalización | Propuesto | Applet Java Card con P-256 en elemento seguro, PIN por niveles y `gid-perso` | F19 |
+| 0025 | Modelo de identificadores numéricos de 9–10 dígitos | Propuesto | Código efímero de sesión (10 dígitos + Damm) en línea; evaluación de número por emisor | F19 |
+| 0026 | Perfil de identidad portable `pip-identity-v1` y tratamiento del retrato | Propuesto | Variantes oficial/derivada con `vct` distintos; retrato JPEG acotado solo por NFC/BLE | F19 |
 
-_Los ADRs de F0 (0001–0012, 0016–0018 y 0020) y los ADRs de F1 (0014 y 0019) han sido redactados y aceptados formalmente. El ADR-0015 (F3.T01) y el ADR-0021 (F19.T01, ampliación de alcance de identidad portable) han sido redactados y quedan en estado **Propuesto** para revisión del mantenedor humano. El ADR 0013 queda planificado para Fase F7, y los ADRs candidatos 0022–0026 se redactan en Fase F19 tras la revisión de ADR-0021._
+_Los ADRs de F0 (0001–0012, 0016–0018 y 0020), los ADRs de F1 (0014 y 0019) y el ADR-0021 (F19.T01, ampliación de alcance de identidad portable) han sido redactados y aceptados formalmente. El ADR-0015 (F3.T01) se encuentra redactado en estado **Propuesto**. Los ADRs 0022–0026 se redactan y revisan en Fase F19 (`F19.T03`–`F19.T07`), y el ADR 0013 queda planificado para Fase F7._

@@ -1,7 +1,7 @@
 # ROADMAP.md — Hoja de ruta completa hasta producción
 
-> **Estado:** Normativo v0.2 · **Depende de:** `ARCHITECTURE.md`, `REQUIREMENTS.md`, `PROJECT_STRUCTURE.md`
-> **Revisión v0.2 (2026-10-10):** incorpora la revisión de arquitectura (ADR-0016 a ADR-0020, en estado **Propuesto**); lo que depende de ellos es propuesta hasta su aceptación por un mantenedor humano.
+> **Estado:** Normativo v0.3 · **Depende de:** `ARCHITECTURE.md`, `REQUIREMENTS.md`, `PROJECT_STRUCTURE.md`
+> **Revisión v0.3 (2026-10-15):** incorpora ADR-0021 (**Aceptado**): pista de identidad portable `F19`–`F25`, hitos `MP1`–`MP3` y riesgos `R-15`–`R-23`. El diseño detallado de cada subsistema se cierra en ADR-0022 a ADR-0026 durante `F19`.
 > Esta hoja de ruta cubre **desde el repositorio vacío hasta el producto en producción y su operación continua**. Ninguna fase se omite. Cada tarea se convierte en un issue de GitHub antes de empezar.
 
 ---
@@ -15,7 +15,7 @@
 5. **"Hecho" significa** cumplir la *Definition of Done* de `AGENTS.md §10` **y** el criterio de aceptación de la tarea. Compilar no es terminar.
 6. **Las duraciones son orientativas**, para un equipo pequeño (3–5 ingenieros con apoyo de agentes de código). No son compromisos. Los plazos externos (auditorías, asesoría legal, reguladores) no se aceleran con más agentes.
 7. **Cambios a esta hoja de ruta** (añadir, mover o retirar tareas) requieren PR con justificación; cambiar el orden de fases o eliminar un gate requiere ADR.
-8. **Los spikes** (PoCs de F0) son código desechable en `spikes/`. Nada de un spike pasa a `crates/` sin reescribirse con las reglas de `AGENTS.md`.
+8. **Los spikes** (PoCs de F0 y F19) son código desechable en `spikes/`. Nada de un spike pasa a `crates/` sin reescribirse con las reglas de `AGENTS.md`.
 
 ---
 
@@ -42,8 +42,15 @@
 | F16 | Piloto controlado en producción | 8–12 semanas | **M4 · Piloto validado** |
 | F17 | Lanzamiento general (GA) | 2–4 semanas | **M5 · Producción** |
 | F18 | Operación continua y evolución | Permanente | — |
+| F19 | Especificación de identidad portable (NFC, tarjeta, código, retrato) | 2–4 semanas (paralela a F4–F5) | — |
+| F20 | Núcleo de proximidad (sesión cifrada, independiente del medio) | 3–4 semanas | — |
+| F21 | NFC: teléfono Android como tarjeta y lectores multiplataforma | 4–6 semanas | **MP1 · Tap offline** |
+| F22 | Tarjeta física Gravital (Java Card) | 6–10 semanas | **MP2 · Tarjeta física** |
+| F23 | Códigos numéricos de sesión (y número por emisor opcional) | 3–4 semanas | — |
+| F24 | Identidad portable (`pip-identity-v1`) y kit del integrador | 6–8 semanas | **MP3 · Identidad portable** |
+| F25 | Formato mdoc e interoperabilidad ISO/IEC 18013-5 (condicional a ADR-0022) | Condicional | — |
 
-**Estimación total orientativa hasta M5:** 14–20 meses con los solapamientos permitidos. El MVP (M2) se alcanza aproximadamente entre los meses 6 y 9. Esta estimación es mayor que la del plan inicial de seis fases porque incluye bindings, protocolos en línea, apps, auditorías, cumplimiento, operación y piloto, que el plan inicial no cubría.
+**Estimación total orientativa hasta M5:** 14–20 meses con los solapamientos permitidos. El MVP (M2) se alcanza aproximadamente entre los meses 6 y 9. La pista `F19`–`F24` se ejecuta encadenada a `F5`, `F7` y `F10`, entregando los hitos `MP1`, `MP2` y `MP3` antes de la beta técnica (`F12`).
 
 ---
 
@@ -69,9 +76,23 @@ flowchart LR
     F13 --> F15
     F14 --> F15
     F15 --> F16 --> F17 --> F18
+    F0 --> F19 --> F20
+    F5 -. F5.T08 y F5.T09 .-> F20
+    F20 --> F21
+    F20 --> F22
+    F21 -. lectores .-> F22
+    F19 --> F23
+    F7 -. relay .-> F23
+    F10 -. OID4VP .-> F23
+    F21 --> F24
+    F22 -. si hay tarjeta .-> F24
+    F10 -. servicio de emisión .-> F24
+    F24 --> F12
+    F19 -. condicional .-> F25
+    F25 -.-> F24
 ```
 
-Solapamientos permitidos: **F6** puede empezar cuando cierra G2 (los contratos no dependen del formato de credencial) y avanzar en paralelo con F3–F5. La tarea F6.T08 (`pip-ledger`) necesita además el modelo de bundle de F4.T03. **F10** puede empezar cuando la API de `pip-sdk` esté congelada (F9.T02). **F14** puede empezar con G11 abierto. La **contratación** de auditores (F13.T01) empieza durante F9.
+Solapamientos permitidos: **F6** puede empezar cuando cierra G2 (los contratos no dependen del formato de credencial) y avanzar en paralelo con F3–F5. La tarea F6.T08 (`pip-ledger`) necesita además el modelo de bundle de F4.T03. **F10** puede empezar cuando la API de `pip-sdk` esté congelada (F9.T02). **F14** puede empezar con G11 abierto. La **contratación** de auditores (F13.T01) empieza durante F9. **F19** puede ejecutarse en paralelo a F4–F5 porque solo produce especificaciones, ADRs y spikes. **F20** requiere G19 y las tareas F5.T08–T09 (y su gate G20 espera a G5). Según ADR-0021, **F21** adelanta el subconjunto de frontera FFI y `KeyStore` Kotlin/Swift de F9.T03–T05 requerido para proximidad, y **F24** adelanta el subconjunto de servidor de F9.T06 y F9.T09 (TypeScript/Node, Go y .NET).
 
 ---
 
@@ -80,7 +101,10 @@ Solapamientos permitidos: **F6** puede empezar cuando cierra G2 (los contratos n
 | Hito | Significado | Demostración mínima |
 |---|---|---|
 | **M1 · Núcleo offline** | El protocolo funciona sin conectividad. | Emitir credencial de prueba → transferir por QR → verificar en otro dispositivo sin red, con divulgación selectiva y rechazo de replay. |
+| **MP1 · Tap offline** | El teléfono Android actúa como tarjeta sin contacto verificable offline. | Emitir → wallet Android (HCE + StrongBox/TEE) → toque NFC → verificación offline en Android, iPhone y lector USB PC/SC con divulgación selectiva y rechazo de replay/sesión cruzada. |
+| **MP2 · Tarjeta física** | Tarjeta inteligente Java Card verificable offline con los mismos vectores que el núcleo. | Personalizar tarjeta real con `gid-perso` → verificar offline en Android, iPhone y PC/SC (nivel 0 sin PIN, nivel 1 con PIN; tarjeta revocada ⇒ `Invalid`). |
 | **M2 · MVP del protocolo** | Confianza pública, sincronización y recuperación funcionan de extremo a extremo en testnet. | Todos los criterios de aceptación del MVP (§24) pasan en una ejecución scriptada y reproducible. |
+| **MP3 · Identidad portable** |Documento de identidad con retrato y kit de servidor listos en teléfono, tarjeta, QR y código numérico. | Emitir `pip-identity-v1` desde SDK de servidor (TS/Go/.NET) con KMS → teléfono y tarjeta → verificar offline por NFC con retrato, por QR sin retrato y por código de sesión en línea. |
 | **M3 · Beta técnica** | SDK en todos los lenguajes, protocolos estándar, apps de referencia e interoperabilidad, en testnet. | Integradores externos completan flujos con sus propios sistemas. |
 | **M4 · Piloto validado** | Uso real limitado en producción con SLOs cumplidos. | Informe de piloto aprobado. |
 | **M5 · Producción** | Producto 100 % funcional en producción (definición en §23). | Gate G17 cerrado. |
@@ -357,13 +381,13 @@ Solapamientos permitidos: **F6** puede empezar cuando cierra G2 (los contratos n
 |---|---|---|---|
 | F9.T01 | `pip-sdk` completo | Fachada (iniciada en F1.T13 y ampliada en cada fase) completa según `SDK_API.md`, features, `PipError` con códigos estables, interfaces del host (`KeyStore`, `Clock`, `StorageBackend`, `VerifierStateStore`, `Transport`). | REQ-SDK-001, REQ-SDK-003, REQ-SDK-005 |
 | F9.T02 | Revisión y congelación de API | Revisión formal; versión `0.x` congelada para la beta; `cargo-semver-checks` activo. | REQ-SDK-006 |
-| F9.T03 | Seguridad FFI | `catch_unwind` en todas las fronteras nativas e instancia envenenada en WASM; prueba de pánico inducido ⇒ `PIP-E9999` en ambos casos; fuzzing a través de la frontera FFI; revisión que confirma que ninguna clave privada del titular cruza FFI. | REQ-SDK-004, REQ-KEY-003 |
-| F9.T04 | Kotlin (Android + JVM) | UniFFI + cargo-ndk (todas las ABIs); `KeyStore` Android (StrongBox con alternativa TEE; autenticación de usuario según perfil); KEK en Android Keystore; exclusión de backups; pruebas en emulador y dispositivo físico. | REQ-KEY-002, REQ-STOR-002, REQ-STOR-007 |
-| F9.T05 | Swift (iOS + macOS) | XCFramework; `KeyStore` Secure Enclave; KEK en Keychain solo-este-dispositivo; exclusión de backups; pruebas en dispositivo físico (el simulador no tiene Secure Enclave: allí solo keystore software marcado como de prueba). | REQ-KEY-002, REQ-STOR-002, REQ-STOR-007 |
-| F9.T06 | JavaScript/TypeScript (WASM) | wasm-bindgen; tipos TypeScript; `KeyStore` WebCrypto no extraíble; `StorageBackend` IndexedDB; pruebas en Node y en Chromium, Firefox y WebKit headless. | REQ-PORT-001 |
+| F9.T03 | Seguridad FFI | `catch_unwind` en todas las fronteras nativas e instancia envenenada en WASM; prueba de pánico inducido ⇒ `PIP-E9999` en ambos casos; fuzzing a través de la frontera FFI; revisión que confirma que ninguna clave privada del titular cruza FFI. *(Subconjunto de proximidad Kotlin adelantado a F21.T03 según ADR-0021).* | REQ-SDK-004, REQ-KEY-003 |
+| F9.T04 | Kotlin (Android + JVM) | UniFFI + cargo-ndk (todas las ABIs); `KeyStore` Android (StrongBox con alternativa TEE; autenticación de usuario según perfil); KEK en Android Keystore; exclusión de backups; pruebas en emulador y dispositivo físico. *(Subconjunto de proximidad y StrongBox/TEE adelantado a F21.T04 según ADR-0021).* | REQ-KEY-002, REQ-STOR-002, REQ-STOR-007 |
+| F9.T05 | Swift (iOS + macOS) | XCFramework; `KeyStore` Secure Enclave; KEK en Keychain solo-este-dispositivo; exclusión de backups; pruebas en dispositivo físico (el simulador no tiene Secure Enclave: allí solo keystore software marcado como de prueba). *(Subconjunto mínimo de verificador Core NFC adelantado a F21.T06 según ADR-0021).* | REQ-KEY-002, REQ-STOR-002, REQ-STOR-007 |
+| F9.T06 | JavaScript/TypeScript (WASM) | wasm-bindgen; tipos TypeScript; `KeyStore` WebCrypto no extraíble; `StorageBackend` IndexedDB; pruebas en Node y en Chromium, Firefox y WebKit headless. *(Superficie de servidor TS/Node adelantada a F24.T06 según ADR-0021).* | REQ-PORT-001 |
 | F9.T07 | Python | UniFFI; wheels para Linux, macOS y Windows; pruebas. | REQ-SDK-002 |
 | F9.T08 | Dart/Flutter | Según ADR-0006; paquete y pruebas en Android e iOS. | REQ-SDK-002 |
-| F9.T09 | C ABI, Go y .NET | `cbindgen`; funciones de liberación de memoria explícitas; envoltorio Go (cgo) y .NET (P/Invoke); pruebas con sanitizadores. | REQ-SDK-002 |
+| F9.T09 | C ABI, Go y .NET | `cbindgen`; funciones de liberación de memoria explícitas; envoltorio Go (cgo) y .NET (P/Invoke); pruebas con sanitizadores. *(Superficie de servidor Go y .NET adelantada a F24.T06 según ADR-0021).* | REQ-SDK-002 |
 | F9.T10 | Conformidad multi-lenguaje | `conformance/vectors/` ejecutado en cada binding con resultados idénticos. | REQ-SDK-007 |
 | F9.T11 | Rendimiento y tamaño | Benchmarks por plataforma; presupuestos numéricos fijados (tiempo de verificación, memoria, arranque, tamaño binario); CI falla ante regresión superior al umbral. | REQ-PERF-002 |
 | F9.T12 | Guías de integración | `docs/guides/<lenguaje>.md` con ejemplo ejecutado en CI. | REQ-SDK-009 |
@@ -579,7 +603,7 @@ El producto está en producción cuando **todo** lo siguiente es verdad:
 | F18.T01 | Ciclo de releases y parches de seguridad con SLA | Continuo |
 | F18.T02 | Rotaciones de claves y ceremonias programadas | Según calendario del marco de confianza |
 | F18.T03 | Migración a RFC final de Token Status List y SD-JWT VC | Al publicarse; ADR + nueva versión de perfil criptográfico |
-| F18.T04 | ISO 18013-5 (mdoc) y transporte BLE/NFC | Demanda de integradores; ADR |
+| F18.T04 | ISO 18013-5 (mdoc) (el transporte NFC sobre SD-JWT VC se movió a F21 según ADR-0021; mdoc se adelanta a F25 si ADR-0022 lo decide) | Demanda de integradores; ADR-0022 |
 | F18.T05 | Presentaciones no correlacionables (BBS) | Estándar en Recommendation y bibliotecas auditadas; ADR |
 | F18.T06 | Registro de emisión anclado (excepción ante compromiso de clave) | ADR |
 | F18.T07 | Preparación post-cuántica | Inventario criptográfico; perfil híbrido con ML-DSA (RFC 9964 ya lo define para JOSE) cuando exista soporte de plataforma para las claves del titular; firma híbrida de la raíz y del bundle como primer paso (el formato multi-firma ya la admite); plan de migración |
@@ -594,7 +618,148 @@ El producto está en producción cuando **todo** lo siguiente es verdad:
 
 ---
 
-## 26. Registro de riesgos
+## 26. F19 — Especificación de la ampliación (spec-first)
+
+**Objetivo:** cerrar decisiones, requisitos y especificaciones del alcance de identidad portable (NFC, tarjeta física, código numérico y perfil de documento de identidad) antes de escribir código de producción.
+**Entrada:** G0 cerrado (avanza en paralelo a F4–F5).
+
+| ID | Tarea | Entregable y criterio de aceptación | REQ |
+|---|---|---|---|
+| F19.T01 | ADR-0021: ampliación de alcance y cambio de hoja de ruta | ADR con opciones (incluida "no ampliar"); añade F19–F25, G19–G25, MP1–MP3; adelanta el subconjunto Kotlin de F9.T03/F9.T04 a F21 y el de TS/Go/.NET de F9.T06/F9.T09 a F24; mueve NFC de F18.T04 a F21; `ROADMAP.md` y `ARCHITECTURE.md` actualizados al aceptarse. | — |
+| F19.T02 | Registrar discrepancias | Un issue `type:spec-gap` por cada discrepancia detectada en la auditoría inicial (#73–#77). | REQ-DOC-001 |
+| F19.T03 | ADR-0022: transporte de proximidad | Compara (a) GID-APDU propio con SD-JWT VC, (b) ISO/IEC 18013-5 con mdoc, (c) BLE con traspaso por NFC; justifica la opción frente a P-04; incluye cambios en `layers.toml`, AID y registro de RID. | REQ-PROX-003 |
+| F19.T04 | ADR-0023: cifrado de sesión y transcrito | Suite HPKE (de `CRYPTO_PROFILES.md`), construcción del transcrito, vinculación del KB-JWT, decisión sobre si el QR adopta cifrado. | REQ-PROX-001, REQ-PROX-002 |
+| F19.T05 | ADR-0024: tarjeta física | Plataforma y versión Java Card, chips candidatos, soporte AEAD (resultado de F19.T13), ciclo de vida, PIN y su transporte, lotes en tarjeta, certificación del chip, atestación. | REQ-CARD-001, REQ-CARD-002, REQ-CARD-003, REQ-CARD-004, REQ-CARD-005 |
+| F19.T06 | ADR-0025: identificadores numéricos | Código de sesión (formato, Damm, TTL, límites) y decisión sobre la opción B con sus contrapartidas; resuelve la tensión con `ARCHITECTURE.md §7.1` (#77). | REQ-CODE-001, REQ-CODE-002, REQ-CODE-003, REQ-CODE-004 |
+| F19.T07 | ADR-0026: perfil de identidad y retrato | Variantes oficial/derivada, claims, retrato (formato, tamaño, transportes), parámetros del perfil. | REQ-IDDOC-001, REQ-IDDOC-002, REQ-IDDOC-003 |
+| F19.T08 | Requisitos | Familias `PROX`, `CARD`, `CODE`, `IDDOC` incorporadas a `REQUIREMENTS.md` según los ADR aceptados; `cargo xtask trace` en verde. | REQ-DOC-003 |
+| F19.T09 | `PROTOCOL.md` §7 Proximidad + `ERROR_CODES.md` familia 8 | Gramática CBOR de los mensajes, tabla APDU, máquinas de estado, errores `GID-E8xxx`; `cargo xtask check-error-codes` en verde. | REQ-PROX-003 |
+| F19.T10 | Adenda de `THREAT_MODEL.md` | Amenazas de proximidad, tarjeta física y código numérico con STRIDE/LINDDUN; cada amenaza enlazada a mitigación y REQ. | REQ-SEC-001 |
+| F19.T11 | `docs/specs/profiles/pip-identity-v1.md` | Perfil completo con el formato de los perfiles existentes. | REQ-CRED-004, REQ-IDDOC-001 |
+| F19.T12 | Spike NFC/HCE (código en `spikes/nfc-hce/`) | App Android HCE mínima + lector Android + lector iPhone + lector PC/SC; payloads de 1, 4 y 20 KB; latencia por APDU, rendimiento con longitud extendida y tasa de éxito al primer toque; script reproducible y datos crudos (CSV) versionados. | REQ-PROX-005 |
+| F19.T13 | Spike Java Card (código en `spikes/javacard/`) | Applet mínimo: generar clave P-256, firmar, ECDH y AEAD disponible; en jCardSim y en ≥ 2 modelos de tarjeta reales; tiempos y memoria; datos crudos versionados. | REQ-CARD-001 |
+| F19.T14 | Reproducibilidad de spikes existentes | Repetir los spikes QR y keystore con código y datos crudos en `spikes/` (#76); si los resultados difieren de los informes, issue y actualización de ADR-0011 por la vía de ADR. | REQ-PRES-005, REQ-KEY-002 |
+| F19.T15 | Adenda legal | Preguntas para F14 en `docs/legal/`: emisión por el Tribunal Electoral o credencial derivada, retrato como dato sensible (Ley 81 de 2019), número por emisor como dato personal, obligaciones del emisor de tarjetas. | REQ-COMP-001 |
+| F19.T16 | Revisión cruzada | Cada documento nuevo revisado con la lista de F0.T21. | REQ-DOC-001 |
+
+**Gate G19:** ADR-0021 a ADR-0026 aceptados (o diferidos con fase límite) por el mantenedor humano; especificaciones fusionadas y revisadas; spikes F19.T12–T14 con código y datos crudos; ningún spec-gap abierto del alcance nuevo.
+
+---
+
+## 27. F20 — Núcleo de proximidad (sesión cifrada, independiente del medio)
+
+**Objetivo:** máquinas de estado sans-I/O, cifrado de sesión HPKE y vinculación al transcrito en L4 (`gravital-id-proximity`), reutilizables sobre NFC y BLE.
+**Entrada:** G19 cerrado; F5.T08 y F5.T09 completadas (el gate G20 espera a G5).
+
+| ID | Tarea | Entregable y criterio de aceptación | REQ |
+|---|---|---|---|
+| F20.T01 | Crate `gravital-id-proximity` (L4) | Crate creado con `#![forbid(unsafe_code)]`, README y lints; `layers.toml` actualizado según ADR-0022; caso negativo de `check-layers`. | REQ-MAINT-002 |
+| F20.T02 | Mensajes CBOR | `ProximityRequest`, `ProximityResponse`, `HolderHello`, estado de sesión; parser acotado sobre `gravital-id-codec`; propiedad de ida y vuelta; objetivo de fuzzing por mensaje. | REQ-PROX-003, REQ-PROX-004 |
+| F20.T03 | Cifrado de sesión | Clave efímera del verificador (propósito de acuerdo, nunca de firma); sellado y apertura HPKE con AAD = transcrito. Pruebas negativas: clave errónea, texto cifrado alterado, AAD de otra sesión ⇒ fallo cerrado. | REQ-PROX-001 |
+| F20.T04 | Transcrito y vinculación | Construcción canónica del transcrito; vinculación del KB-JWT según ADR-0023; prueba: respuesta reenviada a otra sesión o a otro `aud` ⇒ `Invalid`. | REQ-PROX-002 |
+| F20.T05 | Fragmentación | Fragmentación por MTU con hash de integridad, compartida por NFC y BLE; reutiliza la transcodificación de F5.T09. | REQ-PROX-003 |
+| F20.T06 | Máquinas de estado | Titular y verificador sans-I/O; tiempos de espera como eventos del `Clock` inyectado; sin `std::time`. | REQ-VER-009 |
+| F20.T07 | Integración con el verificador | El verificador recibe la presentación reconstruida y llama a `VerifierPipeline::verify`; misma presentación por QR y por proximidad ⇒ mismo `VerificationResult`. Ningún estado nuevo. | REQ-PROX-005 |
+| F20.T08 | Vectores de conformidad | `conformance/vectors/proximity/`: positivos y al menos un negativo por regla de rechazo; `cargo xtask conformance` los ejecuta. | REQ-MAINT-003 |
+| F20.T09 | Fachada del SDK | Feature `proximity` en `gravital-id-sdk`: iniciar sesión (verificador) y responder (titular) manteniendo preparar/confirmar. | REQ-PRES-003, REQ-SDK-001 |
+| F20.T10 | Benchmarks | Tiempo de establecimiento + verificación y tamaños por perfil; resultados en `STATUS.md`. | REQ-PERF-001 |
+
+**Gate G20:** vectores publicados; horas de fuzzing según `TEST_STRATEGY.md`; cobertura ≥ 90 % en `gravital-id-proximity`; demostración con transporte en memoria en la CLI de F4.T12: `Valid`, replay ⇒ `Invalid`, respuesta alterada ⇒ `Invalid`, sesión cruzada ⇒ `Invalid`.
+
+---
+
+## 28. F21 — NFC: teléfono Android como tarjeta y lectores → **MP1 · Tap offline**
+
+**Objetivo:** presentación sin contacto desde teléfono Android (HCE + StrongBox/TEE) y verificación offline en lectores Android, iPhone y USB PC/SC.
+**Entrada:** G20 cerrado y ADR-0021 aceptado.
+
+| ID | Tarea | Entregable y criterio de aceptación | REQ |
+|---|---|---|---|
+| F21.T01 | Codec GID-APDU | `SELECT`, `ENVELOPE` con encadenamiento, `GET RESPONSE`, `VERIFY`; palabras de estado mapeadas a `GID-E8xxx`; fuzzing de comandos y respuestas. | REQ-PROX-004 |
+| F21.T02 | AID | AID propietario de desarrollo definido en un único lugar; decisión de RID documentada (ADR-0022). | — |
+| F21.T03 | Frontera FFI mínima (Kotlin) | UniFFI limitado a la superficie de proximidad; `catch_unwind` en cada frontera; pánico inducido ⇒ `GID-E9999`; ninguna clave privada cruza FFI. | REQ-SDK-004, REQ-KEY-003 |
+| F21.T04 | Titular Android (HCE) | `HostApduService` que solo reenvía APDU a la máquina Rust (INV-15); `KeyStore` StrongBox con alternativa TEE; modelo de consentimiento de dos toques; prueba en dispositivo físico. | REQ-PROX-006, REQ-PROX-008, REQ-KEY-002 |
+| F21.T05 | Verificador Android | Lector `IsoDep` con detección de longitud extendida; verificación offline con trust bundle precargado. | REQ-PROX-005 |
+| F21.T06 | Verificador iPhone | Core NFC (ISO 7816) con el AID declarado; binding Swift mínimo; documentar que el iPhone no actúa como titular por NFC. | REQ-PROX-005 |
+| F21.T07 | Adaptador PC/SC | `gravital-id-transport-pcsc` (L5) y subcomando de verificación por NFC en la CLI de F4.T12, con lector USB. | REQ-PROX-005 |
+| F21.T08 | BLE (condicional) | Solo si F19.T12 muestra que NFC no basta para el retrato o si se exige al titular con iPhone: traspaso NFC → BLE GATT con la misma sesión cifrada. Si no aplica, se cierra con referencia al ADR. | REQ-PROX-003 |
+| F21.T09 | Prueba de campo | ≥ 3 Android (gama baja, media, alta) como titulares; ≥ 2 iPhone y 1 lector PC/SC como verificadores; tasa de éxito y latencia con datos crudos versionados; umbral fijado en ADR-0022. | REQ-PROX-005 |
+| F21.T10 | Demostración MP1 | Script reproducible: emitir → wallet Android → toque → verificación offline en Android, iPhone y PC/SC con divulgación selectiva, rechazo de replay y de sesión cruzada. | — |
+
+**Gate G21 / Hito MP1:** demostración aprobada; prueba de campo dentro del umbral; logs auditados sin PII (REQ-PROX-007).
+
+---
+
+## 29. F22 — Tarjeta física Gravital (Java Card) → **MP2 · Tarjeta física**
+
+**Objetivo:** tarjeta inteligente física con clave en elemento seguro, niveles de PIN, herramienta de personalización y conformidad idéntica al núcleo Rust.
+**Entrada:** G20 cerrado y ADR-0024 aceptado; lectores de F21.T05–T07.
+
+| ID | Tarea | Entregable y criterio de aceptación | REQ |
+|---|---|---|---|
+| F22.T01 | Proyecto del applet | `cards/javacard/gid-applet/` con compilación reproducible, pruebas en jCardSim y workflow `cards.yml`; ruta en `CODEOWNERS`. | REQ-MAINT-004 |
+| F22.T02 | Clave en la tarjeta | Generación P-256 en la tarjeta; exportación solo de la clave pública; prueba: ningún comando devuelve material privado. | REQ-CARD-001 |
+| F22.T03 | Almacenamiento y ciclo de vida | Credencial y divulgaciones con límites; escritura solo en `PERSONALIZACIÓN` autenticada; estados `ACTIVA`, `BLOQUEADA`, `TERMINADA`. | REQ-CARD-002 |
+| F22.T04 | Presentación | KB-JWT construido en la tarjeta con `nonce`, `aud`, instante del verificador y `sd_hash`; divulgación según conjunto autorizado; cifrado de sesión según ADR-0024. | REQ-PROX-001, REQ-PROX-002 |
+| F22.T05 | PIN | Niveles 0/1; contador con bloqueo; desbloqueo solo por el emisor; transporte del PIN según ADR-0024. | REQ-CARD-003 |
+| F22.T06 | Personalización | `apps/gid-perso` (PC/SC + SDK de emisor + `KeyStore` KMS): flujo completo en jCardSim y en tarjeta real. | REQ-CARD-002 |
+| F22.T07 | Conformidad del applet | Vectores de `conformance/vectors/proximity/` ejecutados contra el applet en CI: resultados idénticos al núcleo. | REQ-CARD-004 |
+| F22.T08 | Tarjeta perdida | Revocación por lista de estado: tras sincronizar el snapshot, el verificador devuelve `Invalid`. | REQ-CARD-005 |
+| F22.T09 | Revisión de seguridad del applet | Sin exportación de privadas, sin datos sensibles fuera de la sesión, manejo de errores sin fuga, dependencia de las protecciones del chip documentada. | REQ-SEC-001 |
+| F22.T10 | Demostración MP2 | Personalizar una tarjeta real → verificar offline en Android, iPhone y PC/SC; nivel 0 sin PIN, nivel 1 con PIN; tarjeta revocada ⇒ `Invalid`. | — |
+
+**Gate G22 / Hito MP2:** demostración aprobada; conformidad del applet idéntica al núcleo; revisión de seguridad sin hallazgos altos abiertos.
+
+---
+
+## 30. F23 — Códigos numéricos
+
+**Objetivo:** código de sesión efímero de 10 dígitos con dígito de control Damm para presentaciones en línea cuando no hay cámara ni NFC (y número por emisor opcional si ADR-0025 lo aprueba).
+**Entrada:** ADR-0025 aceptado; F7.T06 (relay) y F10.T05–T06 (OID4VP) completadas.
+
+| ID | Tarea | Entregable y criterio de aceptación | REQ |
+|---|---|---|---|
+| F23.T01 | Newtype `SessionCode` | En `gravital-id-types`: 10 dígitos con control Damm; constructor que rechaza valores inválidos; propiedades y fuzzing del parser. | REQ-CODE-002 |
+| F23.T02 | Rendezvous en el relay | Código → solicitud firmada del verificador; TTL por perfil; un solo uso; límites por origen y globales; sin PII en logs. | REQ-CODE-001 |
+| F23.T03 | Flujo de la wallet | Introducir código → obtener solicitud → validarla → mostrar quién y qué → consentimiento → respuesta HPKE por el relay. | REQ-CODE-003, REQ-PRES-003 |
+| F23.T04 | Flujo del verificador | Crear solicitud y código desde el SDK de servidor; recibir la respuesta (sondeo o webhook); verificar. | REQ-CODE-003 |
+| F23.T05 | Pruebas de abuso | Simulación de adivinación dentro del TTL con la cota de probabilidad documentada; carrera entre dos respuestas (gana la primera, el resto se rechaza). | REQ-CODE-001 |
+| F23.T06 | Número por emisor (opcional) | Solo si ADR-0025 adopta la opción B: prefijos de emisor en el registro, número como claim, resolución con consentimiento por el relay, límites por número; prueba automatizada de que el número no aparece en ledger, logs ni errores. | REQ-CODE-004 |
+| F23.T07 | Guía de atención telefónica | Caso de uso documentado con ejemplo ejecutable en CI. | REQ-SDK-009 |
+
+**Gate G23:** flujos E2E en testnet; pruebas de abuso aprobadas; logs auditados sin PII.
+
+---
+
+## 31. F24 — Identidad portable y kit del integrador → **MP3 · Identidad portable**
+
+**Objetivo:** perfil `pip-identity-v1` con retrato, adaptadores KMS/HSM y SDK de servidor (TS/Node, Go, .NET) listos para emitir y verificar en teléfono, tarjeta, QR y código de sesión.
+**Entrada:** G21 cerrado; G22 si se usa tarjeta; F10.T08 (servicio de emisión); para producción, además F14 (legal).
+
+| ID | Tarea | Entregable y criterio de aceptación | REQ |
+|---|---|---|---|
+| F24.T01 | Esquema `pip-identity-v1` | Esquema incorporado en compilación (como F3.T06); validación en emisión y verificación; variantes oficial/derivada con `vct` distintos. | REQ-IDDOC-001, REQ-CRED-004 |
+| F24.T02 | Retrato | Validación estricta de formato y tamaño; rechazo del retrato en transportes no permitidos; el verificador de referencia no lo persiste. | REQ-IDDOC-002 |
+| F24.T03 | Emisión derivada | Flujo de un emisor que verificó identidad (`IdentityVerificationPort`) → `pip-identity-v1` derivada. | REQ-IDDOC-001 |
+| F24.T04 | Kit para emisor gubernamental | Documento de requisitos para una autoridad de registro civil: HSM, alta en el marco de confianza, personalización de tarjetas. Solo documentación hasta que exista acuerdo. | REQ-GOV-001 |
+| F24.T05 | Adaptadores KMS/HSM | `KeyStore` para Azure Key Vault, AWS KMS y PKCS#11 con ES256; pruebas con emuladores o cuentas de prueba; ninguna clave en variables en claro. | REQ-ISS-002 |
+| F24.T06 | SDK de servidor | Paquetes para TS/Node, Go y .NET (subconjunto adelantado de F9.T06/F9.T09) con la superficie emisor + verificador; vectores de conformidad en cada lenguaje con resultados idénticos. | REQ-SDK-002, REQ-SDK-007 |
+| F24.T07 | API de aprovisionamiento | En `issuer-service`: emisión a teléfono (OID4VCI) y a tarjeta (personalización remota o en punto de atención); imagen de contenedor. | REQ-ISS-001 |
+| F24.T08 | Verificador de referencia tipo terminal | App Android o kiosco PC/SC con políticas predefinidas por operación (aceptar offline con estado de hasta N días, o exigir estado fresco). | REQ-VER-005 |
+| F24.T09 | Guías de integración | `docs/guides/` para emisor, verificador, wallet y tarjeta, con ejemplos ejecutados en CI. | REQ-SDK-009 |
+| F24.T10 | Demostración MP3 | Emitir `pip-identity-v1` → teléfono Android y tarjeta → verificar offline por NFC con retrato, por QR sin retrato y por código de sesión en línea; revocar y comprobar `Invalid` tras sincronizar. | — |
+
+**Gate G24 / Hito MP3:** demostración aprobada; SDK de servidor con conformidad idéntica; guías ejecutables.
+
+---
+
+## 32. F25 — Formato mdoc e interoperabilidad ISO/IEC 18013-5 (condicional)
+
+**Solo si ADR-0022 lo decide** (p. ej. si hay acuerdo con una autoridad de identidad o se exige interoperar con lectores estándar). Adelanta F18.T04. Incluye: formato mdoc (CBOR/COSE), emisión de ambos formatos para el mismo titular, sesión de 18013-5 sobre NFC/BLE, vectores de conformidad oficiales disponibles y pruebas con lectores de terceros. Se planifica en detalle en ADR-0022.
+
+---
+
+## 33. Registro de riesgos
 
 | ID | Riesgo | Prob. | Impacto | Mitigación | Dueño |
 |---|---|---|---|---|---|
@@ -612,6 +777,15 @@ El producto está en producción cuando **todo** lo siguiente es verdad:
 | R-12 | Correlación por reutilización de credenciales SD-JWT | Alta | Medio | Lotes de uso único; BBS en F18 | Protocolo |
 | R-13 | Colusión o indisponibilidad de los firmantes de bundle | Baja | Crítico | Operadores de organizaciones distintas, umbral k < n, raíz offline que los sustituye, `bundle_epoch` | TFA |
 | R-14 | Mantenedor humano único: la aceptación de ADRs y las revisiones de CODEOWNERS se vuelven cuello de botella | Alta | Medio | Decisión explícita en un issue `type:decision`; ADRs agrupados por revisión; incorporar un segundo revisor humano | Mantenedores |
+| R-15 | iPhone no puede emular tarjeta NFC en Panamá | Alta | Medio | QR/BLE para titulares iOS; Core NFC como lector verificador; reevaluar cuando Apple amplíe mercados | Bindings / Producto |
+| R-16 | Chips Java Card sin AEAD nativo para HPKE | Media | Alto | Spike F19.T13 antes de comprar en volumen; ADR-0024 | Tarjetas / Cripto |
+| R-17 | Ataques de relay NFC | Media | Alto | Vinculación al transcrito, solicitud firmada, PIN para datos sensibles, ventanas de tiempo cortas | Protocolo / Seguridad |
+| R-18 | Tarjeta física rastreable por clave fija | Alta | Medio | Varias copias preaprovisionadas con claves distintas; contrapartida documentada en ADR-0024 | Privacidad |
+| R-19 | Validez legal de la cédula portable | Alta | Alto | Distinguir credencial derivada de oficial (`vct` distintos); acuerdo institucional; F14 | Legal / Producto |
+| R-20 | Divergencia entre applet Java Card y núcleo Rust | Media | Alto | Vectores de conformidad ejecutados sobre el applet en CI (`jCardSim`, REQ-CARD-004) | Tarjetas / Calidad |
+| R-21 | Phishing o ingeniería social con códigos numéricos | Media | Medio | Wallet muestra el verificador; solicitudes firmadas; TTL corto y uso único | Protocolo / UX |
+| R-22 | Costo y plazo de certificación de chips y registro de RID | Media | Medio | AID propietario en desarrollo; presupuesto en F15 | Operaciones |
+| R-23 | Spikes de F0 sin evidencia reproducible | Media | Alto | Repetición con código y datos crudos en F19.T14 (#76) | Ingeniería |
 
 ---
 
@@ -626,7 +800,7 @@ El producto está en producción cuando **todo** lo siguiente es verdad:
   - [ ] <criterio 2> — evidencia: <enlace>
 - REQ de la fase trazados (salida de `cargo xtask trace`): <enlace>
 - Issues abiertos de la fase (deben ser 0 o diferidos con justificación): <lista>
-- Riesgos revisados (§26): <cambios>
+- Riesgos revisados (§33): <cambios>
 - Decisión: CERRADO / NO CERRADO
 - Acciones derivadas:
 ```

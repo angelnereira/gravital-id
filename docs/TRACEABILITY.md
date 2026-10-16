@@ -106,6 +106,26 @@
 | REQ-GOV-001 | F14 | DEBE | I | P-12 | — | Inspección / Auditoría |
 | REQ-GOV-002 | F14 | DEBE | I, D | P-08 | — | Inspección / Auditoría |
 | REQ-GOV-003 | F14 | DEBE | I | P-12 | — | Inspección / Auditoría |
+| REQ-PROX-001 | F20 | DEBE | T | P-09 | — | Pendiente (Fase futura) |
+| REQ-PROX-002 | F20 | DEBE | T | P-08 | — | Pendiente (Fase futura) |
+| REQ-PROX-003 | F20 | DEBE | T | P-06 | — | Pendiente (Fase futura) |
+| REQ-PROX-004 | F20 | DEBE | T, F | P-08 | — | Pendiente (Fase futura) |
+| REQ-PROX-005 | F20 | DEBE | T, D | P-01 | — | Pendiente (Fase futura) |
+| REQ-PROX-006 | F21 | DEBE | T, I | P-09 | — | Pendiente (Fase futura) |
+| REQ-PROX-007 | F20 | DEBE | T, I | P-09 | — | Pendiente (Fase futura) |
+| REQ-PROX-008 | F21 | DEBE | I | P-11 | — | Inspección / Auditoría |
+| REQ-CARD-001 | F22 | DEBE | T, I | P-03 | — | Pendiente (Fase futura) |
+| REQ-CARD-002 | F22 | DEBE | T | P-08 | — | Pendiente (Fase futura) |
+| REQ-CARD-003 | F22 | DEBE | T | P-08 | — | Pendiente (Fase futura) |
+| REQ-CARD-004 | F22 | DEBE | T | P-11 | — | Pendiente (Fase futura) |
+| REQ-CARD-005 | F22 | DEBE | T, D | P-08 | — | Pendiente (Fase futura) |
+| REQ-CODE-001 | F23 | DEBE | T | P-09 | — | Pendiente (Fase futura) |
+| REQ-CODE-002 | F23 | DEBE | T, F | P-08 | — | Pendiente (Fase futura) |
+| REQ-CODE-003 | F23 | DEBE | T, I | P-08 | — | Pendiente (Fase futura) |
+| REQ-CODE-004 | F23 | DEBE | T, I | P-02 | — | Pendiente (Fase futura) |
+| REQ-IDDOC-001 | F24 | DEBE | T | P-08 | — | Pendiente (Fase futura) |
+| REQ-IDDOC-002 | F24 | DEBE | T, I | P-09 | — | Pendiente (Fase futura) |
+| REQ-IDDOC-003 | F24 | DEBE | T, I | P-09 | — | Pendiente (Fase futura) |
 | REQ-SEC-001 | F1 | DEBE | T, I | — | layers.rs | Cubierto |
 | REQ-SEC-002 | F2 | DEBE | I | — | aead.rs, ecdh.rs, hpke.rs, kdf.rs, rng.rs, sha.rs, api_coverage.rs, external_vectors.rs | Cubierto |
 | REQ-SEC-003 | F2 | DEBE | T, I | — | aead.rs, secret.rs, api_coverage.rs, secret_hygiene.rs, software.rs, state.rs, verifier_state_integration.rs | Cubierto |

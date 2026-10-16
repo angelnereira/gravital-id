@@ -6,11 +6,11 @@
 
 | Campo | Valor |
 |---|---|
-| Fase actual | **F4 — Estado, confianza y verificación offline (en curso)** · **F19 — Especificación de la ampliación (en paralelo, propuesta)** |
+| Fase actual | **F4 — Estado, confianza y verificación offline (en curso)** · **F19 — Especificación de la ampliación (en paralelo, en curso)** |
 | Último gate cerrado | **G0** (2026-10-11) |
 | Próximo gate | **G3** — revisión formal de Fase F3 (#59); **G2** sigue pendiente de merge/CI |
-| Hito siguiente | M1 · Núcleo offline (al cerrar G5) |
-| Última actualización | 2026-10-15 (F19.T01 / F19.T02 completadas — ADR-0021 Propuesto y registro de spec-gaps #73–#77) |
+| Hito siguiente | M1 · Núcleo offline (al cerrar G5) · MP1 · Tap offline (al cerrar G21) |
+| Última actualización | 2026-10-15 (F19.T01, F19.T02 y F19.T08 completadas — ADR-0021 Aceptado y documentos base actualizados) |
 
 ## Gates
 
@@ -20,13 +20,14 @@
 | G1 | En curso | — | Workspace, xtask, CI y gobierno del repositorio implementados en `feat/6-workspace-cargo` (#6, PR #22); pendiente merge del mantenedor |
 | G2 | **Listo para revisión** | — | F2.T01 a F2.T12 completadas en rama `feat/24-types-newtypes` (#24–#35). Vectores externos 100% pasando (RFC 7515/7638/5869/9180, Wycheproof 799/799), 6 parsers fuzzeados en CI (`fuzz.yml`), cobertura `gravital-id-crypto` al 92,46% (≥ 90%), 25 REQ trazados en `docs/TRACEABILITY.md`. |
 | G3 | **Abierto a revisión** (#59) | — | F3.T01–T09 implementadas y trazadas (24 vectores de conformidad, 304 pruebas). **Decisión: NO CERRADO**: F3.T10 (interoperabilidad bidireccional) está bloqueada por depender de una implementación externa, y la campaña de fuzzing nocturna no puede ejecutarse mientras GitHub Actions esté bloqueado por facturación. |
-| G4 … G17 | Pendiente | — | — |
+| G4 … G25 | Pendiente | — | — |
 
 ## Tareas en curso
 
 | Tarea | Issue | Responsable | Estado | Siguiente paso |
 |---|---|---|---|---|
-| F19.T01 ADR-0021: ampliación de alcance | #78 | Antigravity (agente) | Lista para revisión del mantenedor | `ADR-0021` redactado en estado **Propuesto** (`docs/adr/0021-ampliacion-alcance-identidad-portable.md`); tras su aceptación por el mantenedor, actualizar `ROADMAP.md` y `ARCHITECTURE.md` |
+| F19.T08 Requisitos PROX, CARD, CODE, IDDOC | #78 | Antigravity (agente) | Hecha | 20 nuevos requisitos (`REQ-PROX-001..008`, `REQ-CARD-001..005`, `REQ-CODE-001..004`, `REQ-IDDOC-001..003`) incorporados a `REQUIREMENTS.md` v0.3 y trazados en `TRACEABILITY.md` (167 REQ totales) |
+| F19.T01 ADR-0021: ampliación de alcance | #78 | Antigravity (agente) | Hecha | `ADR-0021` **Aceptado** por el mantenedor; `ROADMAP.md` v0.3 (`F19`–`F25`, `MP1`–`MP3`, `R-15`–`R-23`), `ARCHITECTURE.md` v0.3, `PROJECT_STRUCTURE.md` y `CODEOWNERS` actualizados |
 | F19.T02 Registrar discrepancias (§5.3) | #78 | Antigravity (agente) | Hecha | 5 issues `type:spec-gap` registrados (`#73` multi-QR, `#74` calendario BLE/NFC, `#75` estado en README, `#76` reproducibilidad spikes, `#77` código numérico vs P-09) |
 | F4.T08 Estados de clave del emisor | #71 | Antigravity (agente) | Hecha | Semántica `active`/`retired`/`suspended`/`compromised` (`ARCHITECTURE.md §11.6`, REQ-KEY-005, REQ-KEY-006); integrada en `main` (`cbecf33`) |
 | F4.T07 Caché de nonces | #68 | Antigravity (agente) | Hecha | Trait `NonceCache`, `InMemoryNonceCache` acotada (4.096), evicción determinista por expiración, `proptest`; integrada en `main` |
@@ -80,8 +81,8 @@
 
 1. Excepción de licencia `Unicode-3.0` para `unicode-ident` (dependencia de compilación de `proc-macro2`): registrada como excepción acotada en `deny.toml`; falta confirmar si se incorpora a la allowlist de ADR-0002 (#7).
 2. `PROJECT_STRUCTURE.md §7` contradice a `ERROR_CODES.md` en los rangos de códigos y sitúa `GidError` en `gravital-id-sdk` (L6) cuando el catálogo canónico vive en `gravital-id-types` (L1) y el SDK lo re-exporta: registrado como `type:spec-gap` (#8).
-3. **Revisión y aceptación de `ADR-0021` por el mantenedor humano (#78):** `docs/adr/0021-ampliacion-alcance-identidad-portable.md` está en estado **Propuesto**; bloquea la incorporación oficial de `F19`–`F25` a `ROADMAP.md` y `ARCHITECTURE.md` y el inicio de código de `F20`–`F25`.
-4. **Presupuesto y cabecera Multi-QR (#73):** contradicción entre `ADR-0011` (1.200 caracteres, `GID01/P...`), `PROTOCOL.md §3.3` (800 caracteres, `PIP1/M/...`) y `spikes/qr/REPORT.md` (fragmentos de 900 caracteres, `GID01/P...`); bloquea `F5.T09`.
+3. **Presupuesto y cabecera Multi-QR (#73):** contradicción entre `ADR-0011` (1.200 caracteres, `GID01/P...`), `PROTOCOL.md §3.3` (800 caracteres, `PIP1/M/...`) y `spikes/qr/REPORT.md` (fragmentos de 900 caracteres, `GID01/P...`); bloquea `F5.T09`.
+4. **ADRs de detalle de la ampliación (`ADR-0022` a `ADR-0026`, `F19.T03`–`F19.T07`):** requeridos para cerrar `G19` antes de iniciar `F20`–`F25`.
 
 ## Métricas base (se rellenan desde F2)
 
@@ -117,19 +118,19 @@
 
 ## Última nota de traspaso
 
-### Traspaso — 2026-10-15 (F19.T01 / F19.T02: Plan de ampliación y ADR-0021) — Antigravity (agente)
-- Tarea: F19.T01 / F19.T02 — #78 — rama `main`
-- Estado: **lista para revisión del mantenedor**
+### Traspaso — 2026-10-15 (F19.T01 / F19.T02 / F19.T08: ADR-0021 Aceptado y documentos normativos v0.3) — Antigravity (agente)
+- Tarea: F19.T01 / F19.T02 / F19.T08 — #78 — rama `main`
+- Estado: **hecha**
 - Hecho en esta sesión:
-  - Integrado el commit pendiente de `F4.T08` (`#71`) en `main` y eliminadas las 18 ramas locales y remotas ya fusionadas.
-  - Incorporado el documento de propuesta de alcance en `docs/proposals/2026-10-15-alcance-identidad-portable.md` y registrado `docs/proposals/` en `docs/PROJECT_STRUCTURE.md`.
-  - `ADR-0021` redactado en estado **Propuesto** (`docs/adr/0021-ampliacion-alcance-identidad-portable.md`) e indexado en `docs/adr/README.md` (`F19.T01`).
-  - 5 spec-gaps registrados en GitHub con plantilla completa (`F19.T02`): `#73` (presupuesto y cabecera multi-QR), `#74` (calendario BLE/NFC), `#75` (estado de SDK/WASM en README), `#76` (reproducibilidad de spikes de F0) y `#77` (identificador numérico vs no correlación).
+  - `ADR-0021` aprobado por el mantenedor humano (`Angel Nereira`) y actualizado a estado **Aceptado** en `docs/adr/0021-ampliacion-alcance-identidad-portable.md` y `docs/adr/README.md`.
+  - Actualizado `docs/ROADMAP.md` (v0.3) con las fases `F19`–`F25`, puertas `G19`–`G25`, hitos `MP1`–`MP3`, notas de adelanto en `F9` / `F18.T04` y riesgos `R-15`–`R-23`.
+  - Actualizado `docs/ARCHITECTURE.md` (v0.3) con los límites de viabilidad de proximidad/código/cédula, capa L4 `gravital-id-proximity`, adaptador L5 `gravital-id-transport-pcsc`, perfil `pip-identity-v1`, prioridad de bindings y tabla de ADRs `0021`–`0026`.
+  - Actualizados `docs/REQUIREMENTS.md` (v0.3, incorporando los 20 requisitos de las familias `PROX`, `CARD`, `CODE` e `IDDOC`), `docs/TRACEABILITY.md` (167 requisitos verificados), `docs/PROJECT_STRUCTURE.md` y `.github/CODEOWNERS`.
 - Pendiente (siguiente paso concreto):
-  - Aceptación de `ADR-0021` por el mantenedor humano (Angel Nereira) para actualizar `ROADMAP.md` y `ARCHITECTURE.md`; luego redactar `ADR-0022` a `ADR-0026` (`F19.T03`–`F19.T07`).
-  - En paralelo en la pista principal de código: `F4.T09` (`Matriz negativa y cobertura`: un vector por cada comprobación que falla, precedencia de estados, cobertura y mutación).
-- Bugs/issues abiertos durante la sesión: `#73`, `#74`, `#75`, `#76`, `#77`, `#78`.
-- Decisiones tomadas (con enlace a ADR/issue): ninguna (todo queda en estado **Propuesto** en `ADR-0021` a la espera del mantenedor humano, conforme a `AGENTS.md §12` y `§0` del plan).
-- Riesgos o dudas: `R-15` (iPhone sin HCE en Panamá), `R-16` (soporte AEAD en chips Java Card), `R-19` (validez legal de cédula oficial vs credencial derivada), `R-23` (spikes F0 sin código versionado).
-- Comprobaciones locales: fmt ✅ clippy ✅ tests ✅ (402 pruebas del workspace, 0 fallos) layers ✅ trace ✅ check-error-codes ✅ doc ✅ deny ✅
+  - En `F19`: redactar `ADR-0022` a `ADR-0026` (`F19.T03`–`F19.T07`) y especificaciones asociadas (`F19.T09`–`F19.T11`, `F19.T15`).
+  - En `F4`: completar `F4.T09` (`Matriz negativa y cobertura`), `F4.T10` (`Verificación sin red`), `F4.T11` (`Determinismo`) y `F4.T12` (`pip-cli offline`).
+- Bugs/issues abiertos durante la sesión: `#73`, `#74`, `#75`, `#76`, `#77`, `#78` (cerrado).
+- Decisiones tomadas (con enlace a ADR/issue): `ADR-0021` **Aceptado** (`docs/adr/0021-ampliacion-alcance-identidad-portable.md`, #78).
+- Riesgos o dudas: `R-15` a `R-23` incorporados a `docs/ROADMAP.md §33`.
+- Comprobaciones locales: fmt ✅ clippy ✅ tests ✅ (402 pruebas) layers ✅ trace ✅ check-error-codes ✅ check-req-ids ✅
 

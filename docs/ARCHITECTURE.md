@@ -1,8 +1,8 @@
 # ARCHITECTURE.md — Arquitectura de PIP (Portable Identity Protocol)
 
-> **Estado:** Borrador normativo v0.2 · **Ámbito:** todo el repositorio · **Propietario:** Mantenedores del protocolo
-> **Revisión v0.2 (2026-10-10):** incorpora las correcciones de la revisión de arquitectura (ADR-0016 a ADR-0020 y los ajustes a las propuestas de ADR-0006, 0007, 0009, 0010, 0011 y 0012). Esos ADR están en estado **Propuesto**: las secciones que dependen de ellos son propuesta hasta que un mantenedor humano los acepte.
-> **Nombre de trabajo:** "PIP" colisiona con el gestor de paquetes de Python (`pip`) y con nombres existentes en crates.io/PyPI/npm. El nombre definitivo se decide en **ADR-0001** (Fase F0) y se aplica mediante reemplazo mecánico antes de publicar cualquier paquete.
+> **Estado:** Borrador normativo v0.3 · **Ámbito:** todo el repositorio · **Propietario:** Mantenedores del protocolo
+> **Revisión v0.3 (2026-10-15):** incorpora ADR-0021 (**Aceptado**): ampliación de alcance para identidad portable por NFC (teléfono HCE y tarjeta física Java Card), código numérico de sesión y perfil `pip-identity-v1` (fases F19–F25). El diseño detallado de cada subsistema se cierra en ADR-0022 a ADR-0026 durante F19.
+> **Nombre definitivo:** Gravital ID (`gravital-id` / `gid`, según ADR-0001). En la documentación se conserva "PIP" como acrónimo conceptual del protocolo (*Portable Identity Protocol*).
 
 Este documento define **qué se construye, por qué y con qué límites**. Es normativo: el código que lo contradiga es un defecto. Cualquier cambio de arquitectura requiere un ADR aceptado (`docs/adr/`) y la actualización de este documento en el mismo PR.
 
@@ -46,11 +46,11 @@ Las palabras **DEBE**, **NO DEBE**, **DEBERÍA**, **PUEDE** se interpretan como 
 PIP es un **protocolo de identidad portable** y su **implementación de referencia en Rust**, distribuida como biblioteca y SDK integrable desde múltiples lenguajes. Permite:
 
 - **Emitir** credenciales verificables a titulares (personas, empleados, organizaciones, dispositivos).
-- **Almacenar** esas credenciales en un dispositivo controlado por el titular, cifradas.
-- **Presentar** solo los atributos necesarios (divulgación selectiva), vinculados criptográficamente al verificador y a la sesión.
-- **Verificar** credenciales **sin conexión a Internet** y sin consultar a ningún servidor central.
+- **Almacenar** esas credenciales en un dispositivo controlado por el titular (teléfono móvil, aplicación de escritorio/web o tarjeta física con elemento seguro Java Card), cifradas o protegidas por hardware.
+- **Presentar** solo los atributos necesarios (divulgación selectiva), vinculados criptográficamente al verificador y a la sesión, por **QR**, **NFC** (teléfono Android HCE o tarjeta física), **BLE** o en línea (**OID4VP** y **código numérico efímero de sesión** de 9–10 dígitos).
+- **Verificar** credenciales **sin conexión a Internet** y sin consultar a ningún servidor central (tanto por QR como por proximidad NFC/BLE).
 - **Compartir confianza** (qué emisores están autorizados, con qué claves, qué listas de estado son auténticas) mediante un **registro público en blockchain** que nadie controla en solitario.
-- **Sincronizar** de forma eventual cuando hay conectividad y **recuperar** la identidad tras perder un dispositivo.
+- **Sincronizar** de forma eventual cuando hay conectividad y **recuperar** la identidad tras perder un dispositivo (o revocar una tarjeta física extraviada).
 
 ### 1.2 Qué NO es PIP (no-objetivos)
 
@@ -65,7 +65,7 @@ PIP es un **protocolo de identidad portable** y su **implementación de referenc
 
 ### 1.3 Diferenciador
 
-La combinación de **portabilidad real** (un núcleo, muchos lenguajes y plataformas), **operación offline**, **interoperabilidad por estándares** y **recuperación segura**. El uso de blockchain es un medio, no el diferenciador.
+La combinación de **portabilidad real** (un núcleo, muchos lenguajes, plataformas y factores de forma: móvil, web y tarjeta inteligente), **operación offline** (óptica y sin contacto tipo EMV), **interoperabilidad por estándares** y **recuperación segura**. El uso de blockchain es un medio, no el diferenciador.
 
 ---
 
@@ -75,10 +75,17 @@ Este análisis existe para que ningún agente o desarrollador intente construir 
 
 | Objetivo | ¿Viable? | Condiciones y límites |
 |---|---|---|
-| Verificar sin servidor central | **Sí, completamente** | El verificador necesita un *trust bundle* firmado y un snapshot de estado obtenidos en algún momento previo. La verificación en sí es local y determinista. |
+| Verificar sin servidor central (QR o NFC) | **Sí, completamente** | El verificador necesita un *trust bundle* firmado y un snapshot de estado obtenidos en algún momento previo. La verificación en sí es local y determinista. |
 | Emitir sin servidor | **No** | La emisión requiere un emisor (una organización que responde por los datos). Se descentraliza *quién* puede emitir y *cómo se verifica su autoridad*, no la existencia del emisor. El emisor puede operar su servicio en infraestructura propia. |
-| Revocación en tiempo real estando offline | **Imposible por definición** | Un dispositivo desconectado no puede saber de una revocación posterior a su último snapshot. PIP ofrece **frescura acotada**: el resultado declara la antigüedad del estado y la política del consumidor decide. |
-| Recuperar claves sin terceros | **Parcial** | Solo si se preconfiguró un mecanismo (código de recuperación de alta entropía, fragmentos Shamir entre guardianes). Las claves ligadas a hardware **no se pueden recuperar**: se recupera la capacidad de solicitar **reemisión** o **re-vinculación** al emisor. |
+| Revocación en tiempo real estando offline | **Imposible por definición** | Un dispositivo desconectado no puede saber de una revocación posterior a su último snapshot. PIP ofrece **frescura acotada**: el resultado declara la antigüedad del estado (`ValidWithStaleStatus`) y la política del consumidor decide. |
+| Teléfono **Android** como tarjeta NFC | **Sí** | Mediante Host Card Emulation (`HostApduService`) con clave de vinculación en StrongBox/TEE (ADR-0021, F21). |
+| **iPhone** como tarjeta NFC en Panamá | **No hoy** | Apple limita la emulación HCE y el programa NFC & SE de terceros a jurisdicciones elegibles (EEE, EE. UU., Reino Unido, Canadá, Brasil, Japón, Australia, Nueva Zelanda; Panamá no figura). Un iPhone **sí puede actuar como lector verificador** (Core NFC ISO 7816); como titular presenta por QR o BLE (R-15). |
+| Tarjeta física que funcione offline "como una Visa" | **Sí, con hardware específico** | Requiere un elemento seguro programable (Java Card con generación interna de clave ECDSA P-256 no exportable) y personalización autenticada por el emisor (`gid-perso`, ADR-0021 / ADR-0024, F22). |
+| Validar **solo** con un número de 9–10 dígitos **sin Internet** | **Imposible de forma segura** | 10 dígitos con uno de control dejan ~10⁹ combinaciones (≈ 30 bits): no hay firma ni prueba de posesión. Dictar un número estático equivale a una transacción sin tarjeta presente, que siempre requiere validación en línea. |
+| Validar con un número de 9–10 dígitos **con Internet** | **Sí, como código de sesión** | El número (`SessionCode`, 10 dígitos con control Damm) identifica una **sesión efímera** en el relay, nunca a una persona. La seguridad recae en la solicitud firmada del verificador, el cifrado HPKE y la firma KB-JWT del titular (ADR-0021 / ADR-0025, F23). |
+| Número persistente y global por persona | **No como identificador del protocolo** | Contradice §7.1 ("no existe un identificador global del titular") y P-09 (no correlación). Cualquier número por emisor es opcional, se trata como dato personal fuera de ledger/logs y exige consentimiento explícito (ADR-0025). |
+| Cédula o documento de identidad portable (`pip-identity-v1`) | **Sí técnicamente; validez legal depende del emisor** | El perfil soporta retrato facial y predicados, distinguiendo con `vct` distintos la credencial **oficial** (emitida por la autoridad de registro civil, p. ej. Tribunal Electoral) de la **derivada** (emitida por una entidad autorizada que verificó al titular). El retrato no cabe en un QR (~800 B útiles) y solo viaja por NFC o BLE (ADR-0021 / ADR-0026, F24). |
+| Recuperar claves sin terceros | **Parcial** | Solo si se preconfiguró un mecanismo (código de recuperación de alta entropía, fragmentos Shamir entre guardianes). Las claves ligadas a hardware (móvil o tarjeta física) **no se pueden recuperar**: se recupera la capacidad de solicitar **reemisión** o **re-vinculación** al emisor. |
 | Gobernanza de confianza descentralizada | **Parcial** | El ledger hace la gobernanza transparente, auditable y resistente a un solo operador (multisig, timelock). Las decisiones de quién es confiable siguen siendo humanas y legales (marco de confianza). |
 | Datos personales en la blockchain | **Prohibido** | La blockchain es inmutable y pública; incompatible con el derecho de supresión (Ley 81 de 2019 de Panamá, RGPD). **Incluye hashes de datos personales**: un hash de un dato de baja entropía (cédula, fecha de nacimiento, teléfono) se revierte por fuerza bruta. |
 | Presentaciones no correlacionables | **Parcial en v1** | SD-JWT es correlacionable si se reutiliza la misma credencial (misma firma del emisor, mismos digests). Mitigación v1: **emisión por lotes** y uso único por verificador. Firmas BBS (no correlacionables) se evaluarán cuando el estándar madure (hoy W3C Candidate Recommendation Draft). |
@@ -197,10 +204,10 @@ flowchart LR
 
 ```mermaid
 flowchart TB
-    L7["L7 · Aplicaciones y servicios<br/>wallet/verificador de referencia · issuer-service · trust-service · relay · indexer · CLI"]
+    L7["L7 · Aplicaciones y servicios<br/>wallet/verificador de referencia · issuer-service · trust-service · relay · indexer · CLI · gid-perso"]
     L6["L6 · SDK y bindings<br/>pip-sdk · UniFFI (Kotlin/Swift/Python) · WASM (JS/TS) · C ABI (Go/C#/C++) · Dart"]
-    L5["L5 · Adaptadores<br/>storage (SQLite/host) · transport (HTTP/host) · ledger (EVM) · keystore (host)"]
-    L4["L4 · Protocolos (sans-I/O)<br/>OID4VCI · OID4VP · perfil offline QR · sincronización · re-vinculación"]
+    L5["L5 · Adaptadores<br/>storage (SQLite/host) · transport (HTTP/PC-SC/host) · ledger (EVM) · keystore (host/KMS)"]
+    L4["L4 · Protocolos (sans-I/O)<br/>OID4VCI · OID4VP · perfil offline QR · proximidad (NFC/BLE/GID-APDU) · sincronización · re-vinculación"]
     L3["L3 · Motores<br/>verificador · holder (wallet) · emisor (biblioteca) · recuperación"]
     L2["L2 · Dominio<br/>credenciales SD-JWT VC · estado (Token Status List) · confianza y políticas"]
     L1["L1 · Núcleo<br/>tipos · codificación con límites · abstracción criptográfica · claves"]
@@ -237,6 +244,7 @@ flowchart TB
 | `TrustFrameworkId` | URI | Marco de confianza al que pertenece un bundle. |
 | `BundleVersion` | Entero monotónico de 64 bits | Anti-rollback de trust bundles. |
 | `StatusListUri` + índice | URI + entero | Referencia de estado de una credencial. |
+| `SessionCode` | 10 dígitos numéricos (9 aleatorios + 1 de control Damm) | Código efímero de sesión en línea en el relay; nunca identifica a un titular (ADR-0021 / ADR-0025, F23). |
 
 ---
 
@@ -268,7 +276,7 @@ Para mitigar la correlación (§2), un emisor PUEDE emitir **N copias** de la mi
 
 | Formato | Uso previsto | Condición de entrada |
 |---|---|---|
-| ISO/IEC 18013-5 mdoc | Proximidad (BLE/NFC), documentos gubernamentales | ADR + fase F18 |
+| ISO/IEC 18013-5 mdoc | Interoperabilidad con lectores gubernamentales estándar sobre NFC/BLE (el transporte de proximidad sobre SD-JWT VC se construye en F20–F22 según ADR-0021) | ADR-0022 + fase condicional F25 (o F18) |
 | W3C VCDM 2.0 con JOSE/COSE | Ecosistemas basados en W3C | ADR + demanda de integradores |
 | BBS (Data Integrity) | Presentaciones no correlacionables | Estándar en Recommendation + bibliotecas auditadas |
 | Prueba de conocimiento cero sobre ECDSA P-256 | Presentaciones no correlacionables **compatibles con las claves de hardware existentes** (BBS no puede vincularse a una clave P-256 de Secure Enclave/StrongBox) | Especificación estable (hoy borrador informativo en CFRG, *Longfellow ZK*) + biblioteca auditada; ADR + F18 |
@@ -299,7 +307,7 @@ El SDK **no firma** una presentación sin que el host haya obtenido consentimien
 - La caché es local al verificador; no requiere red.
 - **Límite conocido (retransmisión):** `nonce` y `aud` no impiden que un verificador malicioso retransmita en tiempo real la solicitud de un verificador legítimo. La mitigación es que el titular vea *quién* pregunta (solicitudes firmadas, §9.4) y, en los perfiles que lo exijan, un transporte de proximidad. Se analiza en `THREAT_MODEL.md`.
 
-### 9.4 Transporte offline: QR en dos pasos
+### 9.4 Transporte offline: QR en dos pasos y proximidad (NFC / tarjeta física / BLE)
 
 ```mermaid
 sequenceDiagram
@@ -316,7 +324,7 @@ sequenceDiagram
 - **Codificación:** *transcodificación binaria sin pérdida* + DEFLATE + Base45 (RFC 9285) en modo alfanumérico QR. Comprimir directamente el texto base64url rinde poco; antes de comprimir, cada segmento base64url del SD-JWT+KB se decodifica a bytes y se empaqueta en un contenedor CBOR. El receptor reconstruye **exactamente** la cadena original (la decodificación base64url estricta es biyectiva), de modo que los bytes firmados no cambian. El formato se define en `PROTOCOL.md`; su ganancia se mide en el spike F0.T07.
 - **Presupuesto de tamaño:** se fija por perfil tras medir (F5). Límite físico: un QR versión 40-L admite 4.296 caracteres alfanuméricos, pero su lectura con cámaras de teléfono desde pantallas es poco fiable; el presupuesto operativo será sensiblemente menor y se valida con pruebas reales.
 - **Fragmentación:** si la respuesta excede el presupuesto, se usa una secuencia multi-QR con índice y hash de integridad. El spike F0.T07 compara la secuencia indexada con **códigos fuente** (QR animado tolerante a la pérdida de cuadros); ADR-0011 fija el esquema.
-- **Otros transportes:** el perfil offline produce y consume mensajes binarios independientes del medio; QR es su primera codificación de transporte. BLE de proximidad (sin cambiar el formato de credencial) se adelanta como mitigación de R-02 si el spike muestra que el QR bidireccional no es viable; BLE/NFC según ISO 18013-5 queda en F18.
+- **Transporte de proximidad por NFC y tarjeta física (ADR-0021, F20–F22):** el crate `gravital-id-proximity` (L4 sans-I/O) encapsula el intercambio sobre una sesión cifrada con HPKE (RFC 9180) hacia una clave efímera del verificador, vinculando el KB-JWT al transcrito canónico de la sesión (ADR-0023). Los mensajes viajan como comandos `GID-APDU` (ISO/IEC 7816-4: `SELECT`, `ENVELOPE`, `GET RESPONSE`, `VERIFY`, ADR-0022) entre un lector verificador (Android `IsoDep`, iPhone `Core NFC` o lector USB PC/SC en `gravital-id-transport-pcsc`) y un portador del titular: teléfono Android con Host Card Emulation (`HostApduService` + StrongBox/TEE, F21) o tarjeta inteligente física Java Card (`cards/javacard/gid-applet/`, F22, ADR-0024). Una vez reconstruida la presentación, el verificador invoca el mismo `VerifierPipeline::verify` que en la ruta QR y produce el mismo `VerificationResult` de cuatro estados (INV-04). BLE de proximidad con traspaso NFC se incluye como opción condicional en F21.T08 según los resultados del spike F19.T12.
 - **Solicitudes firmadas:** perfiles que lo exijan requieren que el verificador firme la solicitud con una clave presente en el registro de verificadores del bundle, para que el titular sepa quién pregunta.
 
 ### 9.5 Tiempo confiable y retroceso de reloj
@@ -550,16 +558,16 @@ Para perfiles regulados, el emisor repite las verificaciones de identidad exigid
 
 Un perfil es un documento normativo versionado (`docs/specs/profiles/<id>.md`) que fija tipos de credencial, esquemas, algoritmos, requisitos de almacenamiento de claves, frescura de estado, protección de replay, transportes permitidos y retención.
 
-| Parámetro | `pip-personal-v1` | `pip-financial-v1` | `pip-enterprise-v1` |
-|---|---|---|---|
-| Ejemplos | Edad, membresías, títulos | Atributos KYC, autorizaciones | Empleados, servicios, dispositivos |
-| Clave de vinculación | Hardware preferido; software permitido | **Hardware obligatorio + atestación de clave** | Hardware preferido; software en servicios |
-| Exportación de clave en migración | Permitida (cifrada) | Prohibida (re-vinculación) | Según política de la organización |
-| Frescura máx. de estado (orientativa, se fija en F0) | Días | Minutos–horas o en línea | Horas |
-| Replay protection | Obligatoria en interactivo | Obligatoria | Obligatoria |
-| Solicitud de verificador firmada | Opcional | Obligatoria | Obligatoria |
-| Emisión por lotes | Recomendada | Recomendada | Opcional |
-| Suspensión (2 bits) | No | Sí | Sí |
+| Parámetro | `pip-personal-v1` | `pip-financial-v1` | `pip-enterprise-v1` | `pip-identity-v1` (ADR-0021 / ADR-0026) |
+|---|---|---|---|---|
+| Ejemplos | Edad, membresías, títulos | Atributos KYC, autorizaciones | Empleados, servicios, dispositivos | Documento de identidad / cédula (oficial o derivada) con retrato |
+| Clave de vinculación | Hardware preferido; software permitido | **Hardware obligatorio + atestación de clave** | Hardware preferido; software en servicios | **Hardware obligatorio** (StrongBox/TEE, Secure Enclave o tarjeta Java Card) |
+| Exportación de clave en migración | Permitida (cifrada) | Prohibida (re-vinculación) | Según política de la organización | Prohibida (re-vinculación o reemisión) |
+| Frescura máx. de estado (orientativa, se fija en F0/F19) | Días | Minutos–horas o en línea | Horas | Días (operación general) / horas o en línea (alto valor) |
+| Replay protection | Obligatoria en interactivo | Obligatoria | Obligatoria | Obligatoria |
+| Solicitud de verificador firmada | Opcional | Obligatoria | Obligatoria | Obligatoria para retrato o número de documento |
+| Emisión por lotes | Recomendada | Recomendada | Opcional | Recomendada (móvil) / copias en tarjeta según ADR-0024 |
+| Suspensión (2 bits) | No | Sí | Sí | Sí |
 
 Los perfiles comparten el núcleo pero **no** comparten automáticamente políticas de autorización.
 
@@ -585,7 +593,7 @@ Los perfiles comparten el núcleo pero **no** comparten automáticamente políti
 
 | Interfaz | Obligatoria | Ejemplos |
 |---|---|---|
-| `KeyStore` | Sí (wallet/verificador con solicitudes firmadas) | Android Keystore/StrongBox, iOS Secure Enclave, WebCrypto, PKCS#11 |
+| `KeyStore` | Sí (wallet/verificador con solicitudes firmadas) | Android Keystore/StrongBox, iOS Secure Enclave, WebCrypto, PKCS#11, AWS KMS, Azure Key Vault |
 | `Clock` | Sí | Reloj del sistema (y monotónico si existe); reloj fijo en pruebas |
 | `VerifierStateStore` | Sí (verificador) | Persistencia íntegra del piso de tiempo, versiones aceptadas y caché de nonces (§9.5) |
 | `StorageBackend` | Opcional | Por defecto `pip-storage-sqlite`; IndexedDB en web |
@@ -604,7 +612,7 @@ Los perfiles comparten el núcleo pero **no** comparten automáticamente políti
 | C# / .NET | C ABI + P/Invoke (o generador UniFFI de terceros, sujeto a ADR) | NuGet |
 | C / C++ | C ABI | Cabecera + biblioteca |
 
-Reglas: los bindings **no contienen lógica de negocio**; los **códigos de error** son estables y numéricos (`PIP-Exxxx`) en todos los lenguajes; la **misma suite de vectores** de conformidad se ejecuta en cada lenguaje (F9).
+Reglas: los bindings **no contienen lógica de negocio**; los **códigos de error** son estables y numéricos (`PIP-Exxxx`) en todos los lenguajes; la **misma suite de vectores** de conformidad se ejecuta en cada lenguaje (F9). Según ADR-0021, el subconjunto mínimo de proximidad para Kotlin/Android y Swift/iOS se adelanta a F21 (`MP1`), y la superficie de servidor para **TypeScript/Node, Go y .NET** se adelanta a F24 (`MP3`), fijando el orden de prioridad en: TypeScript/Node → Go y .NET → Kotlin → Dart/Flutter → Swift → Python.
 
 ### 17.4 Versionado
 
@@ -621,7 +629,7 @@ Reglas: los bindings **no contienen lógica de negocio**; los **códigos de erro
 | `pip-issuer-service` | OID4VCI, firma con KMS, gestión y publicación de listas y manifiesto de estado, re-vinculación | Contenedor escalable / serverless (sin estado) | Lo despliega **cada emisor** |
 | `pip-trust-service` | Derivar de forma determinista, cofirmar y publicar trust bundles desde un indexador propio | Tarea programada | **n operadores independientes** (umbral k) |
 | `pip-indexer` | Consumir eventos finalizados, mantener vistas (PostgreSQL), detectar divergencias | Proceso de larga duración | Cualquiera puede operarlo |
-| `pip-relay` | Caché direccionada por contenido + buzón de sobres cifrados | Almacenamiento de objetos + CDN + función ligera | Múltiples operadores |
+| `pip-relay` | Caché direccionada por contenido + buzón de sobres cifrados + rendezvous de `SessionCode` (F23) | Almacenamiento de objetos + CDN + función ligera | Múltiples operadores |
 | Nodos / RPC | Acceso a la cadena | ≥ 2 proveedores + nodo propio opcional | Nunca serverless efímero |
 
 **Serverless:** se usa donde no hay estado (APIs de emisión, publicación de objetos, tareas programadas). No se usa para el núcleo de verificación (vive en el dispositivo) ni para indexadores y nodos (larga duración). **Ninguna función serverless es punto único de fallo** para verificar ni para recuperar (P-10).
@@ -703,6 +711,12 @@ El índice vivo está en `docs/adr/README.md`. Las decisiones marcadas "Bloquea"
 | 0018 | Alcance del rol de emergencia | Solo suspensión reversible con caducidad | F0 |
 | 0019 | Núcleo `no_std` y protocolos sans-I/O | L1–L3 `no_std` + `alloc`; L4 como máquinas de estado; adaptadores en L5 | F1 |
 | 0020 | Fail-closed por tipos | Typestate y resultado por comprobación (`Passed`/`Failed`/`Indeterminate`/`Skipped`) | F0 |
+| 0021 | Ampliación de alcance: NFC, tarjeta física, código numérico e identidad portable | Añadir pista F19–F25 (hitos MP1–MP3), adelantar subconjuntos F9 y mover NFC a F21 | F19 |
+| 0022 | Transporte de proximidad y protocolo GID-APDU | GID-APDU (ISO 7816-4) con SD-JWT VC frente a mdoc (ISO 18013-5) o BLE con traspaso NFC | F19 / F20 |
+| 0023 | Cifrado de sesión de proximidad y vinculación al transcrito | Respuesta sellada con HPKE hacia clave efímera del verificador y AAD ligada al transcrito | F19 / F20 |
+| 0024 | Arquitectura de tarjeta física Java Card y personalización | Applet Java Card con P-256 en elemento seguro, niveles de PIN y herramienta `gid-perso` | F19 / F22 |
+| 0025 | Modelo de identificadores numéricos de 9–10 dígitos | Código efímero de sesión (10 dígitos + Damm) en línea; decisión sobre número por emisor | F19 / F23 |
+| 0026 | Perfil de identidad portable `pip-identity-v1` y retrato | Variantes oficial/derivada con `vct` distintos; retrato JPEG acotado solo por NFC/BLE | F19 / F24 |
 
 ---
 
