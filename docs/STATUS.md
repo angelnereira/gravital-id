@@ -10,7 +10,7 @@
 | Último gate cerrado | **G4** (2026-10-16) · **G19** (2026-10-15) · **G0** (2026-10-11) |
 | Próximo gate | **G5** — almacenamiento local de la wallet; **G3** (#59) y **G2** pendientes de CI |
 | Hito siguiente | M1 · Núcleo offline (al cerrar G5) · MP1 · Tap offline (al cerrar G21) |
-| Última actualización | 2026-10-16 (F5.T01, F5.T02 y F5.T03 completadas — StorageBackend, InMemoryStorageBackend, cifrado de sobre DEK/KEK, AAD canónico e índices ciegos HMAC-SHA-256 en gravital-id-storage; #83 resuelto) |
+| Última actualización | 2026-10-16 (F5.T04, F5.T05 y F5.T06 completadas — gravital-id-storage-sqlite, migraciones de esquema y consistencia ante fallos con 92,38% de cobertura; #84 resuelto) |
 
 ## Gates
 
@@ -28,6 +28,7 @@
 
 | Tarea | Issue | Responsable | Estado | Siguiente paso |
 |---|---|---|---|---|
+| F5.T04-T06 SQLite y migraciones | #84 | Antigravity (agente) | Hecha | SqliteStorage implementando StorageBackend y VerifierStateStore, WAL, BEGIN IMMEDIATE, migraciones V1/V2, reversión atómica y 92,38% de cobertura; integrada en main |
 | F5.T01-T03 Almacenamiento local | #83 | Antigravity (agente) | Hecha | Trait StorageBackend, InMemoryStorageBackend, cifrado de sobre DEK/KEK, formato canónico PIP$, AAD e índices ciegos HMAC-SHA-256 probados con 92,22% de cobertura; integrada en main |
 | F4.T12 `pip-cli` offline | #82 | Antigravity (agente) | Hecha | Binario CLI `pip-cli` / `gid-cli` con subcomandos `demo-offline` (reproduce deterministamente los 4 estados), `dev-issuer`, `dev-bundle`, `dev-status`, `issue`, `verify`; integrada en `main` |
 | F4.T11 Determinismo | #82 | Antigravity (agente) | Hecha | Determinismo estricto: mismas entradas e instante ⇒ mismo resultado, probado con `proptest`; integrada en `main` |
@@ -135,6 +136,22 @@
 | Tamaño binario del SDK | — | — | — | — | — |
 
 ## Última nota de traspaso
+
+### Traspaso — 2026-10-16 (F5.T04 / F5.T05 / F5.T06: SQLite StorageBackend, Migraciones y Consistencia ante Fallos) — Antigravity (agente)
+- Tarea: F5.T04 / F5.T05 / F5.T06 — #84 — rama `main`
+- Estado: **hecha**
+- Hecho en esta sesión:
+  - **F5.T04 (`storage.rs`, `verifier_state.rs`):** Implementación de `SqliteStorage` en `gravital-id-storage-sqlite` (Capa L5) implementando `StorageBackend` y `VerifierStateStore` (`STORAGE_FORMAT.md §5`, `STORAGE_FORMAT.md §6`). Configuración estricta de PRAGMAs (`journal_mode = WAL`, `synchronous = NORMAL`, `foreign_keys = ON`, `temp_store = MEMORY`), transacciones atómicas con `BEGIN IMMEDIATE`, inserciones/actualizaciones atómicas de registros e índices ciegos con clave foránea y borrado en cascada (`ON DELETE CASCADE`), y almacenamiento de estado del verificador (`time_floor`, `accepted_bundle`, caché de nonces con caducidad determinista).
+  - **F5.T05 (`migration.rs`):** Motor de migraciones versionadas y ordenadas (`SqliteMigration`, esquema base V1 con 5 tablas normativas y esquema V2 incremental añadiendo índice temporal `idx_pip_records_updated_at`), validación transaccional de versiones, control de consistencia e integridad, y rechazo fail-closed de versiones futuras o inconsistentes (`REQ-STOR-005`).
+  - **F5.T06 (`sqlite_fault_tolerance.rs`, `sqlite_migrations.rs`, `sqlite_storage_integration.rs`):** Pruebas de consistencia ante fallos con inyección sintética de errores en transacciones, verificación de reversión atómica (rollback) completa, preservación de datos ante migraciones V1->V2 y verificación de PRAGMAs normativos en disco real.
+  - **Cobertura de código (`llvm-cov`):** 92,38% de cobertura de líneas en `gravital-id-storage-sqlite` (error.rs: 100%, migration.rs: 100%, storage.rs: 92,06%, verifier_state.rs: 89,47%).
+  - **Trazabilidad:** REQ-STOR-004, REQ-STOR-005 y REQ-STOR-008 verificados en disco SQLite (71 requisitos referenciados en total en el workspace).
+- Pendiente (siguiente paso concreto):
+  - Iniciar `F5.T07`–`F5.T08`: Gestión de credenciales en la wallet (`gravital-id-holder`), importación de SD-JWT emitidas, indexación de claims por índices ciegos y preparación de presentaciones de divulgación selectiva con KB-JWT offline (`REQ-HOLD-*`, `REQ-PRES-*`).
+- Bugs/issues abiertos durante la sesión: ninguno.
+- Decisiones tomadas (con enlace a ADR/issue): SQLite L5 implementado de acuerdo a `STORAGE_FORMAT.md §5` y `§6` (#84).
+- Riesgos o dudas: ninguna.
+- Comprobaciones locales: fmt ✅ clippy ✅ tests (100% verde) ✅ layers ✅ trace (71 REQs) ✅ check-error-codes (59) ✅ check-req-ids (167) ✅ llvm-cov (92,38% storage-sqlite) ✅
 
 ### Traspaso — 2026-10-16 (F5.T01 / F5.T02 / F5.T03: StorageBackend, Envelope Encryption e Índices Ciegos) — Antigravity (agente)
 - Tarea: F5.T01 / F5.T02 / F5.T03 — #83 — rama `main`

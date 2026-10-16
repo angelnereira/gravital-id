@@ -24,7 +24,7 @@
 | REQ-PRES-001 | F5 | DEBE | T | P-09 | — | Pendiente (Fase futura) |
 | REQ-PRES-002 | F5 | DEBE | T | P-08 | kb.rs, lib.rs, parser.rs, kb_jwt_integration.rs, profile_schema_integration.rs, sd_jwt_vc_integration.rs, pipeline.rs, verifier_negative_matrix_and_precedence.rs, generate_vectors.rs | Cubierto |
 | REQ-PRES-003 | F5 | DEBE | T, I | P-09 | — | Pendiente (Fase futura) |
-| REQ-PRES-004 | F4 | DEBE | T | P-08 | lib.rs, nonce.rs, pipeline.rs, state.rs, verifier_nonce_integration.rs, verifier_pipeline_integration.rs, verifier_state_integration.rs | Cubierto |
+| REQ-PRES-004 | F4 | DEBE | T | P-08 | verifier_state.rs, sqlite_storage_integration.rs, lib.rs, nonce.rs, pipeline.rs, state.rs, verifier_nonce_integration.rs, verifier_pipeline_integration.rs, verifier_state_integration.rs | Cubierto |
 | REQ-PRES-005 | F5 | DEBE | T, D | P-01 | — | Pendiente (Fase futura) |
 | REQ-PRES-006 | F5 | DEBE | T, D | P-01 | — | Pendiente (Fase futura) |
 | REQ-PRES-007 | F5 | DEBE | T | P-09 | — | Pendiente (Fase futura) |
@@ -34,12 +34,12 @@
 | REQ-VER-003 | F4 | DEBE | T, F | P-08 | kb.rs, lib.rs, parser.rs, profile.rs, vc.rs, kb_jwt_integration.rs, predicate_integration.rs, profile_schema_integration.rs, sd_jwt_parsing_verification.rs, sd_jwt_vc_integration.rs, issuer_api.rs, cache.rs, status_list_integration.rs, verifier_negative_matrix_and_precedence.rs, verifier_state_integration.rs, sd_jwt_parser.rs, status_list_parser.rs | Cubierto |
 | REQ-VER-004 | F4 | DEBE | T | P-08 | pipeline.rs, verifier_negative_matrix_and_precedence.rs, verifier_pipeline_integration.rs | Cubierto |
 | REQ-VER-005 | F4 | DEBE | T | — | parser.rs, lib.rs, policy.rs, verifier_negative_matrix_and_precedence.rs, verifier_offline_and_determinism.rs, verifier_policy_integration.rs | Cubierto |
-| REQ-VER-006 | F4 | DEBE | T | P-08 | cache.rs, lib.rs, pipeline.rs, state.rs, verifier_negative_matrix_and_precedence.rs, verifier_pipeline_integration.rs, verifier_state_integration.rs | Cubierto |
+| REQ-VER-006 | F4 | DEBE | T | P-08 | cache.rs, lib.rs, verifier_state.rs, sqlite_storage_integration.rs, lib.rs, pipeline.rs, state.rs, verifier_negative_matrix_and_precedence.rs, verifier_pipeline_integration.rs, verifier_state_integration.rs | Cubierto |
 | REQ-VER-007 | F4 | DEBE | I | P-05 | lib.rs, policy.rs, verifier_negative_matrix_and_precedence.rs, verifier_policy_integration.rs | Cubierto |
 | REQ-VER-008 | F2 | DEBE | T, F | P-08 | base64url.rs, cbor.rs, json.rs, differential_serde_json.rs, lib.rs, parser.rs, vc.rs, sd_jwt_parsing_verification.rs, sd_jwt_vc_integration.rs, request.rs, cache.rs, manifest.rs, status_list_integration.rs, bundle.rs, root.rs, ids.rs, proptest_ids.rs, nonce.rs, state.rs, verifier_nonce_integration.rs, base64url_strict.rs, cbor_bounded.rs, json_bounded.rs, sd_jwt_parser.rs | Cubierto |
 | REQ-VER-009 | F4 | DEBE | T | P-06 | cbor.rs, json.rs, differential_serde_json.rs, issuer_api.rs, status_list_integration.rs, lib.rs, clock.rs, verifier_offline_and_determinism.rs, cbor_bounded.rs, json_bounded.rs, jwk_parser.rs, sd_jwt_parser.rs, status_list_parser.rs | Cubierto |
 | REQ-VER-010 | F4 | DEBE | T | P-08 | pipeline.rs, result.rs, verifier_negative_matrix_and_precedence.rs, verifier_pipeline_integration.rs | Cubierto |
-| REQ-VER-011 | F4 | DEBE | T | P-08 | cache.rs, error.rs, lib.rs, pipeline.rs, state.rs, verifier_negative_matrix_and_precedence.rs, verifier_pipeline_integration.rs, verifier_state_integration.rs | Cubierto |
+| REQ-VER-011 | F4 | DEBE | T | P-08 | cache.rs, lib.rs, verifier_state.rs, error.rs, lib.rs, pipeline.rs, state.rs, verifier_negative_matrix_and_precedence.rs, verifier_pipeline_integration.rs, verifier_state_integration.rs | Cubierto |
 | REQ-VER-012 | F4 | DEBE | T, I | P-08 | pipeline.rs, result.rs, compile_fail.rs, cannot_construct_valid_directly.rs, verifier_pipeline_integration.rs | Cubierto |
 | REQ-STAT-001 | F4 | DEBE | T | P-04 | lib.rs, status_list.rs, status_list_integration.rs, status_list_parser.rs | Cubierto |
 | REQ-STAT-002 | F7 | DEBE | T | P-09 | — | Pendiente (Fase futura) |
@@ -57,7 +57,7 @@
 | REQ-TRUST-006 | F8 | DEBE | T | P-10 | — | Pendiente (Fase futura) |
 | REQ-TRUST-007 | F6 | DEBERÍA | T | P-09 | bundle.rs | Cubierto |
 | REQ-TRUST-008 | F7 | DEBE | T | P-15 | — | Pendiente (Fase futura) |
-| REQ-TRUST-009 | F4 | DEBE | T | P-15 | jws_json.rs, lib.rs, root.rs, trust_bundle_integration.rs | Cubierto |
+| REQ-TRUST-009 | F4 | DEBE | T | P-15 | verifier_state.rs, sqlite_storage_integration.rs, jws_json.rs, lib.rs, root.rs, trust_bundle_integration.rs | Cubierto |
 | REQ-TRUST-010 | F4 | DEBE | T | P-14 | manifest.rs, bundle.rs, lib.rs, trust_bundle_integration.rs | Cubierto |
 | REQ-LEDG-001 | F6 | DEBE | T, A | P-02 | — | Pendiente (Fase futura) |
 | REQ-LEDG-002 | F6 | DEBE | T, I | P-14 | — | Pendiente (Fase futura) |
@@ -75,12 +75,12 @@
 | REQ-SYNC-007 | F7 | DEBE | T | P-10 | — | Pendiente (Fase futura) |
 | REQ-STOR-001 | F5 | DEBE | T | P-03 | envelope.rs, lib.rs, record.rs, storage_envelope_and_indices.rs | Cubierto |
 | REQ-STOR-002 | F9 | DEBE | T, D | P-03 | envelope.rs, lib.rs, storage_envelope_and_indices.rs | Cubierto |
-| REQ-STOR-003 | F5 | DEBE | T, I | P-09 | backend.rs, blind_index.rs, envelope.rs, lib.rs, storage_envelope_and_indices.rs | Cubierto |
-| REQ-STOR-004 | F5 | DEBE | T | — | backend.rs, lib.rs, storage_envelope_and_indices.rs | Cubierto |
-| REQ-STOR-005 | F5 | DEBE | T | — | — | Pendiente (Fase futura) |
-| REQ-STOR-006 | F5 | DEBE | T, I | P-09 | — | Pendiente (Fase futura) |
+| REQ-STOR-003 | F5 | DEBE | T, I | P-09 | backend.rs, blind_index.rs, envelope.rs, lib.rs, storage_envelope_and_indices.rs, storage.rs, sqlite_storage_integration.rs | Cubierto |
+| REQ-STOR-004 | F5 | DEBE | T | — | backend.rs, lib.rs, storage_envelope_and_indices.rs, lib.rs, migration.rs, storage.rs, sqlite_fault_tolerance.rs, sqlite_storage_integration.rs | Cubierto |
+| REQ-STOR-005 | F5 | DEBE | T | — | lib.rs, migration.rs, sqlite_migrations.rs | Cubierto |
+| REQ-STOR-006 | F5 | DEBE | T, I | P-09 | migration.rs | Cubierto |
 | REQ-STOR-007 | F9 | DEBE | D, I | P-03 | — | Inspección / Auditoría |
-| REQ-STOR-008 | F5 | DEBE | T | P-11 | backend.rs, lib.rs, storage_envelope_and_indices.rs | Cubierto |
+| REQ-STOR-008 | F5 | DEBE | T | P-11 | backend.rs, lib.rs, storage_envelope_and_indices.rs, lib.rs, storage.rs, sqlite_storage_integration.rs | Cubierto |
 | REQ-REC-001 | F8 | DEBE | T, D | P-03 | — | Pendiente (Fase futura) |
 | REQ-REC-002 | F8 | DEBE | T | P-03 | — | Pendiente (Fase futura) |
 | REQ-REC-003 | F8 | DEBERÍA | T | P-10 | — | Inspección / Auditoría |

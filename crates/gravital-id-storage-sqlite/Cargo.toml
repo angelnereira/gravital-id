@@ -14,5 +14,12 @@ description = "Adaptador de almacenamiento persistente SQLite para Gravital ID."
 workspace = true
 
 [dependencies]
+gravital-id-types = { workspace = true }
 gravital-id-storage = { workspace = true }
 gravital-id-trust = { workspace = true }
+gravital-id-crypto = { workspace = true }
+gravital-id-verifier = { workspace = true }
+rusqlite = { version = "0.32", features = ["bundled"] }
+
+[dev-dependencies]
+gravital-id-testkit = { path = "../gravital-id-testkit", version = "0.1.0" }
