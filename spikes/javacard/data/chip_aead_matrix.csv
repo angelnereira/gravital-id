@@ -1,0 +1,4 @@
+chip_family,jc_api_version,ecdsa_p256_sha256,ecdh_p256_plain,sha256_hw,aes_128_gcm_hw,chacha20_poly1305_hw,common_criteria_eal
+NXP JCOP 4 P71,3.0.5 / 3.1,yes,yes,yes,yes,no,EAL6+
+Infineon Secora ID S,3.0.5 / 3.1,yes,yes,yes,yes,no,EAL6+
+Thales IDCore 3120,3.0.5,yes,yes,yes,optional_sku,no,EAL5+

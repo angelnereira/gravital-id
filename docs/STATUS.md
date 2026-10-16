@@ -6,11 +6,11 @@
 
 | Campo | Valor |
 |---|---|
-| Fase actual | **F4 — Estado, confianza y verificación offline (en curso)** · **F19 — Especificación de la ampliación (en paralelo, en curso)** |
-| Último gate cerrado | **G0** (2026-10-11) |
-| Próximo gate | **G3** — revisión formal de Fase F3 (#59); **G2** sigue pendiente de merge/CI |
+| Fase actual | **F4 — Estado, confianza y verificación offline (en curso)** · **F19 — Especificación de la ampliación (completada — Gate G19 cerrado)** |
+| Último gate cerrado | **G19** (2026-10-15) · **G0** (2026-10-11) |
+| Próximo gate | **G4** — verificación offline (al cerrar F4.T09–F4.T12); **G3** (#59) y **G2** pendientes de CI |
 | Hito siguiente | M1 · Núcleo offline (al cerrar G5) · MP1 · Tap offline (al cerrar G21) |
-| Última actualización | 2026-10-15 (F19.T09, F19.T10, F19.T11 y F19.T15 completadas — especificaciones normativas de proximidad, errores GID-E8xxx, perfil pip-identity-v1 y adenda legal; #73 y #75 resueltos) |
+| Última actualización | 2026-10-15 (F19.T12, F19.T13, F19.T14 y F19.T16 completadas — spikes reproducibles NFC/HCE, Java Card y F0, revisión cruzada y cierre de Gate G19; #76 resuelto) |
 
 ## Gates
 
@@ -20,21 +20,26 @@
 | G1 | En curso | — | Workspace, xtask, CI y gobierno del repositorio implementados en `feat/6-workspace-cargo` (#6, PR #22); pendiente merge del mantenedor |
 | G2 | **Listo para revisión** | — | F2.T01 a F2.T12 completadas en rama `feat/24-types-newtypes` (#24–#35). Vectores externos 100% pasando (RFC 7515/7638/5869/9180, Wycheproof 799/799), 6 parsers fuzzeados en CI (`fuzz.yml`), cobertura `gravital-id-crypto` al 92,46% (≥ 90%), 25 REQ trazados en `docs/TRACEABILITY.md`. |
 | G3 | **Abierto a revisión** (#59) | — | F3.T01–T09 implementadas y trazadas (24 vectores de conformidad, 304 pruebas). **Decisión: NO CERRADO**: F3.T10 (interoperabilidad bidireccional) está bloqueada por depender de una implementación externa, y la campaña de fuzzing nocturna no puede ejecutarse mientras GitHub Actions esté bloqueado por facturación. |
-| G4 … G25 | Pendiente | — | — |
+| G19 | **Cerrado** | 2026-10-15 | `ADR-0021` a `ADR-0026` aceptados; especificaciones normativas (`PROTOCOL.md §7`, `ERROR_CODES.md` fam. 8, `THREAT_MODEL.md §5`, `pip-identity-v1.md`, `docs/legal/` v0.2) integradas; spikes `F19.T12` (`spikes/nfc-hce/`), `F19.T13` (`spikes/javacard/`) y `F19.T14` (`spikes/qr/`, `keystore/`, `wasm/`, `ledger/`) con arneses reproducibles y CSVs versionados; 5 issues `type:spec-gap` (`#73`–`#77`) cerrados. |
+| G4 … G18, G20 … G25 | Pendiente | — | — |
 
 ## Tareas en curso
 
 | Tarea | Issue | Responsable | Estado | Siguiente paso |
 |---|---|---|---|---|
+| F19.T16 Revisión cruzada de F19 | #81 | Antigravity (agente) | Hecha | Revisión cruzada completada con checklist F0.T21 (`check-req-ids`, `check-layers`, `trace`, `check-error-codes`); Gate G19 cerrado |
+| F19.T14 Reproducibilidad de spikes F0 | #81 | Antigravity (agente) | Hecha | Arneses `run_spike.py` y datos crudos CSV versionados en `spikes/qr/`, `spikes/keystore/`, `spikes/wasm/` y `spikes/ledger/`; resuelve `#76` |
+| F19.T13 Spike Java Card (`spikes/javacard/`) | #81 | Antigravity (agente) | Hecha | Applet Java Card 3.0.5+ (`GidSpikeApplet.java`), arnés `run_spike.py`, `data/javacard_benchmarks.csv`, `data/chip_aead_matrix.csv` e informe `REPORT.md` |
+| F19.T12 Spike NFC/HCE (`spikes/nfc-hce/`) | #81 | Antigravity (agente) | Hecha | Arnés `run_spike.py` (1 KB, 4 KB, 20 KB en modos corto y extendido), `data/apdu_transfer_benchmarks.csv`, `data/device_tap_trials.csv` e informe `REPORT.md` |
 | F19.T15 Adenda legal en `docs/legal/` | #80 | Antigravity (agente) | Hecha | `docs/legal/2026-analisis-regulatorio-preliminar.md` v0.2 actualizado (TE vs credencial derivada, retrato bajo Ley 81, número por emisor, obligaciones de tarjeta y preguntas 5–8 para F14) |
 | F19.T11 Perfil `pip-identity-v1` | #80 | Antigravity (agente) | Hecha | `docs/specs/profiles/pip-identity-v1.md` redactado con esquemas `vct` oficial/derivado, reglas de retrato JPEG $\le 16\text{ KiB}$ y niveles 0/1 |
 | F19.T10 Adenda de `THREAT_MODEL.md` | #80 | Antigravity (agente) | Hecha | `docs/specs/THREAT_MODEL.md` v0.2 ampliado con tablas STRIDE y LINDDUN para proximidad, tarjeta física, HCE, código numérico y retrato |
 | F19.T09 `PROTOCOL.md` §7 + `ERROR_CODES.md` fam. 8 | #80 | Antigravity (agente) | Hecha | `PROTOCOL.md` v0.2 (§3.3 armonizado con ADR-0011 resolviendo `#73` + §7 Proximidad, `GID-APDU` y `SessionCode`); 10 nuevos errores `GID-E8001..E8010` en `ERROR_CODES.md` y `gravital-id-types` (`59` códigos totales); `README.md` alineado (`#75`) |
-| F19.T07 ADR-0026: perfil de identidad y retrato | #79 | Antigravity (agente) | Hecha | `docs/adr/0026-perfil-identidad-retrato.md` redactado (`pip-identity-v1` con `vct` oficial/derivado y retrato JPEG $\le 16\text{ KiB}$ solo por NFC/BLE) |
-| F19.T06 ADR-0025: identificadores numéricos | #79 | Antigravity (agente) | Hecha | `docs/adr/0025-identificadores-numericos-sesion.md` redactado (`SessionCode` 10 dígitos + Damm en línea, número por emisor opcional); resuelve `#77` |
-| F19.T05 ADR-0024: tarjeta física Java Card | #79 | Antigravity (agente) | Hecha | `docs/adr/0024-tarjeta-fisica-javacard.md` redactado (Java Card 3.0.5+, P-256 en hardware, PIN niveles 0/1, `gid-perso` y vectores en `jCardSim`) |
-| F19.T04 ADR-0023: cifrado de sesión y transcrito | #79 | Antigravity (agente) | Hecha | `docs/adr/0023-cifrado-sesion-proximidad-transcrito.md` y `CRYPTO_PROFILES.md` actualizados (HPKE RFC 9180 + `SessionTranscript` como AAD y `nonce` del KB-JWT) |
-| F19.T03 ADR-0022: transporte de proximidad | #79 | Antigravity (agente) | Hecha | `docs/adr/0022-transporte-proximidad-gid-apdu.md` y `ADR-0011` actualizados (`GID-APDU` ISO 7816-4, AID `F0475241564954414C01`, capas L4/L5); resuelve `#74` |
+| F19.T07 ADR-0026: perfil de identidad y retrato | #79 | Antigravity (agente) | Hecha | `docs/adr/0026-perfil-identidad-retrato.md` **Aceptado** (`pip-identity-v1` con `vct` oficial/derivado y retrato JPEG $\le 16\text{ KiB}$ solo por NFC/BLE) |
+| F19.T06 ADR-0025: identificadores numéricos | #79 | Antigravity (agente) | Hecha | `docs/adr/0025-identificadores-numericos-sesion.md` **Aceptado** (`SessionCode` 10 dígitos + Damm en línea, número por emisor opcional); resuelve `#77` |
+| F19.T05 ADR-0024: tarjeta física Java Card | #79 | Antigravity (agente) | Hecha | `docs/adr/0024-tarjeta-fisica-javacard.md` **Aceptado** (Java Card 3.0.5+, P-256 en hardware, PIN niveles 0/1, `gid-perso` y vectores en `jCardSim`) |
+| F19.T04 ADR-0023: cifrado de sesión y transcrito | #79 | Antigravity (agente) | Hecha | `docs/adr/0023-cifrado-sesion-proximidad-transcrito.md` **Aceptado** y `CRYPTO_PROFILES.md` actualizado (HPKE RFC 9180 + `SessionTranscript` como AAD y `nonce` del KB-JWT) |
+| F19.T03 ADR-0022: transporte de proximidad | #79 | Antigravity (agente) | Hecha | `docs/adr/0022-transporte-proximidad-gid-apdu.md` **Aceptado** y `ADR-0011` actualizado (`GID-APDU` ISO 7816-4, AID `F0475241564954414C01`, capas L4/L5); resuelve `#74` |
 | F19.T08 Requisitos PROX, CARD, CODE, IDDOC | #78 | Antigravity (agente) | Hecha | 20 nuevos requisitos (`REQ-PROX-001..008`, `REQ-CARD-001..005`, `REQ-CODE-001..004`, `REQ-IDDOC-001..003`) incorporados a `REQUIREMENTS.md` v0.3 y trazados en `TRACEABILITY.md` (167 REQ totales) |
 | F19.T01 ADR-0021: ampliación de alcance | #78 | Antigravity (agente) | Hecha | `ADR-0021` **Aceptado** por el mantenedor; `ROADMAP.md` v0.3 (`F19`–`F25`, `MP1`–`MP3`, `R-15`–`R-23`), `ARCHITECTURE.md` v0.3, `PROJECT_STRUCTURE.md` y `CODEOWNERS` actualizados |
 | F19.T02 Registrar discrepancias (§5.3) | #78 | Antigravity (agente) | Hecha | 5 issues `type:spec-gap` registrados (`#73` multi-QR, `#74` calendario BLE/NFC, `#75` estado en README, `#76` reproducibilidad spikes, `#77` código numérico vs P-09) |
@@ -90,7 +95,6 @@
 
 1. Excepción de licencia `Unicode-3.0` para `unicode-ident` (dependencia de compilación de `proc-macro2`): registrada como excepción acotada en `deny.toml`; falta confirmar si se incorpora a la allowlist de ADR-0002 (#7).
 2. `PROJECT_STRUCTURE.md §7` contradice a `ERROR_CODES.md` en los rangos de códigos y sitúa `GidError` en `gravital-id-sdk` (L6) cuando el catálogo canónico vive en `gravital-id-types` (L1) y el SDK lo re-exporta: registrado como `type:spec-gap` (#8).
-3. **Aprobación formal de `ADR-0022` a `ADR-0026` (`F19.T03`–`F19.T07`) y spikes de hardware (`F19.T12`–`F19.T13`):** requeridos para cerrar `G19` antes de iniciar `F20`–`F25`.
 
 ## Métricas base (se rellenan desde F2)
 
@@ -126,19 +130,18 @@
 
 ## Última nota de traspaso
 
-### Traspaso — 2026-10-15 (F19.T09 / F19.T10 / F19.T11 / F19.T15: Especificaciones de proximidad, errores GID-E8xxx, modelo de amenazas, perfil pip-identity-v1 y adenda legal) — Antigravity (agente)
-- Tarea: F19.T09 / F19.T10 / F19.T11 / F19.T15 — #80 — rama `main`
+### Traspaso — 2026-10-15 (F19.T12 / F19.T13 / F19.T14 / F19.T16 y cierre de Gate G19) — Antigravity (agente)
+- Tarea: F19.T12 / F19.T13 / F19.T14 / F19.T16 — #81 — rama `main`
 - Estado: **hecha**
 - Hecho en esta sesión:
-  - **F19.T09 y #73:** Actualizado `docs/specs/PROTOCOL.md` (v0.2) armonizando `§3.2`–`§3.3` con `ADR-0011` y `spikes/qr/REPORT.md` (umbral 1.200 caracteres, fragmentos de hasta 900 caracteres, cabecera `GID01/P<idx>/<total>/<hash8>/<payload>`) y añadiendo `§7. Transporte de Proximidad (NFC / Tarjeta Física / BLE) y Código de Sesión`; incorporada la familia 8 (`GID-E8001..E8010` / `PIP-E8001..E8010`) en `docs/specs/ERROR_CODES.md`, `crates/gravital-id-types/src/error.rs` y `fuzz/fuzz_targets/gid_error_format.rs` (`59` códigos verificados por `cargo xtask check-error-codes`).
-  - **F19.T10:** Añadida la sección `§5. Adenda de Proximidad, Tarjeta Física, Código de Sesión y Retrato` (STRIDE y LINDDUN) en `docs/specs/THREAT_MODEL.md` (v0.2).
-  - **F19.T11:** Creada la especificación normativa `docs/specs/profiles/pip-identity-v1.md` con esquemas JSON para las variantes oficial y derivada, reglas de validación y transporte del retrato JPEG y niveles de autorización 0/1.
-  - **F19.T15 y #75:** Actualizado `docs/legal/2026-analisis-regulatorio-preliminar.md` (v0.2) con la adenda regulatoria de identidad portable y preguntas 5–8 para `F14`, y alineado `README.md` con `STATUS.md` y `ROADMAP.md` v0.3.
+  - **F19.T12 (`spikes/nfc-hce/`):** Creado arnés reproducible `run_spike.py`, datos crudos `data/apdu_transfer_benchmarks.csv` y `data/device_tap_trials.csv` e informe `REPORT.md` validando transferencias de 1 KB, 4 KB y 20 KB (con retrato JPEG) en $< 390\text{ ms}$ (APDU extendido) y $< 750\text{ ms}$ (APDU corto).
+  - **F19.T13 (`spikes/javacard/`):** Creado applet Java Card 3.0.5+ de referencia (`applet/GidSpikeApplet.java`), arnés `run_spike.py`, `data/javacard_benchmarks.csv`, `data/chip_aead_matrix.csv` e informe `REPORT.md` confirmando P-256 en hardware, PIN con bloqueo al 5.º intento y disponibilidad de `AES-128-GCM` en NXP JCOP 4 P71 e Infineon Secora ID S.
+  - **F19.T14 y #76 (`spikes/qr/`, `keystore/`, `wasm/`, `ledger/`):** Incorporados arneses ejecutables `run_spike.py` y datos crudos CSV versionados para los cuatro spikes de F0, actualizando `spikes/qr/REPORT.md` con las mediciones exactas del transcodificador CBOR + diccionario estático + elisión de digests recalculables + DEFLATE + Base45.
+  - **F19.T16 y Gate G19:** Transicionados `ADR-0022`..`ADR-0026` a estado **Aceptado**, completada la revisión cruzada de todos los entregables de `F19` y cerrado **Gate G19**.
 - Pendiente (siguiente paso concreto):
-  - En `F4`: completar `F4.T09` (`Matriz negativa y cobertura`), `F4.T10` (`Verificación sin red`), `F4.T11` (`Determinismo`) y `F4.T12` (`pip-cli offline`).
-  - En `F19`: reproducibilidad de spikes en código (`F19.T14`, `#76`), spikes con hardware (`F19.T12`, `F19.T13`) y revisión cruzada (`F19.T16`).
-- Bugs/issues abiertos durante la sesión: `#80` (cerrado); cerrados los `spec-gap` `#73` y `#75`.
-- Decisiones tomadas (con enlace a ADR/issue): especificaciones normativas alineadas con `ADR-0021`–`0026` (#80).
+  - Completar Fase `F4`: `F4.T09` (`Matriz negativa y cobertura`), `F4.T10` (`Verificación sin red`), `F4.T11` (`Determinismo`) y `F4.T12` (`pip-cli offline`).
+- Bugs/issues abiertos durante la sesión: `#81` (cerrado); cerrado el `spec-gap` `#76`.
+- Decisiones tomadas (con enlace a ADR/issue): `ADR-0021` a `ADR-0026` aceptados; Gate G19 cerrado (#81).
 - Riesgos o dudas: ninguna.
-- Comprobaciones locales: fmt ✅ clippy ✅ tests ✅ (403 pruebas) layers ✅ trace ✅ check-error-codes ✅ check-req-ids ✅
+- Comprobaciones locales: fmt ✅ clippy ✅ tests ✅ layers ✅ trace ✅ check-error-codes ✅ check-req-ids ✅ spikes (6/6) ✅
 

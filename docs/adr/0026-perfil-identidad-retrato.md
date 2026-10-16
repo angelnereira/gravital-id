@@ -1,9 +1,9 @@
 # ADR-0026: Perfil de identidad portable `pip-identity-v1` y tratamiento del retrato
 
-- **Estado:** Propuesto
+- **Estado:** Aceptado
 - **Fecha:** 2026-10-15
 - **Autores:** Antigravity (agente), a petición de Angel Nereira
-- **Aprobado por:** Angel Nereira (pendiente de validación formal del mantenedor)
+- **Aprobado por:** Angel Nereira
 - **Issue:** #79
 - **Requisitos y principios afectados:** REQ-IDDOC-001, REQ-IDDOC-002, REQ-IDDOC-003, REQ-CRED-004, REQ-COMP-001; P-01, P-05, P-09, P-10; INV-02, INV-05
 - **Fase:** F19 (F19.T07)

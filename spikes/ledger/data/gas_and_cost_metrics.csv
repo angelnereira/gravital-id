@@ -1,0 +1,7 @@
+operation,gas_units,eth_l1_usd_25gwei,arbitrum_l2_usd_0_1gwei,base_l2_usd_0_05gwei
+deploy_trust_registry,785420,54.979,0.22,0.11
+deploy_status_anchor,542100,37.947,0.152,0.076
+register_issuer,98240,6.877,0.028,0.014
+emergency_suspend_key,32150,2.251,0.009,0.005
+anchor_single_status_list,44820,3.137,0.013,0.006
+anchor_batch_10_lists,182500,12.775,0.051,0.026

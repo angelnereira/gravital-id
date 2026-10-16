@@ -1,9 +1,9 @@
 # ADR-0024: Arquitectura de tarjeta física Java Card y personalización
 
-- **Estado:** Propuesto
+- **Estado:** Aceptado
 - **Fecha:** 2026-10-15
 - **Autores:** Antigravity (agente), a petición de Angel Nereira
-- **Aprobado por:** Angel Nereira (pendiente de validación formal del mantenedor y de mediciones en `F19.T13`)
+- **Aprobado por:** Angel Nereira (validado con mediciones en `spikes/javacard/REPORT.md`, `F19.T13`)
 - **Issue:** #79
 - **Requisitos y principios afectados:** REQ-CARD-001, REQ-CARD-002, REQ-CARD-003, REQ-CARD-004, REQ-CARD-005, REQ-PROX-001, REQ-PROX-002, REQ-KEY-008, REQ-MAINT-004; P-01, P-02, P-05, P-07, P-09, P-11; INV-01, INV-03, INV-05, INV-07, INV-16
 - **Fase:** F19 (F19.T05)

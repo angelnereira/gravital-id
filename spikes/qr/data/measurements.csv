@@ -1,0 +1,7 @@
+profile_case,raw_sdjwt_kb_bytes,cbor_bytes,cbor_deflate_bytes,base45_chars,reduction_pct,qr_mode,fragments_count,roundtrip_verified
+pip-personal-v1 (2 atributos),1433,625,608,912,36.4,Versión 24-M (113x113),1,true
+pip-financial-v1 (3 atributos),1725,764,746,1119,35.1,Versión 26-M (121x121),1,true
+pip-enterprise-v1 (4 atributos),1930,847,845,1268,34.3,Multi-QR (2 partes),2,true
+pip-financial-v1 (8 atributos),2397,991,953,1430,40.3,Multi-QR (2 partes),2,true
+"pip-identity-v1 (sin retrato, 2 predicados)",1497,661,651,977,34.7,Versión 24-M (113x113),1,true
+pip-identity-v1 (con retrato JPEG ~14 KB),26748,14867,14872,22308,16.6,Multi-QR (25 partes),25,true

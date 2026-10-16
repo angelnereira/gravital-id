@@ -26,6 +26,8 @@ Métricas clave analizadas:
 **Conclusión principal:**
 El despliegue en redes L2 (Arbitrum One / Base) reduce los costes de transacción en más de un **99.8 %** respecto a Ethereum L1 (coste medio inferior a $0.005 USD por anclaje por lotes frente a $4.80 USD en L1). La finalidad en L2 combinada con indexación por eventos permite a los operadores de confianza cofirmar trust bundles con frescura de pocos minutos de forma económicamente sostenible.
 
+> **Reproducibilidad (F19.T14 / #76):** Ejecute `python3 spikes/ledger/run_spike.py` para verificar la invariante `INV-02` sobre los payloads de eventos EVM y regenerar los datos crudos en `spikes/ledger/data/gas_and_cost_metrics.csv` y `spikes/ledger/data/rpc_availability_metrics.csv`.
+
 ---
 
 ## 2. Contratos Mínimos de Prueba Evaluados

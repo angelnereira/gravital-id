@@ -1,0 +1,5 @@
+stage,size_kb,reduction_pct,budget_status
+cargo_build_wasm32_release_raw,486,0.0,baseline
+wasm_opt_Oz_stripped,174,64.2,within_budget
+http_gzip_compressed,71,85.4,within_budget
+http_brotli_compressed,62,87.2,within_budget

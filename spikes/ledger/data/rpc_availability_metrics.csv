@@ -1,0 +1,5 @@
+provider,network,availability_pct,mean_latency_ms,http_429_rate_pct
+Alchemy,Arbitrum Sepolia,99.98,64,0.0
+Infura,Arbitrum Sepolia,99.95,72,0.0
+QuickNode,Base Sepolia,99.97,68,0.0
+Public Foundation RPC,Arbitrum / Base,97.4,240,4.8

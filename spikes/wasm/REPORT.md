@@ -21,6 +21,8 @@ Este spike evalúa experimentalmente:
 **Conclusión principal:**
 La compilación a `wasm32-unknown-unknown` es completamente exitosa y limpia. El módulo optimizado ocupa únicamente **174 KB** (62 KB comprimido en red con brotli). Un pánico inducido envenena la memoria de la instancia Wasm como se esperaba por diseño (`WebAssembly.RuntimeError`), siendo interceptado limpiamente por el envoltorio TypeScript de `pip-sdk`, retornando el error tipado normalizado `GID-E9999` (instancia envenenada) y recreando la instancia sin fugas ni interrupciones del hilo principal.
 
+> **Reproducibilidad (F19.T14 / #76):** Ejecute `python3 spikes/wasm/run_spike.py` para verificar el modelo de recreación de instancia envenenada (`GID-E9999`) y regenerar los datos crudos en `spikes/wasm/data/binary_size_metrics.csv` y `spikes/wasm/data/crypto_runtime_benchmarks.csv`.
+
 ---
 
 ## 2. Configuración de Compilación y Suites Evaluadas

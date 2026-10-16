@@ -1,0 +1,7 @@
+payload_profile,payload_bytes,apdu_mode,chunk_mtu_bytes,total_apdu_roundtrips,android_hce_to_android_reader_ms,android_hce_to_iphone_corenfc_ms,android_hce_to_pcsc_usb_ms,roundtrip_verified
+1KB_pip_personal_v1,1024,short_apdu_240B,240,7,149.4,154.6,139.9,true
+1KB_pip_personal_v1,1024,extended_apdu_1024B,1024,3,140.5,144.6,132.9,true
+4KB_pip_financial_enterprise_v1,4096,short_apdu_240B,240,20,230.0,244.9,202.7,true
+4KB_pip_financial_enterprise_v1,4096,extended_apdu_1024B,1024,6,175.0,183.3,159.8,true
+20KB_pip_identity_v1_with_portrait,20480,short_apdu_240B,240,88,651.6,717.1,531.6,true
+20KB_pip_identity_v1_with_portrait,20480,extended_apdu_1024B,1024,22,359.0,389.4,303.3,true

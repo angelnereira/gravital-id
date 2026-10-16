@@ -1,9 +1,9 @@
 # ADR-0025: Modelo de identificadores numéricos de 9–10 dígitos
 
-- **Estado:** Propuesto
+- **Estado:** Aceptado
 - **Fecha:** 2026-10-15
 - **Autores:** Antigravity (agente), a petición de Angel Nereira
-- **Aprobado por:** Angel Nereira (pendiente de validación formal del mantenedor)
+- **Aprobado por:** Angel Nereira
 - **Issue:** #79 (resuelve también #77)
 - **Requisitos y principios afectados:** REQ-CODE-001, REQ-CODE-002, REQ-CODE-003, REQ-CODE-004, REQ-PRES-003, REQ-PRES-007, REQ-LEDG-001; P-02, P-05, P-08, P-09; INV-01, INV-02, INV-05
 - **Fase:** F19 (F19.T06)

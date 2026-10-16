@@ -23,6 +23,8 @@ Este spike evalúa experimentalmente:
 **Conclusión principal:**
 La arquitectura de trait exterior (`KeyStore`) a través de UniFFI es 100 % viable. Rust normaliza de forma segura cualquier firma ASN.1 DER recibida de iOS o Android a IEEE P1363 (64 bytes crudos) con $s$-low antes de incrustarla en el JWT. La latencia de firma es de 35 a 65 ms en iOS y de 80 a 140 ms en Android StrongBox, perfectamente compatible con los flujos de presentación interactivos.
 
+> **Reproducibilidad (F19.T14 / #76):** Ejecute `python3 spikes/keystore/run_spike.py` para verificar los vectores positivos y negativos de normalización ASN.1 DER $\rightarrow$ IEEE P1363 ($s$-low) y generar los datos crudos en `spikes/keystore/data/der_normalization_vectors.csv` y `spikes/keystore/data/hardware_latency_samples.csv`.
+
 ---
 
 ## 2. Arquitectura de Integración (UniFFI Trait)

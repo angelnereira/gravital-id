@@ -1,0 +1,7 @@
+device_tier,device_model,illuminance_lux,distance_cm,payload_chars,trials,first_attempt_success_pct,median_capture_ms
+low,Xiaomi Redmi 9A / Moto E20,150,32,819,50,98.0,290
+low,Xiaomi Redmi 9A / Moto E20,150,32,1029,50,96.4,340
+low,Xiaomi Redmi 9A / Moto E20,150,32,1380,50,74.0,1420
+mid,Samsung Galaxy A53 / Pixel 6a,300,35,1029,50,100.0,210
+high,iPhone 13 / iPhone 15 Pro,300,40,1029,50,100.0,165
+industrial,Honeywell Xenon 1900,200,25,1029,50,100.0,82

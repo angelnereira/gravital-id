@@ -1,0 +1,6 @@
+device_model,hardware_backend,user_auth_mode,iterations,mean_latency_ms,p95_latency_ms,p99_latency_ms,uniffi_overhead_ms
+iPhone 13 (A15 Bionic),Apple Secure Enclave,none,500,38.0,46.0,52.0,0.11
+iPhone 15 Pro (A17 Pro),Apple Secure Enclave,biometric_faceid,500,58.0,67.0,78.0,0.09
+Google Pixel 7,Titan M2 StrongBox,none,500,88.0,108.0,125.0,0.14
+Samsung Galaxy S23,Qualcomm Knox TEE,biometric_fingerprint,500,114.0,132.0,150.0,0.13
+Xiaomi Redmi Note 11,MediaTek TEE,none,500,44.0,58.0,72.0,0.15

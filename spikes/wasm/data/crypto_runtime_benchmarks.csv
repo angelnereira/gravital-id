@@ -1,0 +1,5 @@
+operation,nodejs_20_v8_ms,chrome_128_desktop_ms,safari_ios17_iphone13_ms,iterations
+sha256_4kb,0.012,0.014,0.019,1000
+xchacha20poly1305_decrypt_1kb,0.024,0.028,0.035,1000
+es256_p256_verify,1.84,1.95,2.42,1000
+sdjwt_kb_full_verify_3_claims,2.12,2.26,2.8,1000

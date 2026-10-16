@@ -1,0 +1,7 @@
+holder_device,verifier_reader,payload_kb,apdu_mode,taps_attempted,first_tap_success_count,first_tap_success_pct,p95_total_session_ms
+Google Pixel 7 (HCE),Samsung Galaxy A53 (IsoDep),1,extended_1024B,50,50,100.0,148
+Google Pixel 7 (HCE),iPhone 15 Pro (Core NFC),1,short_240B,50,49,98.0,172
+Google Pixel 7 (HCE),ACR122U / Hid Omnikey (PC/SC),4,extended_1024B,50,50,100.0,168
+Google Pixel 7 (HCE),Samsung Galaxy A53 (IsoDep),20,extended_1024B,50,49,98.0,385
+Xiaomi Redmi Note 11 (HCE),iPhone 13 (Core NFC),20,short_240B,50,48,96.0,745
+Samsung Galaxy S23 (HCE),ACR122U / Hid Omnikey (PC/SC),20,extended_1024B,50,50,100.0,310

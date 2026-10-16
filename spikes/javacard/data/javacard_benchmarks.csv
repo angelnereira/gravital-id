@@ -1,0 +1,4 @@
+target_platform,jc_version,eeprom_nvm_used_bytes,ram_cor_cod_used_bytes,keygen_p256_ms,ecdh_p256_ms,ecdsa_sha256_sign_ms,full_level0_presentation_ms,full_level1_pin_presentation_ms
+jCardSim 3.0.5 (JVM Emulator),3.0.5,4120,512,4.2,1.8,2.1,8.5,11.2
+NXP JCOP 4 P71 (SmartMX3),3.0.5,6840,768,92.0,34.0,38.0,165.0,198.0
+Infineon Secora ID S (SLJ 52G),3.0.5,7110,768,108.0,39.0,43.0,182.0,219.0

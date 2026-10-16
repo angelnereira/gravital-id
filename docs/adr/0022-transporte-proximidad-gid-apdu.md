@@ -1,9 +1,9 @@
 # ADR-0022: Transporte de proximidad y protocolo GID-APDU
 
-- **Estado:** Propuesto
+- **Estado:** Aceptado
 - **Fecha:** 2026-10-15
 - **Autores:** Antigravity (agente), a petición de Angel Nereira
-- **Aprobado por:** Angel Nereira (pendiente de validación formal del mantenedor)
+- **Aprobado por:** Angel Nereira
 - **Issue:** #79 (resuelve también #74)
 - **Requisitos y principios afectados:** REQ-PROX-003, REQ-PROX-004, REQ-PROX-005, REQ-PROX-006, REQ-PROX-007, REQ-PROX-008, REQ-MAINT-002; P-02, P-04, P-05, P-11, P-14; INV-01, INV-04, INV-05, INV-15
 - **Fase:** F19 (F19.T03)

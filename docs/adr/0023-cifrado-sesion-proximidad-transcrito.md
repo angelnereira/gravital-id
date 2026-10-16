@@ -1,9 +1,9 @@
 # ADR-0023: Cifrado de sesión de proximidad y vinculación al transcrito
 
-- **Estado:** Propuesto
+- **Estado:** Aceptado
 - **Fecha:** 2026-10-15
 - **Autores:** Antigravity (agente), a petición de Angel Nereira
-- **Aprobado por:** Angel Nereira (pendiente de validación formal del mantenedor)
+- **Aprobado por:** Angel Nereira
 - **Issue:** #79
 - **Requisitos y principios afectados:** REQ-PROX-001, REQ-PROX-002, REQ-PROX-003, REQ-PRES-004, REQ-PRES-007, REQ-SEC-002; P-02, P-05, P-07, P-08; INV-01, INV-05, INV-07, INV-08, INV-11
 - **Fase:** F19 (F19.T04)

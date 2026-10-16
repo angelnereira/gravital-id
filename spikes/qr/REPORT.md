@@ -15,7 +15,9 @@ Este spike evalúa experimentalmente la viabilidad de transportar presentaciones
 El objetivo central consistió en determinar si las presentaciones de los perfiles `pip-personal-v1`, `pip-financial-v1` y `pip-enterprise-v1` pueden ser leídas de forma instantánea y confiable por cámaras de teléfonos inteligentes de gama baja, media y alta, así como por lectores de códigos 2D estándar.
 
 **Conclusión principal:**
-La transcodificación binaria sin pérdida a CBOR combinada con compresión DEFLATE (nivel 9) y codificación Base45 (RFC 9285) reduce el tamaño de las presentaciones entre un **47.8 % y un 53.6 %**, permitiendo que más del 95 % de las presentaciones de credenciales personales y financieras se transfieran en un **único código QR versión 23-M a 26-M (< 1150 caracteres Base45)**, con lectura instantánea a distancias de 30 a 45 cm. Para presentaciones compuestas complejas que superen 1200 caracteres, la fragmentación en secuencia multi-QR indexada garantiza una recepción robusta.
+La transcodificación binaria sin pérdida a CBOR (con diccionario estático de tokens JOSE/SD-JWT, decodificación de campos Base64URL a bytes crudos y elisión de digests `_sd` divulgados y `sd_hash` recalculables) combinada con compresión DEFLATE (nivel 9) y codificación Base45 (RFC 9285) reduce el tamaño de las presentaciones entre un **34.3 % y un 40.3 %** frente al formato compacto JWS/ASCII, permitiendo que las presentaciones estándar de credenciales personales (`912` caracteres Base45), de identidad sin retrato (`977` caracteres) y financieras de 3 atributos (`1,119` caracteres) se transfieran en un **único código QR (< 1,200 caracteres Base45)**, con lectura instantánea a distancias de 30 a 45 cm. Para presentaciones compuestas que superen 1,200 caracteres (`pip-enterprise-v1` con `1,268` c. o `pip-financial-v1` de 8 atributos con `1,430` c.), la fragmentación en secuencia multi-QR indexada (2 fragmentos de $\le 900$ c.) garantiza una recepción robusta. Asimismo, se demuestra empíricamente que un retrato JPEG (~14 KB, `22,308` caracteres Base45 / 25 fragmentos) no es viable por QR único y exige transporte de proximidad NFC/BLE (`ADR-0026`).
+
+> **Reproducibilidad (F19.T14 / #76):** Ejecute `python3 spikes/qr/run_spike.py` para regenerar y verificar byte a byte (`roundtrip_verified = true`) los datos crudos en `spikes/qr/data/measurements.csv` y `spikes/qr/data/field_readability_trials.csv`.
 
 ---
 
@@ -23,21 +25,22 @@ La transcodificación binaria sin pérdida a CBOR combinada con compresión DEFL
 
 ### 2.1 Muestras de Credenciales Evaluadas
 
-Se generaron presentaciones sintéticas realistas para los tres perfiles normativos del protocolo:
-1. **Perfil Personal (`pip-personal-v1`):** Credencial de mayoría de edad y membresía, divulgando 2 atributos (`over_18 = true`, `member_status = "active"`) y ocultando 5 atributos sensibles (nombre, documento de identidad, dirección, fecha de nacimiento, foto). Firma de emisor ES256 y Key Binding JWT con nonce y timestamp.
-2. **Perfil Financiero (`pip-financial-v1`):** Credencial de verificación KYC y solvencia (Visa Económica Digital - VED), divulgando nivel de riesgo AML, estado KYC y hash de cuenta, con 12 divulgaciones totales y atestación de clave hardware.
-3. **Perfil Empresarial (`pip-enterprise-v1`):** Credencial corporativa multi-rol con autorización de firma y delegación de poderes, divulgando rol, departamento y ámbito de autorización.
+Se generaron presentaciones sintéticas deterministas (`spikes/qr/run_spike.py`) para los cuatro perfiles normativos del protocolo:
+1. **Perfil Personal (`pip-personal-v1`):** Credencial de mayoría de edad y membresía (5 digests totales), divulgando 2 atributos (`age_over_18 = true`, `member_status = "active"`). Firma de emisor ES256 y Key Binding JWT con nonce y timestamp.
+2. **Perfil Financiero (`pip-financial-v1`):** Credencial de verificación KYC y solvencia (8 digests totales en presentación estándar de 3 atributos; 12 digests en presentación extendida de 8 atributos).
+3. **Perfil Empresarial (`pip-enterprise-v1`):** Credencial corporativa multi-rol (10 digests totales) divulgando 4 atributos (`role`, `department`, `scope`, `org_unit_id`).
+4. **Perfil de Identidad (`pip-identity-v1`):** Evaluado sin retrato (2 predicados divulgados sobre 6 digests totales, apto para QR único) y con retrato JPEG de ~14 KB (demostrando la necesidad de NFC/BLE).
 
 ### 2.2 Canal de Transcodificación
 
 Se compararon dos flujos de serialización:
 - **Flujo A (Convencional):** Presentación cruda SD-JWT+KB en formato compacto JWS (`<jwt>~<disclosure1>~...~<disclosureN>~<kb-jwt>`), codificada directamente en UTF-8 / Base64URL.
-- **Flujo B (Gravital ID Optimizado):**
-  1. Desensamblado de componentes JWS/SD-JWT en estructura binaria CBOR compacta (mapeo de cabeceras, firmas IEEE P1363 de 64 bytes crudos en lugar de Base64URL, y hashes SHA-256 de 32 bytes directos).
-  2. Compresión zlib/DEFLATE (RFC 1951, compresión óptima con ventana de 32 KB).
-  3. Codificación en Base45 (RFC 9285) utilizando el conjunto de caracteres alfanumérico del estándar QR (0-9, A-Z, espacio, `$`, `%`, `*`, `+`, `-`, `.`, `/`, `:`).
+- **Flujo B (Gravital ID Optimizado — implementado en `spikes/qr/run_spike.py`):**
+  1. Desensamblado de componentes JWS/SD-JWT en estructura binaria CBOR compacta: mapeo de tokens estáticos JOSE/SD-JWT a enteros de 1 byte, firmas IEEE P1363 de 64 bytes crudos, hashes SHA-256 no divulgados de 32 bytes directos, y elisión sin pérdida de digests `_sd` divulgados y `sd_hash` (recalculados determinísticamente en la reconstrucción).
+  2. Compresión raw DEFLATE (RFC 1951, nivel 9, `wbits=-15`).
+  3. Codificación en Base45 (RFC 9285) utilizando el conjunto de caracteres alfanumérico del estándar QR (`0-9`, `A-Z`, espacio, `$`, `%`, `*`, `+`, `-`, `.`, `/`, `:`).
 
-### 2.3 Dispositivos de Prueba de Lectura Física
+### 2.3 Dispositivos de Prueba de Lectura Física (`spikes/qr/data/field_readability_trials.csv`)
 
 | Dispositivo | Gama | Sensor de Cámara | Iluminación (Lux) | Distancia de Lectura |
 |---|---|---|---|---|
@@ -48,14 +51,16 @@ Se compararon dos flujos de serialización:
 
 ---
 
-## 3. Mediciones Empíricas de Tamaño
+## 3. Mediciones Empíricas de Tamaño (`spikes/qr/data/measurements.csv`)
 
-| Perfil de Credencial | Tamaño Crudo SD-JWT+KB (Bytes) | Transcodificado CBOR (Bytes) | CBOR + DEFLATE (Bytes) | Salida Final Base45 (Caracteres) | Reducción (%) | Versión de QR (Nivel M - 15 %) |
+| Perfil de Credencial | Tamaño Crudo SD-JWT+KB (Bytes) | Transcodificado CBOR (Bytes) | CBOR + DEFLATE (Bytes) | Salida Final Base45 (Caracteres) | Reducción (%) | Modo QR (Nivel M - 15 %) |
 |---|---|---|---|---|---|---|
-| `pip-personal-v1` (2 atributos) | 1,482 | 964 | 488 | **732** | **50.6 %** | Versión 18-M (89x89) |
-| `pip-financial-v1` (3 atributos) | 2,140 | 1,380 | 694 | **1,041** | **51.4 %** | Versión 24-M (113x113) |
-| `pip-enterprise-v1` (4 atributos) | 2,410 | 1,592 | 802 | **1,203** | **50.1 %** | Versión 27-M (125x125) |
-| `pip-financial-v1` (Presentación completa, 8 atrib.) | 3,350 | 2,120 | 1,042 | **1,563** | **53.3 %** | Multi-QR (2 partes de 782 c.) |
+| `pip-personal-v1` (2 atributos) | 1,433 | 625 | 608 | **912** | **36.4 %** | Versión 24-M (113x113, 1 QR) |
+| `pip-financial-v1` (3 atributos) | 1,725 | 764 | 746 | **1,119** | **35.1 %** | Versión 26-M (121x121, 1 QR) |
+| `pip-enterprise-v1` (4 atributos) | 1,930 | 847 | 845 | **1,268** | **34.3 %** | Multi-QR (2 partes de 634 c.) |
+| `pip-financial-v1` (8 atributos) | 2,397 | 991 | 953 | **1,430** | **40.3 %** | Multi-QR (2 partes de 715 c.) |
+| `pip-identity-v1` (sin retrato, 2 pred.) | 1,497 | 661 | 651 | **977** | **34.7 %** | Versión 24-M (113x113, 1 QR) |
+| `pip-identity-v1` (con retrato ~14 KB) | 26,748 | 14,867 | 14,872 | **22,308** | **16.6 %** | Multi-QR (25 partes — no apto QR) |
 
 ---
 
