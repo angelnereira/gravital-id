@@ -14,5 +14,11 @@ description = "Trait de adaptador de ledger y reconstrucción pura de estado par
 workspace = true
 
 [dependencies]
-gravital-id-trust = { workspace = true }
 gravital-id-types = { workspace = true }
+gravital-id-codec = { workspace = true }
+gravital-id-crypto = { workspace = true }
+gravital-id-trust = { workspace = true }
+
+[dev-dependencies]
+gravital-id-testkit = { path = "../gravital-id-testkit", version = "0.1.0" }
+proptest = "=1.5.0"

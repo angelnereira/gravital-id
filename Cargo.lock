@@ -522,8 +522,12 @@ dependencies = [
 name = "gravital-id-ledger"
 version = "0.1.0"
 dependencies = [
+ "gravital-id-codec",
+ "gravital-id-crypto",
+ "gravital-id-testkit",
  "gravital-id-trust",
  "gravital-id-types",
+ "proptest",
 ]
 
 [[package]]

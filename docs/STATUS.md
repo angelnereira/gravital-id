@@ -10,7 +10,7 @@
 | Último gate cerrado | **G5** (2026-10-16) · **G4** (2026-10-16) · **G19** (2026-10-15) · **G0** (2026-10-11) |
 | Próximo gate | **G6** — contratos en testnet y adaptador de ledger; **G3** (#59) y **G2** pendientes de CI |
 | Hito siguiente | M2 · Sincronización y anclaje (al cerrar G7) · MP1 · Tap offline (al cerrar G21) [M1 alcanzado] |
-| Última actualización | 2026-10-16 (F6.T02–T07 completadas — contratos inteligentes TrustRegistry, StatusAnchor, gobernanza timelock, 25 pruebas Foundry, gas snapshot y verificación automatizada de no-PII check-contracts-privacy; #90 resuelto) |
+| Última actualización | 2026-10-16 (F6.T08 completada — pip-ledger implementado con Trait LedgerAdapter, proyección pura de estado, derivación determinista de TrustBundle y reconciliación de divergencias estado ↔ bundle con 93,90% de cobertura; #91 resuelto) |
 
 ## Gates
 
@@ -29,7 +29,8 @@
 
 | Tarea | Issue | Responsable | Estado | Siguiente paso |
 |---|---|---|---|---|
-| F6.T08 `pip-ledger` | — | Antigravity (agente) | Por iniciar | Trait LedgerAdapter, eventos, reconstrucción pura y derivación de bundle (REQ-LEDG-002, REQ-TRUST-008) |
+| F6.T09 `pip-ledger-evm` | — | Antigravity (agente) | Por iniciar | Implementación de LedgerAdapter con alloy, lectura por rangos y multi-RPC (REQ-LEDG-005, REQ-LEDG-006) |
+| F6.T08 `pip-ledger` | #91 | Antigravity (agente) | Hecha | Trait LedgerAdapter, eventos, reconstrucción pura y derivación de bundle (REQ-LEDG-002, REQ-TRUST-008); resuelto #91 |
 | F6.T02-T07 Contratos inteligentes y pruebas | #90 | Antigravity (agente) | Hecha | TrustRegistry, StatusAnchor, Gobernanza timelock, 25 pruebas Foundry, snapshot gas y verificación check-contracts-privacy (no PII); resuelto #90 |
 | F6.T01 `CONTRACTS.md` v1 | #89 | Antigravity (agente) | Hecha | Actualización de especificación técnica de contratos CONTRACTS.md a v1.0.0 normativa (interfaces, RBAC, eventos, inmutabilidad y no-PII); resuelto #89 |
 | F5.T13-T14 Legibilidad QR y Demostración M1 | #88 | Antigravity (agente) | Hecha | Pruebas de legibilidad QR (F5.T13), demostración reproducible de escenarios MVP-01..03, auditoría forense SQLite y cierre de Gate G5 / Hito M1 (94,71% cobertura); resuelto #88 |
@@ -144,6 +145,27 @@
 | Tamaño binario del SDK | — | — | — | — | — |
 
 ## Última nota de traspaso
+
+### Traspaso — 2026-10-16 (F6.T08: pip-ledger — Trait LedgerAdapter, proyección pura de estado, derivación determinista de TrustBundle y reconciliación estado ↔ bundle) — Antigravity (agente)
+- Tarea: F6.T08 — #91 — rama `main`
+- Estado: **hecha**
+- Hecho en esta sesión:
+  - **F6.T08 (`crates/gravital-id-ledger`):** Crate en capa L4 sans-I/O para proyección determinista del ledger.
+    - `adapter.rs`: Trait abstracto `LedgerAdapter` (`chain_id`, `finalized_head`, `fetch_events`, `get_status_commitment`) e implementación en memoria `InMemoryLedgerAdapter` para entornos sans-I/O y pruebas (`REQ-LEDG-002`, `INV-01`).
+    - `event.rs`: Coordenada estricta `EventCoordinate` ordenada monótonamente por `(block_number, tx_index, log_index)` y catálogo completo de 13 eventos normativos tipados de `ITrustRegistry` e `IStatusAnchor`.
+    - `state.rs`: Motor puro de reconstrucción de estado (`LedgerState`) que procesa secuencialmente eventos del ledger sin red ni reloj implícito (`INV-01`, `INV-11`), implementando la máquina de estados de emisores y claves P-256 SEC-1 con inmutabilidad terminal de estados `Compromised`, gestión de timelocks y expiración determinista de suspensiones de emergencia a los 14 días (`REQ-LEDG-004`).
+    - `derivation.rs`: Derivación pura y determinista byte a byte de `TrustBundle` (`derive_trust_bundle`) a partir del estado reconstruido y cabecera de bloque finalizado, serialización canónica RFC 8785 y digest SHA-256 (`REQ-TRUST-008`).
+    - `diff.rs`: Reconciliación determinista entre un `TrustBundle` y el `LedgerState` (`compare_bundle_with_state`) que produce un `BundleDiffReport` con tipificación de divergencias operativas y detección inmediata de alertas críticas de seguridad (`CompromisedKeyNotReflected`, `ChainIdMismatch`, `RegistryAddressMismatch`).
+  - **Pruebas y calidad:**
+    - Suite exhaustiva de 13 pruebas unitarias, de integración y proptests (`ledger_proptest.rs`, `ledger_state_and_derivation.rs`).
+    - Cobertura de líneas `cargo llvm-cov` en `gravital-id-ledger`: **93,90%** (todas las áreas $\ge 90\%$, `error.rs`: 100%, `event.rs`: 100%, `adapter.rs`: 98,36%, `state.rs`: 93,96%, `derivation.rs`: 92,15%, `diff.rs`: 90,86%).
+    - Trazabilidad: 87 requisitos referenciados en código Rust actualizados en `docs/TRACEABILITY.md` (`REQ-LEDG-002`, `REQ-TRUST-008`, `REQ-LEDG-004`).
+- Pendiente (siguiente paso concreto):
+  - Iniciar `F6.T09`: Implementación de `pip-ledger-evm` (`crates/gravital-id-ledger-evm`) con `alloy`, adaptador `LedgerAdapter` conectando a RPC EVM, consultas de eventos por rangos de bloques `[fromBlock, toBlock]` y soporte multi-RPC con tolerancia a fallos (`REQ-LEDG-005`, `REQ-LEDG-006`).
+- Bugs/issues abiertos durante la sesión: ninguno.
+- Decisiones tomadas (con enlace a ADR/issue): Implementado `pip-ledger` en capa L4 sans-I/O conforme a `REQ-LEDG-002` y `REQ-TRUST-008` (#91).
+- Riesgos o dudas: ninguna.
+- Comprobaciones locales: fmt ✅ clippy ✅ tests (100% verde en todo el workspace) ✅ layers ✅ trace (87 REQs) ✅ check-error-codes (59) ✅ check-contracts-privacy (0 PII) ✅ llvm-cov (93,90% ledger) ✅
 
 ### Traspaso — 2026-10-16 (F6.T02–T07: Contratos Inteligentes TrustRegistry, StatusAnchor, Gobernanza, Pruebas Foundry y Verificación sin PII) — Antigravity (agente)
 - Tarea: F6.T02–T07 — #90 — rama `main`
