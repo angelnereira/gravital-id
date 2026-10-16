@@ -25,5 +25,9 @@ gravital-id-status = { workspace = true }
 gravital-id-trust = { workspace = true }
 gravital-id-verifier = { workspace = true }
 gravital-id-issuer = { workspace = true }
+gravital-id-holder = { workspace = true }
+gravital-id-protocol = { workspace = true }
+gravital-id-storage = { workspace = true }
+gravital-id-storage-sqlite = { workspace = true }
 gravital-id-testkit = { path = "../../crates/gravital-id-testkit", version = "0.1.0" }
 anyhow = { workspace = true }

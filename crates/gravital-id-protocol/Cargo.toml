@@ -21,6 +21,8 @@ gravital-id-credential = { workspace = true }
 gravital-id-verifier = { workspace = true }
 gravital-id-holder = { workspace = true }
 gravital-id-recovery = { workspace = true }
+gravital-id-trust = { workspace = true }
+gravital-id-keys = { workspace = true }
 
 [dev-dependencies]
 gravital-id-testkit = { path = "../gravital-id-testkit", version = "0.1.0" }

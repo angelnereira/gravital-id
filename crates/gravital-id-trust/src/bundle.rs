@@ -237,7 +237,7 @@ impl IssuerEntry {
     }
 }
 
-/// Verificador registrado (opcional por perfil, REQ-TRUST-007).
+/// Verificador registrado (opcional por perfil, REQ-TRUST-007, REQ-PRES-007).
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct VerifierEntry {
     /// Identificador del verificador.
@@ -248,6 +248,44 @@ pub struct VerifierEntry {
     pub valid_from: UnixTime,
     /// Fin de vigencia.
     pub valid_until: Option<UnixTime>,
+    /// Clave pública P-256 opcional registrada para verificar solicitudes firmadas (REQ-PRES-007).
+    pub public_key: Option<JwkEcP256>,
+}
+
+impl VerifierEntry {
+    /// Comprueba si el verificador está vigente en el instante dado.
+    #[must_use]
+    pub fn is_valid_at(&self, now: UnixTime) -> bool {
+        let t = now.as_seconds();
+        if t < self.valid_from.as_seconds() {
+            return false;
+        }
+        if let Some(until) = self.valid_until {
+            if t > until.as_seconds() {
+                return false;
+            }
+        }
+        true
+    }
+
+    /// Comprueba si el verificador está autorizado para el perfil o VCT indicado.
+    #[must_use]
+    pub fn allows_profile(&self, profile_or_vct: &str) -> bool {
+        if self.profiles.is_empty() {
+            return true;
+        }
+        self.profiles.iter().any(|p| {
+            p == "*"
+                || p == profile_or_vct
+                || (p == "pip-personal-v1"
+                    && profile_or_vct == "https://credentials.gravital.io/vct/personal/id-v1")
+                || (p == "pip-financial-v1"
+                    && profile_or_vct == "https://credentials.gravital.io/vct/financial/kyc-v1")
+                || (p == "pip-enterprise-v1"
+                    && profile_or_vct
+                        == "https://credentials.gravital.io/vct/enterprise/employee-v1")
+        })
+    }
 }
 
 /// Política de perfico referenciada por el bundle.
@@ -345,6 +383,12 @@ impl TrustBundle {
         &self.verifiers
     }
 
+    /// Busca un verificador registrado por su identificador.
+    #[must_use]
+    pub fn find_verifier(&self, verifier_id: &str) -> Option<&VerifierEntry> {
+        self.verifiers.iter().find(|v| v.verifier_id == verifier_id)
+    }
+
     /// Políticas referenciadas.
     #[must_use]
     pub fn policies(&self) -> &[PolicyEntry] {
@@ -376,6 +420,24 @@ impl TrustBundle {
     pub fn contains(&self, now: UnixTime) -> bool {
         now.as_seconds() >= self.issued_at.as_seconds()
             && now.as_seconds() <= self.valid_until.as_seconds()
+    }
+
+    /// Construye el bundle deserializando bytes JSON.
+    ///
+    /// # Errores
+    /// [`ErrorCode::MalformedSdJwt`] si el JSON o su contenido es inválido.
+    pub fn from_json_bytes(bytes: &[u8]) -> Result<Self, GidError> {
+        let val = gravital_id_codec::json::parse_bytes(
+            bytes,
+            &gravital_id_codec::json::Limits::profile_default(),
+        )
+        .map_err(|e| {
+            GidError::new(
+                ErrorCode::MalformedSdJwt,
+                format!("failed to parse trust bundle JSON: {e}"),
+            )
+        })?;
+        Self::from_payload(&val)
     }
 
     /// Construye el bundle a partir del payload JSON.
@@ -794,6 +856,20 @@ fn parse_verifiers(payload: &Value) -> Result<Vec<VerifierEntry>, GidError> {
     };
     let mut verifiers = Vec::with_capacity(entries.len());
     for entry in entries {
+        let public_key =
+            if let Some(jwk_val) = entry.member("public_key").or_else(|| entry.member("jwk")) {
+                Some(
+                    JwkEcP256::parse(&crate::to_canonical_json(jwk_val)).map_err(|e| {
+                        GidError::new(
+                            ErrorCode::InvalidKeyFormat,
+                            format!("invalid verifier jwk: {e}"),
+                        )
+                    })?,
+                )
+            } else {
+                None
+            };
+
         verifiers.push(VerifierEntry {
             verifier_id: entry
                 .member("verifier_id")
@@ -808,6 +884,7 @@ fn parse_verifiers(payload: &Value) -> Result<Vec<VerifierEntry>, GidError> {
             profiles: string_array(entry, "profiles")?,
             valid_from: UnixTime::from_seconds(u64_field(entry, "valid_from")?),
             valid_until: optional_time(entry, "valid_until")?,
+            public_key,
         });
     }
     Ok(verifiers)

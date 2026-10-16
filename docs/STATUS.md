@@ -10,7 +10,7 @@
 | Último gate cerrado | **G4** (2026-10-16) · **G19** (2026-10-15) · **G0** (2026-10-11) |
 | Próximo gate | **G5** — almacenamiento local de la wallet; **G3** (#59) y **G2** pendientes de CI |
 | Hito siguiente | M1 · Núcleo offline (al cerrar G5) · MP1 · Tap offline (al cerrar G21) |
-| Última actualización | 2026-10-16 (F5.T09 y F5.T10 completadas — gravital-id-protocol, perfil offline QR, transcodificación binaria sin pérdida SD-JWT <-> CBOR, fragmentación Multi-QR y verificación CI de presupuesto de tamaño con 90,58% de cobertura; #86 resuelto) |
+| Última actualización | 2026-10-16 (F5.T11 y F5.T12 completadas — validación de solicitudes por la wallet, verificación de solicitudes firmadas, perfiles autorizados y flujo CLI offline completo emisor -> wallet SQLite cifrada -> verificador con 93,40% y 94,20% de cobertura; #87 resuelto) |
 
 ## Gates
 
@@ -28,6 +28,8 @@
 
 | Tarea | Issue | Responsable | Estado | Siguiente paso |
 |---|---|---|---|---|
+| F5.T13-T14 Legibilidad QR y Demostración M1 | — | Antigravity (agente) | En curso | Pruebas de contraste y densidad QR (F5.T13) y demostración de escenarios MVP-01, MVP-02 y MVP-03 para cierre de Gate G5 / M1 (F5.T14) |
+| F5.T11-T12 Validación wallet y flujo CLI offline | #87 | Antigravity (agente) | Hecha | Solicitudes firmadas JWS, validación de políticas wallet REQ-PRES-007, subcomandos pip-cli y flujo offline integral emisor -> wallet -> verificador (93,40% / 94,20% cobertura); resuelto #87 |
 | F5.T09-T10 Perfil offline QR y presupuestos | #86 | Antigravity (agente) | Hecha | Perfil offline QR, VerificationRequest, transcodificación sin pérdida CBOR, compresión Base45, segmentación Multi-QR y presupuesto de tamaño (90,58% cobertura); resuelto #86 |
 | F5.T07-T08 Gestión wallet y presentación | #85 | Antigravity (agente) | Hecha | Modelado completo de WalletCredential, HolderWallet, DCQL query, DisclosurePlan y KB-JWT en gravital-id-holder (90,15% de cobertura de líneas); resuelto #85 |
 | F5.T04-T06 SQLite y migraciones | #84 | Antigravity (agente) | Hecha | SqliteStorage implementando StorageBackend y VerifierStateStore, WAL, BEGIN IMMEDIATE, migraciones V1/V2, reversión atómica y 92,38% de cobertura; integrada en main |
@@ -138,6 +140,31 @@
 | Tamaño binario del SDK | — | — | — | — | — |
 
 ## Última nota de traspaso
+
+### Traspaso — 2026-10-16 (F5.T11 / F5.T12: Validación de solicitudes por la wallet y flujo CLI offline completo) — Antigravity (agente)
+- Tarea: F5.T11 / F5.T12 — #87 — rama `main`
+- Estado: **hecha**
+- Hecho en esta sesión:
+  - **F5.T11 (`offline_signed_request.rs`, `offline_wallet_policy.rs`):**
+    - `OfflineSignedRequest`: Creación y verificación de solicitudes firmadas en JWS compacto ES256 (`sign_verification_request`, `verify_signed_request`) con payload canónico `VerificationRequest`, cabecera `typ: oauth-authz-req+jwt`, validación temporal con reloj inyectado (`UnixTime`, `INV-11`) y verificación de clave pública del verificador extraída de `TrustBundle` (`INV-06`).
+    - `WalletRequestPolicy` y `WalletRequestValidator`: Validación integral de solicitudes en la wallet (`REQ-PRES-007`). Control de ventana máxima de validez, lista blanca de verificadores (`allowed_verifier_ids`), rechazo estricto de verificadores no registrados en el trust bundle cuando `require_registered_verifier` está activo, verificación de perfiles autorizados (`allows_profile`), rechazo de claims explícitamente denegados por política, y rechazo fail-closed de solicitudes no firmadas si demandan claims sensibles (`is_sensitive_claim`, ej. `tax_id`, `ssn`, `bank_account`, `salary`, `medical_info`, `biometric`).
+  - **F5.T12 (`apps/pip-cli/src/lib.rs`):**
+    - Nuevos subcomandos y ampliación integral de CLI para ciclo de vida offline completo:
+      - `dev-verifier`: Genera pares de claves de desarrollo para verificadores (`P-256`) y exporta JWKs públicos.
+      - `dev-bundle`: Admite ahora `--verifier <id> <jwk-file> <profiles...>` para registrar verificadores en el trust bundle firmado.
+      - `verify-request`: Emite solicitudes offline (`VerificationRequest`) con consulta DCQL, opcionalmente firmadas (`--sign-key`) o transcodificadas a Base45 (`REQ1:`, `--base45`).
+      - `wallet-import`: Importa credenciales SD-JWT emitidas dentro de la base de datos SQLite cifrada (`SqliteStorage`) asociándolas a su clave de titular (`HolderBinding`).
+      - `wallet-present`: Procesa una solicitud offline (`--request` en JSON o Base45), valida la política de la wallet y la firma contra el TrustBundle (`REQ-PRES-007`), evalúa la consulta DCQL, aplica divulgación selectiva, genera el `KB-JWT` offline con nonce del verificador y emite la presentación transcodificada a Base45 con prefijo canónico `GID1:`.
+      - `verify`: Detecta automáticamente el prefijo Base45 `GID1:` decodificándolo a SD-JWT sin llamadas de red y valida el nonce y la presentación contra la solicitud original (`--request`).
+      - `demo-flow-offline`: Demostración e2e en un solo comando que simula en disco SQLite y claves reales todo el recorrido offline: Emisor (5 divulgaciones) -> Importación en SQLite de la wallet -> Solicitud firmada de verificador -> Validación por la wallet -> Presentación Base45 -> Verificación sans-I/O en 21 ms (`Valid`).
+  - **Pruebas y cobertura de código (`llvm-cov`):** 93,40% de líneas cubiertas en `gravital-id-protocol` (`offline_signed_request.rs`: 98,26%, `offline_wallet_policy.rs`: 97,62%), 94,20% en `pip-cli` (`lib.rs`). 4 pruebas de integración CLI en `cli_integration.rs` y 8 pruebas de validación de wallet en `protocol_wallet_request_validation.rs`.
+  - **Trazabilidad:** REQ-PRES-005, REQ-PRES-007, REQ-PERF-003, INV-01, INV-05, INV-11 trazados y verificados en `docs/TRACEABILITY.md` (80 requisitos referenciados en total).
+- Pendiente (siguiente paso concreto):
+  - Iniciar `F5.T13`–`F5.T14`: Pruebas de legibilidad física y contraste de códigos QR (`F5.T13`) y Demostración M1 (escenarios MVP-01, MVP-02, MVP-03) con cierre formal de Gate G5 / Hito M1 (`F5.T14`).
+- Bugs/issues abiertos durante la sesión: ninguno.
+- Decisiones tomadas (con enlace a ADR/issue): Validación de solicitudes offline y flujo CLI completado según `PROTOCOL.md §3`, `ADR-0011` y `REQ-PRES-007` (#87).
+- Riesgos o dudas: ninguna.
+- Comprobaciones locales: fmt ✅ clippy ✅ tests (100% verde en todo el workspace) ✅ layers ✅ trace (80 REQs) ✅ check-error-codes (59) ✅ check-req-ids (167) ✅ llvm-cov (93,40% protocol / 94,20% cli) ✅
 
 ### Traspaso — 2026-10-16 (F5.T09 / F5.T10: Perfil Offline QR, Transcodificación Binaria, Multi-QR y Presupuesto de Tamaño) — Antigravity (agente)
 - Tarea: F5.T09 / F5.T10 — #86 — rama `main`
