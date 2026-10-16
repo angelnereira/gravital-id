@@ -10,7 +10,7 @@
 | Último gate cerrado | **G5** (2026-10-16) · **G4** (2026-10-16) · **G19** (2026-10-15) · **G0** (2026-10-11) |
 | Próximo gate | **G6** — contratos en testnet y adaptador de ledger; **G3** (#59) y **G2** pendientes de CI |
 | Hito siguiente | M2 · Sincronización y anclaje (al cerrar G7) · MP1 · Tap offline (al cerrar G21) [M1 alcanzado] |
-| Última actualización | 2026-10-16 (F5.T13 y F5.T14 completadas — legibilidad QR física probada en 3 teléfonos y lector industrial, demostración reproducible de escenarios MVP-01..03, auditoría forense SQLite y cierre formal de Gate G5 / Hito M1; #88 resuelto) |
+| Última actualización | 2026-10-16 (F6.T01 completada — especificación técnica de contratos inteligentes CONTRACTS.md v1.0.0 normativa, interfaces ITrustRegistry, IStatusAnchor, RBAC con timelock y rol de emergencia, eventos estructurados e inmutabilidad estricta; #89 resuelto) |
 
 ## Gates
 
@@ -29,7 +29,8 @@
 
 | Tarea | Issue | Responsable | Estado | Siguiente paso |
 |---|---|---|---|---|
-| F6.T01 `CONTRACTS.md` v1 | — | Antigravity (agente) | Por iniciar | Actualización de especificación de contratos inteligentes TrustRegistry, StatusAnchor y gobernanza desde v0.1 a v1.0 |
+| F6.T02 `TrustRegistry.sol` | — | Antigravity (agente) | Por iniciar | Implementación en Solidity de TrustRegistry (emisores, claves, suspensiones con TTL 14d, verificadores por perfil, bundle signers, trust root hash) |
+| F6.T01 `CONTRACTS.md` v1 | #89 | Antigravity (agente) | Hecha | Actualización de especificación técnica de contratos CONTRACTS.md a v1.0.0 normativa (interfaces, RBAC, eventos, inmutabilidad y no-PII); resuelto #89 |
 | F5.T13-T14 Legibilidad QR y Demostración M1 | #88 | Antigravity (agente) | Hecha | Pruebas de legibilidad QR (F5.T13), demostración reproducible de escenarios MVP-01..03, auditoría forense SQLite y cierre de Gate G5 / Hito M1 (94,71% cobertura); resuelto #88 |
 | F5.T11-T12 Validación wallet y flujo CLI offline | #87 | Antigravity (agente) | Hecha | Solicitudes firmadas JWS, validación de políticas wallet REQ-PRES-007, subcomandos pip-cli y flujo offline integral emisor -> wallet -> verificador (93,40% / 94,20% cobertura); resuelto #87 |
 | F5.T09-T10 Perfil offline QR y presupuestos | #86 | Antigravity (agente) | Hecha | Perfil offline QR, VerificationRequest, transcodificación sin pérdida CBOR, compresión Base45, segmentación Multi-QR y presupuesto de tamaño (90,58% cobertura); resuelto #86 |
@@ -142,6 +143,26 @@
 | Tamaño binario del SDK | — | — | — | — | — |
 
 ## Última nota de traspaso
+
+### Traspaso — 2026-10-16 (F6.T01: Especificación de Contratos Inteligentes CONTRACTS.md v1.0.0) — Antigravity (agente)
+- Tarea: F6.T01 — #89 — rama `main`
+- Estado: **hecha**
+- Hecho en esta sesión:
+  - **F6.T01 (`docs/specs/CONTRACTS.md` v1.0.0):**
+    - Especificación completa y normativa de la arquitectura de contratos inteligentes EVM (`TrustRegistry`, `StatusAnchor`, `Governance`).
+    - Interfaces completas `ITrustRegistry` (emisores, claves P-256 SEC-1 con thumbprints canónicos RFC 7638, máquina de estados de clave y emisor, transiciones terminales `Compromised` y `Retired`, registro de verificadores por perfil `REQ-TRUST-007`, raíz de confianza y bundle signers).
+    - Interfaz `IStatusAnchor` con validación monotónica de versión para el anclaje de compromisos de manifiestos de estado (`IssuerStatusManifest`, `REQ-STAT-006`).
+    - Modelo RBAC con separación de poderes: `DEFAULT_ADMIN_ROLE` (multisig Safe), `TIMELOCK_ROLE` (48-72h de retardo para altas/bajas/rotaciones), y `EMERGENCY_ROLE` acotado exclusivamente a suspensiones preventivas con TTL fijo de 14 días y prohibición estricta de auto-renovación (`REQ-LEDG-004`, `ADR-0018`).
+    - Regla de inmutabilidad estricta sin proxies actualizables (`REQ-LEDG-003`) y ausencia de datos personales en el ledger (`REQ-LEDG-001`, `INV-02`, identificadores seudónimos para emisores particulares `REQ-LEDG-007`).
+    - Catálogo normativo de eventos ordenados por `(blockNumber, transactionIndex, logIndex)` para reconstrucción determinista en `pip-ledger` e indexación (`REQ-TRUST-008`).
+  - **Comprobaciones y calidad:**
+    - Verificación completa con `xtask check-layers`, `xtask trace`, `xtask check-error-codes` y `check-req-ids.sh` 100% en verde.
+- Pendiente (siguiente paso concreto):
+  - Iniciar `F6.T02`: Implementación en Solidity de `TrustRegistry.sol` (emisores, claves con estados, suspensiones con caducidad 14d, perfiles/vct, verificadores, hash de raíz y firmantes de bundle; roles y eventos).
+- Bugs/issues abiertos durante la sesión: ninguno.
+- Decisiones tomadas (con enlace a ADR/issue): `CONTRACTS.md` actualizado a versión 1.0.0 (#89).
+- Riesgos o dudas: ninguna.
+- Comprobaciones locales: fmt ✅ clippy ✅ tests ✅ layers ✅ trace (80 REQs) ✅ check-error-codes (59) ✅ check-req-ids (167) ✅
 
 ### Traspaso — 2026-10-16 (F5.T13 / F5.T14: Legibilidad QR física, Demostración M1 y Cierre de Gate G5 / Hito M1) — Antigravity (agente)
 - Tarea: F5.T13 / F5.T14 — #88 — rama `main`
