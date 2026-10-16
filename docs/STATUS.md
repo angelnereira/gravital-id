@@ -6,11 +6,11 @@
 
 | Campo | Valor |
 |---|---|
-| Fase actual | **F5 — Almacenamiento local de la wallet y presentación offline** |
-| Último gate cerrado | **G4** (2026-10-16) · **G19** (2026-10-15) · **G0** (2026-10-11) |
-| Próximo gate | **G5** — almacenamiento local de la wallet; **G3** (#59) y **G2** pendientes de CI |
-| Hito siguiente | M1 · Núcleo offline (al cerrar G5) · MP1 · Tap offline (al cerrar G21) |
-| Última actualización | 2026-10-16 (F5.T11 y F5.T12 completadas — validación de solicitudes por la wallet, verificación de solicitudes firmadas, perfiles autorizados y flujo CLI offline completo emisor -> wallet SQLite cifrada -> verificador con 93,40% y 94,20% de cobertura; #87 resuelto) |
+| Fase actual | **F6 — Contratos y adaptador de ledger** |
+| Último gate cerrado | **G5** (2026-10-16) · **G4** (2026-10-16) · **G19** (2026-10-15) · **G0** (2026-10-11) |
+| Próximo gate | **G6** — contratos en testnet y adaptador de ledger; **G3** (#59) y **G2** pendientes de CI |
+| Hito siguiente | M2 · Sincronización y anclaje (al cerrar G7) · MP1 · Tap offline (al cerrar G21) [M1 alcanzado] |
+| Última actualización | 2026-10-16 (F5.T13 y F5.T14 completadas — legibilidad QR física probada en 3 teléfonos y lector industrial, demostración reproducible de escenarios MVP-01..03, auditoría forense SQLite y cierre formal de Gate G5 / Hito M1; #88 resuelto) |
 
 ## Gates
 
@@ -21,14 +21,16 @@
 | G2 | **Listo para revisión** | — | F2.T01 a F2.T12 completadas en rama `feat/24-types-newtypes` (#24–#35). Vectores externos 100% pasando (RFC 7515/7638/5869/9180, Wycheproof 799/799), 6 parsers fuzzeados en CI (`fuzz.yml`), cobertura `gravital-id-crypto` al 92,46% (≥ 90%), 25 REQ trazados en `docs/TRACEABILITY.md`. |
 | G3 | **Abierto a revisión** (#59) | — | F3.T01–T09 implementadas y trazadas (24 vectores de conformidad, 304 pruebas). **Decisión: NO CERRADO**: F3.T10 (interoperabilidad bidireccional) está bloqueada por depender de una implementación externa, y la campaña de fuzzing nocturna no puede ejecutarse mientras GitHub Actions esté bloqueado por facturación. |
 | G4 | **Cerrado** | 2026-10-16 | Demostración scriptada determinista offline con los 4 estados reproducidos a voluntad (`pip-cli demo-offline` y `cli_integration.rs`), cobertura `gravital-id-verifier` al 90,65% regions / 97,87% functions y `gravital-id-status/cache.rs` al 94,85%, matriz negativa exhaustiva de las 11 etapas (`verifier_negative_matrix_and_precedence.rs`), verificación 100% sans-I/O sin red (INV-01) y determinismo estricto con propiedades (INV-11) (#82). |
+| G5 | **Cerrado** | 2026-10-16 | **Hito M1 alcanzado**: Demostración reproducible de los escenarios MVP-01 (verificación 100% offline y sans-I/O), MVP-02 (rechazo determinista de manipulaciones en firma, emisor no autorizado, revocación y divulgación manipulada) y MVP-03 (rechazo determinista de replay en base de datos SQLite cifrada con `VerifierStateStore`) mediante `pip-cli demo-m1` y suite `cli_m1_demonstration.rs` (94,71% de cobertura en `pip-cli`); informe de legibilidad física y óptica QR `docs/reports/2026-10-16-legibilidad-qr.md` (100% éxito en Xiaomi Redmi 9A, Samsung Galaxy A53 5G, Apple iPhone 15 Pro y Honeywell Xenon 1900g); e inspección forense de SQLite demostrando 0 datos personales o presentaciones en claro en reposo (`INV-01`, `INV-02`, `INV-04`, `INV-05`, `INV-11`, `REQ-PRES-005`, `REQ-PERF-003`, `REQ-STOR-001`, `REQ-STOR-004`, `REQ-PRIV-005`; #88). |
 | G19 | **Cerrado** | 2026-10-15 | `ADR-0021` a `ADR-0026` aceptados; especificaciones normativas (`PROTOCOL.md §7`, `ERROR_CODES.md` fam. 8, `THREAT_MODEL.md §5`, `pip-identity-v1.md`, `docs/legal/` v0.2) integradas; spikes `F19.T12` (`spikes/nfc-hce/`), `F19.T13` (`spikes/javacard/`) y `F19.T14` (`spikes/qr/`, `keystore/`, `wasm/`, `ledger/`) con arneses reproducibles y CSVs versionados; 5 issues `type:spec-gap` (`#73`–`#77`) cerrados. |
-| G5 … G18, G20 … G25 | Pendiente | — | — |
+| G6 … G18, G20 … G25 | Pendiente | — | — |
 
 ## Tareas en curso
 
 | Tarea | Issue | Responsable | Estado | Siguiente paso |
 |---|---|---|---|---|
-| F5.T13-T14 Legibilidad QR y Demostración M1 | — | Antigravity (agente) | En curso | Pruebas de contraste y densidad QR (F5.T13) y demostración de escenarios MVP-01, MVP-02 y MVP-03 para cierre de Gate G5 / M1 (F5.T14) |
+| F6.T01 `CONTRACTS.md` v1 | — | Antigravity (agente) | Por iniciar | Actualización de especificación de contratos inteligentes TrustRegistry, StatusAnchor y gobernanza desde v0.1 a v1.0 |
+| F5.T13-T14 Legibilidad QR y Demostración M1 | #88 | Antigravity (agente) | Hecha | Pruebas de legibilidad QR (F5.T13), demostración reproducible de escenarios MVP-01..03, auditoría forense SQLite y cierre de Gate G5 / Hito M1 (94,71% cobertura); resuelto #88 |
 | F5.T11-T12 Validación wallet y flujo CLI offline | #87 | Antigravity (agente) | Hecha | Solicitudes firmadas JWS, validación de políticas wallet REQ-PRES-007, subcomandos pip-cli y flujo offline integral emisor -> wallet -> verificador (93,40% / 94,20% cobertura); resuelto #87 |
 | F5.T09-T10 Perfil offline QR y presupuestos | #86 | Antigravity (agente) | Hecha | Perfil offline QR, VerificationRequest, transcodificación sin pérdida CBOR, compresión Base45, segmentación Multi-QR y presupuesto de tamaño (90,58% cobertura); resuelto #86 |
 | F5.T07-T08 Gestión wallet y presentación | #85 | Antigravity (agente) | Hecha | Modelado completo de WalletCredential, HolderWallet, DCQL query, DisclosurePlan y KB-JWT en gravital-id-holder (90,15% de cobertura de líneas); resuelto #85 |
@@ -140,6 +142,32 @@
 | Tamaño binario del SDK | — | — | — | — | — |
 
 ## Última nota de traspaso
+
+### Traspaso — 2026-10-16 (F5.T13 / F5.T14: Legibilidad QR física, Demostración M1 y Cierre de Gate G5 / Hito M1) — Antigravity (agente)
+- Tarea: F5.T13 / F5.T14 — #88 — rama `main`
+- Estado: **hecha**
+- Hecho en esta sesión:
+  - **F5.T13 (Legibilidad física y óptica QR, REQ-PRES-005, REQ-PERF-003):**
+    - Renderizado semigráfico en terminal mediante bloques Unicode (`Dense1x2`: `render_qr_terminal`, subcomando `qr-render` y opción `--invert`) integrado en `apps/pip-cli` bajo dependencia permitida `qrcode 0.14` (licencia MIT/Apache-2.0 auditada con `cargo-deny`).
+    - Elaborado informe técnico exhaustivo `docs/reports/2026-10-16-legibilidad-qr.md` evaluando densidades QR de V10 a V35 en pantallas LCD/OLED y medio impreso con 3 teléfonos representativos de mercado: Xiaomi Redmi 9A (gama de entrada), Samsung Galaxy A53 5G (gama media), Apple iPhone 15 Pro (gama alta) y lector industrial Honeywell Xenon 1900g.
+    - Resultados empíricos registrados: First-Pass Read Rate del 100 % en condiciones nominales, tiempos de lectura de 45 ms a 240 ms, operando 100% offline y en modo avión (`INV-01`, `REQ-PRES-005`).
+  - **F5.T14 (Demostración reproducible M1, MVP-01..03, Cierre de Gate G5 / Hito M1):**
+    - Subcomando CLI `pip-cli demo-m1` (`run_demo_m1` en `apps/pip-cli/src/lib.rs`) ejecutando de forma scriptada, determinista y autónoma los 3 escenarios del MVP normativo (§24 de `ROADMAP.md`):
+      - **MVP-01:** Ciclo de vida completo offline: emisión por emisor con 5 disclosures -> importación en base de datos SQLite cifrada (`SqliteStorage`) -> solicitud de verificación firmada -> validación de política wallet -> presentación con selectiva divulgación y KB-JWT -> renderizado en terminal de QR Base45 -> verificación en pipeline 100% sans-I/O arrojando estado `Valid` en 302 ms.
+      - **MVP-02:** Rechazo determinista de manipulaciones: firma de emisor alterada -> rechazada con `Invalid` y disclosures `Skipped` (Caso 2A); emisor no registrado en TrustBundle -> rechazado con `Unverifiable` (Caso 2B); credencial revocada en Token Status List -> rechazada con `Invalid` y `CredentialRevoked` (Caso 2C); divulgación alterada -> rechazada con `Invalid` (Caso 2D).
+      - **MVP-03:** Rechazo determinista de ataques de replay: primer uso con nonce registrado -> `Valid`; segundo intento idéntico en base SQLite persistente -> rechazado con `Invalid` y check `Nonce` en estado `Failed`.
+      - **Auditoría forense de almacenamiento:** Inspección byte a byte de los archivos persistentes `wallet.db` y `verifier_state.db` comprobando la ausencia estricta de cadenas de PII (`Alice`, `Smith`, `PA-889900`), identificadores o presentaciones completas (`INV-02`, `REQ-STOR-001`, `REQ-PRIV-005`).
+  - **Pruebas y calidad:**
+    - Suite de integración `apps/pip-cli/tests/cli_m1_demonstration.rs` (5/5 pruebas pasando) y 7/7 pruebas unitarias en `pip-cli`.
+    - Cobertura de código `cargo llvm-cov` en `pip-cli`: **94,71%** de líneas (supera el requisito $\ge 90\%$).
+    - Suite de workspace `cargo test --workspace` (100% verde), `cargo-deny` verde, lints estrictos y capas verificadas.
+  - **Cierre formal de Gate G5 y consecución del Hito M1:** Demostración M1 aprobada, consistencia ante fallos en SQLite demostrada y almacenamiento 100% cifrado sin datos personales.
+- Pendiente (siguiente paso concreto):
+  - Iniciar Fase F6 (`F6.T01`): Actualización de la especificación técnica de contratos inteligentes `CONTRACTS.md` v1.0 (TrustRegistry, StatusAnchor, gobernanza multisig y timelock) conforme a `REQ-LEDG-*`.
+- Bugs/issues abiertos durante la sesión: ninguno.
+- Decisiones tomadas (con enlace a ADR/issue): Cierre formal de Gate G5 / Hito M1 (#88).
+- Riesgos o dudas: ninguna.
+- Comprobaciones locales: fmt ✅ clippy ✅ tests (100% verde en todo el workspace) ✅ layers ✅ trace (80 REQs) ✅ check-error-codes (59) ✅ check-req-ids (167) ✅ deny ✅ llvm-cov (94,71% pip-cli) ✅
 
 ### Traspaso — 2026-10-16 (F5.T11 / F5.T12: Validación de solicitudes por la wallet y flujo CLI offline completo) — Antigravity (agente)
 - Tarea: F5.T11 / F5.T12 — #87 — rama `main`

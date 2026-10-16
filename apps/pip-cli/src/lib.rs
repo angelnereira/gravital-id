@@ -48,6 +48,8 @@ use gravital_id_verifier::pipeline::{VerificationRequest, VerifierPipeline};
 use gravital_id_verifier::policy::{OperationClass, VerificationPolicy};
 use gravital_id_verifier::result::{CheckKind, CheckStatus, VerificationStatus};
 use gravital_id_verifier::state::{InMemoryStateStore, StateIntegrityKey};
+use qrcode::render::unicode;
+use qrcode::{EcLevel, QrCode};
 
 const DEV_INSECURE_WARNING: &str =
     "[DEV-INSECURE] Clave de desarrollo generada con fines de prueba. NO USAR EN PRODUCCIÓN.";
@@ -74,6 +76,15 @@ SUBCOMANDOS:
         Ejecuta el flujo completo de extremo a extremo offline (F5.T12):
         emisor -> wallet cifrada -> solicitud firmada -> presentación QR Base45 -> verificación.
 
+    demo-m1
+        Ejecuta la demostración oficial del Hito M1 y Gate G5 (F5.T14, ROADMAP.md §24):
+        escenarios normativos MVP-01 (offline sans-I/O), MVP-02 (rechazo de firmas y emisores no autorizados),
+        MVP-03 (rechazo de replay con SQLite persistente) e inspección forense de cero PII en almacenamiento.
+
+    qr-render --data <CADENA|FICHERO> [--invert]
+        Renderiza en consola un código QR Dense1x2 de alto contraste escaneable directamente
+        por cámaras de teléfonos móviles y lectores 2D (F5.T13, REQ-PRES-005).
+
     dev-issuer [--out-jwk <FICHERO>] [--seed <NUM>]
         Genera un par de claves de emisor para desarrollo marcado explícitamente como inseguro.
 
@@ -95,7 +106,7 @@ SUBCOMANDOS:
     verify-request --verifier-id <ID> [--audience <AUD>] [--nonce <NONCE>] [--claims <C1,C2>] [--sign-seed <NUM>] [--format <json|base45>] [--out <FICHERO>]
         Genera una solicitud de verificación offline (opcionalmente firmada con ES256).
 
-    wallet-present --request <CADENA|FICHERO> --credential <CADENA|FICHERO> [--bundle <FICHERO>] [--holder-seed <NUM>] [--claims <C1,C2>] [--format <base45|sd-jwt>] [--out <FICHERO>]
+    wallet-present --request <CADENA|FICHERO> --credential <CADENA|FICHERO> [--bundle <FICHERO>] [--holder-seed <NUM>] [--claims <C1,C2>] [--format <base45|sd-jwt>] [--qr] [--out <FICHERO>]
         Valida la solicitud en la wallet y genera una presentación divulgando solo los atributos permitidos con KB-JWT y QR Base45.
 
     verify --presentation <CADENA|FICHERO> --bundle <FICHERO> [--request <CADENA|FICHERO>] [--status-snapshot <FICHERO>] [--nonce <NONCE>] [--audience <AUD>] [--now <UNIX_TIME>]
@@ -118,6 +129,8 @@ pub fn run() -> Result<()> {
     match args.first().map(|s| s.as_str()) {
         Some("demo-offline") => run_demo_offline()?,
         Some("demo-flow-offline") => run_demo_flow_offline()?,
+        Some("demo-m1") => run_demo_m1()?,
+        Some("qr-render") => run_qr_render(&args[1..])?,
         Some("dev-issuer") => run_dev_issuer(&args[1..])?,
         Some("dev-verifier") => run_dev_verifier(&args[1..])?,
         Some("dev-bundle") => run_dev_bundle(&args[1..])?,
@@ -880,6 +893,15 @@ fn run_wallet_present(args: &[String]) -> Result<()> {
     );
     println!("--------------------------------------------------");
 
+    let show_qr = args.iter().any(|a| a == "--qr");
+    if show_qr {
+        println!("\nCódigo QR listo para escaneo físico en pantalla (Dense1x2 ANSI):\n");
+        match render_qr_terminal(&final_presentation, false) {
+            Ok(qr_display) => println!("{qr_display}\n"),
+            Err(e) => eprintln!("Aviso: no se pudo renderizar matriz QR: {e}"),
+        }
+    }
+
     if let Some(path) = out_path {
         fs::write(&path, final_presentation.as_bytes())
             .with_context(|| format!("error escribiendo {path}"))?;
@@ -1374,6 +1396,10 @@ fn run_demo_flow_offline() -> Result<()> {
     );
     assert!(qr_base45.starts_with("GID1:"));
     println!("    [✓] Payload listo para transporte óptico offline.\n");
+    println!("    Visualización de código QR listo para escaneo en pantalla (Dense1x2 ANSI):\n");
+    if let Ok(qr_display) = render_qr_terminal(&qr_base45, false) {
+        println!("{qr_display}\n");
+    }
 
     // 9. Verificador escanea Base45, decodifica a SD-JWT y verifica offline
     println!(">>> PASO 9: Verificador procesa payload QR y ejecuta pipeline 100% offline (INV-01, INV-04, INV-05)");
@@ -1691,8 +1717,684 @@ fn run_demo_offline() -> Result<()> {
     Ok(())
 }
 
+/// Renderiza un payload como código QR en formato texto con bloques unicode (Dense1x2) para terminales.
+///
+/// Permite contraste óptico directo escaneable por cámaras de teléfonos inteligentes
+/// y lectores de código 2D estándar (F5.T13, REQ-PRES-005).
+pub fn render_qr_terminal(payload: &str, invert: bool) -> Result<String> {
+    let code = QrCode::with_error_correction_level(payload.as_bytes(), EcLevel::M)
+        .map_err(|e| anyhow!("Error generando matriz QR: {e}"))?;
+
+    let (dark_module, light_module) = if invert {
+        (unicode::Dense1x2::Dark, unicode::Dense1x2::Light)
+    } else {
+        (unicode::Dense1x2::Light, unicode::Dense1x2::Dark)
+    };
+
+    let rendered = code
+        .render::<unicode::Dense1x2>()
+        .dark_color(dark_module)
+        .light_color(light_module)
+        .quiet_zone(true)
+        .build();
+
+    Ok(rendered)
+}
+
+fn run_qr_render(args: &[String]) -> Result<()> {
+    let data_arg =
+        get_arg_val(args, "--data").ok_or_else(|| anyhow!("Falta --data <CADENA|FICHERO>"))?;
+    let invert = args.iter().any(|a| a == "--invert");
+    let content = if Path::new(&data_arg).exists() {
+        fs::read_to_string(&data_arg).with_context(|| format!("error leyendo {data_arg}"))?
+    } else {
+        data_arg
+    };
+    let payload = content.trim();
+
+    println!("--------------------------------------------------");
+    println!("Gravital ID — Renderizado QR Terminal (F5.T13, REQ-PRES-005)");
+    println!("--------------------------------------------------");
+    println!("Longitud del payload: {} caracteres", payload.len());
+
+    let qr_rendered = render_qr_terminal(payload, invert)?;
+    println!("\n{qr_rendered}\n");
+
+    let budget_info = if payload.len() <= 1200 {
+        format!(
+            "Apto para QR único ({} <= 1200 caracteres, REQ-PERF-003)",
+            payload.len()
+        )
+    } else {
+        let parts = payload
+            .len()
+            .saturating_add(899)
+            .checked_div(900)
+            .unwrap_or(2);
+        format!(
+            "Supera límite de 1200 caracteres: requiere Multi-QR ({} fragmentos <= 900 c.)",
+            parts
+        )
+    };
+    println!("Presupuesto óptico: {budget_info}");
+    println!("--------------------------------------------------");
+
+    Ok(())
+}
+
+// Verifies: REQ-PRES-005, REQ-PERF-003, REQ-STOR-001, REQ-STOR-004, REQ-PRIV-005, INV-01, INV-02, INV-04, INV-05, INV-11
+/// Ejecuta la demostración oficial del Hito M1 y Gate G5 cubriendo los escenarios normativos
+/// MVP-01, MVP-02 y MVP-03 de ROADMAP.md §24 de forma determinista y reproducible.
+pub fn run_demo_m1() -> Result<()> {
+    println!("================================================================================");
+    println!(" Gravital ID (PIP) — Demostración Oficial Hito M1 & Gate G5 (F5.T14)");
+    println!(" Escenarios: MVP-01 (Offline), MVP-02 (Rechazo Negativo), MVP-03 (Anti-Replay)");
+    println!(" Invariantes: INV-01 (cero red), INV-02 (cero PII), INV-04 (4 estados), INV-05 (fail-closed)");
+    println!("================================================================================\n");
+
+    let now = UnixTime::from_seconds(1_770_000_000);
+    let start_demo = std::time::Instant::now();
+
+    // Directorio de prueba temporal para base de datos SQLite y auditoría forense
+    let temp_dir = std::env::temp_dir().join(format!(
+        "pip_demo_m1_{}_{}",
+        std::process::id(),
+        now.as_seconds()
+    ));
+    let _ = fs::remove_dir_all(&temp_dir);
+    fs::create_dir_all(&temp_dir).with_context(|| "crear directorio temporal M1")?;
+    let wallet_db_path = temp_dir.join("wallet.db");
+    let verifier_state_path = temp_dir.join("verifier_state.db");
+
+    // 1. Claves y TrustBundle
+    let mut issuer_store = SoftwareKeyStore::new(SeededRng::new(0xCAFE_1111));
+    let issuer_handle = gid_err(issuer_store.generate_key::<IssuerSigning>(), "issuer key")?;
+    let issuer_jwk = gid_err(issuer_store.public_key(&issuer_handle), "issuer jwk")?;
+    let issuer_jwk_parsed = gid_err(
+        gravital_id_codec::json::parse(&issuer_jwk.to_canonical_json()),
+        "jwk parse",
+    )?;
+
+    let mut verifier_store = SoftwareKeyStore::new(SeededRng::new(0xCAFE_2222));
+    let verifier_handle = gid_err(
+        verifier_store.generate_key::<IssuerSigning>(),
+        "verifier key",
+    )?;
+    let verifier_jwk = gid_err(verifier_store.public_key(&verifier_handle), "verifier jwk")?;
+    let verifier_jwk_parsed = gid_err(
+        gravital_id_codec::json::parse(&verifier_jwk.to_canonical_json()),
+        "verifier jwk parse",
+    )?;
+
+    let mut holder_store = SoftwareKeyStore::new(SeededRng::new(0xCAFE_3333));
+    let holder_handle = gid_err(holder_store.generate_key::<HolderBinding>(), "holder key")?;
+    let holder_jwk = gid_err(holder_store.public_key(&holder_handle), "holder jwk")?;
+    let holder_jwk_parsed = gid_err(
+        gravital_id_codec::json::parse(&holder_jwk.to_canonical_json()),
+        "holder jwk parse",
+    )?;
+
+    let issuer_uri = "https://issuer.m1.example.com";
+    let verifier_id = "https://verifier.m1.example.com";
+    let kid = "m1-issuer-key-01";
+    let vct = "urn:gravital-id:vct:pip-personal-v1";
+    let status_list_uri = "https://issuer.m1.example.com/status/1";
+
+    let bundle_payload = Value::Object(vec![
+        (
+            "framework_id".to_string(),
+            Value::String("pip-global".to_string()),
+        ),
+        (
+            "bundle_version".to_string(),
+            Value::Number(Number::PosInt(1)),
+        ),
+        ("bundle_epoch".to_string(), Value::Number(Number::PosInt(1))),
+        ("chain_id".to_string(), Value::Number(Number::PosInt(1))),
+        (
+            "registry_address".to_string(),
+            Value::String("0x1234".to_string()),
+        ),
+        (
+            "finalized_block_number".to_string(),
+            Value::Number(Number::PosInt(200)),
+        ),
+        (
+            "finalized_block_hash".to_string(),
+            Value::String("0xfacefeed".to_string()),
+        ),
+        (
+            "issued_at".to_string(),
+            Value::Number(Number::PosInt(now.as_seconds().saturating_sub(86_400))),
+        ),
+        (
+            "valid_until".to_string(),
+            Value::Number(Number::PosInt(now.as_seconds().saturating_add(86_400 * 30))),
+        ),
+        (
+            "issuers".to_string(),
+            Value::Array(vec![Value::Object(vec![
+                (
+                    "issuer_id".to_string(),
+                    Value::String(issuer_uri.to_string()),
+                ),
+                (
+                    "profiles".to_string(),
+                    Value::Array(vec![Value::String("pip-personal-v1".to_string())]),
+                ),
+                (
+                    "vcts".to_string(),
+                    Value::Array(vec![Value::String(vct.to_string())]),
+                ),
+                (
+                    "valid_from".to_string(),
+                    Value::Number(Number::PosInt(now.as_seconds().saturating_sub(86_400))),
+                ),
+                ("state".to_string(), Value::String("active".to_string())),
+                (
+                    "keys".to_string(),
+                    Value::Array(vec![Value::Object(vec![
+                        ("kid".to_string(), Value::String(kid.to_string())),
+                        ("jwk".to_string(), issuer_jwk_parsed),
+                        ("state".to_string(), Value::String("active".to_string())),
+                        (
+                            "state_since".to_string(),
+                            Value::Number(Number::PosInt(now.as_seconds().saturating_sub(86_400))),
+                        ),
+                    ])]),
+                ),
+            ])]),
+        ),
+        (
+            "verifiers".to_string(),
+            Value::Array(vec![Value::Object(vec![
+                (
+                    "verifier_id".to_string(),
+                    Value::String(verifier_id.to_string()),
+                ),
+                (
+                    "profiles".to_string(),
+                    Value::Array(vec![
+                        Value::String("pip-personal-v1".to_string()),
+                        Value::String(vct.to_string()),
+                    ]),
+                ),
+                (
+                    "valid_from".to_string(),
+                    Value::Number(Number::PosInt(now.as_seconds().saturating_sub(86_400))),
+                ),
+                (
+                    "valid_until".to_string(),
+                    Value::Number(Number::PosInt(now.as_seconds().saturating_add(86_400 * 30))),
+                ),
+                ("jwk".to_string(), verifier_jwk_parsed),
+            ])]),
+        ),
+        ("policies".to_string(), Value::Array(vec![])),
+    ]);
+    let bundle = gid_err(TrustBundle::from_payload(&bundle_payload), "bundle parse")?;
+
+    // Emisión de credencial personal con 5 claims selectivos
+    let mut cred_builder = SdObjectBuilder::new();
+    cred_builder = cred_builder.add_plain_claim("iss", Value::String(issuer_uri.to_string()));
+    cred_builder = cred_builder.add_plain_claim("vct", Value::String(vct.to_string()));
+    cred_builder = cred_builder.add_plain_claim(
+        "iat",
+        Value::Number(Number::PosInt(now.as_seconds().saturating_sub(3600))),
+    );
+    cred_builder = cred_builder.add_plain_claim(
+        "exp",
+        Value::Number(Number::PosInt(
+            now.as_seconds().saturating_add(86_400 * 365),
+        )),
+    );
+    cred_builder = cred_builder.add_plain_claim(
+        "cnf",
+        Value::Object(vec![("jwk".to_string(), holder_jwk_parsed)]),
+    );
+    cred_builder = cred_builder.add_plain_claim(
+        "status",
+        Value::Object(vec![(
+            "status_list".to_string(),
+            Value::Object(vec![
+                ("idx".to_string(), Value::Number(Number::PosInt(0))),
+                (
+                    "uri".to_string(),
+                    Value::String(status_list_uri.to_string()),
+                ),
+            ]),
+        )]),
+    );
+    cred_builder = cred_builder.add_sd_claim("given_name", Value::String("Alice".to_string()));
+    cred_builder = cred_builder.add_sd_claim("family_name", Value::String("Smith".to_string()));
+    cred_builder = cred_builder.add_sd_claim("age_over_18", Value::Bool(true));
+    cred_builder = cred_builder.add_sd_claim("member_status", Value::String("active".to_string()));
+    cred_builder =
+        cred_builder.add_sd_claim("document_number", Value::String("PA-889900".to_string()));
+
+    let header = gravital_id_credential::JwsHeader {
+        alg: "ES256".to_string(),
+        typ: "dc+sd-jwt".to_string(),
+        kid: Some(gravital_id_types::Kid::parse(kid).expect("kid")),
+    };
+    let rng = SeededRng::new(0xCAFE_4444);
+    let issued_cred = gid_err(
+        SdIssuer::issue_signed(cred_builder, &issuer_store, &issuer_handle, header, &rng),
+        "issue credential",
+    )?;
+    let raw_credential = issued_cred.to_compact_serialization().to_string();
+
+    // Snapshot no revocado
+    let snap_jwt = format!(
+        "{}.{}.{}",
+        base64url::encode(r#"{"alg":"ES256","typ":"statuslist+jwt"}"#.as_bytes()),
+        base64url::encode(
+            format!(
+                r#"{{"exp":{},"iat":{},"iss":"{}","status_list":{{"bits":2,"lst":"{}","uri":"{}"}}}}"#,
+                now.as_seconds().saturating_add(86_400),
+                now.as_seconds().saturating_sub(3_600),
+                issuer_uri,
+                pack_status_lst(2, &[0, 0, 0, 0]),
+                status_list_uri
+            )
+            .as_bytes()
+        ),
+        base64url::encode(&[0u8; 64])
+    );
+    let status_list =
+        StatusListVerifier::parse(&snap_jwt).map_err(|e| anyhow!("status list parse: {e}"))?;
+    let valid_snap = StatusSnapshot::new(status_list, status_list_uri, now);
+
+    // =========================================================================
+    // ESCENARIO MVP-01: Verificación correcta sin acceso a Internet
+    // =========================================================================
+    println!(">>> [ESCENARIO MVP-01] Verificación 100% offline y sans-I/O");
+    let sqlite_storage = gid_err(SqliteStorage::open(&wallet_db_path), "open wallet db")?;
+    let kek = SecretBytes::new([0x55; 32]);
+    let mut wallet = gid_err(
+        HolderWallet::new(sqlite_storage, kek, SeededRng::new(0xCAFE_5555)),
+        "init wallet",
+    )?;
+    let _ = gid_err(
+        wallet.import_credential(
+            &raw_credential,
+            holder_handle.id(),
+            now,
+            &holder_store,
+            &holder_handle,
+        ),
+        "import credential",
+    )?;
+
+    // Solicitud firmada de verificador registrado
+    let requested_claims = vec![
+        RequestedClaim::required("given_name"),
+        RequestedClaim::required("age_over_18"),
+    ];
+    let vct_parsed = gid_err(Vct::parse(vct), "vct")?;
+    let cred_query = gid_err(
+        CredentialQuery::new("query_m1", vec![vct_parsed], requested_claims),
+        "cred query",
+    )?;
+    let dcql = gid_err(DcqlQuery::new(vec![cred_query]), "dcql")?;
+    let nonce_valid = "m1_offline_nonce_990011";
+    let req_m1 = gid_err(
+        ProtocolVerificationRequest::new(
+            verifier_id,
+            nonce_valid,
+            verifier_id,
+            now,
+            UnixTime::from_seconds(now.as_seconds().saturating_add(300)),
+            dcql,
+            None,
+        ),
+        "new req",
+    )?;
+    let signed_req_m1 = gid_err(
+        sign_verification_request(&req_m1, &verifier_store, &verifier_handle, None),
+        "sign request",
+    )?;
+
+    // Wallet valida solicitud firmada contra trust bundle (REQ-PRES-007)
+    let validator = WalletRequestValidator::default();
+    let validated = gid_err(
+        validator.validate_signed_request(&signed_req_m1, now, &bundle),
+        "validate req",
+    )?;
+    assert!(validated.is_signed);
+
+    // Wallet genera presentación con divulgación selectiva y KB-JWT (REQ-PRES-001, REQ-PRES-002)
+    let parsed_vc = gid_err(ParsedSdJwt::parse(&raw_credential), "parse vc")?;
+    let mut selected_disc = Vec::new();
+    for d in parsed_vc.disclosures() {
+        if let Some(claim) = d.claim_name() {
+            if claim == "given_name" || claim == "age_over_18" {
+                selected_disc.push(d.encoded().to_string());
+            }
+        }
+    }
+    let issuer_jwt = format!(
+        "{}.{}",
+        parsed_vc.signing_input(),
+        base64url::encode(parsed_vc.signature())
+    );
+    let mut sd_prefix = String::new();
+    sd_prefix.push_str(&issuer_jwt);
+    sd_prefix.push('~');
+    for d in &selected_disc {
+        sd_prefix.push_str(d);
+        sd_prefix.push('~');
+    }
+    let pres_sd_jwt = gid_err(
+        KbIssuer::create_presentation(
+            &sd_prefix,
+            verifier_id,
+            nonce_valid,
+            now,
+            &holder_store,
+            &holder_handle,
+        ),
+        "create kb pres",
+    )?;
+
+    // Transcodificación a QR Base45 (REQ-PRES-005, REQ-PERF-003)
+    let qr_base45 = gid_err(encode_presentation_to_base45(&pres_sd_jwt), "encode b45")?;
+    assert!(qr_base45.starts_with("GID1:"));
+    println!(
+        "    Payload Base45 generado: {} caracteres (<= 1200 presupuesto)",
+        qr_base45.len()
+    );
+
+    // Renderizado QR visual para escaneo en pantalla (F5.T13)
+    println!("    Visualización de código QR (Dense1x2 ANSI):\n");
+    if let Ok(qr_display) = render_qr_terminal(&qr_base45, false) {
+        println!("{qr_display}\n");
+    }
+
+    // Verificador sans-I/O
+    let decoded_pres = gid_err(decode_presentation_from_base45(&qr_base45), "decode b45")?;
+    let mut verifier_state = gid_err(
+        SqliteStorage::open(&verifier_state_path),
+        "open verifier state db",
+    )?;
+    let policy = VerificationPolicy::default();
+    let exp_req = VerificationRequest::new(
+        nonce_valid,
+        verifier_id,
+        UnixTime::from_seconds(now.as_seconds().saturating_add(300)),
+        OperationClass::Default,
+    );
+
+    let res_m1 = VerifierPipeline::verify(
+        &decoded_pres,
+        Some(&exp_req),
+        &bundle,
+        Some(&valid_snap),
+        &mut verifier_state,
+        &policy,
+        now,
+        None,
+    );
+    assert_eq!(res_m1.status(), VerificationStatus::Valid);
+    println!(
+        "    [✓] MVP-01 Aprobado: Resultado '{}' verificado sin acceso a la red (INV-01, INV-05).\n",
+        res_m1.status().as_str()
+    );
+
+    // =========================================================================
+    // ESCENARIO MVP-02: Detección y rechazo de manipulaciones y no autorizados
+    // =========================================================================
+    println!(">>> [ESCENARIO MVP-02] Rechazo determinista de manipulaciones");
+
+    // 2A: Firma manipulada
+    let parts: Vec<&str> = pres_sd_jwt.split('~').collect();
+    let jwt_str = parts.first().copied().unwrap_or("");
+    let jwt_parts: Vec<&str> = jwt_str.split('.').collect();
+    let tampered_sig = base64url::encode(&[0x99; 64]);
+    let tampered_issuer_jwt = format!(
+        "{}.{}.{}",
+        jwt_parts.first().copied().unwrap_or(""),
+        jwt_parts.get(1).copied().unwrap_or(""),
+        tampered_sig
+    );
+    let mut tampered_pres = tampered_issuer_jwt;
+    for p in parts.iter().skip(1) {
+        tampered_pres.push('~');
+        tampered_pres.push_str(p);
+    }
+    let mut state_temp = InMemoryStateStore::new(StateIntegrityKey::new([0x11; 32]));
+    let res_tampered = VerifierPipeline::verify(
+        &tampered_pres,
+        Some(&exp_req),
+        &bundle,
+        Some(&valid_snap),
+        &mut state_temp,
+        &policy,
+        now,
+        None,
+    );
+    assert_eq!(res_tampered.status(), VerificationStatus::Invalid);
+    assert_eq!(
+        res_tampered.check(CheckKind::Signature).map(|c| c.status),
+        Some(CheckStatus::Failed)
+    );
+    assert_eq!(
+        res_tampered.check(CheckKind::Disclosures).map(|c| c.status),
+        Some(CheckStatus::Skipped)
+    );
+    println!("    [✓] Caso 2A: Firma de emisor manipulada rechazada deterministamente (Invalid, firma fallida, disclosures Skipped).");
+
+    // 2B: Emisor no autorizado
+    let untrusted_issuer_jwt = format!(
+        "{}.{}.{}~",
+        base64url::encode(r#"{"alg":"ES256","typ":"dc+sd-jwt"}"#.as_bytes()),
+        base64url::encode(
+            format!(
+                r#"{{"iss":"https://untrusted-attacker.org","vct":"{}","iat":{},"exp":{}}}"#,
+                vct,
+                now.as_seconds().saturating_sub(100),
+                now.as_seconds().saturating_add(10_000)
+            )
+            .as_bytes()
+        ),
+        base64url::encode(&[0x44; 64])
+    );
+    let res_untrusted = VerifierPipeline::verify(
+        &untrusted_issuer_jwt,
+        Some(&exp_req),
+        &bundle,
+        Some(&valid_snap),
+        &mut state_temp,
+        &policy,
+        now,
+        None,
+    );
+    assert_eq!(res_untrusted.status(), VerificationStatus::Unverifiable);
+    assert_eq!(
+        res_untrusted
+            .check(CheckKind::IssuerAuthorized)
+            .map(|c| c.status),
+        Some(CheckStatus::Indeterminate)
+    );
+    println!("    [✓] Caso 2B: Emisor no autorizado rechazado deterministamente (Unverifiable).");
+
+    // 2C: Credencial revocada
+    let revoked_snap_jwt = format!(
+        "{}.{}.{}",
+        base64url::encode(r#"{"alg":"ES256","typ":"statuslist+jwt"}"#.as_bytes()),
+        base64url::encode(
+            format!(
+                r#"{{"exp":{},"iat":{},"iss":"{}","status_list":{{"bits":2,"lst":"{}","uri":"{}"}}}}"#,
+                now.as_seconds().saturating_add(86_400),
+                now.as_seconds().saturating_sub(3_600),
+                issuer_uri,
+                pack_status_lst(2, &[1, 0, 0, 0]), // bit 1 = Revoked
+                status_list_uri
+            )
+            .as_bytes()
+        ),
+        base64url::encode(&[0u8; 64])
+    );
+    let revoked_status_list = StatusListVerifier::parse(&revoked_snap_jwt)
+        .map_err(|e| anyhow!("revoked list parse: {e}"))?;
+    let revoked_snap = StatusSnapshot::new(revoked_status_list, status_list_uri, now);
+    let mut state_temp2 = InMemoryStateStore::new(StateIntegrityKey::new([0x22; 32]));
+    let res_revoked = VerifierPipeline::verify(
+        &pres_sd_jwt,
+        Some(&exp_req),
+        &bundle,
+        Some(&revoked_snap),
+        &mut state_temp2,
+        &policy,
+        now,
+        None,
+    );
+    assert_eq!(res_revoked.status(), VerificationStatus::Invalid);
+    assert_eq!(
+        res_revoked.check(CheckKind::Status).map(|c| c.error_code),
+        Some(Some(ErrorCode::CredentialRevoked))
+    );
+    println!("    [✓] Caso 2C: Credencial revocada rechazada deterministamente (Invalid, CredentialRevoked).");
+
+    // 2D: Divulgación manipulada
+    let tampered_disc = base64url::encode(r#"["salt_tampered","given_name","Mallory"]"#.as_bytes());
+    let pres_tampered_disc = format!(
+        "{}~{}~{}",
+        parts.first().copied().unwrap_or(""),
+        tampered_disc,
+        parts.last().copied().unwrap_or("")
+    );
+    let mut state_temp3 = InMemoryStateStore::new(StateIntegrityKey::new([0x33; 32]));
+    let res_tampered_disc = VerifierPipeline::verify(
+        &pres_tampered_disc,
+        Some(&exp_req),
+        &bundle,
+        Some(&valid_snap),
+        &mut state_temp3,
+        &policy,
+        now,
+        None,
+    );
+    assert_eq!(res_tampered_disc.status(), VerificationStatus::Invalid);
+    println!("    [✓] Caso 2D: Divulgación manipulada rechazada deterministamente (Invalid).\n");
+
+    // =========================================================================
+    // ESCENARIO MVP-03: Rechazo determinista de replay (anti-replay en SQLite)
+    // =========================================================================
+    println!(">>> [ESCENARIO MVP-03] Rechazo de replay con estado persistente SQLite");
+    let replay_nonce = "m1_replay_protected_nonce_123456";
+    let pres_replay = gid_err(
+        KbIssuer::create_presentation(
+            &sd_prefix,
+            verifier_id,
+            replay_nonce,
+            now,
+            &holder_store,
+            &holder_handle,
+        ),
+        "create replay pres",
+    )?;
+    let req_replay = VerificationRequest::new(
+        replay_nonce,
+        verifier_id,
+        UnixTime::from_seconds(now.as_seconds().saturating_add(300)),
+        OperationClass::Default,
+    );
+
+    // Intento 1: válido
+    let res_replay_1 = VerifierPipeline::verify(
+        &pres_replay,
+        Some(&req_replay),
+        &bundle,
+        Some(&valid_snap),
+        &mut verifier_state,
+        &policy,
+        now,
+        None,
+    );
+    assert_eq!(res_replay_1.status(), VerificationStatus::Valid);
+    println!(
+        "    [✓] Intento 1 con nonce '{}': Valid (nonce registrado en SQLite).",
+        replay_nonce
+    );
+
+    // Intento 2 con el mismo nonce y presentación: REPLAY RECHAZADO
+    let res_replay_2 = VerifierPipeline::verify(
+        &pres_replay,
+        Some(&req_replay),
+        &bundle,
+        Some(&valid_snap),
+        &mut verifier_state,
+        &policy,
+        now,
+        None,
+    );
+    assert_eq!(res_replay_2.status(), VerificationStatus::Invalid);
+    assert_eq!(
+        res_replay_2.check(CheckKind::Nonce).map(|c| c.status),
+        Some(CheckStatus::Failed)
+    );
+    println!("    [✓] Intento 2 (Replay idéntico): Invalid determinista (Nonce check FAILED).\n");
+
+    // =========================================================================
+    // INSPECCIÓN FORENSE DE ALMACENAMIENTO (INV-02, REQ-STOR-001, REQ-PRIV-005)
+    // =========================================================================
+    println!(">>> [AUDITORÍA FORENSE] Inspección de almacenamiento SQLite (INV-02, REQ-STOR-001, REQ-PRIV-005)");
+    let wallet_db_bytes = fs::read(&wallet_db_path).with_context(|| "leer wallet.db")?;
+    let verifier_db_bytes =
+        fs::read(&verifier_state_path).with_context(|| "leer verifier_state.db")?;
+
+    let forbidden_pii = ["Alice", "Smith", "PA-889900", &pres_sd_jwt];
+    for pii in &forbidden_pii {
+        assert!(
+            !wallet_db_bytes
+                .windows(pii.len())
+                .any(|w| w == pii.as_bytes()),
+            "Fallo de seguridad: PII '{}' detectada en wallet.db",
+            pii
+        );
+        assert!(
+            !verifier_db_bytes
+                .windows(pii.len())
+                .any(|w| w == pii.as_bytes()),
+            "Fallo de seguridad: PII '{}' detectada en verifier_state.db",
+            pii
+        );
+    }
+    println!("    [✓] Inspección forense superada: 0 strings de PII o presentaciones en claro en los archivos SQLite.");
+
+    // Limpieza de directorio temporal
+    let _ = fs::remove_dir_all(&temp_dir);
+
+    println!("\n================================================================================");
+    println!(
+        " HITO M1 & GATE G5: DEMOSTRACIÓN COMPLETADA CON ÉXITO en {:.2?}",
+        start_demo.elapsed()
+    );
+    println!(" Criterios demostrados y aprobados:");
+    println!("  - MVP-01: Verificación correcta sin acceso a Internet.");
+    println!(
+        "  - MVP-02: Rechazo de credenciales alteradas, firmas incorrectas y emisores no autorizados."
+    );
+    println!(
+        "  - MVP-03: Rechazo de presentaciones repetidas (anti-replay en almacenamiento persistente)."
+    );
+    println!(
+        "  - REQ-STOR-001 / REQ-STOR-004: Almacenamiento SQLite cifrado con consistencia probada."
+    );
+    println!("  - INV-01, INV-02, INV-04, INV-05, INV-11: Todos los invariantes cumplidos rigurosamente.");
+    println!("================================================================================");
+
+    Ok(())
+}
+
 #[cfg(test)]
-#[allow(clippy::unwrap_used, clippy::expect_used)]
+#[allow(
+    clippy::unwrap_used,
+    clippy::expect_used,
+    clippy::panic,
+    clippy::indexing_slicing
+)]
 mod tests {
     use super::*;
 
@@ -1920,5 +2622,30 @@ mod tests {
         assert!(run_wallet_import(&[]).is_err());
         assert!(run_wallet_present(&[]).is_err());
         assert!(run_verify(&[]).is_err());
+        assert!(run_qr_render(&[]).is_err());
+    }
+
+    #[test]
+    fn test_render_qr_terminal_and_qr_render() {
+        let test_payload = "GID1:000TESTPAYLOAD123456";
+        let normal_qr = render_qr_terminal(test_payload, false);
+        assert!(normal_qr.is_ok());
+        let invert_qr = render_qr_terminal(test_payload, true);
+        assert!(invert_qr.is_ok());
+        assert_ne!(normal_qr.unwrap(), invert_qr.unwrap());
+
+        // Test qr-render subcommand
+        assert!(run_qr_render(&["--data".to_string(), test_payload.to_string()]).is_ok());
+        assert!(run_qr_render(&[
+            "--data".to_string(),
+            test_payload.to_string(),
+            "--invert".to_string()
+        ])
+        .is_ok());
+    }
+
+    #[test]
+    fn test_in_process_run_demo_m1() {
+        assert!(run_demo_m1().is_ok());
     }
 }
