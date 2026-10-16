@@ -10,7 +10,7 @@
 | Último gate cerrado | **G0** (2026-10-11) |
 | Próximo gate | **G3** — revisión formal de Fase F3 (#59); **G2** sigue pendiente de merge/CI |
 | Hito siguiente | M1 · Núcleo offline (al cerrar G5) · MP1 · Tap offline (al cerrar G21) |
-| Última actualización | 2026-10-15 (F19.T03–F19.T07 completadas — ADR-0022 a ADR-0026 redactados; #74 y #77 resueltos) |
+| Última actualización | 2026-10-15 (F19.T09, F19.T10, F19.T11 y F19.T15 completadas — especificaciones normativas de proximidad, errores GID-E8xxx, perfil pip-identity-v1 y adenda legal; #73 y #75 resueltos) |
 
 ## Gates
 
@@ -26,6 +26,10 @@
 
 | Tarea | Issue | Responsable | Estado | Siguiente paso |
 |---|---|---|---|---|
+| F19.T15 Adenda legal en `docs/legal/` | #80 | Antigravity (agente) | Hecha | `docs/legal/2026-analisis-regulatorio-preliminar.md` v0.2 actualizado (TE vs credencial derivada, retrato bajo Ley 81, número por emisor, obligaciones de tarjeta y preguntas 5–8 para F14) |
+| F19.T11 Perfil `pip-identity-v1` | #80 | Antigravity (agente) | Hecha | `docs/specs/profiles/pip-identity-v1.md` redactado con esquemas `vct` oficial/derivado, reglas de retrato JPEG $\le 16\text{ KiB}$ y niveles 0/1 |
+| F19.T10 Adenda de `THREAT_MODEL.md` | #80 | Antigravity (agente) | Hecha | `docs/specs/THREAT_MODEL.md` v0.2 ampliado con tablas STRIDE y LINDDUN para proximidad, tarjeta física, HCE, código numérico y retrato |
+| F19.T09 `PROTOCOL.md` §7 + `ERROR_CODES.md` fam. 8 | #80 | Antigravity (agente) | Hecha | `PROTOCOL.md` v0.2 (§3.3 armonizado con ADR-0011 resolviendo `#73` + §7 Proximidad, `GID-APDU` y `SessionCode`); 10 nuevos errores `GID-E8001..E8010` en `ERROR_CODES.md` y `gravital-id-types` (`59` códigos totales); `README.md` alineado (`#75`) |
 | F19.T07 ADR-0026: perfil de identidad y retrato | #79 | Antigravity (agente) | Hecha | `docs/adr/0026-perfil-identidad-retrato.md` redactado (`pip-identity-v1` con `vct` oficial/derivado y retrato JPEG $\le 16\text{ KiB}$ solo por NFC/BLE) |
 | F19.T06 ADR-0025: identificadores numéricos | #79 | Antigravity (agente) | Hecha | `docs/adr/0025-identificadores-numericos-sesion.md` redactado (`SessionCode` 10 dígitos + Damm en línea, número por emisor opcional); resuelve `#77` |
 | F19.T05 ADR-0024: tarjeta física Java Card | #79 | Antigravity (agente) | Hecha | `docs/adr/0024-tarjeta-fisica-javacard.md` redactado (Java Card 3.0.5+, P-256 en hardware, PIN niveles 0/1, `gid-perso` y vectores en `jCardSim`) |
@@ -47,7 +51,7 @@
 | F1.T05 Workflows de CI | #6 | OpenCode (agente) | Hecha | `ci.yml`, `security.yml`, `docs.yml`, `wasm.yml`, `fuzz.yml`, `mutation.yml`, `bench.yml` |
 | F1.T06 `deny.toml` | #6 | OpenCode (agente) | Hecha | Allowlist ADR-0002; excepción `unicode-ident` pendiente de confirmación del mantenedor |
 | F1.T07 `gravital-id-testkit` base | #6 | OpenCode (agente) | Hecha | `FixedClock` + `SeededRng`; aserciones de `VerificationResult` diferidas a F4.T06 |
-| F1.T08 Esqueleto de errores | #6 | OpenCode (agente) | Hecha | 48 códigos únicos y documentados; `check-error-codes` corregido |
+| F1.T08 Esqueleto de errores | #6 | OpenCode (agente) | Hecha | 59 códigos únicos y documentados (`check-error-codes`) |
 | F1.T09 `clippy.toml` restrictivo | #6 | OpenCode (agente) | Hecha | `SystemTime::now`, `std::net`, `std::fs` prohibidos |
 | F1.T10 Compilación cruzada | #6 | OpenCode (agente) | Hecha | wasm32/android/ios + bare-metal L1–L3 verificados en local y en CI |
 | F1.T11 Fuzzing y benchmarks | #6 | OpenCode (agente) | Hecha | Objetivo de ejemplo + criterion + `fuzz.yml` nocturno |
@@ -86,8 +90,7 @@
 
 1. Excepción de licencia `Unicode-3.0` para `unicode-ident` (dependencia de compilación de `proc-macro2`): registrada como excepción acotada en `deny.toml`; falta confirmar si se incorpora a la allowlist de ADR-0002 (#7).
 2. `PROJECT_STRUCTURE.md §7` contradice a `ERROR_CODES.md` en los rangos de códigos y sitúa `GidError` en `gravital-id-sdk` (L6) cuando el catálogo canónico vive en `gravital-id-types` (L1) y el SDK lo re-exporta: registrado como `type:spec-gap` (#8).
-3. **Presupuesto y cabecera Multi-QR (#73):** contradicción entre `ADR-0011` (1.200 caracteres, `GID01/P...`), `PROTOCOL.md §3.3` (800 caracteres, `PIP1/M/...`) y `spikes/qr/REPORT.md` (fragmentos de 900 caracteres, `GID01/P...`); bloquea `F5.T09`.
-4. **Aprobación formal de `ADR-0022` a `ADR-0026` (`F19.T03`–`F19.T07`):** redactados en estado **Propuesto** (#79); sujetos a revisión del mantenedor humano y a las mediciones en hardware de `F19.T12`–`F19.T13` para cerrar `G19`.
+3. **Aprobación formal de `ADR-0022` a `ADR-0026` (`F19.T03`–`F19.T07`) y spikes de hardware (`F19.T12`–`F19.T13`):** requeridos para cerrar `G19` antes de iniciar `F20`–`F25`.
 
 ## Métricas base (se rellenan desde F2)
 
@@ -123,22 +126,19 @@
 
 ## Última nota de traspaso
 
-### Traspaso — 2026-10-15 (F19.T03–F19.T07: ADR-0022 a ADR-0026 redactados) — Antigravity (agente)
-- Tarea: F19.T03 / F19.T04 / F19.T05 / F19.T06 / F19.T07 — #79 — rama `main`
+### Traspaso — 2026-10-15 (F19.T09 / F19.T10 / F19.T11 / F19.T15: Especificaciones de proximidad, errores GID-E8xxx, modelo de amenazas, perfil pip-identity-v1 y adenda legal) — Antigravity (agente)
+- Tarea: F19.T09 / F19.T10 / F19.T11 / F19.T15 — #80 — rama `main`
 - Estado: **hecha**
 - Hecho en esta sesión:
-  - Redactados los 5 ADRs técnicos de la ampliación en `docs/adr/`:
-    - `0022-transporte-proximidad-gid-apdu.md` (`F19.T03`, resuelve `#74` junto con la actualización de `ADR-0011`),
-    - `0023-cifrado-sesion-proximidad-transcrito.md` (`F19.T04`, junto con la referencia explícita a RFC 9180 HPKE en `CRYPTO_PROFILES.md`),
-    - `0024-tarjeta-fisica-javacard.md` (`F19.T05`),
-    - `0025-identificadores-numericos-sesion.md` (`F19.T06`, resuelve `#77`),
-    - `0026-perfil-identidad-retrato.md` (`F19.T07`).
-  - Actualizado `docs/adr/README.md` enlazando los cinco ADRs.
+  - **F19.T09 y #73:** Actualizado `docs/specs/PROTOCOL.md` (v0.2) armonizando `§3.2`–`§3.3` con `ADR-0011` y `spikes/qr/REPORT.md` (umbral 1.200 caracteres, fragmentos de hasta 900 caracteres, cabecera `GID01/P<idx>/<total>/<hash8>/<payload>`) y añadiendo `§7. Transporte de Proximidad (NFC / Tarjeta Física / BLE) y Código de Sesión`; incorporada la familia 8 (`GID-E8001..E8010` / `PIP-E8001..E8010`) en `docs/specs/ERROR_CODES.md`, `crates/gravital-id-types/src/error.rs` y `fuzz/fuzz_targets/gid_error_format.rs` (`59` códigos verificados por `cargo xtask check-error-codes`).
+  - **F19.T10:** Añadida la sección `§5. Adenda de Proximidad, Tarjeta Física, Código de Sesión y Retrato` (STRIDE y LINDDUN) en `docs/specs/THREAT_MODEL.md` (v0.2).
+  - **F19.T11:** Creada la especificación normativa `docs/specs/profiles/pip-identity-v1.md` con esquemas JSON para las variantes oficial y derivada, reglas de validación y transporte del retrato JPEG y niveles de autorización 0/1.
+  - **F19.T15 y #75:** Actualizado `docs/legal/2026-analisis-regulatorio-preliminar.md` (v0.2) con la adenda regulatoria de identidad portable y preguntas 5–8 para `F14`, y alineado `README.md` con `STATUS.md` y `ROADMAP.md` v0.3.
 - Pendiente (siguiente paso concreto):
-  - En `F19`: completar `F19.T09` (`PROTOCOL.md §7` + `ERROR_CODES.md` familia 8 + resolver `#73`), `F19.T10` (adenda `THREAT_MODEL.md`), `F19.T11` (`docs/specs/profiles/pip-identity-v1.md`) y `F19.T15` (adenda legal en `docs/legal/`).
-  - En `F4`: completar `F4.T09`–`F4.T12`.
-- Bugs/issues abiertos durante la sesión: `#79` (cerrado); cerrados los `spec-gap` `#74` y `#77`.
-- Decisiones tomadas (con enlace a ADR/issue): propuestas documentadas en `ADR-0022` a `ADR-0026` (#79).
-- Riesgos o dudas: `R-16` (soporte AEAD en tarjeta Java Card) queda sujeto a mediciones del spike `F19.T13`.
-- Comprobaciones locales: fmt ✅ clippy ✅ tests ✅ (402 pruebas) layers ✅ trace ✅ check-error-codes ✅ check-req-ids ✅
+  - En `F4`: completar `F4.T09` (`Matriz negativa y cobertura`), `F4.T10` (`Verificación sin red`), `F4.T11` (`Determinismo`) y `F4.T12` (`pip-cli offline`).
+  - En `F19`: reproducibilidad de spikes en código (`F19.T14`, `#76`), spikes con hardware (`F19.T12`, `F19.T13`) y revisión cruzada (`F19.T16`).
+- Bugs/issues abiertos durante la sesión: `#80` (cerrado); cerrados los `spec-gap` `#73` y `#75`.
+- Decisiones tomadas (con enlace a ADR/issue): especificaciones normativas alineadas con `ADR-0021`–`0026` (#80).
+- Riesgos o dudas: ninguna.
+- Comprobaciones locales: fmt ✅ clippy ✅ tests ✅ (403 pruebas) layers ✅ trace ✅ check-error-codes ✅ check-req-ids ✅
 

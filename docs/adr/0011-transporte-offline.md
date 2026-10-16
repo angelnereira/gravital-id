@@ -38,7 +38,7 @@ Desafíos técnicos del transporte óptico mediante códigos QR:
   - **Transcodificación binaria de alta compresión:**
     La presentación SD-JWT+KB se convierte a una representación binaria estructurada en CBOR, se comprime mediante el algoritmo DEFLATE (RFC 1951) y se codifica en **Base45** (RFC 9285), el estándar internacional optimizado para el conjunto de caracteres alfanuméricos de los códigos QR.
     Esta técnica reduce el tamaño del código QR en más de un **45 % a 55 %**, permitiendo que la gran mayoría de presentaciones quepan en un único QR legible de forma instantánea.
-  - **Multi-QR determinista:** Si la presentación supera el umbral de 1200 caracteres Base45, se fragmenta en una secuencia indexada con cabecera fija (`GID01/P<idx>/<total>/<payload>`), permitiendo lectura mediante carrusel manual o animación a 3-5 fps.
+  - **Multi-QR determinista:** Si la presentación supera el umbral de 1200 caracteres Base45, se fragmenta en una secuencia indexada de fragmentos de hasta 900 caracteres Base45 con cabecera fija (`GID01/P<idx>/<total>/<hash8>/<payload>`, donde `<hash8>` son los primeros 8 caracteres Base64URL del SHA-256 de la presentación completa), permitiendo lectura mediante carrusel manual o animación a 3-5 fps.
 - **Inconvenientes:** Requiere parseo CBOR/Base45 en las capas de transporte.
 
 ---
@@ -46,10 +46,10 @@ Desafíos técnicos del transporte óptico mediante códigos QR:
 ## Decisión
 
 Se adopta la **Opción C**:
-1. El canal de transporte offline predeterminado es el **flujo óptico QR interactivo en dos pasos** conforme a la especificación normativa `docs/specs/PROTOCOL.md §5`.
+1. El canal de transporte offline predeterminado es el **flujo óptico QR interactivo en dos pasos** conforme a la especificación normativa `docs/specs/PROTOCOL.md §3`.
 2. Las presentaciones en código QR se procesan obligatoriamente mediante el esquema de compresión **transcodificación binaria CBOR + DEFLATE + Base45**.
 3. Se fija un **presupuesto máximo de 1200 caracteres Base45** para códigos QR individuales con corrección de errores nivel M (15 %).
-4. Toda presentación que exceda 1200 caracteres activa automáticamente la fragmentación multi-QR indexada.
+4. Toda presentación que exceda 1200 caracteres activa automáticamente la fragmentación multi-QR indexada en tramas de hasta 900 caracteres Base45 con cabecera `GID01/P<idx>/<total>/<hash8>/<payload>` (`PROTOCOL.md §3.3`).
 5. Los canales de proximidad por radiofrecuencia (NFC `GID-APDU` para teléfonos Android y tarjetas físicas Java Card, y BLE condicional) se especifican en la Fase `F19` (**ADR-0022**, **ADR-0023**, **ADR-0024**) y se implementan en `F20`–`F22` (con interoperabilidad `mdoc` ISO/IEC 18013-5 en `F25`/`F18`), preservando siempre el canal QR como base universal de interoperabilidad óptica.
 
 ---

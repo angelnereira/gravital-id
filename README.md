@@ -46,15 +46,17 @@ Cualquier cambio que viole estos invariantes es automáticamente rechazado:
 
 ## Arquitectura de Capas y Crates del Workspace
 
-El repositorio organiza el protocolo en 20 crates modulares con límites de dependencia estrictos verificados por `cargo xtask check-layers`:
+El repositorio organiza el protocolo en crates modulares (20 crates activos en el workspace y 2 adicionales planificados para proximidad en `F20`–`F21`) con límites de dependencia estrictos verificados por `cargo xtask check-layers`:
 
 ```text
 ┌────────────────────────────────────────────────────────────────────────┐
 │ L6 / Bindings / Aplicaciones: gravital-id-sdk, bindings/wasm, CLI      │
 ├────────────────────────────────────────────────────────────────────────┤
-│ L5 (Host & I/O): -storage-sqlite, -transport-http, -ledger-evm         │
+│ L5 (Host & I/O): -storage-sqlite, -transport-http, -transport-pcsc,    │
+│                  -ledger-evm                                           │
 ├────────────────────────────────────────────────────────────────────────┤
-│ L4 (Sans-I/O & Flujos): gravital-id-holder, -protocol, -sync           │
+│ L4 (Sans-I/O & Flujos): gravital-id-holder, -protocol, -proximity,     │
+│                         -sync                                          │
 ├────────────────────────────────────────────────────────────────────────┤
 │ L3 (Lógica de Verificación & Emisión): -issuer, -verifier, -recovery   │
 ├────────────────────────────────────────────────────────────────────────┤
@@ -65,22 +67,24 @@ El repositorio organiza el protocolo en 20 crates modulares con límites de depe
 └────────────────────────────────────────────────────────────────────────┘
 ```
 
-### Componentes Implementados
+### Estado de los Crates del Workspace (fuente viva detallada en [`docs/STATUS.md`](docs/STATUS.md))
 
 | Capa | Crate | Estado | Descripción |
 |---|---|---|---|
-| **L1** | `gravital-id-types` | **Listo** | Identificadores validados (`IssuerId`, `Kid`, `Vct`, `ProfileId`, `UnixTime`), catálogo de errores `GidError` con 48 códigos normativos y trait `Clock`. |
-| **L1** | `gravital-id-codec` | **Listo** | Parsers acotados anti-DoS: `base64url` estricto sin relleno, JSON acotado RFC 8259, CBOR determinista RFC 8949, DEFLATE acotado (2 MiB, 10:1) y Base45 RFC 9285. |
-| **L1** | `gravital-id-crypto` | **Listo** | Primitivas criptográficas fijadas: ES256 (RFC 6979), SHA-256, HMAC, HKDF (RFC 5869), XChaCha20-Poly1305, HPKE Base (RFC 9180), JWK EC P-256 (RFC 7517/7638) e higiene de secretos con `Zeroize`. |
-| **L2** | `gravital-id-keys` | **Listo** | Abstracción `KeyStore`, handles tipados por propósito (`SigningPurpose`: `IssuerSigning`, `HolderBinding`, `BundleSigning`), `SoftwareKeyStore` y normalización DER↔P1363. |
-| **L2** | `gravital-id-credential` | **Listo** | Emisión, parseo y verificación SD-JWT (RFC 9901): divulgaciones de objetos y arrays, sal $\ge 128$ bits, decoys, Key Binding JWT (`typ: kb+jwt`), capa SD-JWT VC (`typ: dc+sd-jwt`), esquemas de perfil (`pip-personal-v1`, `pip-financial-v1`, `pip-enterprise-v1`) y predicados de calendario. |
-| **L2** | `gravital-id-status` | **Listo** | Token Status List JWT comprimido (1 y 2 bits), manifiesto de emisor `IssuerStatusManifest` con versión monotónica, `StatusSnapshot` y `StatusCache` acotada con políticas de frescura por perfil. |
-| **L2** | `gravital-id-trust` | **Listo** | Raíz de confianza `TrustRoot` con encadenamiento multi-firma, `TrustBundle` derivado con cofirmas $k$-de-$n$ de operadores independientes, estados de clave (`active`, `retired`, `suspended`, `compromised`) y anti-rollback. |
-| **L3** | `gravital-id-issuer` | **Listo** | API de construcción y firma de credenciales; emisión individual y por lotes con claves, sales e índices independientes. |
-| **L3** | `gravital-id-verifier` | **En curso (F4)** | Piso de tiempo confiable `TimeFloorGuard` anti-rollback, `VerifierStateStore`, caché de nonces anti-replay, `VerificationPolicy` y pipeline de comprobaciones ordenadas con typestate. |
-| **L6** | `gravital-id-sdk` | **Listo** | Fachada unificada del SDK para integradores. |
-| **Test** | `gravital-id-testkit` | **Listo** | Entorno determinista para pruebas: `FixedClock` y `SeededRng` (xoshiro256** reproducible). |
-| **WASM**| `bindings/wasm` | **Listo** | Bindings WebAssembly (`wasm32-unknown-unknown`) con pruebas de humo FFI en Node.js. |
+| **L1** | `gravital-id-types` | **Implementado (F1–F2, F19)** | Identificadores validados (`IssuerId`, `Kid`, `Vct`, `ProfileId`, `UnixTime`, `BundleVersion`), catálogo de errores `GidError` con 59 códigos normativos (familias 1–9) y trait `Clock`. |
+| **L1** | `gravital-id-codec` | **Implementado (F2)** | Parsers acotados anti-DoS: `base64url` estricto sin relleno, JSON acotado RFC 8259, CBOR determinista RFC 8949, DEFLATE acotado (2 MiB, 10:1) y Base45 RFC 9285. |
+| **L1** | `gravital-id-crypto` | **Implementado (F2)** | Primitivas criptográficas fijadas: ES256 (RFC 6979), SHA-256, HMAC, HKDF (RFC 5869), XChaCha20-Poly1305, HPKE Base (RFC 9180), JWK EC P-256 (RFC 7517/7638) e higiene de secretos con `Zeroize`. |
+| **L2** | `gravital-id-keys` | **Implementado (F2)** | Abstracción `KeyStore`, handles tipados por propósito (`IssuerSigning`, `HolderBinding`, `BundleSigning`), `SoftwareKeyStore` y normalización DER↔P1363. |
+| **L2** | `gravital-id-credential` | **Implementado (F3)** | Emisión, parseo y verificación SD-JWT (RFC 9901): divulgaciones de objetos y arrays, sal $\ge 128$ bits, decoys, Key Binding JWT (`typ: kb+jwt`), capa SD-JWT VC (`typ: dc+sd-jwt`), esquemas de perfil (`pip-personal-v1`, `pip-financial-v1`, `pip-enterprise-v1`) y predicados de calendario. |
+| **L2** | `gravital-id-status` | **Implementado (F4)** | Token Status List JWT comprimido (1 y 2 bits), manifiesto de emisor `IssuerStatusManifest` con versión monotónica, `StatusSnapshot` y `StatusCache` acotada con políticas de frescura por perfil. |
+| **L2** | `gravital-id-trust` | **Implementado (F4)** | Raíz de confianza `TrustRoot` con encadenamiento multi-firma, `TrustBundle` derivado con cofirmas $k$-de-$n$ de operadores independientes, estados de clave (`active`, `retired`, `suspended`, `compromised`) y anti-rollback. |
+| **L3** | `gravital-id-issuer` | **Implementado (F3)** | API de construcción y firma de credenciales; emisión individual y por lotes con claves, sales e índices independientes. |
+| **L3** | `gravital-id-verifier` | **Implementado (F4.T03–T08; cierre F4 en curso)** | Piso de tiempo confiable `TimeFloorGuard` anti-rollback, `VerifierStateStore`, caché de nonces anti-replay, `VerificationPolicy`, semántica de estados de clave de emisor y pipeline de 11 comprobaciones ordenadas con typestate. |
+| **L2–L5** | Resto de crates (`-storage`, `-ledger`, `-holder`, `-protocol`, `-sync`, `-recovery`, adaptadores L5) | **Esqueleto (F5–F8)** | Estructuras de crate creadas en `F1.T01` con `#![forbid(unsafe_code)]`; implementación programada en las fases `F5`–`F8`. |
+| **L4–L5** | `gravital-id-proximity`, `gravital-id-transport-pcsc` | **Especificados en F19 (código en F20–F21)** | Sesión de proximidad cifrada con HPKE, transcrito canónico, protocolo `GID-APDU` ISO/IEC 7816-4 y adaptador de lectores PC/SC (`ADR-0021`–`0024`). |
+| **L6** | `gravital-id-sdk` | **Esqueleto vertical (F1.T13; F5/F20)** | Fachada unificada del SDK para integradores. |
+| **Test** | `gravital-id-testkit` | **Implementado (F1)** | Entorno determinista para pruebas: `FixedClock` y `SeededRng` (xoshiro256** reproducible). |
+| **WASM**| `bindings/wasm` | **Esqueleto vertical (F1.T13)** | Bindings WebAssembly (`wasm32-unknown-unknown`) con pruebas de humo FFI en Node.js. |
 
 ---
 
@@ -88,10 +92,10 @@ El repositorio organiza el protocolo en 20 crates modulares con límites de depe
 
 El repositorio cuenta con una batería integral de pruebas unitarias, de integración, vectores normativos externos, análisis estático estricto y fuzzing continuo:
 
-- **Vectores de conformidad normativos:** Suite de 24 vectores de prueba para SD-JWT VC (`conformance/vectors/sd-jwt-vc/`).
+- **Vectores de conformidad normativos:** Suite de 24 vectores de prueba inmutables para SD-JWT VC (`conformance/vectors/sd-jwt-vc/`).
 - **Vectores criptográficos externos superados al 100 %:** RFC 7515 (JWS ES256), RFC 7638 (Thumbprints), RFC 5869 (HKDF), RFC 9180 (HPKE) y Proyecto Wycheproof (484/484 ECDSA P-256 y 315/315 AEAD).
 - **Cobertura de pruebas:** $\ge 90\,\%$ de cobertura de líneas en crates criptográficos y del verificador.
-- **Parsers con fuzzing en CI:** Objetivos de fuzzing dedicados para todos los parsers de frontera (`base64url`, `json`, `cbor`, `base45`, `deflate`, `jwk`, `sd_jwt`).
+- **Parsers con fuzzing en CI:** Objetivos de fuzzing dedicados para todos los parsers de frontera (`base64url_strict`, `json_bounded`, `cbor_bounded`, `base45_strict`, `deflate_bounded`, `jwk_parser`, `sd_jwt_parser`, `status_list_parser`).
 - **Verificación cruzada de arquitecturas:** Compilación y pruebas locales y en CI para x86_64, aarch64, WebAssembly (`wasm32-unknown-unknown`) y bare-metal embebido (`thumbv7em-none-eabihf`).
 
 ### Comandos de Verificación Local
@@ -138,13 +142,13 @@ El desarrollo se rige por el principio **spec-first**: la documentación técnic
 |---|---|
 | [`AGENTS.md`](AGENTS.md) | **Reglas obligatorias** para agentes y desarrolladores: protocolo de sesión, Definition of Done y manejo de issues. |
 | [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Arquitectura del sistema, modelo de confianza, amenazas, protocolos y especificación técnica general. |
-| [`docs/REQUIREMENTS.md`](docs/REQUIREMENTS.md) | Catálogo de requisitos funcionales y no funcionales trazables (`REQ-*`). |
+| [`docs/REQUIREMENTS.md`](docs/REQUIREMENTS.md) | Catálogo de 167 requisitos funcionales y no funcionales trazables (`REQ-*`). |
 | [`docs/PROJECT_STRUCTURE.md`](docs/PROJECT_STRUCTURE.md) | Jerarquía de capas, reglas de dependencia entre crates y directrices de implementación. |
-| [`docs/ROADMAP.md`](docs/ROADMAP.md) | Hoja de ruta completa en 19 fases (F0–F18) y sus respectivos gates de calidad (G0–G17). |
+| [`docs/ROADMAP.md`](docs/ROADMAP.md) | Hoja de ruta completa en 26 fases (`F0`–`F25`), gates de calidad (`G0`–`G25`) e hitos (`M1`–`M3`, `MP1`–`MP3`). |
 | [`docs/STATUS.md`](docs/STATUS.md) | Estado vivo del avance del proyecto y notas de traspaso de cada sesión. |
 | [`docs/TRACEABILITY.md`](docs/TRACEABILITY.md) | Matriz viva de trazabilidad entre requisitos normativos y pruebas del repositorio. |
-| [`docs/specs/`](docs/specs/) | Especificaciones normativas: `CRYPTO_PROFILES`, `TRUST_BUNDLE`, `PROTOCOL`, `CONTRACTS`, `SDK_API`, `ERROR_CODES` y perfiles de credencial. |
-| [`docs/adr/`](docs/adr/) | Registros de Decisiones de Arquitectura (ADRs aceptados y propuestos). |
+| [`docs/specs/`](docs/specs/) | Especificaciones normativas: `CRYPTO_PROFILES`, `TRUST_BUNDLE`, `PROTOCOL`, `CONTRACTS`, `SDK_API`, `ERROR_CODES` y perfiles (`pip-personal-v1`, `pip-financial-v1`, `pip-enterprise-v1`, `pip-identity-v1`). |
+| [`docs/adr/`](docs/adr/) | Registros de Decisiones de Arquitectura (`ADR-0001` a `ADR-0026`). |
 | [`SECURITY.md`](SECURITY.md) | Política de reporte responsable de vulnerabilidades y seguridad del proyecto. |
 
 ---

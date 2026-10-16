@@ -11,7 +11,7 @@ use gravital_id_types::{ErrorCode, GidError};
 use libfuzzer_sys::fuzz_target;
 
 /// Lista cerrada de variantes del catálogo (espejo de `ErrorCode`).
-const CODES: [ErrorCode; 48] = [
+const CODES: [ErrorCode; 59] = [
     ErrorCode::MalformedMessage,
     ErrorCode::ExpiredRequest,
     ErrorCode::NonceReused,
@@ -49,6 +49,7 @@ const CODES: [ErrorCode; 48] = [
     ErrorCode::BundleVersionRollback,
     ErrorCode::ClockRollbackDetected,
     ErrorCode::TrustRootChainBroken,
+    ErrorCode::VerifierStateCorrupted,
     ErrorCode::StorageReadFailed,
     ErrorCode::StorageWriteFailed,
     ErrorCode::SchemaMigrationFailed,
@@ -57,6 +58,16 @@ const CODES: [ErrorCode; 48] = [
     ErrorCode::ClockUnavailable,
     ErrorCode::StateStoreCorrupted,
     ErrorCode::TransportTimeout,
+    ErrorCode::UnsupportedAid,
+    ErrorCode::ProximityMessageTooLarge,
+    ErrorCode::ProximitySessionExpired,
+    ErrorCode::ConsentPending,
+    ErrorCode::CardPinRequired,
+    ErrorCode::CardPinBlocked,
+    ErrorCode::ProximityDecryptionFailed,
+    ErrorCode::InvalidApduCommand,
+    ErrorCode::CardNotPersonalized,
+    ErrorCode::InvalidSessionCode,
     ErrorCode::FfiBoundaryViolation,
     ErrorCode::WasmMemoryPoisoned,
     ErrorCode::PanicCaught,

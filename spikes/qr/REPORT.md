@@ -83,8 +83,8 @@ Para presentaciones que superen los 1200 caracteres Base45, se evaluaron dos mec
 - **Opción A (Códigos Fuente / RaptorQ / Fountain Codes):** Permite lectura continua sin orden fijo. Sin embargo, impone sobrecarga computacional de decodificación en microcontroladores y añade un 15-20 % de bytes adicionales.
 - **Opción B (Secuencia Indexada con Prefijo Determinista):**
   Estructura de trama:
-  `GID01/P<index>/<total>/<checksum>/<payload_base45>`
-  Ejemplo: `GID01/P1/2/A9F2/<fragmento 1>` y `GID01/P2/2/A9F2/<fragmento 2>`.
+  `GID01/P<index>/<total>/<hash8>/<payload_base45>`
+  Ejemplo: `GID01/P1/2/A9F2k8X1/<fragmento 1>` y `GID01/P2/2/A9F2k8X1/<fragmento 2>`.
 
 **Resultados de la Opción B:**
 - El verificador ensambla la presentación en cuanto recibe ambas tramas.
@@ -97,5 +97,5 @@ Para presentaciones que superen los 1200 caracteres Base45, se evaluaron dos mec
 
 1. **Presupuesto Máximo de QR Único:** 1,200 caracteres Base45 con corrección de error nivel M (15 %).
 2. **Esquema de Compresión Mandatorio:** CBOR determinista $\rightarrow$ DEFLATE (nivel 9) $\rightarrow$ Base45 (RFC 9285).
-3. **Fragmentación:** Todo payload Base45 que exceda 1200 caracteres se divide automáticamente en fragmentos iguales de como máximo 900 caracteres por trama con cabecera `GID01/P...`.
-4. **Validación de Integridad:** Checksum CRC-16 o SHA-256 truncado a 4 bytes por fragmento para evitar ensamblados de secuencias dispares.
+3. **Fragmentación:** Todo payload Base45 que exceda 1200 caracteres se divide automáticamente en fragmentos iguales de como máximo 900 caracteres por trama con cabecera `GID01/P<idx>/<total>/<hash8>/<payload>`.
+4. **Validación de Integridad:** Resumen SHA-256 truncado a 8 caracteres Base64URL (`<hash8>`, 48 bits) de la presentación completa sin fragmentar para evitar ensamblados de secuencias dispares (`PROTOCOL.md §3.3`).

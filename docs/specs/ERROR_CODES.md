@@ -123,6 +123,23 @@ pub struct PipError {
 
 ---
 
+### Familia 8: Proximidad, Tarjeta Física y Código de Sesión (`PIP-E8000..E8999` / `GID-E8000..E8999`)
+
+| Código | Identificador | Descripción |
+|---|---|---|
+| `PIP-E8001` | `UnsupportedAid` | Identificador de aplicación (AID) ISO/IEC 7816-4 desconocido o no soportado (`SW=6A82`). |
+| `PIP-E8002` | `ProximityMessageTooLarge` | Mensaje APDU, fragmento de proximidad o atributo (p. ej. retrato en QR) excede los límites permitidos por el transporte (`SW=6700`). |
+| `PIP-E8003` | `ProximitySessionExpired` | La sesión de proximidad, el armado de toque NFC o el código numérico de sesión (`SessionCode`) ha expirado. |
+| `PIP-E8004` | `ConsentPending` | El titular debe confirmar interactivamente la divulgación en su dispositivo antes del segundo toque (`SW=6985`). |
+| `PIP-E8005` | `CardPinRequired` | La tarjeta física exige verificación de PIN (`VERIFY`) para divulgar claims de Nivel 1 (`SW=6982`). |
+| `PIP-E8006` | `CardPinBlocked` | El contador de intentos de PIN de la tarjeta física se ha agotado y la tarjeta está bloqueada (`SW=6983`). |
+| `PIP-E8007` | `ProximityDecryptionFailed` | Fallo al abrir el sobre HPKE de proximidad o discrepancia en el `transcript_hash` asociado (rechazo fail-closed, INV-05). |
+| `PIP-E8008` | `InvalidApduCommand` | Comando o respuesta APDU malformado, instrucción (`INS`) no soportada o fuera de secuencia en la máquina de estados (`SW=6D00`/`6986`). |
+| `PIP-E8009` | `CardNotPersonalized` | Operación rechazada porque la tarjeta no se encuentra en el estado de ciclo de vida requerido (`PERSONALIZACION` vs `ACTIVA`). |
+| `PIP-E8010` | `InvalidSessionCode` | Código numérico de sesión (`SessionCode`) malformado, dígito de control Damm inválido, ya consumido o límite de intentos excedido. |
+
+---
+
 ### Familia 9: Errores Críticos y FFI (`PIP-E9000..E9999`)
 
 | Código | Identificador | Descripción |

@@ -119,6 +119,28 @@ pub enum ErrorCode {
     /// Tiempo de espera agotado al comunicar con un relay o endpoint de red.
     TransportTimeout = 7004,
 
+    // --- Familia 8: Proximidad, Tarjeta Física y Código de Sesión (8001..8010) ---
+    /// Identificador de aplicación (AID) ISO/IEC 7816-4 desconocido o no soportado (SW=6A82).
+    UnsupportedAid = 8001,
+    /// Mensaje APDU, fragmento de proximidad o atributo excede los límites del transporte (SW=6700).
+    ProximityMessageTooLarge = 8002,
+    /// La sesión de proximidad, el armado de toque NFC o el código numérico de sesión ha expirado.
+    ProximitySessionExpired = 8003,
+    /// El titular debe confirmar interactivamente la divulgación antes del segundo toque (SW=6985).
+    ConsentPending = 8004,
+    /// La tarjeta física exige verificación de PIN (VERIFY) para divulgar claims de Nivel 1 (SW=6982).
+    CardPinRequired = 8005,
+    /// El contador de intentos de PIN de la tarjeta se ha agotado y la tarjeta está bloqueada (SW=6983).
+    CardPinBlocked = 8006,
+    /// Fallo al abrir el sobre HPKE de proximidad o discrepancia en el transcript_hash (fail-closed, INV-05).
+    ProximityDecryptionFailed = 8007,
+    /// Comando o respuesta APDU malformado, instrucción no soportada o fuera de secuencia (SW=6D00/6986).
+    InvalidApduCommand = 8008,
+    /// Operación rechazada porque la tarjeta no se encuentra en el estado de ciclo de vida requerido.
+    CardNotPersonalized = 8009,
+    /// Código numérico de sesión malformado, dígito Damm inválido, ya consumido o límite de intentos excedido.
+    InvalidSessionCode = 8010,
+
     // --- Familia 9: Errores Críticos y FFI (9001..9999) ---
     /// Parámetro nulo, puntero no alineado o violación de contrato FFI.
     FfiBoundaryViolation = 9001,
@@ -192,6 +214,17 @@ impl ErrorCode {
             Self::StateStoreCorrupted => "GID-E7003",
             Self::TransportTimeout => "GID-E7004",
 
+            Self::UnsupportedAid => "GID-E8001",
+            Self::ProximityMessageTooLarge => "GID-E8002",
+            Self::ProximitySessionExpired => "GID-E8003",
+            Self::ConsentPending => "GID-E8004",
+            Self::CardPinRequired => "GID-E8005",
+            Self::CardPinBlocked => "GID-E8006",
+            Self::ProximityDecryptionFailed => "GID-E8007",
+            Self::InvalidApduCommand => "GID-E8008",
+            Self::CardNotPersonalized => "GID-E8009",
+            Self::InvalidSessionCode => "GID-E8010",
+
             Self::FfiBoundaryViolation => "GID-E9001",
             Self::WasmMemoryPoisoned => "GID-E9002",
             Self::PanicCaught => "GID-E9999",
@@ -255,6 +288,17 @@ impl ErrorCode {
             Self::StateStoreCorrupted => "PIP-E7003",
             Self::TransportTimeout => "PIP-E7004",
 
+            Self::UnsupportedAid => "PIP-E8001",
+            Self::ProximityMessageTooLarge => "PIP-E8002",
+            Self::ProximitySessionExpired => "PIP-E8003",
+            Self::ConsentPending => "PIP-E8004",
+            Self::CardPinRequired => "PIP-E8005",
+            Self::CardPinBlocked => "PIP-E8006",
+            Self::ProximityDecryptionFailed => "PIP-E8007",
+            Self::InvalidApduCommand => "PIP-E8008",
+            Self::CardNotPersonalized => "PIP-E8009",
+            Self::InvalidSessionCode => "PIP-E8010",
+
             Self::FfiBoundaryViolation => "PIP-E9001",
             Self::WasmMemoryPoisoned => "PIP-E9002",
             Self::PanicCaught => "PIP-E9999",
@@ -317,6 +361,17 @@ impl ErrorCode {
             Self::ClockUnavailable => "ClockUnavailable",
             Self::StateStoreCorrupted => "StateStoreCorrupted",
             Self::TransportTimeout => "TransportTimeout",
+
+            Self::UnsupportedAid => "UnsupportedAid",
+            Self::ProximityMessageTooLarge => "ProximityMessageTooLarge",
+            Self::ProximitySessionExpired => "ProximitySessionExpired",
+            Self::ConsentPending => "ConsentPending",
+            Self::CardPinRequired => "CardPinRequired",
+            Self::CardPinBlocked => "CardPinBlocked",
+            Self::ProximityDecryptionFailed => "ProximityDecryptionFailed",
+            Self::InvalidApduCommand => "InvalidApduCommand",
+            Self::CardNotPersonalized => "CardNotPersonalized",
+            Self::InvalidSessionCode => "InvalidSessionCode",
 
             Self::FfiBoundaryViolation => "FfiBoundaryViolation",
             Self::WasmMemoryPoisoned => "WasmMemoryPoisoned",
@@ -392,7 +447,7 @@ mod kani_proofs {
 
     /// Invariante del catálogo (REQ-SDK-003, PROJECT_STRUCTURE.md §7): todo
     /// código publicado es un entero de 4 dígitas dentro del rango documentado
-    /// 1001..=9999. Kani lo comprueba para las 48 variantes del enum.
+    /// 1001..=9999. Kani lo comprueba para las variantes del enum.
     #[kani::proof]
     fn error_codes_are_four_digit_numbers() {
         let code: ErrorCode = kani::any();
@@ -427,6 +482,23 @@ mod tests {
         assert_eq!(err.code.legacy_code_str(), "PIP-E1003");
         assert_eq!(err.code.identifier_name(), "NonceReused");
         assert_eq!(format!("{err}"), "[GID-E1003] Session nonce was reused");
+    }
+
+    // // Verifies: REQ-SDK-003, REQ-PROX-003
+    #[test]
+    fn test_proximity_family_error_codes_formatting() {
+        let err = GidError::new(
+            ErrorCode::ProximityDecryptionFailed,
+            "HPKE envelope open or transcript hash failed",
+        );
+        assert_eq!(err.numeric_code(), 8007);
+        assert_eq!(err.code_str(), "GID-E8007");
+        assert_eq!(err.code.legacy_code_str(), "PIP-E8007");
+        assert_eq!(err.code.identifier_name(), "ProximityDecryptionFailed");
+        assert_eq!(
+            format!("{err}"),
+            "[GID-E8007] HPKE envelope open or transcript hash failed"
+        );
     }
 
     // // Verifies: REQ-SDK-003

@@ -108,7 +108,7 @@
 | REQ-GOV-003 | F14 | DEBE | I | P-12 | — | Inspección / Auditoría |
 | REQ-PROX-001 | F20 | DEBE | T | P-09 | — | Pendiente (Fase futura) |
 | REQ-PROX-002 | F20 | DEBE | T | P-08 | — | Pendiente (Fase futura) |
-| REQ-PROX-003 | F20 | DEBE | T | P-06 | — | Pendiente (Fase futura) |
+| REQ-PROX-003 | F20 | DEBE | T | P-06 | error.rs | Cubierto |
 | REQ-PROX-004 | F20 | DEBE | T, F | P-08 | — | Pendiente (Fase futura) |
 | REQ-PROX-005 | F20 | DEBE | T, D | P-01 | — | Pendiente (Fase futura) |
 | REQ-PROX-006 | F21 | DEBE | T, I | P-09 | — | Pendiente (Fase futura) |
