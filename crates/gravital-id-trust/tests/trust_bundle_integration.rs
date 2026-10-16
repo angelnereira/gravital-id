@@ -797,3 +797,88 @@ fn issuer_key_states_in_verified_bundle_respect_semantics() {
     assert!(!compromised.could_sign_at(UnixTime::from_seconds(1_600_000_000)));
     assert!(!compromised.could_sign_at(UnixTime::from_seconds(1_800_000_000)));
 }
+
+#[test]
+fn trust_bundle_and_root_getters_and_edge_cases() {
+    let fixture = build_root(9_999, "pip-global", 1, 1, &["root-0", "root-1"]);
+    assert_eq!(fixture.root.chain_id(), 1);
+    assert_eq!(
+        fixture.root.registry_address(),
+        "0x1234567890123456789012345678901234567890"
+    );
+    assert!(fixture.root.issued_at().as_seconds() > 0);
+    assert!(fixture.root.valid_until().as_seconds() > fixture.root.issued_at().as_seconds());
+    assert_eq!(fixture.root.root_keys().len(), 3);
+    assert_eq!(fixture.root.root_threshold(), 2);
+    assert_eq!(fixture.root.bundle_signers().len(), 3);
+    assert_eq!(fixture.root.bundle_threshold(), 2);
+
+    let issuer_key_kid = "iss-cedula-2026-01".to_string();
+    let issuer_jwk = fixture.keys.jwk("root-2").clone();
+    let (_json, bundle_b64) = bundle_payload(1, 100, &issuer_key_kid, &issuer_jwk);
+    let (good, _) = sign_document(
+        &fixture.keys,
+        &bundle_b64,
+        &["signer-0".to_string(), "signer-1".to_string()],
+    );
+    let (bundle, jws) = TrustBundle::parse(&good).expect("bundle parse");
+
+    assert_eq!(bundle.chain_id(), 1);
+    assert_eq!(bundle.registry_address(), "0xabc");
+    assert_eq!(bundle.finalized_block_number(), 100);
+    assert_eq!(bundle.finalized_block_hash(), "0xdead");
+    assert_eq!(bundle.issued_at(), UnixTime::from_seconds(1_700_000_000));
+    assert_eq!(bundle.valid_until(), UnixTime::from_seconds(1_900_000_000));
+    assert!(bundle.verifiers().is_empty());
+    assert!(bundle.policies().is_empty());
+    assert_eq!(bundle.issuers().len(), 1);
+    assert!(bundle.issuer("iss-example").is_some());
+    assert!(bundle.issuer("non-existent").is_none());
+
+    // Payload access
+    assert!(!jws.payload_bytes.is_empty());
+
+    // Error case: document too large
+    let huge = "a".repeat(600_000);
+    let err = TrustBundle::parse(&huge).unwrap_err();
+    assert_eq!(err.code, ErrorCode::MalformedSdJwt);
+
+    // Error case: valid_until < issued_at
+    let invalid_dates_payload = Value::Object(vec![
+        (
+            "framework_id".to_string(),
+            Value::String("pip-global".to_string()),
+        ),
+        ("bundle_epoch".to_string(), Value::Number(Number::PosInt(1))),
+        (
+            "bundle_version".to_string(),
+            Value::Number(Number::PosInt(1)),
+        ),
+        ("chain_id".to_string(), Value::Number(Number::PosInt(1))),
+        (
+            "registry_address".to_string(),
+            Value::String("0xabc".to_string()),
+        ),
+        (
+            "finalized_block_number".to_string(),
+            Value::Number(Number::PosInt(100)),
+        ),
+        (
+            "finalized_block_hash".to_string(),
+            Value::String("0xdead".to_string()),
+        ),
+        (
+            "issued_at".to_string(),
+            Value::Number(Number::PosInt(1_900_000_000)),
+        ),
+        (
+            "valid_until".to_string(),
+            Value::Number(Number::PosInt(1_700_000_000)),
+        ),
+        ("issuers".to_string(), Value::Array(vec![])),
+        ("verifiers".to_string(), Value::Array(vec![])),
+        ("policies".to_string(), Value::Array(vec![])),
+    ]);
+    let err = TrustBundle::from_payload(&invalid_dates_payload).unwrap_err();
+    assert_eq!(err.code, ErrorCode::MalformedSdJwt);
+}

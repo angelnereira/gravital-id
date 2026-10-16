@@ -468,3 +468,55 @@ fn cache_and_snapshot_use_the_injected_clock() {
         )
         .expect("snapshot recién refrescado");
 }
+
+#[test]
+fn status_list_manifest_and_cache_getters_and_edge_cases() {
+    let now = UnixTime::from_seconds(1_700_000_000);
+    let values = [0u32, 1u32, 2u32, 0u32];
+    let lst = pack_lst(2, &values);
+    let payload = format!(
+        r#"{{"iss":"https://issuer.cedula.example.gov","iat":{},"exp":{},"status_list":{{"bits":2,"lst":"{lst}","uri":"{LIST_URI}"}}}}"#,
+        now.as_seconds() - 100,
+        now.as_seconds() + 3600
+    );
+    let mut fixture = Fixture::new(8_888);
+    let handle = fixture.store.generate_key::<IssuerSigning>().expect("key");
+    let jwt = sign_jwt(&fixture.store, &handle, status_list_header(), &payload);
+
+    let list = StatusListVerifier::parse(&jwt).expect("status list parse");
+    assert_eq!(list.bits_per_entry(), 2);
+    assert_eq!(list.uri(), Some(LIST_URI));
+    assert_eq!(
+        list.issued_at(),
+        Some(UnixTime::from_seconds(now.as_seconds() - 100))
+    );
+    assert_eq!(
+        list.expires_at(),
+        Some(UnixTime::from_seconds(now.as_seconds() + 3600))
+    );
+    assert!(list.entry_count() >= 4);
+    assert!(gravital_id_status::TokenStatus::Valid.is_valid());
+    assert!(!gravital_id_status::TokenStatus::Revoked.is_valid());
+    assert!(!gravital_id_status::TokenStatus::Suspended.is_valid());
+
+    let snapshot = gravital_id_status::cache::StatusSnapshot::new(list.clone(), LIST_URI, now);
+    assert_eq!(snapshot.uri(), LIST_URI);
+    assert_eq!(snapshot.acquired_at(), now);
+    assert_eq!(snapshot.age_seconds(now), 0);
+    assert_eq!(snapshot.list().bits_per_entry(), 2);
+
+    let mut cache = gravital_id_status::cache::StatusCache::new(10);
+    assert_eq!(cache.len(), 0);
+    assert_eq!(cache.max_entries(), 10);
+    assert!(cache.is_empty());
+    cache.insert(snapshot);
+    assert_eq!(cache.len(), 1);
+    assert!(!cache.is_empty());
+    assert!(cache.get(LIST_URI).is_some());
+    assert!(cache.get("https://non-existent.example").is_none());
+    assert_eq!(cache.uris().len(), 1);
+    let removed = cache.remove(LIST_URI);
+    assert!(removed.is_some());
+    assert_eq!(cache.len(), 0);
+    cache.clear();
+}

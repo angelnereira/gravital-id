@@ -15,31 +15,31 @@
 | REQ-CRED-001 | F3 | DEBE | T | P-04 | kb.rs, lib.rs, parser.rs, vc.rs, kb_jwt_integration.rs, sd_jwt_parsing_verification.rs, sd_jwt_vc_integration.rs, sd_jwt_parser.rs, generate_vectors.rs | Cubierto |
 | REQ-CRED-002 | F3 | DEBE | T, I | P-07 | disclosure.rs, issuer.rs, lib.rs, salt.rs, sd_jwt_emission.rs, batch.rs, lib.rs, issuer_api.rs, generate_vectors.rs | Cubierto |
 | REQ-CRED-003 | F3 | DEBE | T | P-09 | decoy.rs, issuer.rs, lib.rs, vc.rs, sd_jwt_emission.rs, request.rs, issuer_api.rs | Cubierto |
-| REQ-CRED-004 | F3 | DEBE | T | P-08 | lib.rs, parser.rs, profile.rs, vc.rs, profile_schema_integration.rs, lib.rs, request.rs, issuer_api.rs, generate_vectors.rs | Cubierto |
+| REQ-CRED-004 | F3 | DEBE | T | P-08 | lib.rs, parser.rs, profile.rs, vc.rs, profile_schema_integration.rs, lib.rs, request.rs, issuer_api.rs, verifier_negative_matrix_and_precedence.rs, generate_vectors.rs | Cubierto |
 | REQ-CRED-005 | F3 | PUEDE | T | P-09 | lib.rs, predicate.rs, profile.rs, predicate_integration.rs, lib.rs, issuer_api.rs, generate_vectors.rs | Cubierto |
 | REQ-CRED-006 | F3 | DEBERÍA | T | P-09 | batch.rs, lib.rs, request.rs, issuer_api.rs, generate_vectors.rs | Cubierto |
-| REQ-CRED-007 | F4 | DEBE | T | P-08 | lib.rs, vc.rs, sd_jwt_vc_integration.rs, request.rs, pipeline.rs, policy.rs, verifier_pipeline_integration.rs, generate_vectors.rs | Cubierto |
+| REQ-CRED-007 | F4 | DEBE | T | P-08 | lib.rs, vc.rs, sd_jwt_vc_integration.rs, request.rs, pipeline.rs, policy.rs, verifier_negative_matrix_and_precedence.rs, verifier_pipeline_integration.rs, generate_vectors.rs | Cubierto |
 | REQ-CRED-008 | F3 | DEBE | T, F | P-07 | lib.rs, parser.rs, vc.rs, sd_jwt_vc_integration.rs, lib.rs, issuer_api.rs, pipeline.rs, policy.rs, verifier_pipeline_integration.rs, verifier_policy_integration.rs, sd_jwt_parser.rs, generate_vectors.rs | Cubierto |
 | REQ-CRED-009 | F2 | DEBE | T, F | P-08 | json.rs, lib.rs, parser.rs, sd_jwt_parsing_verification.rs, json_bounded.rs, sd_jwt_parser.rs, generate_vectors.rs | Cubierto |
 | REQ-PRES-001 | F5 | DEBE | T | P-09 | — | Pendiente (Fase futura) |
-| REQ-PRES-002 | F5 | DEBE | T | P-08 | kb.rs, lib.rs, parser.rs, kb_jwt_integration.rs, profile_schema_integration.rs, sd_jwt_vc_integration.rs, pipeline.rs, generate_vectors.rs | Cubierto |
+| REQ-PRES-002 | F5 | DEBE | T | P-08 | kb.rs, lib.rs, parser.rs, kb_jwt_integration.rs, profile_schema_integration.rs, sd_jwt_vc_integration.rs, pipeline.rs, verifier_negative_matrix_and_precedence.rs, generate_vectors.rs | Cubierto |
 | REQ-PRES-003 | F5 | DEBE | T, I | P-09 | — | Pendiente (Fase futura) |
 | REQ-PRES-004 | F4 | DEBE | T | P-08 | lib.rs, nonce.rs, pipeline.rs, state.rs, verifier_nonce_integration.rs, verifier_pipeline_integration.rs, verifier_state_integration.rs | Cubierto |
 | REQ-PRES-005 | F5 | DEBE | T, D | P-01 | — | Pendiente (Fase futura) |
 | REQ-PRES-006 | F5 | DEBE | T, D | P-01 | — | Pendiente (Fase futura) |
 | REQ-PRES-007 | F5 | DEBE | T | P-09 | — | Pendiente (Fase futura) |
 | REQ-PRES-008 | F10 | DEBE | T | P-04 | — | Pendiente (Fase futura) |
-| REQ-VER-001 | F4 | DEBE | T, I | P-01 | — | Pendiente (Fase futura) |
-| REQ-VER-002 | F4 | DEBE | T | P-05 | pipeline.rs, result.rs, verifier_pipeline_integration.rs | Cubierto |
-| REQ-VER-003 | F4 | DEBE | T, F | P-08 | kb.rs, lib.rs, parser.rs, profile.rs, vc.rs, kb_jwt_integration.rs, predicate_integration.rs, profile_schema_integration.rs, sd_jwt_parsing_verification.rs, sd_jwt_vc_integration.rs, issuer_api.rs, cache.rs, status_list_integration.rs, verifier_state_integration.rs, sd_jwt_parser.rs, status_list_parser.rs | Cubierto |
-| REQ-VER-004 | F4 | DEBE | T | P-08 | pipeline.rs, verifier_pipeline_integration.rs | Cubierto |
-| REQ-VER-005 | F4 | DEBE | T | — | parser.rs, lib.rs, policy.rs, verifier_policy_integration.rs | Cubierto |
-| REQ-VER-006 | F4 | DEBE | T | P-08 | cache.rs, lib.rs, pipeline.rs, state.rs, verifier_pipeline_integration.rs, verifier_state_integration.rs | Cubierto |
-| REQ-VER-007 | F4 | DEBE | I | P-05 | lib.rs, policy.rs, verifier_policy_integration.rs | Cubierto |
+| REQ-VER-001 | F4 | DEBE | T, I | P-01 | lib.rs, cli_integration.rs, verifier_offline_and_determinism.rs | Cubierto |
+| REQ-VER-002 | F4 | DEBE | T | P-05 | pipeline.rs, result.rs, verifier_negative_matrix_and_precedence.rs, verifier_pipeline_integration.rs | Cubierto |
+| REQ-VER-003 | F4 | DEBE | T, F | P-08 | kb.rs, lib.rs, parser.rs, profile.rs, vc.rs, kb_jwt_integration.rs, predicate_integration.rs, profile_schema_integration.rs, sd_jwt_parsing_verification.rs, sd_jwt_vc_integration.rs, issuer_api.rs, cache.rs, status_list_integration.rs, verifier_negative_matrix_and_precedence.rs, verifier_state_integration.rs, sd_jwt_parser.rs, status_list_parser.rs | Cubierto |
+| REQ-VER-004 | F4 | DEBE | T | P-08 | pipeline.rs, verifier_negative_matrix_and_precedence.rs, verifier_pipeline_integration.rs | Cubierto |
+| REQ-VER-005 | F4 | DEBE | T | — | parser.rs, lib.rs, policy.rs, verifier_negative_matrix_and_precedence.rs, verifier_offline_and_determinism.rs, verifier_policy_integration.rs | Cubierto |
+| REQ-VER-006 | F4 | DEBE | T | P-08 | cache.rs, lib.rs, pipeline.rs, state.rs, verifier_negative_matrix_and_precedence.rs, verifier_pipeline_integration.rs, verifier_state_integration.rs | Cubierto |
+| REQ-VER-007 | F4 | DEBE | I | P-05 | lib.rs, policy.rs, verifier_negative_matrix_and_precedence.rs, verifier_policy_integration.rs | Cubierto |
 | REQ-VER-008 | F2 | DEBE | T, F | P-08 | base64url.rs, cbor.rs, json.rs, differential_serde_json.rs, lib.rs, parser.rs, vc.rs, sd_jwt_parsing_verification.rs, sd_jwt_vc_integration.rs, request.rs, cache.rs, manifest.rs, status_list_integration.rs, bundle.rs, root.rs, ids.rs, proptest_ids.rs, nonce.rs, state.rs, verifier_nonce_integration.rs, base64url_strict.rs, cbor_bounded.rs, json_bounded.rs, sd_jwt_parser.rs | Cubierto |
-| REQ-VER-009 | F4 | DEBE | T | P-06 | cbor.rs, json.rs, differential_serde_json.rs, issuer_api.rs, status_list_integration.rs, lib.rs, clock.rs, cbor_bounded.rs, json_bounded.rs, jwk_parser.rs, sd_jwt_parser.rs, status_list_parser.rs | Cubierto |
-| REQ-VER-010 | F4 | DEBE | T | P-08 | pipeline.rs, result.rs, verifier_pipeline_integration.rs | Cubierto |
-| REQ-VER-011 | F4 | DEBE | T | P-08 | cache.rs, error.rs, lib.rs, pipeline.rs, state.rs, verifier_pipeline_integration.rs, verifier_state_integration.rs | Cubierto |
+| REQ-VER-009 | F4 | DEBE | T | P-06 | cbor.rs, json.rs, differential_serde_json.rs, issuer_api.rs, status_list_integration.rs, lib.rs, clock.rs, verifier_offline_and_determinism.rs, cbor_bounded.rs, json_bounded.rs, jwk_parser.rs, sd_jwt_parser.rs, status_list_parser.rs | Cubierto |
+| REQ-VER-010 | F4 | DEBE | T | P-08 | pipeline.rs, result.rs, verifier_negative_matrix_and_precedence.rs, verifier_pipeline_integration.rs | Cubierto |
+| REQ-VER-011 | F4 | DEBE | T | P-08 | cache.rs, error.rs, lib.rs, pipeline.rs, state.rs, verifier_negative_matrix_and_precedence.rs, verifier_pipeline_integration.rs, verifier_state_integration.rs | Cubierto |
 | REQ-VER-012 | F4 | DEBE | T, I | P-08 | pipeline.rs, result.rs, compile_fail.rs, cannot_construct_valid_directly.rs, verifier_pipeline_integration.rs | Cubierto |
 | REQ-STAT-001 | F4 | DEBE | T | P-04 | lib.rs, status_list.rs, status_list_integration.rs, status_list_parser.rs | Cubierto |
 | REQ-STAT-002 | F7 | DEBE | T | P-09 | — | Pendiente (Fase futura) |
@@ -101,7 +101,7 @@
 | REQ-SDK-005 | F9 | DEBE | T | P-11 | — | Pendiente (Fase futura) |
 | REQ-SDK-006 | F9 | DEBE | T | — | — | Pendiente (Fase futura) |
 | REQ-SDK-007 | F9 | DEBE | T | P-11 | — | Pendiente (Fase futura) |
-| REQ-SDK-008 | F4 | DEBE | T | P-14 | — | Pendiente (Fase futura) |
+| REQ-SDK-008 | F4 | DEBE | T | P-14 | lib.rs, cli_integration.rs, verifier_offline_and_determinism.rs | Cubierto |
 | REQ-SDK-009 | F9 | DEBE | T, I | P-12 | — | Pendiente (Fase futura) |
 | REQ-GOV-001 | F14 | DEBE | I | P-12 | — | Inspección / Auditoría |
 | REQ-GOV-002 | F14 | DEBE | I, D | P-08 | — | Inspección / Auditoría |
@@ -138,7 +138,7 @@
 | REQ-SEC-010 | F0 | DEBE | I | — | — | Inspección / Auditoría |
 | REQ-SEC-011 | F0 | DEBE | I | — | — | Inspección / Auditoría |
 | REQ-PRIV-001 | F5 | DEBE | I | — | — | Inspección / Auditoría |
-| REQ-PRIV-002 | F4 | DEBE | T | — | — | Pendiente (Fase futura) |
+| REQ-PRIV-002 | F4 | DEBE | T | — | verifier_offline_and_determinism.rs | Cubierto |
 | REQ-PRIV-003 | F7 | DEBE | T, I | — | — | Pendiente (Fase futura) |
 | REQ-PRIV-004 | F14 | DEBE | A | — | — | Inspección / Auditoría |
 | REQ-PRIV-005 | F5 | DEBE | T | — | — | Pendiente (Fase futura) |
@@ -149,16 +149,16 @@
 | REQ-REL-001 | F15 | DEBE | A, D | — | — | Inspección / Auditoría |
 | REQ-REL-002 | F15 | DEBE | I | — | — | Inspección / Auditoría |
 | REQ-REL-003 | F15 | DEBE | D | — | — | Inspección / Auditoría |
-| REQ-REL-004 | F4 | DEBE | T | — | — | Pendiente (Fase futura) |
+| REQ-REL-004 | F4 | DEBE | T | — | verifier_negative_matrix_and_precedence.rs, verifier_offline_and_determinism.rs | Cubierto |
 | REQ-PERF-001 | F2 | DEBE | T | — | crypto_primitives.rs | Cubierto |
 | REQ-PERF-002 | F9 | DEBE | T | — | — | Pendiente (Fase futura) |
 | REQ-PERF-003 | F5 | DEBE | T | — | — | Pendiente (Fase futura) |
 | REQ-MAINT-001 | F1 | DEBE | T | — | — | Pendiente (Fase futura) |
 | REQ-MAINT-002 | F1 | DEBE | T | — | layers.rs, trace.rs | Cubierto |
-| REQ-MAINT-003 | F4 | DEBE | T | — | conformance.rs | Cubierto |
+| REQ-MAINT-003 | F4 | DEBE | T | — | verifier_negative_matrix_and_precedence.rs, conformance.rs | Cubierto |
 | REQ-MAINT-004 | F1 | DEBE | T | — | — | Pendiente (Fase futura) |
-| REQ-MAINT-005 | F4 | DEBERÍA | T | — | — | Inspección / Auditoría |
-| REQ-MAINT-006 | F4 | DEBERÍA | T | — | — | Inspección / Auditoría |
+| REQ-MAINT-005 | F4 | DEBERÍA | T | — | verifier_negative_matrix_and_precedence.rs | Cubierto |
+| REQ-MAINT-006 | F4 | DEBERÍA | T | — | verifier_negative_matrix_and_precedence.rs | Cubierto |
 | REQ-COMP-001 | F14 | DEBE | A | — | — | Inspección / Auditoría |
 | REQ-COMP-002 | F14 | DEBE | A | — | — | Inspección / Auditoría |
 | REQ-COMP-003 | F1 | DEBE | T | — | — | Pendiente (Fase futura) |

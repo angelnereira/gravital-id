@@ -21,6 +21,7 @@ members = [
     "crates/gravital-id-ledger-evm",
     "crates/gravital-id-sdk",
     "crates/gravital-id-testkit",
+    "apps/pip-cli",
     "xtask",
 ]
 

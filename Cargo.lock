@@ -795,6 +795,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "pip-cli"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "gravital-id-codec",
+ "gravital-id-credential",
+ "gravital-id-crypto",
+ "gravital-id-issuer",
+ "gravital-id-keys",
+ "gravital-id-status",
+ "gravital-id-testkit",
+ "gravital-id-trust",
+ "gravital-id-types",
+ "gravital-id-verifier",
+]
+
+[[package]]
 name = "poly1305"
 version = "0.8.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"

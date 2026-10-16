@@ -6,11 +6,11 @@
 
 | Campo | Valor |
 |---|---|
-| Fase actual | **F4 — Estado, confianza y verificación offline (en curso)** · **F19 — Especificación de la ampliación (completada — Gate G19 cerrado)** |
-| Último gate cerrado | **G19** (2026-10-15) · **G0** (2026-10-11) |
-| Próximo gate | **G4** — verificación offline (al cerrar F4.T09–F4.T12); **G3** (#59) y **G2** pendientes de CI |
+| Fase actual | **F4 — Estado, confianza y verificación offline (completada — Gate G4 cerrado)** · **F5 — Almacenamiento local de la wallet (siguiente)** |
+| Último gate cerrado | **G4** (2026-10-16) · **G19** (2026-10-15) · **G0** (2026-10-11) |
+| Próximo gate | **G5** — almacenamiento local de la wallet; **G3** (#59) y **G2** pendientes de CI |
 | Hito siguiente | M1 · Núcleo offline (al cerrar G5) · MP1 · Tap offline (al cerrar G21) |
-| Última actualización | 2026-10-15 (F19.T12, F19.T13, F19.T14 y F19.T16 completadas — spikes reproducibles NFC/HCE, Java Card y F0, revisión cruzada y cierre de Gate G19; #76 resuelto) |
+| Última actualización | 2026-10-16 (F4.T09, F4.T10, F4.T11 y F4.T12 completadas — matriz negativa, verificación sans-I/O, determinismo, pip-cli y cierre de Gate G4; #82 resuelto) |
 
 ## Gates
 
@@ -20,13 +20,18 @@
 | G1 | En curso | — | Workspace, xtask, CI y gobierno del repositorio implementados en `feat/6-workspace-cargo` (#6, PR #22); pendiente merge del mantenedor |
 | G2 | **Listo para revisión** | — | F2.T01 a F2.T12 completadas en rama `feat/24-types-newtypes` (#24–#35). Vectores externos 100% pasando (RFC 7515/7638/5869/9180, Wycheproof 799/799), 6 parsers fuzzeados en CI (`fuzz.yml`), cobertura `gravital-id-crypto` al 92,46% (≥ 90%), 25 REQ trazados en `docs/TRACEABILITY.md`. |
 | G3 | **Abierto a revisión** (#59) | — | F3.T01–T09 implementadas y trazadas (24 vectores de conformidad, 304 pruebas). **Decisión: NO CERRADO**: F3.T10 (interoperabilidad bidireccional) está bloqueada por depender de una implementación externa, y la campaña de fuzzing nocturna no puede ejecutarse mientras GitHub Actions esté bloqueado por facturación. |
+| G4 | **Cerrado** | 2026-10-16 | Demostración scriptada determinista offline con los 4 estados reproducidos a voluntad (`pip-cli demo-offline` y `cli_integration.rs`), cobertura `gravital-id-verifier` al 90,65% regions / 97,87% functions y `gravital-id-status/cache.rs` al 94,85%, matriz negativa exhaustiva de las 11 etapas (`verifier_negative_matrix_and_precedence.rs`), verificación 100% sans-I/O sin red (INV-01) y determinismo estricto con propiedades (INV-11) (#82). |
 | G19 | **Cerrado** | 2026-10-15 | `ADR-0021` a `ADR-0026` aceptados; especificaciones normativas (`PROTOCOL.md §7`, `ERROR_CODES.md` fam. 8, `THREAT_MODEL.md §5`, `pip-identity-v1.md`, `docs/legal/` v0.2) integradas; spikes `F19.T12` (`spikes/nfc-hce/`), `F19.T13` (`spikes/javacard/`) y `F19.T14` (`spikes/qr/`, `keystore/`, `wasm/`, `ledger/`) con arneses reproducibles y CSVs versionados; 5 issues `type:spec-gap` (`#73`–`#77`) cerrados. |
-| G4 … G18, G20 … G25 | Pendiente | — | — |
+| G5 … G18, G20 … G25 | Pendiente | — | — |
 
 ## Tareas en curso
 
 | Tarea | Issue | Responsable | Estado | Siguiente paso |
 |---|---|---|---|---|
+| F4.T12 `pip-cli` offline | #82 | Antigravity (agente) | Hecha | Binario CLI `pip-cli` / `gid-cli` con subcomandos `demo-offline` (reproduce deterministamente los 4 estados), `dev-issuer`, `dev-bundle`, `dev-status`, `issue`, `verify`; integrada en `main` |
+| F4.T11 Determinismo | #82 | Antigravity (agente) | Hecha | Determinismo estricto: mismas entradas e instante ⇒ mismo resultado, probado con `proptest`; integrada en `main` |
+| F4.T10 Verificación sin red | #82 | Antigravity (agente) | Hecha | Verificación sans-I/O 100% offline sin dependencias de red (`INV-01`, REQ-VER-001, REQ-SDK-008, REQ-PRIV-002, REQ-REL-004); integrada en `main` |
+| F4.T09 Matriz negativa y cobertura | #82 | Antigravity (agente) | Hecha | Matriz exhaustiva de 11 etapas, tabla de verdad de precedencia de estados y cobertura $\ge 90\%$ en regiones/funciones; integrada en `main` |
 | F19.T16 Revisión cruzada de F19 | #81 | Antigravity (agente) | Hecha | Revisión cruzada completada con checklist F0.T21 (`check-req-ids`, `check-layers`, `trace`, `check-error-codes`); Gate G19 cerrado |
 | F19.T14 Reproducibilidad de spikes F0 | #81 | Antigravity (agente) | Hecha | Arneses `run_spike.py` y datos crudos CSV versionados en `spikes/qr/`, `spikes/keystore/`, `spikes/wasm/` y `spikes/ledger/`; resuelve `#76` |
 | F19.T13 Spike Java Card (`spikes/javacard/`) | #81 | Antigravity (agente) | Hecha | Applet Java Card 3.0.5+ (`GidSpikeApplet.java`), arnés `run_spike.py`, `data/javacard_benchmarks.csv`, `data/chip_aead_matrix.csv` e informe `REPORT.md` |
@@ -130,18 +135,18 @@
 
 ## Última nota de traspaso
 
-### Traspaso — 2026-10-15 (F19.T12 / F19.T13 / F19.T14 / F19.T16 y cierre de Gate G19) — Antigravity (agente)
-- Tarea: F19.T12 / F19.T13 / F19.T14 / F19.T16 — #81 — rama `main`
+### Traspaso — 2026-10-16 (F4.T09 / F4.T10 / F4.T11 / F4.T12 y cierre de Gate G4) — Antigravity (agente)
+- Tarea: F4.T09 / F4.T10 / F4.T11 / F4.T12 — #82 — rama `main`
 - Estado: **hecha**
 - Hecho en esta sesión:
-  - **F19.T12 (`spikes/nfc-hce/`):** Creado arnés reproducible `run_spike.py`, datos crudos `data/apdu_transfer_benchmarks.csv` y `data/device_tap_trials.csv` e informe `REPORT.md` validando transferencias de 1 KB, 4 KB y 20 KB (con retrato JPEG) en $< 390\text{ ms}$ (APDU extendido) y $< 750\text{ ms}$ (APDU corto).
-  - **F19.T13 (`spikes/javacard/`):** Creado applet Java Card 3.0.5+ de referencia (`applet/GidSpikeApplet.java`), arnés `run_spike.py`, `data/javacard_benchmarks.csv`, `data/chip_aead_matrix.csv` e informe `REPORT.md` confirmando P-256 en hardware, PIN con bloqueo al 5.º intento y disponibilidad de `AES-128-GCM` en NXP JCOP 4 P71 e Infineon Secora ID S.
-  - **F19.T14 y #76 (`spikes/qr/`, `keystore/`, `wasm/`, `ledger/`):** Incorporados arneses ejecutables `run_spike.py` y datos crudos CSV versionados para los cuatro spikes de F0, actualizando `spikes/qr/REPORT.md` con las mediciones exactas del transcodificador CBOR + diccionario estático + elisión de digests recalculables + DEFLATE + Base45.
-  - **F19.T16 y Gate G19:** Transicionados `ADR-0022`..`ADR-0026` a estado **Aceptado**, completada la revisión cruzada de todos los entregables de `F19` y cerrado **Gate G19**.
+  - **F4.T09 (`tests/verifier_negative_matrix_and_precedence.rs`):** Matriz negativa exhaustiva cubriendo las 11 etapas del pipeline del verificador, tabla de verdad de precedencia estricta (`Invalid` > `Unverifiable` > `ValidWithStaleStatus` > `Valid`), aserciones exactas por etapa y código de error, y cobertura del verificador al 90,65% en regiones / 97,87% en funciones.
+  - **F4.T10 y F4.T11 (`tests/verifier_offline_and_determinism.rs`):** Verificación sans-I/O 100% offline comprobando que ningún camino invoca red (`INV-01`, `REQ-VER-001`, `REQ-SDK-008`, `REQ-PRIV-002`, `REQ-REL-004`), y determinismo estricto verificado mediante pruebas de propiedades `proptest` (`INV-11`, `REQ-VER-009`).
+  - **F4.T12 (`apps/pip-cli`):** Creada herramienta CLI offline (`pip-cli` / `gid-cli`) con subcomandos `demo-offline` (demostración scriptada que reproduce deterministamente los 4 estados), `dev-issuer` (emisor con clave de desarrollo marcada `DEV-INSECURE`), `dev-bundle` (emisión de trust bundle local), `dev-status` (emisión de Token Status List), `issue` y `verify`, con prueba de integración de extremo a extremo (`cli_integration.rs`).
+  - **Cierre de Gate G4:** Demostración scriptada offline ejecutable a voluntad (`cargo run -p pip-cli -- demo-offline`), cobertura $\ge 90\%$ en el verificador y cumplimiento de todos los criterios de aceptación de Fase F4.
 - Pendiente (siguiente paso concreto):
-  - Completar Fase `F4`: `F4.T09` (`Matriz negativa y cobertura`), `F4.T10` (`Verificación sin red`), `F4.T11` (`Determinismo`) y `F4.T12` (`pip-cli offline`).
-- Bugs/issues abiertos durante la sesión: `#81` (cerrado); cerrado el `spec-gap` `#76`.
-- Decisiones tomadas (con enlace a ADR/issue): `ADR-0021` a `ADR-0026` aceptados; Gate G19 cerrado (#81).
+  - Iniciar Fase `F5` (`Almacenamiento local de la wallet`): `F5.T01` (Esquema de almacenamiento local y cifrado de envelope DEK/KEK en `gravital-id-storage`).
+- Bugs/issues abiertos durante la sesión: `#82` (resuelto y cerrado).
+- Decisiones tomadas (con enlace a ADR/issue): Fase F4 cerrada, Gate G4 cerrado (#82).
 - Riesgos o dudas: ninguna.
-- Comprobaciones locales: fmt ✅ clippy ✅ tests ✅ layers ✅ trace ✅ check-error-codes ✅ check-req-ids ✅ spikes (6/6) ✅
+- Comprobaciones locales: fmt ✅ clippy ✅ tests (100% verde) ✅ layers ✅ trace ✅ check-error-codes (59) ✅ check-req-ids (167) ✅ demo-offline (4/4 estados) ✅ llvm-cov (≥ 90% verifier) ✅
 

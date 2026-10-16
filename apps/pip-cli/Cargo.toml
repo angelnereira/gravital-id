@@ -1,0 +1,29 @@
+[package]
+name = "pip-cli"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+readme = "README.md"
+description = "Línea de comandos para desarrollo y verificación offline de Gravital ID (F4.T12, REQ-VER-001)."
+default-run = "pip-cli"
+
+
+[lints]
+workspace = true
+
+[dependencies]
+gravital-id-types = { workspace = true }
+gravital-id-codec = { workspace = true }
+gravital-id-crypto = { workspace = true }
+gravital-id-keys = { workspace = true }
+gravital-id-credential = { workspace = true }
+gravital-id-status = { workspace = true }
+gravital-id-trust = { workspace = true }
+gravital-id-verifier = { workspace = true }
+gravital-id-issuer = { workspace = true }
+gravital-id-testkit = { path = "../../crates/gravital-id-testkit", version = "0.1.0" }
+anyhow = { workspace = true }
