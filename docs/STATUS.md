@@ -6,11 +6,11 @@
 
 | Campo | Valor |
 |---|---|
-| Fase actual | **F4 — Estado, confianza y verificación offline (completada — Gate G4 cerrado)** · **F5 — Almacenamiento local de la wallet (siguiente)** |
+| Fase actual | **F5 — Almacenamiento local de la wallet y presentación offline** |
 | Último gate cerrado | **G4** (2026-10-16) · **G19** (2026-10-15) · **G0** (2026-10-11) |
 | Próximo gate | **G5** — almacenamiento local de la wallet; **G3** (#59) y **G2** pendientes de CI |
 | Hito siguiente | M1 · Núcleo offline (al cerrar G5) · MP1 · Tap offline (al cerrar G21) |
-| Última actualización | 2026-10-16 (F4.T09, F4.T10, F4.T11 y F4.T12 completadas — matriz negativa, verificación sans-I/O, determinismo, pip-cli y cierre de Gate G4; #82 resuelto) |
+| Última actualización | 2026-10-16 (F5.T01, F5.T02 y F5.T03 completadas — StorageBackend, InMemoryStorageBackend, cifrado de sobre DEK/KEK, AAD canónico e índices ciegos HMAC-SHA-256 en gravital-id-storage; #83 resuelto) |
 
 ## Gates
 
@@ -28,6 +28,7 @@
 
 | Tarea | Issue | Responsable | Estado | Siguiente paso |
 |---|---|---|---|---|
+| F5.T01-T03 Almacenamiento local | #83 | Antigravity (agente) | Hecha | Trait StorageBackend, InMemoryStorageBackend, cifrado de sobre DEK/KEK, formato canónico PIP$, AAD e índices ciegos HMAC-SHA-256 probados con 92,22% de cobertura; integrada en main |
 | F4.T12 `pip-cli` offline | #82 | Antigravity (agente) | Hecha | Binario CLI `pip-cli` / `gid-cli` con subcomandos `demo-offline` (reproduce deterministamente los 4 estados), `dev-issuer`, `dev-bundle`, `dev-status`, `issue`, `verify`; integrada en `main` |
 | F4.T11 Determinismo | #82 | Antigravity (agente) | Hecha | Determinismo estricto: mismas entradas e instante ⇒ mismo resultado, probado con `proptest`; integrada en `main` |
 | F4.T10 Verificación sin red | #82 | Antigravity (agente) | Hecha | Verificación sans-I/O 100% offline sin dependencias de red (`INV-01`, REQ-VER-001, REQ-SDK-008, REQ-PRIV-002, REQ-REL-004); integrada en `main` |
@@ -135,18 +136,21 @@
 
 ## Última nota de traspaso
 
-### Traspaso — 2026-10-16 (F4.T09 / F4.T10 / F4.T11 / F4.T12 y cierre de Gate G4) — Antigravity (agente)
-- Tarea: F4.T09 / F4.T10 / F4.T11 / F4.T12 — #82 — rama `main`
+### Traspaso — 2026-10-16 (F5.T01 / F5.T02 / F5.T03: StorageBackend, Envelope Encryption e Índices Ciegos) — Antigravity (agente)
+- Tarea: F5.T01 / F5.T02 / F5.T03 — #83 — rama `main`
 - Estado: **hecha**
 - Hecho en esta sesión:
-  - **F4.T09 (`tests/verifier_negative_matrix_and_precedence.rs`):** Matriz negativa exhaustiva cubriendo las 11 etapas del pipeline del verificador, tabla de verdad de precedencia estricta (`Invalid` > `Unverifiable` > `ValidWithStaleStatus` > `Valid`), aserciones exactas por etapa y código de error, y cobertura del verificador al 90,65% en regiones / 97,87% en funciones.
-  - **F4.T10 y F4.T11 (`tests/verifier_offline_and_determinism.rs`):** Verificación sans-I/O 100% offline comprobando que ningún camino invoca red (`INV-01`, `REQ-VER-001`, `REQ-SDK-008`, `REQ-PRIV-002`, `REQ-REL-004`), y determinismo estricto verificado mediante pruebas de propiedades `proptest` (`INV-11`, `REQ-VER-009`).
-  - **F4.T12 (`apps/pip-cli`):** Creada herramienta CLI offline (`pip-cli` / `gid-cli`) con subcomandos `demo-offline` (demostración scriptada que reproduce deterministamente los 4 estados), `dev-issuer` (emisor con clave de desarrollo marcada `DEV-INSECURE`), `dev-bundle` (emisión de trust bundle local), `dev-status` (emisión de Token Status List), `issue` y `verify`, con prueba de integración de extremo a extremo (`cli_integration.rs`).
-  - **Cierre de Gate G4:** Demostración scriptada offline ejecutable a voluntad (`cargo run -p pip-cli -- demo-offline`), cobertura $\ge 90\%$ en el verificador y cumplimiento de todos los criterios de aceptación de Fase F4.
+  - **F5.T01 (`backend.rs`):** Definición del trait `StorageBackend` clave-valor transaccional (`get`, `put`, `delete`, `query_by_blind_index`, `list`, `count`, `execute_transaction`), tipos de soporte `StoredRecord`, `StorageOp`, `StorageBatch` e implementación completa `InMemoryStorageBackend` (`no_std` + `alloc`) con atomicidad y reversión transaccional garantizada ante fallos (`REQ-STOR-004`, `REQ-STOR-008`).
+  - **F5.T02 (`record.rs`, `envelope.rs`):** Implementación de la estructura canónica `EncryptedRecord` con constante mágica `PIP$` y cabecera canónica (`STORAGE_FORMAT.md §3`), cálculo de AAD vinculado `b"PIP-STORAGE-AAD-v1" || schema_version || record_id || collection` (`REQ-STOR-001`), derivación HKDF-SHA256 de DEK por registro y BIK (`STORAGE_FORMAT.md §2`), cifrado/descifrado AEAD `XChaCha20-Poly1305`, y definición del trait `KekProvider` del host (`REQ-STOR-002`) con implementación `StaticKekProvider`.
+  - **F5.T03 (`blind_index.rs`):** Implementación del newtype `BlindIndex` (32 bytes / 64 hex / 16 bytes truncados para `record_id_hash`) y `BlindIndexer` con fórmula canónica `HMAC-SHA256(BIK, "idx:" || attr || ":" || val)` (`STORAGE_FORMAT.md §4`, `REQ-STOR-003`, `P-09`).
+  - **Pruebas e inspección forense (`storage_envelope_and_indices.rs`):** Suite completa de integración con prueba de round-trip e2e, matriz negativa estricta (rechazo con `AeadAuthenticationFailed` o `StorageReadFailed` ante KEK incorrecta, intercambio de record_id, intercambio de colección, manipulación de ciphertext, auth_tag, nonce o versión), y test de **inspección forense automática** que escanea todo el almacenamiento verificando ausencia absoluta de strings, atributos o PII en claro (`INV-02`).
+  - **Cobertura de código (`llvm-cov`):** 92,22% de cobertura de líneas en `gravital-id-storage` (backend: 95,26%, envelope: 95,77%, blind_index: 92,97%, record: 87,83%).
+  - **Trazabilidad:** REQ-STOR-001, REQ-STOR-002, REQ-STOR-003, REQ-STOR-004 y REQ-STOR-008 marcados como **Cubierto** en `docs/TRACEABILITY.md` (69 requisitos cubiertos en total).
 - Pendiente (siguiente paso concreto):
-  - Iniciar Fase `F5` (`Almacenamiento local de la wallet`): `F5.T01` (Esquema de almacenamiento local y cifrado de envelope DEK/KEK en `gravital-id-storage`).
-- Bugs/issues abiertos durante la sesión: `#82` (resuelto y cerrado).
-- Decisiones tomadas (con enlace a ADR/issue): Fase F4 cerrada, Gate G4 cerrado (#82).
+  - Iniciar `F5.T04`–`F5.T06`: Adaptador SQLite `gravital-id-storage-sqlite` (L5) implementando `StorageBackend` y `VerifierStateStore`, migraciones de esquema versionadas y consistencia ante fallos (`REQ-STOR-004`, `REQ-STOR-005`, `REQ-STOR-008`).
+- Bugs/issues abiertos durante la sesión: ninguno.
+- Decisiones tomadas (con enlace a ADR/issue): Implementado almacenamiento L3 según `STORAGE_FORMAT.md` (#83).
 - Riesgos o dudas: ninguna.
-- Comprobaciones locales: fmt ✅ clippy ✅ tests (100% verde) ✅ layers ✅ trace ✅ check-error-codes (59) ✅ check-req-ids (167) ✅ demo-offline (4/4 estados) ✅ llvm-cov (≥ 90% verifier) ✅
+- Comprobaciones locales: fmt ✅ clippy ✅ tests (100% verde) ✅ layers ✅ trace (69 REQs) ✅ check-error-codes (59) ✅ check-req-ids (167) ✅ llvm-cov (92,22% storage) ✅
+
 

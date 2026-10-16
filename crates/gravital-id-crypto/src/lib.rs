@@ -29,7 +29,7 @@ pub use hpke::{
     open_base as hpke_open_base, seal_base as hpke_seal_base,
 };
 pub use jwk::{jwk_thumbprint_base64url, jwk_thumbprint_sha256, JwkEcP256, ES256_COORDINATE_LEN};
-pub use kdf::{hkdf_extract_sha256, hkdf_sha256, MAX_HKDF_OUTPUT_LEN};
+pub use kdf::{hkdf_expand_sha256, hkdf_extract_sha256, hkdf_sha256, MAX_HKDF_OUTPUT_LEN};
 pub use mac::{constant_time_eq, hmac_sha256, hmac_sha256_verify, HMAC_OUTPUT_LEN};
 pub use rng::Rng;
 pub use secret::{

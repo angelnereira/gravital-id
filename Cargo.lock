@@ -544,7 +544,9 @@ name = "gravital-id-storage"
 version = "0.1.0"
 dependencies = [
  "gravital-id-crypto",
+ "gravital-id-testkit",
  "gravital-id-types",
+ "zeroize",
 ]
 
 [[package]]

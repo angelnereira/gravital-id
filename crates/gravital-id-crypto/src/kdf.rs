@@ -60,6 +60,30 @@ pub fn hkdf_extract_sha256(salt: &[u8], ikm: &[u8]) -> Result<[u8; 32], GidError
     Ok(out)
 }
 
+/// HKDF-Expand aislado (RFC 5869 §2.3) a partir de una pseudorandom key (PRK).
+///
+/// # Errores
+/// [`ErrorCode::InvalidKeyFormat`] si `okm_len` es 0 o excede [`MAX_HKDF_OUTPUT_LEN`].
+pub fn hkdf_expand_sha256(
+    prk: &[u8; 32],
+    info: &[u8],
+    okm_len: usize,
+) -> Result<Vec<u8>, GidError> {
+    if okm_len == 0 || okm_len > MAX_HKDF_OUTPUT_LEN {
+        return Err(GidError::new(
+            ErrorCode::InvalidKeyFormat,
+            "HKDF output length out of range",
+        ));
+    }
+
+    let hkdf = Hkdf::<Sha256>::from_prk(prk)
+        .map_err(|_| GidError::new(ErrorCode::InvalidKeyFormat, "HKDF from_prk failed"))?;
+    let mut okm = vec![0u8; okm_len];
+    hkdf.expand(info, &mut okm)
+        .map_err(|_| GidError::new(ErrorCode::InvalidKeyFormat, "HKDF expand failed"))?;
+    Ok(okm)
+}
+
 use alloc::vec;
 use gravital_id_types::{ErrorCode, GidError};
 
@@ -115,5 +139,30 @@ mod tests {
         let zero_salt = [0u8; 32];
         let okm_zeros = hkdf_sha256(&zero_salt, b"ikm", b"info", 32).expect("valid");
         assert_eq!(okm, okm_zeros);
+    }
+
+    // // Verifies: REQ-SEC-002 (hkdf_expand_sha256 con PRK)
+    #[test]
+    fn hkdf_expand_matches_rfc5869_case_1() {
+        let salt = {
+            let mut s = [0u8; 13];
+            for (i, slot) in s.iter_mut().enumerate() {
+                *slot = i as u8;
+            }
+            s
+        };
+        let ikm = [0x0bu8; 22];
+        let info = [0xf0u8, 0xf1, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7, 0xf8, 0xf9];
+        let prk = hkdf_extract_sha256(&salt, &ikm).expect("valid");
+        let okm = hkdf_expand_sha256(&prk, &info, 42).expect("valid expand");
+        let expected: [u8; 42] = [
+            0x3c, 0xb2, 0x5f, 0x25, 0xfa, 0xac, 0xd5, 0x7a, 0x90, 0x43, 0x4f, 0x64, 0xd0, 0x36,
+            0x2f, 0x2a, 0x2d, 0x2d, 0x0a, 0x90, 0xcf, 0x1a, 0x5a, 0x4c, 0x5d, 0xb0, 0x2d, 0x56,
+            0xec, 0xc4, 0xc5, 0xbf, 0x34, 0x00, 0x72, 0x08, 0xd5, 0xb8, 0x87, 0x18, 0x58, 0x65,
+        ];
+        assert_eq!(okm, expected);
+
+        assert!(hkdf_expand_sha256(&prk, &info, 0).is_err());
+        assert!(hkdf_expand_sha256(&prk, &info, MAX_HKDF_OUTPUT_LEN + 1).is_err());
     }
 }

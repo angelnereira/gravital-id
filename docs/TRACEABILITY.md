@@ -73,14 +73,14 @@
 | REQ-SYNC-005 | F7 | DEBE | T, I | P-09 | — | Pendiente (Fase futura) |
 | REQ-SYNC-006 | F7 | DEBE | T | P-09 | — | Pendiente (Fase futura) |
 | REQ-SYNC-007 | F7 | DEBE | T | P-10 | — | Pendiente (Fase futura) |
-| REQ-STOR-001 | F5 | DEBE | T | P-03 | — | Pendiente (Fase futura) |
-| REQ-STOR-002 | F9 | DEBE | T, D | P-03 | — | Pendiente (Fase futura) |
-| REQ-STOR-003 | F5 | DEBE | T, I | P-09 | — | Pendiente (Fase futura) |
-| REQ-STOR-004 | F5 | DEBE | T | — | — | Pendiente (Fase futura) |
+| REQ-STOR-001 | F5 | DEBE | T | P-03 | envelope.rs, lib.rs, record.rs, storage_envelope_and_indices.rs | Cubierto |
+| REQ-STOR-002 | F9 | DEBE | T, D | P-03 | envelope.rs, lib.rs, storage_envelope_and_indices.rs | Cubierto |
+| REQ-STOR-003 | F5 | DEBE | T, I | P-09 | backend.rs, blind_index.rs, envelope.rs, lib.rs, storage_envelope_and_indices.rs | Cubierto |
+| REQ-STOR-004 | F5 | DEBE | T | — | backend.rs, lib.rs, storage_envelope_and_indices.rs | Cubierto |
 | REQ-STOR-005 | F5 | DEBE | T | — | — | Pendiente (Fase futura) |
 | REQ-STOR-006 | F5 | DEBE | T, I | P-09 | — | Pendiente (Fase futura) |
 | REQ-STOR-007 | F9 | DEBE | D, I | P-03 | — | Inspección / Auditoría |
-| REQ-STOR-008 | F5 | DEBE | T | P-11 | — | Pendiente (Fase futura) |
+| REQ-STOR-008 | F5 | DEBE | T | P-11 | backend.rs, lib.rs, storage_envelope_and_indices.rs | Cubierto |
 | REQ-REC-001 | F8 | DEBE | T, D | P-03 | — | Pendiente (Fase futura) |
 | REQ-REC-002 | F8 | DEBE | T | P-03 | — | Pendiente (Fase futura) |
 | REQ-REC-003 | F8 | DEBERÍA | T | P-10 | — | Inspección / Auditoría |
