@@ -154,19 +154,15 @@ class _WalletHomeShell extends StatelessWidget {
       onDestinationSelected: onDestinationSelected,
       destinations: destinations,
       appBar: AppBar(
-        title: const Text('Gravital ID · Bóveda & Accesos'),
+        title: const Text('Gravital ID'),
         actions: <Widget>[
-          Flexible(
-            child: Padding(
-              padding: const EdgeInsets.only(right: GxSpace.m),
-              child: Center(
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: GxTabularCodeText(
-                    'Cédula PA: 8-888-8888',
-                    style: Theme.of(context).textTheme.labelSmall,
-                  ),
-                ),
+          Padding(
+            padding: const EdgeInsets.only(right: GxSpace.s),
+            child: Center(
+              child: Text(
+                '8-888-8888',
+                style: Theme.of(context).textTheme.labelSmall,
+                overflow: TextOverflow.ellipsis,
               ),
             ),
           ),
