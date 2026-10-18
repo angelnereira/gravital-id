@@ -8,6 +8,7 @@ import 'src/domain/gravital_wallet_store.dart';
 import 'src/screens/device_slots_screen.dart';
 import 'src/screens/present_access_screen.dart';
 import 'src/screens/recovery_screen.dart';
+import 'src/screens/sync_trust_screen.dart';
 import 'src/screens/tenants_portability_screen.dart';
 import 'src/screens/vault_screen.dart';
 
@@ -107,6 +108,11 @@ class _WalletHomeShell extends StatelessWidget {
         icon: Icons.health_and_safety_outlined,
         selectedIcon: Icons.health_and_safety_rounded,
       ),
+      const GxNavigationDestination(
+        label: 'Sincronizar',
+        icon: Icons.sync_outlined,
+        selectedIcon: Icons.sync_rounded,
+      ),
     ];
 
     final Widget primaryBody = switch (selectedIndex) {
@@ -124,6 +130,7 @@ class _WalletHomeShell extends StatelessWidget {
           onNavigateToPresent: () => onDestinationSelected(1),
         ),
       4 => RecoveryScreen(store: store),
+      5 => SyncTrustScreen(store: store),
       _ => DeviceSlotsScreen(store: store),
     };
 
