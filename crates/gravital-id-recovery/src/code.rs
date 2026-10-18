@@ -25,7 +25,7 @@ pub const RECOVERY_ENTROPY_LEN: usize = 16;
 pub const BIP39_WORD_COUNT: usize = 12;
 
 /// Alfabeto canónico de Crockford Base32 (excluye I, L, O, U para evitar ambigüedades visuales).
-const CROCKFORD_ALPHABET: &[u8; 32] = b"0123456789ABCDEFGHJKMNPQRSTVWXYZ";
+pub const CROCKFORD_ALPHABET: &[u8; 32] = b"0123456789ABCDEFGHJKMNPQRSTVWXYZ";
 
 /// Código de recuperación generado con ≥ 128 bits de entropía criptográfica y suma de verificación.
 #[derive(Clone, PartialEq, Eq)]

@@ -83,7 +83,7 @@
 | REQ-STOR-008 | F5 | DEBE | T | P-11 | holder_credential_management.rs, holder_privacy_and_forensics.rs, backend.rs, lib.rs, storage_envelope_and_indices.rs, lib.rs, storage.rs, sqlite_storage_integration.rs | Cubierto |
 | REQ-REC-001 | F8 | DEBE | T, D | P-03 | — | Pendiente (Fase futura) |
 | REQ-REC-002 | F8 | DEBE | T | P-03 | code.rs, error.rs, kdf.rs, lib.rs, manager.rs, package.rs, payload.rs, wordlist.rs, recovery_tests.rs | Cubierto |
-| REQ-REC-003 | F8 | DEBERÍA | T | P-10 | — | Inspección / Auditoría |
+| REQ-REC-003 | F8 | DEBERÍA | T | P-10 | gf256.rs, shamir.rs, shamir_tests.rs | Cubierto |
 | REQ-REC-004 | F8 | DEBE | T | P-07 | kdf.rs, lib.rs, payload.rs, recovery_tests.rs | Cubierto |
 | REQ-REC-005 | F8 | DEBE | I | — | — | Inspección / Auditoría |
 | REQ-REC-006 | F8 | DEBE | I | P-10 | — | Inspección / Auditoría |

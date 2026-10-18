@@ -31,6 +31,16 @@ pub enum RecoveryError {
     KeyDerivationFailed(&'static str),
     /// Entropía insuficiente en la fuente RNG inyectada.
     InsufficientEntropy,
+    /// Parámetros de umbral de Shamir inválidos (k < 2, k > n o n > 255).
+    InvalidShamirThreshold(&'static str),
+    /// Fragmentos insuficientes para alcanzar el umbral de reconstrucción k.
+    InsufficientShares,
+    /// Fragmentos con índices duplicados o nulos.
+    DuplicateShareIndex,
+    /// Los fragmentos pertenecen a secretos distintos (secret_id no coincide).
+    SecretIdMismatch,
+    /// Formato de fragmento Shamir inválido o malformado.
+    InvalidShareFormat(&'static str),
 }
 
 impl fmt::Display for RecoveryError {
@@ -62,6 +72,24 @@ impl fmt::Display for RecoveryError {
             Self::KeyDerivationFailed(msg) => write!(f, "Fallo en derivación HKDF: {msg}"),
             Self::InsufficientEntropy => {
                 write!(f, "Entropía insuficiente en la fuente aleatoria inyectada")
+            }
+            Self::InvalidShamirThreshold(msg) => {
+                write!(f, "Umbral de Shamir inválido: {msg}")
+            }
+            Self::InsufficientShares => {
+                write!(
+                    f,
+                    "Fragmentos insuficientes para alcanzar el umbral de reconstrucción"
+                )
+            }
+            Self::DuplicateShareIndex => {
+                write!(f, "Índice de fragmento duplicado o nulo detectado")
+            }
+            Self::SecretIdMismatch => {
+                write!(f, "Los fragmentos pertenecen a secretos distintos")
+            }
+            Self::InvalidShareFormat(msg) => {
+                write!(f, "Formato de fragmento Shamir inválido: {msg}")
             }
         }
     }

@@ -174,7 +174,9 @@ impl EncryptedBackupPackage {
             package_bytes
                 .get(4..6)
                 .and_then(|s| s.try_into().ok())
-                .ok_or(RecoveryError::InvalidBackupHeader("formato de versión inválido"))?,
+                .ok_or(RecoveryError::InvalidBackupHeader(
+                    "formato de versión inválido",
+                ))?,
         );
         if format_version != BACKUP_PACKAGE_FORMAT_VERSION {
             return Err(RecoveryError::InvalidBackupHeader(
@@ -211,7 +213,9 @@ impl EncryptedBackupPackage {
             package_bytes
                 .get(55..59)
                 .and_then(|s| s.try_into().ok())
-                .ok_or(RecoveryError::InvalidBackupHeader("ciphertext_len inválido"))?,
+                .ok_or(RecoveryError::InvalidBackupHeader(
+                    "ciphertext_len inválido",
+                ))?,
         ) as usize;
 
         if ciphertext_len > MAX_BACKUP_CIPHERTEXT_LEN {
@@ -231,7 +235,9 @@ impl EncryptedBackupPackage {
 
         let ciphertext_and_tag = package_bytes
             .get(BACKUP_HEADER_LEN..expected_total_len)
-            .ok_or(RecoveryError::InvalidBackupHeader("rango de criptograma inválido"))?;
+            .ok_or(RecoveryError::InvalidBackupHeader(
+                "rango de criptograma inválido",
+            ))?;
 
         // 3. Reconstruir AAD
         let aad = Self::compute_aad(format_version, cipher_suite, created_at, &salt);

@@ -23,14 +23,17 @@ extern crate alloc;
 
 pub mod code;
 pub mod error;
+pub mod gf256;
 pub mod kdf;
 pub mod manager;
 pub mod package;
 pub mod payload;
+pub mod shamir;
 pub mod wordlist;
 
 pub use code::{RecoveryCode, BIP39_WORD_COUNT, RECOVERY_ENTROPY_LEN};
 pub use error::RecoveryError;
+pub use gf256::{gf256_add, gf256_div, gf256_eval_poly, gf256_inv, gf256_mul, gf256_sub};
 pub use kdf::{
     derive_backup_keys, derive_issuer_recovery_jwk, derive_issuer_recovery_secret, BACKUP_SALT_LEN,
 };
@@ -42,6 +45,10 @@ pub use package::{
 pub use payload::{
     BackupCredential, BackupDeviceSlot, BackupPayload, BackupTenantRole, BACKUP_SCHEMA_VERSION,
     MAX_BACKUP_PAYLOAD_BYTES,
+};
+pub use shamir::{
+    ShamirSecretSharing, ShamirShare, MAX_SHAMIR_SECRET_LEN, SHAMIR_CHECKSUM_LEN,
+    SHAMIR_FORMAT_VERSION, SHAMIR_HEADER_LEN, SHAMIR_MAGIC_GIDS, SHAMIR_MIN_THRESHOLD,
 };
 pub use wordlist::{find_word_index, get_word, BIP39_WORDLIST_SIZE};
 

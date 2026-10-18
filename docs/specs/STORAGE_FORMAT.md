@@ -186,3 +186,61 @@ El texto en claro antes de comprimir y cifrar contiene:
 * `tenant_roles`: array de credenciales de rol e inquilinos asociados (`pip-tenant-role-v1`).
 * `created_at`: `UnixTime` de generación del respaldo.
 
+---
+
+## 8. Formato Canónico de Fragmentos de Recuperación Social Shamir $k$-de-$n$ (`SPEC-PIP-SHAMIR-001`)
+
+> **Trazabilidad:** `REQ-REC-003`, `P-10`, `INV-01`, `INV-02`, `INV-03`, `INV-05`, `INV-10`, `INV-11`.
+
+Para mitigar el riesgo de punto único de fallo o coacción física en la custodia del código de recuperación, el titular puede opcionalmente fragmentar el secreto (16 bytes de entropía de `RecoveryCode` o 32 bytes de `RecoverySecret`) entre $n$ guardianes de confianza con un umbral de reconstrucción $k$ ($2 \le k \le n \le 255$).
+
+### 8.1 Aritmética en Campo de Galois $GF(2^8)$
+
+Las operaciones se ejecutan sobre el campo finito de Galois $GF(2^8)$ con el polinomio generador irreducible estándar de Rijndael/AES:
+$$P(x) = x^8 + x^4 + x^3 + x + 1 \quad (\texttt{0x11B})$$
+
+1. **Suma y Resta:** Operación XOR bit a bit:
+   $$a \oplus b$$
+2. **Multiplicación e Inversión:** Operaciones en tiempo constante o mediante tablas precomputadas de logaritmo/exponenciación base $\alpha = 3$:
+   $$a \cdot b = \alpha^{(\log_\alpha(a) + \log_\alpha(b)) \pmod{255}}, \quad a^{-1} = \alpha^{(255 - \log_\alpha(a)) \pmod{255}}$$
+
+### 8.2 Partición y Reconstrucción Polinómica
+
+Dado un secreto $S \in GF(2^8)^L$ ($L \in \{16, 32\}$):
+1. **Generación de Polinomio:** Se generan $k-1$ coeficientes aleatorios independientes $A_1, \dots, A_{k-1} \in GF(2^8)^L$ inyectados mediante `Rng` (`INV-11`):
+   $$f(x) = S \oplus A_1 x \oplus A_2 x^2 \oplus \dots \oplus A_{k-1} x^{k-1}$$
+2. **Evaluación de Fragmentos:** Para cada guardián $i \in \{1, \dots, n\}$, con $x_i \ne 0$ distintos:
+   $$\text{Share}_i = (x_i, f(x_i))$$
+3. **Reconstrucción de Lagrange:** Presentados $k$ fragmentos válidos distintos $\{(x_0, y_0), \dots, (x_{k-1}, y_{k-1})\}$:
+   $$S = f(0) = \bigoplus_{j=0}^{k-1} \left( y_j \cdot \prod_{m=0, m \ne j}^{k-1} \frac{x_m}{x_m \oplus x_j} \right)$$
+
+### 8.3 Estructura Binaria del Fragmento (`ShamirShare`)
+
+Cada fragmento se empaqueta en una estructura binaria canónica autosuficiente con validación de integridad fail-closed:
+
+```text
++-------------------+----------------+-------------+-------------+
+| magic (4 B)       | format_ver (1B)| threshold k | total n     |
+| "GIDS" (0x47494453)| 0x01           | [2..255]    | [k..255]    |
++-------------------+----------------+-------------+-------------+
+| share_index x (1B)| secret_id (4 B)| val_len (1B)| share_val   |
+| [1..255]          | SHA-256[..4]   | L (16 o 32) | L bytes     |
++-------------------+----------------+-------------+-------------+
+| checksum (4 B)    |
+| SHA-256(header || share_val)[..4]
++-------------------+
+```
+
+* `magic`: `b"GIDS"` (Gravital ID Shamir).
+* `format_version`: `0x01`.
+* `threshold`: número mínimo $k$ de fragmentos necesarios.
+* `total_shares`: total $n$ de fragmentos emitidos.
+* `share_index`: coordenada $x_i \in [1, 255]$ no nula.
+* `secret_id`: identificador de 4 bytes derivado del hash del secreto para impedir mezclar fragmentos de diferentes secretos.
+* `share_value`: $L$ bytes correspondientes a $f(x_i)$.
+* `checksum`: 4 bytes de verificación de integridad criptográfica SHA-256 calculados sobre los bytes precedentes.
+
+### 8.4 Formato Legible para Custodia Física (Crockford Base32)
+
+Los fragmentos binarios pueden codificarse como cadenas alfanuméricas Crockford Base32 agrupadas con guiones (`XXXX-XXXX-...`), facilitando su almacenamiento en papel o soportes físicos seguros sin ambigüedad tipográfica (`I`, `L`, `O` normalizados).
+

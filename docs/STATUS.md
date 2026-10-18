@@ -10,7 +10,7 @@
 | Último gate cerrado | **G7** (2026-10-18) · **G6** (2026-10-17) · **G5** (2026-10-16) · **G4** (2026-10-16) · **G19** (2026-10-15) · **G0** (2026-10-11) |
 | Próximo gate | **G8 / Hito M2** — los nueve criterios de aceptación del MVP (§24); **G3** (#59) y **G2** pendientes de CI |
 | Hito siguiente | M2 · Sincronización y anclaje (al cerrar G8) · MP1 · Tap offline (al cerrar G21) [M1 alcanzado] |
-| Última actualización | 2026-10-18 (`F8.T01` completada: implementación de `gravital-id-recovery` en capa L3 `no_std`, código de recuperación con $\ge 128$ bits de entropía en mnemónico BIP-39 de 12 palabras y Crockford Base32 con checksum, derivación KDF determinista por emisor para re-vinculación sin correlación, contenedor de respaldo binario cifrado `GIDB` con AAD autenticado y suite de 23 pruebas pasando al 100% con auditoría forense cero PII; siguiente tarea: F8.T02 Shamir k-de-n) |
+| Última actualización | 2026-10-18 (`F8.T02` completada: división de secreto $k$-de-$n$ de Shamir sobre $GF(2^8)$ con polinomio Rijndael `0x11B` en `gravital-id-recovery` L3 `no_std`, contenedor binario canónico `GIDS` según `SPEC-PIP-SHAMIR-001`, representación Crockford Base32, validación fail-closed de integridad con SHA-256 de 4 bytes e inmunidad a fragmentos corruptos o umbrales insuficientes; siguiente tarea: F8.T03 Clave de recuperación) |
 
 ## Gates
 
@@ -31,7 +31,8 @@
 
 | Tarea | Issue | Responsable | Estado | Siguiente paso |
 |---|---|---|---|---|
-| F8.T02 Shamir k-de-n | — | Antigravity (agente) | Por hacer | División de secreto k-de-n sin I/O, formato de custodia y recuperación social (`REQ-REC-003`) |
+| F8.T03 Clave de recuperación | — | Antigravity (agente) | En curso | `KeyPurpose::HolderRecovery`, derivación por emisor, registro de huella en emisión (`PROTOCOL.md`) y prueba de no correlación (`REQ-REC-004`, `REQ-REC-007`) |
+| F8.T02 Shamir k-de-n | #102 | Antigravity (agente) | Hecha | Aritmética $GF(2^8)$, interpolación de Lagrange de Shamir $k$-de-$n$, contenedor `GIDS` canónico, Crockford Base32, 44 pruebas verdes y auditoría cero PII (`REQ-REC-003`, `SPEC-PIP-SHAMIR-001`); resuelto #102 |
 | F8.T01 Código de recuperación y respaldo | #101 | Antigravity (agente) | Hecha | Generación $\ge 128$ bits, codificación legible BIP-39/Crockford con checksum, derivación HKDF por emisor, formato de respaldo GIDB versionado y cifrado con XChaCha20-Poly1305 (`REQ-REC-002`, `REQ-REC-004`, `REQ-REC-007`, `SPEC-PIP-BACKUP-001`); resuelto #101 |
 | F7.T12 Caos (inyección de fallos) | #105 | Antigravity (agente) | Hecha | Subcomando `pip-cli demo-chaos` y suite `apps/pip-cli/tests/chaos_fault_injection.rs` con 6 escenarios de inyección: relay malicioso (rollback, retención, alteración), RPC caído, divergencia inter-ledger, CDN caída y degradación a `ValidWithStaleStatus`/`Unverifiable`, y auditoría cero PII (`REQ-REL-004`, `REQ-SYNC-004`, `REQ-SYNC-007`, `REQ-TRUST-004`, `REQ-OBS-002`, `INV-01`, `INV-02`, `INV-04`, `INV-05`, `INV-10`, `INV-11`, `INV-16`); resuelto #105 y Gate G7 cerrado |
 | F7.T11 Revocación durante periodo offline (MVP-05) | #104 | Antigravity (agente) | Hecha | Subcomando `pip-cli demo-mvp05` y suite `apps/pip-cli/tests/offline_revocation_mvp05.rs` con ciclo de vida completo: $T_0 \to \text{Valid}$, $T_{\text{offline}} \to \text{ValidWithStaleStatus}$ por umbral de frescura de transacción, $T_{\text{sync}} \to \text{Invalid}$ por revocación, y anti-rollback monotónico (`REQ-STAT-004`, `REQ-STAT-008`, `REQ-REL-004`, `MVP-05`); resuelto #104 |
@@ -163,6 +164,36 @@
 | Tamaño binario del SDK | — | — | — | — | — |
 
 ## Última nota de traspaso
+
+### Traspaso — 2026-10-18 (F8.T02: Shamir k-de-n — gravital-id-recovery L3 no_std, aritmética GF(2^8) canónica, contenedor canónico GIDS SPEC-PIP-SHAMIR-001, Crockford Base32, validación de integridad fail-closed y auditoría forense cero PII) — Antigravity (agente)
+- Tarea: F8.T02 — #102 — rama `main`
+- Estado: **hecha**
+- Hecho en esta sesión:
+  - **`docs/specs/STORAGE_FORMAT.md §8` (`SPEC-PIP-SHAMIR-001`):** Especificación normativa del esquema de fragmentos de Shamir $k$-de-$n$ para custodia social y recuperación distribuida sin I/O de red (`REQ-REC-003`, `INV-01`, `INV-02`, `INV-05`, `INV-11`):
+    - Campo de Galois $GF(2^8)$ con polinomio irreducible canónico de Rijndael/AES $P(x) = x^8 + x^4 + x^3 + x + 1$ (`0x11B`).
+    - Interpolación polinómica de Lagrange evaluada en $x = 0$ para reconstrucción exacta del secreto.
+    - Contenedor binario canónico `GIDS` (13 bytes de cabecera AAD/metadatos: número mágico `b"GIDS"`, versión de formato 1, umbral $k$, total $n$, índice de fragmento $x \in [1, 255]$, identificador de secreto `sha256(secret)[..4]`, longitud de payload $L$ de 2 bytes, valor del fragmento de $L$ bytes y checksum SHA-256 de 4 bytes).
+    - Representación canónica alfanumérica en Crockford Base32 compacto con dígito de control para custodia humana en papel o almacenamiento seguro.
+  - **`crates/gravital-id-recovery` (Capa L3 `no_std` + `alloc`, `#![forbid(unsafe_code)]`):**
+    - `gf256.rs`: Aritmética de campo finito en tiempo constante sin tablas de búsqueda dependientes de datos (Russian peasant multiplication, inverso multiplicativo modular mediante Pequeño Teorema de Fermat $a^{-1} = a^{254}$, división segura e interpolación de Lagrange en $x = 0$).
+    - `shamir.rs`: Estructura `ShamirShare` con `Zeroize`/`ZeroizeOnDrop`, `Debug` redactado (`[REDACTED]`), serialización y deserialización binaria estricta `GIDS`, y codificación legible Base32 Crockford. `ShamirSecretSharing`: partición polinómica aleatoria con RNG inyectado (`split`, `split_recovery_code`) y reconstrucción determinista (`combine`, `combine_recovery_code`) con validación fail-closed de umbral ($k \ge 2$, $n \ge k$, $n \le 255$), deduplicación de índices y verificación de coincidencia de `secret_id` e integridad SHA-256.
+  - **Pruebas y trazabilidad (`crates/gravital-id-recovery/tests/shamir_tests.rs`):**
+    - 8 pruebas de integración exhaustivas:
+      - `test_shamir_threshold_matrix_roundtrips`: Matriz de umbrales exhaustiva $(2, 3), (3, 5), (4, 7), (5, 10), (8, 12)$ probada con múltiples combinaciones de subconjuntos de fragmentos.
+      - `test_insufficient_shares_fail_closed`: Verificación estricta de que $k-1$ fragmentos devuelven error explícito `InsufficientShares` y nunca reconstruyen el secreto (`INV-05`).
+      - `test_duplicate_share_index_rejected`: Rechazo fail-closed inmediato ante fragmentos con índice $x$ duplicado (`DuplicateShareIndex`).
+      - `test_mismatched_secret_id_rejected`: Rechazo fail-closed ante mezcla de fragmentos pertenecientes a diferentes secretos (`SecretIdMismatch`).
+      - `test_corrupted_share_integrity_fail_closed`: Mutación de 1 solo bit en payload o checksum provoca rechazo fail-closed con `InvalidChecksum`.
+      - `test_zero_pii_in_shares_forensic_audit`: Auditoría forense en memoria verificando ausencia total de PII o identificadores en shares o logs (`INV-02`).
+      - `test_recovery_code_shamir_journey`: Ciclo completo de generación de `RecoveryCode`, división en 3 de 5 fragmentos, serialización Crockford Base32, deserialización de 3 fragmentos arbitrarios, reconstrucción de la entropía y validación del mnemónico BIP-39 idéntico al original.
+      - `test_hostile_input_immunity`: Inmunidad a entradas hostiles arbitrarias sin pánicos (`INV-10`).
+  - **Verificaciones del workspace:** `fmt` ✅, `clippy` (-D warnings) ✅, `test --workspace` ✅ (100% pasando, 44 pruebas en `gravital-id-recovery`), `check-layers` ✅, `check-deploy-hygiene` ✅, `trace` ✅ (112 REQs referenciados).
+- Pendiente (siguiente paso concreto):
+  - Iniciar `F8.T03`: Clave de recuperación (`REQ-REC-004`, `REQ-REC-007`): propósito de clave `KeyPurpose::HolderRecovery`, derivación por emisor a partir del secreto de recuperación, registro de huella en la emisión como extensión en `PROTOCOL.md` y prueba de no-correlación entre emisores.
+- Bugs/issues abiertos durante la sesión: ninguno.
+- Decisiones tomadas (con enlace a ADR/issue): Implementado esquema normativo `SPEC-PIP-SHAMIR-001` en `STORAGE_FORMAT.md §8` y `gravital-id-recovery` según `REQ-REC-003` (#102).
+- Riesgos o dudas: ninguna.
+- Comprobaciones locales: fmt ✅ clippy (-D warnings) ✅ tests (100% verde en todo el workspace) ✅ layers (21 crates) ✅ trace (112 REQs) ✅ check-deploy-hygiene ✅
 
 ### Traspaso — 2026-10-18 (F8.T01: Código de recuperación y respaldo cifrado — gravital-id-recovery L3 no_std, mnemónico BIP-39, Crockford Base32, jerarquía KDF determinista por emisor, paquete GIDB con AAD y auditoría forense cero PII) — Antigravity (agente)
 - Tarea: F8.T01 — #101 — rama `main`
