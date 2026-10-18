@@ -66,13 +66,13 @@
 | REQ-LEDG-005 | F7 | DEBE | T | P-08 | adapter.rs, client.rs, error.rs, lib.rs, evm_adapter_integration.rs, evm_fault_tolerance.rs, config.rs, divergence.rs, engine.rs, error.rs, lib.rs, main.rs, metrics.rs, storage.rs, config_test.rs, divergence_test.rs, engine_test.rs, storage_test.rs | Cubierto |
 | REQ-LEDG-006 | F7 | DEBE | T | P-10 | adapter.rs, client.rs, error.rs, lib.rs, transport.rs, evm_adapter_integration.rs, evm_fault_tolerance.rs, divergence.rs, error.rs, lib.rs, main.rs, divergence_test.rs | Cubierto |
 | REQ-LEDG-007 | F6 | DEBE | I | P-02 | event.rs, lib.rs, ledger_state_and_derivation.rs, contracts_privacy.rs | Cubierto |
-| REQ-SYNC-001 | F7 | DEBE | T | P-01 | — | Pendiente (Fase futura) |
+| REQ-SYNC-001 | F7 | DEBE | T | P-01 | error.rs, types.rs | Cubierto |
 | REQ-SYNC-002 | F7 | DEBE | T | — | — | Pendiente (Fase futura) |
-| REQ-SYNC-003 | F7 | DEBE | T | — | client.rs, evm_fault_tolerance.rs | Cubierto |
+| REQ-SYNC-003 | F7 | DEBE | T | — | client.rs, evm_fault_tolerance.rs, backoff.rs | Cubierto |
 | REQ-SYNC-004 | F7 | DEBE | T | P-08 | manifest.rs, config.rs, lib.rs, main.rs, server.rs, store.rs, config_test.rs, limiter_test.rs, server_test.rs, store_test.rs | Cubierto |
 | REQ-SYNC-005 | F7 | DEBE | T, I | P-09 | — | Pendiente (Fase futura) |
-| REQ-SYNC-006 | F7 | DEBE | T | P-09 | config.rs, lib.rs, main.rs, server.rs, store.rs, config_test.rs, limiter_test.rs, server_test.rs, store_test.rs | Cubierto |
-| REQ-SYNC-007 | F7 | DEBE | T | P-10 | — | Pendiente (Fase futura) |
+| REQ-SYNC-006 | F7 | DEBE | T | P-09 | types.rs, config.rs, lib.rs, main.rs, server.rs, store.rs, config_test.rs, limiter_test.rs, server_test.rs, store_test.rs | Cubierto |
+| REQ-SYNC-007 | F7 | DEBE | T | P-10 | config.rs | Cubierto |
 | REQ-STOR-001 | F5 | DEBE | T | P-03 | lib.rs, cli_m1_demonstration.rs, credential.rs, wallet.rs, holder_credential_management.rs, envelope.rs, lib.rs, record.rs, storage_envelope_and_indices.rs | Cubierto |
 | REQ-STOR-002 | F9 | DEBE | T, D | P-03 | envelope.rs, lib.rs, storage_envelope_and_indices.rs | Cubierto |
 | REQ-STOR-003 | F5 | DEBE | T, I | P-09 | wallet.rs, holder_credential_management.rs, backend.rs, blind_index.rs, envelope.rs, lib.rs, storage_envelope_and_indices.rs, storage.rs, sqlite_storage_integration.rs | Cubierto |
