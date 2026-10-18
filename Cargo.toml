@@ -22,6 +22,7 @@ members = [
     "crates/gravital-id-sdk",
     "crates/gravital-id-testkit",
     "apps/pip-cli",
+    "services/pip-service-common",
     "xtask",
 ]
 
@@ -84,6 +85,7 @@ gravital-id-recovery = { path = "crates/gravital-id-recovery", version = "0.1.0"
 gravital-id-sync = { path = "crates/gravital-id-sync", version = "0.1.0" }
 gravital-id-ledger = { path = "crates/gravital-id-ledger", version = "0.1.0" }
 gravital-id-storage-sqlite = { path = "crates/gravital-id-storage-sqlite", version = "0.1.0" }
+pip-service-common = { path = "services/pip-service-common", version = "0.1.0" }
 anyhow = "1.0"
 # Ya usado por gravital-id-crypto para higiene de secretos (REQ-SEC-003); se comparte la
 # misma configuración para evitar divergencias entre crates.

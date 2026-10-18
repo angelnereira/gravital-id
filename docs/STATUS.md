@@ -10,7 +10,7 @@
 | Último gate cerrado | **G6** (2026-10-17) · **G5** (2026-10-16) · **G4** (2026-10-16) · **G19** (2026-10-15) · **G0** (2026-10-11) |
 | Próximo gate | **G7** — plano de servicio completo en testnet; **G3** (#59) y **G2** pendientes de CI |
 | Hito siguiente | M2 · Sincronización y anclaje (al cerrar G7) · MP1 · Tap offline (al cerrar G21) [M1 alcanzado] |
-| Última actualización | 2026-10-17 (F7.T01 completada — ADR-0013 Aceptado, Dockerfile.service multi-stage non-root, stack docker-compose local, módulos OpenTofu/Terraform para dev y testnet, check-deploy-hygiene en xtask, cero secretos en repositorio; #94 resuelto) |
+| Última actualización | 2026-10-17 (F7.T02 completada — pip-service-common implementado con configuración tipada, OpenTelemetry, /healthz, /readyz y redacción estricta no-PII al 94,86% de cobertura; #95 resuelto) |
 
 ## Gates
 
@@ -30,7 +30,8 @@
 
 | Tarea | Issue | Responsable | Estado | Siguiente paso |
 |---|---|---|---|---|
-| F7.T02 `pip-service-common` | — | Antigravity (agente) | Por iniciar | Configuración tipada, OpenTelemetry, /healthz, /readyz, capa de redacción no-PII (REQ-OBS-001, REQ-PRIV-003) |
+| F7.T03 `pip-indexer` | — | Antigravity (agente) | Por iniciar | Consumo determinista de eventos finalizados, persistencia en PostgreSQL con idempotencia, prevención de reorganizaciones (REQ-LEDG-005) |
+| F7.T02 `pip-service-common` | #95 | Antigravity (agente) | Hecha | Crate L5 pip-service-common con configuración tipada, OpenTelemetry, /healthz, /readyz y redacción no-PII (94,86% cobertura); resuelto #95 |
 | F7.T01 ADR-0013 e IaC base | #94 | Antigravity (agente) | Hecha | ADR-0013 Aceptado, Dockerfile.service multi-stage, docker-compose local, módulos OpenTofu/Terraform dev/testnet, check-deploy-hygiene (REQ-REL-001); resuelto #94 |
 | F6.T11 Despliegue en testnet y Gate G6 | #93 | Antigravity (agente) | Hecha | Scripts reproducibles en Foundry, esquemas y artefactos en deploy/environments/testnet/contracts.json; Gate G6 cerrado (#93) |
 | F6.T09-T10 `pip-ledger-evm` y pruebas de fallos | #92 | Antigravity (agente) | Hecha | EvmLedgerAdapter con MultiRpcClient, failover, consistencia cruzada, tolerancia a reorgs y fallos (91,44% cobertura); resuelto #92 |
@@ -149,6 +150,25 @@
 | Tamaño binario del SDK | — | — | — | — | — |
 
 ## Última nota de traspaso
+
+### Traspaso — 2026-10-17 (F7.T02: pip-service-common — Configuración tipada, telemetría estructurada OpenTelemetry, health server y redacción estricta no-PII) — Antigravity (agente)
+- Tarea: F7.T02 — #95 — rama `main`
+- Estado: **hecha**
+- Hecho en esta sesión:
+  - **F7.T02 (`services/pip-service-common`):**
+    - `config.rs`: Modelado y validación de `ServiceConfig`, `ServerConfig`, `TelemetryConfig` y `Environment` con fail-closed en puertos, timeouts y niveles de log, y validación estricta para entornos productivos.
+    - `redaction.rs`: Motor de sanitización `redact_text` y escritor `RedactingWriter` que redacta tokens JWS/JWT, bloques PEM de claves privadas, correos electrónicos, números de teléfono y atributos JSON PII estructurados (`password`, `secret`, `given_name`, `national_id`, etc.) con cero pánicos ni unwraps (`compile_safe_regex`), garantizando cero PII en logs (`REQ-PRIV-003`, `INV-02`).
+    - `telemetry.rs`: Instrumentación estructurada basada en `tracing` y `tracing-subscriber` con soporte para formatos JSON y compacto, filtrado dinámico `EnvFilter`, integración de la capa de redacción y `TelemetryGuard` (`REQ-OBS-001`).
+    - `health.rs`: Registro extensible de salud (`HealthRegistry`, `HealthCheck`, `HealthStatus`, `ComponentHealth`, `HealthResponse`) para comprobaciones de liveness (`/healthz`) y readiness (`/readyz`) con agregación de dependencias.
+    - `shutdown.rs`: Coordinador atómico de apagado ordenado (`ShutdownCoordinator`) para orquestar la parada limpia ante señales (`SIGINT`, `SIGTERM`).
+    - `server.rs`: Servidor HTTP minimalista y sin dependencias externas pesadas en L5 para endpoints de salud y observabilidad con respuestas 200, 400, 404, 405 y 503.
+    - **Cobertura de código (`llvm-cov`):** 94,86% de cobertura de líneas en `pip-service-common` (config.rs: 98,84%, health.rs: 100%, redaction.rs: 92,06%, server.rs: 87,62%, shutdown.rs: 100%, telemetry.rs: 98,08%).
+- Pendiente (siguiente paso concreto):
+  - Iniciar `F7.T03`: Implementación de `pip-indexer` (Capa L5) consumiendo eventos finalizados del EVM, persistiendo proyecciones en PostgreSQL con idempotencia estricta, detección de reorganizaciones y split-views (`REQ-LEDG-005`).
+- Bugs/issues abiertos durante la sesión: ninguno.
+- Decisiones tomadas (con enlace a ADR/issue): Crate común L5 implementado según ADR-0013, REQ-OBS-001, REQ-PRIV-003 y REQ-REL-001 (#95).
+- Riesgos o dudas: ninguna.
+- Comprobaciones locales: fmt ✅ clippy ✅ tests (100% verde en todo el workspace) ✅ layers ✅ trace ✅ check-error-codes (59) ✅ check-contracts-privacy ✅ check-deploy-hygiene ✅ deny ✅ llvm-cov (94,86% pip-service-common) ✅
 
 ### Traspaso — 2026-10-16 (F6.T08: pip-ledger — Trait LedgerAdapter, proyección pura de estado, derivación determinista de TrustBundle y reconciliación estado ↔ bundle) — Antigravity (agente)
 - Tarea: F6.T08 — #91 — rama `main`
