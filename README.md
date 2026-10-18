@@ -243,6 +243,129 @@ Diseñado para intercambio remoto de credenciales o sincronización entre dispos
 
 ---
 
+## Almacenamiento, Portabilidad y Topología de Datos: Titular vs. Servidor
+
+Para entender cómo opera Gravital ID en la práctica, es fundamental comprender la separación física y criptográfica de los datos: dónde reside la credencial, cómo se transfiere entre soportes (tarjetas inteligentes y teléfonos móviles), qué custodia cada entidad y cómo se garantiza el aislamiento absoluto entre usuarios.
+
+### 1. Dónde Vive y Cómo se Aloja una Credencial en el Dispositivo
+
+En la arquitectura de Gravital ID, la credencial reside bajo el control físico exclusivo del usuario en su dispositivo (teléfono móvil, ordenador o tarjeta inteligente):
+
+```text
++-----------------------------------------------------------------------------------+
+|                        DISPOSITIVO DEL TITULAR (SMARTPHONE)                       |
+|                                                                                   |
+|  +-------------------------------------+   +-----------------------------------+  |
+|  |     ALMACENAMIENTO LOCAL CIFRADO    |   |     HARDWARE SEGURO (SILICIO)     |  |
+|  |     (gravital-id-storage-sqlite)    |   |     (Secure Enclave / StrongBox)  |  |
+|  |                                     |   |                                   |  |
+|  |  [Registro Cifrado - Formato PIP$]  |   |  [Clave Privada HolderBinding]    |  |
+|  |  - Cabecera: Version, Salt, Nonce   |   |  - Curva: NIST P-256 (secp256r1)  |  |
+|  |  - Datos: Issuer-Signed SD-JWT      |   |  - Estado: Inexportable en RAM    |  |
+|  |  - Algoritmo: XChaCha20-Poly1305    |   |  - Acceso: Protegido por PIN o    |  |
+|  |  - Clave DEK envuelta con KEK       |   |            biometria del titular  |  |
+|  |                                     |   +-----------------+-----------------+  |
+|  |  [Indices Ciegos Anti-Inspeccion]   |                     |                    |
+|  |  - HMAC-SHA256(KEK, Vct)            |                     | Solo firma KB-JWT  |
+|  |  - HMAC-SHA256(KEK, IssuerId)       |                     v (la clave nunca    |
+|  |  (Busqueda sin revelar texto plano) |             +-------+-------+            |
+|  +-------------------------------------+             | FFI / Bindings| (INV-03)   |
+|                                                      +---------------+            |
++-----------------------------------------------------------------------------------+
+```
+
+- **Estructura de Almacenamiento Cifrado (Formato `PIP$`):**
+  La biblioteca `gravital-id-holder` y el adaptador `gravital-id-storage-sqlite` almacenan cada credencial en un contenedor seguro denominado `EncryptedRecord`. Cada registro utiliza un esquema de cifrado de sobre (*envelope encryption*):
+  1. Se genera una Clave de Cifrado de Datos (DEK, *Data Encryption Key*) efímera de 256 bits mediante el CSPRNG del sistema.
+  2. El payload de la credencial (el SD-JWT completo emitido con sus divulgaciones y sales) se cifra mediante XChaCha20-Poly1305 con datos asociados autenticados (AAD) que vinculan la versión y el ID del registro.
+  3. La DEK se cifra (*envuelve*) utilizando la Clave de Cifrado de Claves (KEK, *Key Encryption Key*). La KEK se deriva de hardware seguro del dispositivo (mediante Secure Enclave en iOS con `kSecAccessControlBiometryAny`, StrongBox Keymaster en Android o TPM 2.0 en sistemas operativos de escritorio).
+- **Índices Ciegos para Consultas Locales:**
+  Para que la billetera pueda buscar credenciales por tipo (`vct`) o por emisor (`iss`) sin descifrar toda la base de datos y sin almacenar identificadores en claro en las tablas SQLite, se calculan tokens de búsqueda ciegos mediante `HMAC-SHA256(KEK, Vct)` y `HMAC-SHA256(KEK, IssuerId)`. Un atacante que extraiga el archivo SQLite de la memoria flash no puede determinar qué credenciales contiene ni a quién pertenecen.
+- **Aislamiento Estricto de Claves Privadas (`INV-03`):**
+  La clave privada que vincula al titular con su credencial (`HolderBinding`) reside exclusivamente en el chip de hardware seguro. El software de la billetera solo mantiene un manejador opaco (`KeyHandle`). Durante una presentación, el motor sans-I/O genera el hash de los atributos divulgados (`sd_hash`) y solicita al hardware seguro la firma ECDSA del KB-JWT. La clave privada nunca se expone a la memoria RAM de la aplicación ni cruza fronteras de FFI.
+
+---
+
+### 2. Cómo se Pasa la Información a una Tarjeta con Chip NFC o a un Móvil
+
+El aprovisionamiento de credenciales y su transferencia entre soportes se realiza mediante protocolos estandarizados y canales cifrados de extremo a extremo:
+
+#### A. Aprovisionamiento y Uso en una Tarjeta Inteligente NFC (Java Card 3.0.5+)
+
+En entornos donde el usuario no utiliza un smartphone o prefiere un documento de identidad físico infalsificable (cédula digital, tarjeta de transporte, tarjeta corporativa), la credencial se aloja directamente en el silicio de una tarjeta inteligente conforme a `ADR-0024` y `PROTOCOL.md §7`:
+
+```text
+  [Estacion de Personalizacion]                     [Tarjeta Inteligente Java Card]
+  (PC con lector PC/SC USB)                         (Chip seguro con Applet GID-APDU)
+              |                                                     |
+              | 1. SELECT AID (F0475241564954414C01)                |
+              |---------------------------------------------------->|
+              |                                                     | 2. Genera par P-256 interno
+              | 3. Lee clave publica cnf.jwk                        |    en coprocesador de silicio
+              |<----------------------------------------------------|    (clave privada inexportable)
+              |                                                     |
+              | 4. Emisor firma SD-JWT VC vinculando cnf.jwk        |
+              |                                                     |
+              | 5. APDU UPDATE_CREDENTIAL (fragmentos cifrados)     |
+              |---------------------------------------------------->| 6. Graba SD-JWT y sales
+              | 7. Respuesta de estado APDU 9000 (OK)               |    en memoria EEPROM/Flash
+              |<----------------------------------------------------|
+```
+
+1. **Generación de Claves en Silicio:** El chip de la tarjeta ejecuta el applet `GidSpikeApplet` (desarrollado para Java Card 3.0.5+). Durante la inicialización, el coprocesador criptográfico genera internamente un par de claves EC P-256. La clave privada queda permanentemente bloqueada dentro del silicio y físicamente no puede ser leída ni extraída mediante ningún comando o sondeo externo.
+2. **Personalización Presencial o en Fábrica (`gid-perso`):** La estación de enrolamiento, conectada a través de un lector de tarjetas inteligentes estándar mediante el adaptador `gravital-id-transport-pcsc`, lee la clave pública del chip (`cnf.jwk`). El emisor institucional incorpora esta clave en el claim de vinculación (`cnf`) de la credencial SD-JWT VC y firma el documento.
+3. **Inyección por Comandos APDU (ISO/IEC 7816-4):** La credencial se transfiere a la tarjeta mediante una secuencia de comandos `GID-APDU` sobre el canal seguro de personalización. La tarjeta guarda el token y las divulgaciones en su memoria no volátil protegida.
+4. **Verificación Offline por Contacto Físico ("Tap"):** Al acercar la tarjeta al lector NFC de un verificador offline:
+   - Se abre una sesión cifrada efímera mediante HPKE (RFC 9180).
+   - El lector transmite la solicitud de verificación (`VerificationRequest`) con un nonce aleatorio.
+   - El titular introduce su PIN si la política exige autenticación explícita (Nivel 1).
+   - El chip de la tarjeta selecciona los atributos consentidos, calcula el `sd_hash`, firma el KB-JWT utilizando su clave privada interna, y responde con la presentación en milisegundos mediante el comando `GET_PRESENTATION`.
+
+#### B. Aprovisionamiento en un Dispositivo Móvil (Smartphone)
+
+En un teléfono móvil, la credencial se transfiere mediante tres modalidades posibles:
+
+- **Vía Internet o Relay Asíncrono (`pip-relay`):** La billetera móvil genera su par de claves en el Secure Enclave/StrongBox, contacta al servicio de emisión a través de un sobre cifrado con HPKE, y recibe la credencial emitida sin que ningún intermediario de red pueda descifrar su contenido. Si la emisión es presencial, el emparejamiento inicial puede realizarse mediante un código numérico efímero de 10 dígitos (`SessionCode`) protegido con suma de comprobación Damm.
+- **Vía Código QR Offline:** En terminales de autoservicio desconectados, el emisor muestra en pantalla un código QR de aprovisionamiento (o una secuencia de multi-QRs Base45). La aplicación de la billetera escanea el código mediante la cámara, valida la firma del emisor contra su `TrustBundle` local e importa la credencial en su base de datos SQLite cifrada.
+- **Emulación de Tarjeta (NFC HCE - *Host Card Emulation*):** La aplicación móvil puede activar el modo HCE para responder a lectores NFC externos como si fuera una tarjeta física, ejecutando el protocolo `GID-APDU` y permitiendo verificaciones rápidas por proximidad en molinetes y controles de acceso.
+
+---
+
+### 3. Qué Porta el Titular vs. Qué Custodia el Servidor
+
+Una de las premisas fundamentales de Gravital ID es que el sistema **no** es un almacén de identidad centralizado. La distribución de responsabilidades y artefactos entre las partes es asimétrica y soberana:
+
+| Entidad / Rol | Artefactos que Custodia y Almacena | Lo que NUNCA Tiene ni Conoce |
+|---|---|---|
+| **Titular (Usuario en su Móvil o Tarjeta)** | - Sus credenciales emitidas (SD-JWT con divulgaciones y sales).<br>- Su clave privada de vinculación (`HolderBinding`) en hardware seguro.<br>- Sus políticas de consentimiento y claves de cifrado local (KEK/DEK).<br>- Copia local del `TrustBundle` (emisores autorizados) y `StatusSnapshot` para operar sin red. | - No tiene claves privadas de los emisores.<br>- No custodia datos de ningún otro usuario. |
+| **Servidor Emisor (Entidad Emisora)** | - Su propia clave privada de emisor (custodiada en HSM institucional FIPS 140-2 L3+).<br>- La Token Status List (mapa de bits comprimido de 1 y 2 bits).<br>- El manifiesto de estado de revocación (`IssuerStatusManifest`). | - **No custodia las claves privadas de los titulares.**<br>- **No necesita retener los datos personales tras la emisión** (el titular los porta en su credencial firmada).<br>- No sabe cuándo, dónde ni ante quién el usuario presenta su credencial. |
+| **Servidor Verificador (Terminal o Lector Offline)** | - El `TrustBundle` actualizado con las claves públicas de emisores autorizados.<br>- La política de verificación local (`VerificationPolicy`).<br>- La caché de nonces (`NonceCache`) para prevenir ataques de replay.<br>- El snapshot local de estado de revocación (`StatusSnapshot`). | - **No almacena datos personales ni historiales de presentaciones** (`INV-02`).<br>- No retiene identificadores de titulares ni credenciales completas.<br>- No realiza consultas en línea durante la verificación (`INV-01`). |
+| **Servicio de Retransmisión (`pip-relay`)** | - Sobres cifrados efímeros en tránsito dirigidos a buzones temporales.<br>- Objetos públicos inmutables (bundles, esquemas) indexados por digest SHA-256. | - **No tiene las claves para descifrar los sobres.**<br>- No conoce la identidad de los emisores ni de los titulares.<br>- No almacena metadatos persistentes de sesiones. |
+| **Blockchain Pública / Ledger (EVM)** | - Contrato `TrustRegistry`: lista de operadores, emisores registrados, claves públicas y estados normativos.<br>- Contrato `StatusAnchor`: hashes SHA-256 y versiones de las listas de revocación.<br>- Contrato `GovernanceTimelock`: reglas de gobernanza y cofirmas $k$-de-$n$. | - **CERO datos personales, cero hashes de PII y cero identificadores de titulares** (`INV-02`).<br>- Ninguna cuenta, saldo, transacción ni billetera pertenece a usuarios finales. |
+
+---
+
+### 4. Aislamiento y Cero Relación entre Usuarios
+
+Una duda frecuente en arquitecturas de identidad digital es si las credenciales de los usuarios guardan relación entre sí, o si un atacante, emisor o verificador puede correlacionar a distintos usuarios. En Gravital ID, **los usuarios están completa e irrevocablemente aislados**:
+
+1. **Ausencia Total de un Identificador Global de Usuario:**
+   No existe ningún "ID de usuario", número de cuenta único ni identificador persistente compartido en el protocolo. Cada titular interactúa con el sistema de forma completamente autónoma.
+2. **Sales Criptográficas Independientes ($\ge 128$ bits) por Cada Atributo:**
+   Conforme a la especificación SD-JWT (RFC 9901), cada claim emitido se combina con una sal aleatoria independiente generada mediante CSPRNG de alta entropía antes de calcular su hash:
+   $$\text{digest} = \text{SHA-256}(\text{sal} \parallel \text{nombre\_claim} \parallel \text{valor})$$
+   Dos usuarios que compartan exactamente el mismo dato (por ejemplo, el mismo nombre "Carlos", la misma fecha de nacimiento o la misma nacionalidad) poseen valores de digest totalmente distintos e imposibles de relacionar estadísticamente.
+3. **Señuelos Criptográficos (*Decoys*):**
+   Para evitar que dos usuarios puedan ser comparados o clasificados por el número de campos que contiene su credencial, el emisor inserta señuelos (*decoys* o hashes falsos indistinguibles) en la estructura de divulgaciones. Esto garantiza que una credencial con 3 atributos consentidos aparente exactamente la misma estructura que una con 10 atributos.
+4. **Asignación Pseudoaleatoria en la Token Status List (`P-09`, `REQ-STAT-002`):**
+   La posición que ocupa cada titular en el mapa de bits de revocación de la Token Status List se asigna de manera estrictamente pseudoaleatoria e impredecible dentro de un espacio de al menos 131.072 bits. La posición no sigue el orden de emisión, ni la cédula, ni la fecha. Dos personas que soliciten su credencial consecutivamente en el mismo mostrador reciben índices dispersos y no correlacionados, impidiendo cualquier ataque de análisis de tráfico o deducción cronológica.
+5. **Cero Huella y Cero Cuentas en Blockchain:**
+   En el registro de blockchain no existen cuentas, direcciones, claves públicas ni transacciones de los usuarios finales. Los titulares no pagan gas, no firman transacciones de ledger ni interactúan jamás con los nodos de la red. La blockchain solo actúa como tablón de anuncios criptográfico donde los emisores institucionales publican sus claves públicas de verificación.
+6. **No Vinculabilidad entre Verificaciones:**
+   Cuando un titular presenta su credencial ante un verificador A (por ejemplo, un control de acceso laboral) y posteriormente ante un verificador B (por ejemplo, una aerolínea), cada presentación genera una firma de vinculación (*Key Binding JWT*) con un nonce fresco, una audiencia diferente y un instante temporal independiente. Aun si el verificador A y el verificador B intercambiaran todas sus bases de datos, es matemáticamente imposible correlacionar que ambas presentaciones fueron realizadas por la misma persona.
+
+---
+
 ## Contratos Inteligentes y Capa de Anclaje (EVM)
 
 El protocolo utiliza contratos inteligentes en redes Ethereum / EVM exclusivamente como registro de confianza inmutable y público:
