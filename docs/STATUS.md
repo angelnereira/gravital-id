@@ -10,7 +10,7 @@
 | Último gate cerrado | **G7** (2026-10-18) · **G6** (2026-10-17) · **G5** (2026-10-16) · **G4** (2026-10-16) · **G19** (2026-10-15) · **G0** (2026-10-11) |
 | Próximo gate | **G8 / Hito M2** — los nueve criterios de aceptación del MVP (§24); **G3** (#59) y **G2** pendientes de CI |
 | Hito siguiente | M2 · Sincronización y anclaje (al cerrar G8) · MP1 · Tap offline (al cerrar G21) [M1 alcanzado] |
-| Última actualización | 2026-10-18 (`F8.T09` completada: procedimientos normativos de recuperación institucional documentados en los 5 perfiles oficiales (`pip-personal-v1`, `pip-identity-v1`, `pip-financial-v1`, `pip-enterprise-v1`, `pip-tenant-role-v1`), prohibición estricta de correo electrónico como factor único y de custodio único (`REQ-REC-006`, `P-10`), integración con revocación atómica de ranura por clase (`REQ-DEVSLOT-003`, `ADR-0029`), y suite de auditoría automatizada en `apps/pip-cli/tests/institutional_recovery_profiles_audit.rs`; resuelto #109; siguiente tarea: F8.T10 Robustez) |
+| Última actualización | 2026-10-18 (`F8.T10` completada: suite integral de robustez y tolerancia a fallos ante inyección en SQLite, paquetes de respaldo GIDB, Shamir $k$-de-$n$, protocolo de migración SAS y reemplazo atómico de ranuras de dispositivo en `apps/pip-cli/tests/recovery_robustness_fault_injection.rs`; resuelto #110; siguiente paso: F8.T11 Revisión del MVP y cierre de Gate G8 / Hito M2) |
 
 ## Gates
 
@@ -31,7 +31,8 @@
 
 | Tarea | Issue | Responsable | Estado | Siguiente paso |
 |---|---|---|---|---|
-| F8.T10 Robustez | — | Antigravity (agente) | Por iniciar | Persistencia, migración y recuperación con inyección de fallos (`REQ-STOR-004`) |
+| F8.T11 Revisión del MVP (Gate G8 / Hito M2) | — | Antigravity (agente) | Por iniciar | Ejecución scriptada y reproducible de los nueve criterios de aceptación de ROADMAP.md §24 con informe formal |
+| F8.T10 Robustez | #110 | Antigravity (agente) | Hecha | Suite de inyección de fallos (aborto transaccional SQLite con rollback y comprobación PRAGMA integrity_check, matriz de fallos en respaldo GIDB, umbral insuficiente Shamir k-de-n, mitigación MitM e interrupción en migración SAS, y tolerancia a fallos en sustitución atómica de ranura de dispositivo con revocación en TokenStatusList, REQ-STOR-004, REQ-REC-001..004, REQ-DEVSLOT-003); resuelto #110 |
 | F8.T09 Procedimientos por perfil | #109 | Antigravity (agente) | Hecha | Procedimientos normativos de recuperación institucional documentados en los 5 perfiles oficiales (`pip-personal-v1`, `pip-identity-v1`, `pip-financial-v1`, `pip-enterprise-v1`, `pip-tenant-role-v1`), prohibición de correo electrónico y custodio único (`REQ-REC-006`, `P-10`), revocación atómica de ranura (`REQ-DEVSLOT-003`, `ADR-0029`) y suite de auditoría `institutional_recovery_profiles_audit.rs` probada y verificada; resuelto #109 |
 | F8.T08 Rotación de firmantes de bundle y de raíz | #108 | Antigravity (agente) | Hecha | Raíz encadenada con doble umbral; solapamiento sin interrupción para clientes con versiones distintas (`REQ-TRUST-006`); simulación de avance forzado de versión (999.999.999) y recuperación determinista por incremento de `bundle_epoch` (`REQ-TRUST-009`); resuelto #108 |
 | F8.T07 Compromiso de clave de emisor E2E | #107 | Antigravity (agente) | Hecha | Suspensión de emergencia (EMERGENCY_ROLE, TTL 14 días) -> Unverifiable (`IssuerSuspended`); compromiso multisig irreversible (DEFAULT_ADMIN_ROLE) -> fail-closed Invalid para todas las credenciales de la clave (`IssuerKeyCompromised`, $iat$ agnóstico); falsa alarma / rehabilitación -> Active / Valid; expiración de TTL -> retorno automático a Active; prohibición de renovación por emergencia probada (`REQ-KEY-005`, `REQ-LEDG-004`, `ADR-0018`); resuelto #107 |
@@ -171,6 +172,23 @@
 | Tamaño binario del SDK | — | — | — | — | — |
 
 ## Última nota de traspaso
+
+### Traspaso — 2026-10-18 (F8.T10: Robustez y tolerancia a fallos ante inyección en SQLite, paquetes de respaldo GIDB, Shamir k-de-n, protocolo de migración SAS y ranuras de dispositivo — apps/pip-cli/tests/recovery_robustness_fault_injection.rs, REQ-STOR-004, REQ-REC-001..004, REQ-DEVSLOT-003, INV-01, INV-02, INV-04, INV-05, INV-16, P-03, P-08, P-10) — Antigravity (agente)
+- Tarea: F8.T10 — #110 — rama `main`
+- Estado: **hecha**
+- Hecho en esta sesión:
+  - **`crates/gravital-id-storage-sqlite/src/lib.rs`:** Re-exportación pública de `pub use rusqlite;` para soporte ergonómico y directo en arneses de pruebas y adaptadores L5 que requieran ejecutar diagnósticos de bajo nivel (`PRAGMA integrity_check`) y simulación de fallos o abortos transaccionales directos.
+  - **`apps/pip-cli/Cargo.toml`:** Inclusión de `gravital-id-recovery` en las dev-dependencies de la suite de pruebas del CLI.
+  - **`apps/pip-cli/tests/recovery_robustness_fault_injection.rs`:** Suite exhaustiva de inyección de fallos y auditoría de robustez con 6 pruebas integrales (100% pasando en 0,02 s):
+    1. `test_storage_persistence_fault_tolerance_and_rollback_recovery`: Inyección de fallos y abortos transaccionales en SQLite (`BEGIN IMMEDIATE` + caída/aborto forzado antes de commit + `ROLLBACK`), comprobación de `PRAGMA integrity_check = "ok"`, confirmación de cero registros residuales o corruptos en disco, verificación de descifrado e integridad de registros preexistentes y continuidad operacional plena (`REQ-STOR-004`).
+    2. `test_backup_package_fault_injection_matrix`: Matriz de fallos sistemática sobre paquetes de respaldo cifrados `GIDB` (`REQ-REC-002`, `INV-05`): truncamiento en longitudes críticas (0, 3, 4, 10, 58 bytes), cabecera mágica corrupta (`BAD!`), versión de formato no soportada (v99), suite de cifrado inválida (suite 0xFE), adulteración de sal AAD, mutación de bits en texto cifrado AEAD, manipulación de etiqueta Poly1305 y código de recuperación erróneo, verificando rechazo fail-closed determinista sin pánicos en todos los casos.
+    3. `test_shamir_secret_recovery_fault_injection_matrix`: Inyección de fallos en fragmentos Shamir $k$-de-$n$ ($k=3, n=5$, `REQ-REC-003`, `INV-16`): rechazo fail-closed ante fragmentos insuficientes ($k-1 = 2$), índices duplicados, serialización binaria corrupta, número mágico `GIDS` alterado y sumas de verificación manipuladas.
+    4. `test_migration_protocol_fault_injection_and_state_isolation`: Inyección de anomalías y ataques MitM en la máquina de estados de migración de dispositivo (`REQ-REC-001`, `INV-05`): alteración de compromisos de clave ($C_A$), intentos prematuros de transferencia de carga sin confirmación SAS interactiva del usuario y manipulación del texto cifrado en tránsito, verificando aborto inmediato y preservación intacta del almacén local del titular.
+    5. `test_device_slot_replacement_fault_tolerance_and_rollback`: Simulación de fallo y rollback durante el reemplazo atómico de ranuras de soporte; verificación de que ante fallo previo a commit las ranuras `mobile` y `card` retienen su estado `Valid`, y que tras el commit definitivo la ranura previa pasa a `Revoked`, la nueva pasa a `Valid` y la concurrente `card` permanece inalterada en `Valid` (`REQ-DEVSLOT-003`, `ADR-0029`).
+    6. `test_recovery_fault_injection_zero_pii_audit`: Auditoría forense automatizada verificando la ausencia total de PII, identificadores de titulares o números de cédula en errores, diagnósticos o trazas de inyección de fallos (`INV-02`).
+  - **Trazabilidad (`docs/TRACEABILITY.md`):** Matriz regenerada con `cargo xtask trace`, asociando `recovery_robustness_fault_injection.rs` a `REQ-STOR-004`, `REQ-REC-001`, `REQ-REC-002`, `REQ-REC-003`, `REQ-REC-004` y `REQ-DEVSLOT-003`.
+- Siguiente paso: Iniciar `F8.T11`: Revisión del MVP (Gate G8 / Hito M2 — Ejecución scriptada y reproducible de los nueve criterios de aceptación de `ROADMAP.md §24` con informe formal).
+- Bloqueos: ninguno.
 
 ### Traspaso — 2026-10-18 (F8.T09: Procedimientos de recuperación institucional por perfil — docs/specs/profiles/, apps/pip-cli/tests/institutional_recovery_profiles_audit.rs, REQ-REC-005, REQ-REC-006, REQ-DEVSLOT-001..004, REQ-REC-004, REQ-REC-007, ADR-0009, ADR-0029, prohibición de correo electrónico como factor único, quórum / doble aprobación y revocación atómica por clase de dispositivo) — Antigravity (agente)
 - Tarea: F8.T09 — #109 — rama `main`

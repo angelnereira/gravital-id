@@ -36,6 +36,7 @@ anyhow = { workspace = true }
 qrcode = { version = "0.14", default-features = false }
 
 [dev-dependencies]
+gravital-id-recovery = { workspace = true }
 gravital-id-ledger-evm = { workspace = true }
 gravital-id-transport-http = { workspace = true }
 pip-service-common = { workspace = true }

@@ -969,6 +969,7 @@ dependencies = [
  "gravital-id-ledger",
  "gravital-id-ledger-evm",
  "gravital-id-protocol",
+ "gravital-id-recovery",
  "gravital-id-status",
  "gravital-id-storage",
  "gravital-id-storage-sqlite",

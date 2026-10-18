@@ -24,6 +24,7 @@ pub mod verifier_state;
 pub use migration::{
     apply_migrations, get_current_version, Migration, LATEST_SCHEMA_VERSION, MIGRATIONS,
 };
+pub use rusqlite;
 pub use storage::{SqliteStorage, SqliteStorageConfig};
 
 /// Versión semántica del crate en compilación.

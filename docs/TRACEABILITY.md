@@ -76,15 +76,15 @@
 | REQ-STOR-001 | F5 | DEBE | T | P-03 | lib.rs, cli_m1_demonstration.rs, credential.rs, wallet.rs, holder_credential_management.rs, lib.rs, package.rs, payload.rs, migration_tests.rs, envelope.rs, lib.rs, record.rs, storage_envelope_and_indices.rs | Cubierto |
 | REQ-STOR-002 | F9 | DEBE | T, D | P-03 | envelope.rs, lib.rs, storage_envelope_and_indices.rs | Cubierto |
 | REQ-STOR-003 | F5 | DEBE | T, I | P-09 | wallet.rs, holder_credential_management.rs, backend.rs, blind_index.rs, envelope.rs, lib.rs, storage_envelope_and_indices.rs, storage.rs, sqlite_storage_integration.rs | Cubierto |
-| REQ-STOR-004 | F5 | DEBE | T | — | lib.rs, cli_m1_demonstration.rs, wallet.rs, holder_credential_management.rs, backend.rs, lib.rs, storage_envelope_and_indices.rs, lib.rs, migration.rs, storage.rs, sqlite_fault_tolerance.rs, sqlite_storage_integration.rs | Cubierto |
+| REQ-STOR-004 | F5 | DEBE | T | — | lib.rs, cli_m1_demonstration.rs, recovery_robustness_fault_injection.rs, wallet.rs, holder_credential_management.rs, backend.rs, lib.rs, storage_envelope_and_indices.rs, lib.rs, migration.rs, storage.rs, sqlite_fault_tolerance.rs, sqlite_storage_integration.rs | Cubierto |
 | REQ-STOR-005 | F5 | DEBE | T | — | lib.rs, migration.rs, sqlite_migrations.rs | Cubierto |
 | REQ-STOR-006 | F5 | DEBE | T, I | P-09 | audit.rs, lib.rs, wallet.rs, holder_credential_management.rs, holder_privacy_and_forensics.rs, migration.rs | Cubierto |
 | REQ-STOR-007 | F9 | DEBE | D, I | P-03 | — | Inspección / Auditoría |
 | REQ-STOR-008 | F5 | DEBE | T | P-11 | holder_credential_management.rs, holder_privacy_and_forensics.rs, backend.rs, lib.rs, storage_envelope_and_indices.rs, lib.rs, storage.rs, sqlite_storage_integration.rs | Cubierto |
-| REQ-REC-001 | F8 | DEBE | T, D | P-03 | lib.rs, migration.rs, migration_tests.rs | Cubierto |
-| REQ-REC-002 | F8 | DEBE | T | P-03 | code.rs, error.rs, kdf.rs, lib.rs, manager.rs, package.rs, payload.rs, wordlist.rs, migration_tests.rs, recovery_tests.rs | Cubierto |
-| REQ-REC-003 | F8 | DEBERÍA | T | P-10 | gf256.rs, shamir.rs, shamir_tests.rs | Cubierto |
-| REQ-REC-004 | F8 | DEBE | T | P-07 | institutional_recovery_profiles_audit.rs, vc.rs, lib.rs, request.rs, slot_manager.rs, kdf.rs, key.rs, lib.rs, payload.rs, rebinding.rs, migration_tests.rs, rebinding_tests.rs, recovery_key_tests.rs, recovery_tests.rs | Cubierto |
+| REQ-REC-001 | F8 | DEBE | T, D | P-03 | recovery_robustness_fault_injection.rs, lib.rs, migration.rs, migration_tests.rs | Cubierto |
+| REQ-REC-002 | F8 | DEBE | T | P-03 | recovery_robustness_fault_injection.rs, code.rs, error.rs, kdf.rs, lib.rs, manager.rs, package.rs, payload.rs, wordlist.rs, migration_tests.rs, recovery_tests.rs | Cubierto |
+| REQ-REC-003 | F8 | DEBERÍA | T | P-10 | recovery_robustness_fault_injection.rs, gf256.rs, shamir.rs, shamir_tests.rs | Cubierto |
+| REQ-REC-004 | F8 | DEBE | T | P-07 | institutional_recovery_profiles_audit.rs, recovery_robustness_fault_injection.rs, vc.rs, lib.rs, request.rs, slot_manager.rs, kdf.rs, key.rs, lib.rs, payload.rs, rebinding.rs, migration_tests.rs, rebinding_tests.rs, recovery_key_tests.rs, recovery_tests.rs | Cubierto |
 | REQ-REC-005 | F8 | DEBE | I | — | institutional_recovery_profiles_audit.rs | Cubierto |
 | REQ-REC-006 | F8 | DEBE | I | P-10 | institutional_recovery_profiles_audit.rs | Cubierto |
 | REQ-REC-007 | F8 | DEBE | T | P-09 | institutional_recovery_profiles_audit.rs, vc.rs, lib.rs, request.rs, kdf.rs, key.rs, lib.rs, rebinding.rs, rebinding_tests.rs, recovery_key_tests.rs, recovery_tests.rs | Cubierto |
@@ -136,7 +136,7 @@
 | REQ-UNIQ-004 | F10 | DEBE | T, I | P-14 | — | Pendiente (Fase futura) |
 | REQ-DEVSLOT-001 | F8 | DEBE | T | P-08 | institutional_recovery_profiles_audit.rs, slot_manager.rs, rebinding.rs, rebinding_tests.rs, ids.rs | Cubierto |
 | REQ-DEVSLOT-002 | F10 | DEBE | T, I | P-03 | slot_manager.rs, rebinding_tests.rs | Cubierto |
-| REQ-DEVSLOT-003 | F8 | DEBE | T | P-08 | institutional_recovery_profiles_audit.rs, slot_manager.rs, rebinding.rs, rebinding_tests.rs | Cubierto |
+| REQ-DEVSLOT-003 | F8 | DEBE | T | P-08 | institutional_recovery_profiles_audit.rs, recovery_robustness_fault_injection.rs, slot_manager.rs, rebinding.rs, rebinding_tests.rs | Cubierto |
 | REQ-DEVSLOT-004 | F10 | DEBE | T, I | P-02 | slot_manager.rs, rebinding.rs, rebinding_tests.rs | Cubierto |
 | REQ-SEC-001 | F1 | DEBE | T, I | — | layers.rs | Cubierto |
 | REQ-SEC-002 | F2 | DEBE | I | — | aead.rs, ecdh.rs, hpke.rs, kdf.rs, rng.rs, sha.rs, api_coverage.rs, external_vectors.rs | Cubierto |
