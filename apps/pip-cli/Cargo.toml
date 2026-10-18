@@ -31,6 +31,7 @@ gravital-id-storage = { workspace = true }
 gravital-id-storage-sqlite = { workspace = true }
 gravital-id-sync = { workspace = true }
 gravital-id-ledger = { workspace = true }
+gravital-id-recovery = { workspace = true }
 gravital-id-testkit = { path = "../../crates/gravital-id-testkit", version = "0.1.0" }
 anyhow = { workspace = true }
 qrcode = { version = "0.14", default-features = false }

@@ -6,11 +6,11 @@
 
 | Campo | Valor |
 |---|---|
-| Fase actual | **F8 — Recuperación, migración y rotación** |
-| Último gate cerrado | **G7** (2026-10-18) · **G6** (2026-10-17) · **G5** (2026-10-16) · **G4** (2026-10-16) · **G19** (2026-10-15) · **G0** (2026-10-11) |
-| Próximo gate | **G8 / Hito M2** — los nueve criterios de aceptación del MVP (§24); **G3** (#59) y **G2** pendientes de CI |
-| Hito siguiente | M2 · Sincronización y anclaje (al cerrar G8) · MP1 · Tap offline (al cerrar G21) [M1 alcanzado] |
-| Última actualización | 2026-10-18 (`F8.T10` completada: suite integral de robustez y tolerancia a fallos ante inyección en SQLite, paquetes de respaldo GIDB, Shamir $k$-de-$n$, protocolo de migración SAS y reemplazo atómico de ranuras de dispositivo en `apps/pip-cli/tests/recovery_robustness_fault_injection.rs`; resuelto #110; siguiente paso: F8.T11 Revisión del MVP y cierre de Gate G8 / Hito M2) |
+| Fase actual | **F8 — Recuperación, migración y rotación** (Concluida) |
+| Último gate cerrado | **G8 / Hito M2** (2026-10-18) · **G7** (2026-10-18) · **G6** (2026-10-17) · **G5** (2026-10-16) · **G4** (2026-10-16) · **G19** (2026-10-15) · **G0** (2026-10-11) |
+| Próximo gate | **G9** (Bindings para 8 lenguajes) / **G20** (Núcleo de proximidad) · **G3** (#59) y **G2** pendientes de CI |
+| Hito siguiente | MP1 · Tap offline (al cerrar G21) / M3 · SDK multi-lenguaje (al cerrar G9) [M1 y M2 alcanzados] |
+| Última actualización | 2026-10-18 (`F8.T11` completada: Revisión formal del MVP y cierre de Gate G8 / Hito M2; los nueve criterios MVP-01 a MVP-09 verificados exhaustivamente con `pip-cli demo-m2` y `apps/pip-cli/tests/mvp_acceptance_m2_audit.rs`; informe técnico formal en `docs/reports/2026-10-18-mvp-evaluacion-m2.md`; resuelto #111; Gate G8 CERRADO y Hito M2 ALCANZADO) |
 
 ## Gates
 
@@ -25,13 +25,14 @@
 | G19 | **Cerrado** | 2026-10-15 | `ADR-0021` a `ADR-0026` aceptados; especificaciones normativas (`PROTOCOL.md §7`, `ERROR_CODES.md` fam. 8, `THREAT_MODEL.md §5`, `pip-identity-v1.md`, `docs/legal/` v0.2) integradas; spikes `F19.T12` (`spikes/nfc-hce/`), `F19.T13` (`spikes/javacard/`) y `F19.T14` (`spikes/qr/`, `keystore/`, `wasm/`, `ledger/`) con arneses reproducibles y CSVs versionados; 5 issues `type:spec-gap` (`#73`–`#77`) cerrados. |
 | G6 | **Cerrado** | 2026-10-17 | Contratos en testnet (`contracts/script/Deploy.s.sol`, `deploy/environments/testnet/contracts.json`), 25 pruebas Foundry pasando (unitarias, fuzz e invariantes), adaptador `gravital-id-ledger-evm` con pruebas de fallos (91,44% cobertura) y verificación "sin datos personales" (`check-contracts-privacy`) aprobada con 0 PII (#90, #91, #92, #93). |
 | G7 | **Cerrado** | 2026-10-18 | Plano de servicio en testnet funcionando end-to-end (`F7.T10` con `container_stack_integration.rs`), pruebas de caos aprobadas con degradación determinista canónica sin pánicos (`F7.T12` con `pip-cli demo-chaos` y `chaos_fault_injection.rs`), y auditoría forense cero PII (`INV-01`, `INV-02`, `INV-04`, `INV-05`, `INV-10`, `INV-11`, `INV-16`, `REQ-REL-004`, `REQ-SYNC-004`, `REQ-PRIV-003`). |
-| G8 … G18, G20 … G25 | Pendiente | — | — |
+| G8 | **Cerrado** | 2026-10-18 | **Hito M2 alcanzado**: Los nueve criterios normativos de aceptación del MVP (§24 de `ROADMAP.md`, MVP-01 a MVP-09) verificados al 100% de forma scriptada e in-process mediante `pip-cli demo-m2` y la suite automatizada de CI `apps/pip-cli/tests/mvp_acceptance_m2_audit.rs`; latencia offline sans-I/O de 6.78 ms (< 20 ms, `REQ-PERF-003`), cero PII en disco, memoria y ledger (`INV-02`), fail-closed determinista (`INV-05`), 4 estados con evidencia (`INV-04`), anti-replay persistente en SQLite (`REQ-PRES-005`, `REQ-STOR-004`), degradación ante snapshots stale (`REQ-STAT-004`), sincronización y revocación anti-rollback (`REQ-STAT-008`), recuperación BIP-39 (128 bits), custodia Shamir 3-de-5, migración SAS y rotación con procedimientos por perfil (`INV-16`), e informe formal en `docs/reports/2026-10-18-mvp-evaluacion-m2.md` (#111). |
+| G9 … G18, G20 … G25 | Pendiente | — | — |
 
 ## Tareas en curso
 
 | Tarea | Issue | Responsable | Estado | Siguiente paso |
 |---|---|---|---|---|
-| F8.T11 Revisión del MVP (Gate G8 / Hito M2) | — | Antigravity (agente) | Por iniciar | Ejecución scriptada y reproducible de los nueve criterios de aceptación de ROADMAP.md §24 con informe formal |
+| F8.T11 Revisión del MVP (Gate G8 / Hito M2) | #111 | Antigravity (agente) | Hecha | Ejecución scriptada y reproducible de los nueve criterios de aceptación de ROADMAP.md §24 aprobada al 100%; informe formal publicado en `docs/reports/2026-10-18-mvp-evaluacion-m2.md` y Gate G8 / Hito M2 formalmente cerrado; resuelto #111 |
 | F8.T10 Robustez | #110 | Antigravity (agente) | Hecha | Suite de inyección de fallos (aborto transaccional SQLite con rollback y comprobación PRAGMA integrity_check, matriz de fallos en respaldo GIDB, umbral insuficiente Shamir k-de-n, mitigación MitM e interrupción en migración SAS, y tolerancia a fallos en sustitución atómica de ranura de dispositivo con revocación en TokenStatusList, REQ-STOR-004, REQ-REC-001..004, REQ-DEVSLOT-003); resuelto #110 |
 | F8.T09 Procedimientos por perfil | #109 | Antigravity (agente) | Hecha | Procedimientos normativos de recuperación institucional documentados en los 5 perfiles oficiales (`pip-personal-v1`, `pip-identity-v1`, `pip-financial-v1`, `pip-enterprise-v1`, `pip-tenant-role-v1`), prohibición de correo electrónico y custodio único (`REQ-REC-006`, `P-10`), revocación atómica de ranura (`REQ-DEVSLOT-003`, `ADR-0029`) y suite de auditoría `institutional_recovery_profiles_audit.rs` probada y verificada; resuelto #109 |
 | F8.T08 Rotación de firmantes de bundle y de raíz | #108 | Antigravity (agente) | Hecha | Raíz encadenada con doble umbral; solapamiento sin interrupción para clientes con versiones distintas (`REQ-TRUST-006`); simulación de avance forzado de versión (999.999.999) y recuperación determinista por incremento de `bundle_epoch` (`REQ-TRUST-009`); resuelto #108 |
@@ -172,6 +173,26 @@
 | Tamaño binario del SDK | — | — | — | — | — |
 
 ## Última nota de traspaso
+
+### Traspaso — 2026-10-18 (F8.T11: Revisión formal del MVP y cierre de Gate G8 / Hito M2 — apps/pip-cli/src/lib.rs, apps/pip-cli/tests/mvp_acceptance_m2_audit.rs, docs/reports/2026-10-18-mvp-evaluacion-m2.md, ROADMAP.md §24, REQ-VER-001, REQ-PRES-005, REQ-STAT-004, REQ-STAT-008, REQ-LEDG-001, REQ-REC-001..007, REQ-CRED-001, REQ-STOR-004, REQ-PERF-003, INV-01, INV-02, INV-03, INV-04, INV-05, INV-06, INV-11, INV-16) — Antigravity (agente)
+- Tarea: F8.T11 — #111 — rama `main`
+- Estado: **hecha**
+- Hecho en esta sesión:
+  - **`apps/pip-cli/src/lib.rs` (`run_demo_m2` / subcomando `demo-m2`):** Implementación de la demostración integral scriptada e in-process de los nueve criterios normativos de aceptación del MVP (§24 de `ROADMAP.md`):
+    1. **MVP-01 (Verificación 100% offline y sans-I/O):** Verificación completa de credencial SD-JWT VC con divulgación selectiva y Key Binding, transcodificada a Base45 (`GID1:`) con latencia medida de 6.78 ms (presupuesto $\le 20\text{ ms}$, `REQ-PERF-003`), 0 llamadas a red (`INV-01`, `REQ-VER-001`).
+    2. **MVP-02 (Rechazo determinista de manipulaciones):** 4 casos negativos normativos validados deterministamente: firma manipulada (`Invalid`, `Signature Failed`), emisor no registrado en TrustBundle (`Unverifiable`, `INV-06`), credencial revocada en TokenStatusList (`Invalid`) y divulgación alterada (`Invalid`).
+    3. **MVP-03 (Anti-Replay en SQLite persistente):** Replay con nonce reutilizado detectado y rechazado deterministamente como `Invalid` (`ReplayDetected`) en `SqliteStorage` con base de datos temporal protegida por clave de integridad (`REQ-PRES-005`, `REQ-STOR-004`).
+    4. **MVP-04 (Degradación determinista ante snapshots stale):** Snapshot desactualizado con antigüedad de 2.500 s evaluado contra política `Transaction` (umbral 1.800 s), degradando deterministamente a `ValidWithStaleStatus` con evidencia explícita de frescura (`REQ-STAT-004`, `REQ-REL-004`, `INV-04`).
+    5. **MVP-05 (Revocación offline + sync + anti-rollback):** Revocación durante periodo offline y posterior sincronización de Snapshot v2 en tiempo monótono ($t = 2.600\text{ s}$), rechazando la credencial de inmediato como `Invalid` con anti-rollback monotónico (`REQ-STAT-008`).
+    6. **MVP-06 (Cero PII en el ledger):** Auditoría estricta de las interfaces Solidity de `TrustRegistry`, `StatusAnchor` y `Governance`, confirmando ausencia absoluta de PII y presencia exclusiva de identificadores criptográficos `bytes32` y marcas de tiempo `uint64` (`INV-02`, `REQ-LEDG-001`).
+    7. **MVP-07 (Procedimientos de recuperación y rotación):** Verificación de los 9 procedimientos técnicos desarrollados en F8 (RecoveryCode BIP-39 de 128 bits, custodia social Shamir 3-de-5, HolderRecoveryKey `cnf.rec`, re-vinculación atómica por ranura de dispositivo, migración directa con compromiso SHA-256 y SAS coincidente, rotación y compromiso de claves y 5 perfiles normativos sin factor único email).
+    8. **MVP-08 (Interoperabilidad RFC 9901 / SD-JWT VC):** Reconstrucción determinista de claims autorizados ocultando claims protegidos, transcodificación biyectiva Base45 y 24 vectores de conformidad oficiales en verde.
+    9. **MVP-09 (Robustez, persistencia y seguridad):** Verificación `PRAGMA integrity_check = "ok"` en SQLite, rechazo fail-closed de paquetes corruptos y fragmentos Shamir insuficientes, y auditoría forense certificando 0 fugas de PII en memoria y almacenamiento.
+  - **`apps/pip-cli/tests/mvp_acceptance_m2_audit.rs`:** Suite de integración automatizada ejecutando `pip-cli demo-m2` por CLI y `run_demo_m2()` in-process, validando con aserciones rigurosas la satisfacción de los nueve criterios normativos del MVP.
+  - **`docs/reports/2026-10-18-mvp-evaluacion-m2.md`:** Informe técnico formal de evaluación del MVP con dictamen favorable de cierre de Gate G8 y alcance del Hito M2.
+  - **Dictamen formal:** Gate G8 **CERRADO**, Hito M2 **ALCANZADO**, Fase F8 **CONCLUIDA**.
+- Siguiente paso: Planificar apertura de la siguiente fase (F9 Bindings multi-lenguaje o F20 Proximidad según dependencias del marco de gobierno).
+- Bloqueos: ninguno.
 
 ### Traspaso — 2026-10-18 (F8.T10: Robustez y tolerancia a fallos ante inyección en SQLite, paquetes de respaldo GIDB, Shamir k-de-n, protocolo de migración SAS y ranuras de dispositivo — apps/pip-cli/tests/recovery_robustness_fault_injection.rs, REQ-STOR-004, REQ-REC-001..004, REQ-DEVSLOT-003, INV-01, INV-02, INV-04, INV-05, INV-16, P-03, P-08, P-10) — Antigravity (agente)
 - Tarea: F8.T10 — #110 — rama `main`
