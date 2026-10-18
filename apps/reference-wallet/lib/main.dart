@@ -7,6 +7,7 @@ import 'package:gravital_experience_ui/gravital_experience_ui.dart';
 import 'src/domain/gravital_wallet_store.dart';
 import 'src/screens/device_slots_screen.dart';
 import 'src/screens/present_access_screen.dart';
+import 'src/screens/recovery_screen.dart';
 import 'src/screens/tenants_portability_screen.dart';
 import 'src/screens/vault_screen.dart';
 
@@ -101,6 +102,11 @@ class _WalletHomeShell extends StatelessWidget {
         icon: Icons.devices_other_outlined,
         selectedIcon: Icons.devices_other_rounded,
       ),
+      const GxNavigationDestination(
+        label: 'Recuperar',
+        icon: Icons.health_and_safety_outlined,
+        selectedIcon: Icons.health_and_safety_rounded,
+      ),
     ];
 
     final Widget primaryBody = switch (selectedIndex) {
@@ -117,6 +123,7 @@ class _WalletHomeShell extends StatelessWidget {
           store: store,
           onNavigateToPresent: () => onDestinationSelected(1),
         ),
+      4 => RecoveryScreen(store: store),
       _ => DeviceSlotsScreen(store: store),
     };
 
