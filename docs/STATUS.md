@@ -10,7 +10,7 @@
 | Último gate cerrado | **G6** (2026-10-17) · **G5** (2026-10-16) · **G4** (2026-10-16) · **G19** (2026-10-15) · **G0** (2026-10-11) |
 | Próximo gate | **G7** — plano de servicio completo en testnet; **G3** (#59) y **G2** pendientes de CI |
 | Hito siguiente | M2 · Sincronización y anclaje (al cerrar G7) · MP1 · Tap offline (al cerrar G21) [M1 alcanzado] |
-| Última actualización | 2026-10-17 (F7.T02 completada — pip-service-common implementado con configuración tipada, OpenTelemetry, /healthz, /readyz y redacción estricta no-PII al 94,86% de cobertura; #95 resuelto) |
+| Última actualización | 2026-10-17 (F7.T03 completada — pip-indexer implementado con consumo determinista de bloques finalizados, detección de divergencia multi-RPC, almacenamiento relacional idempotente y métricas de lag al 90,19% de cobertura; #96 resuelto) |
 
 ## Gates
 
@@ -30,7 +30,8 @@
 
 | Tarea | Issue | Responsable | Estado | Siguiente paso |
 |---|---|---|---|---|
-| F7.T03 `pip-indexer` | — | Antigravity (agente) | Por iniciar | Consumo determinista de eventos finalizados, persistencia en PostgreSQL con idempotencia, prevención de reorganizaciones (REQ-LEDG-005) |
+| F7.T04 `pip-trust-service` | — | Antigravity (agente) | Por iniciar | Derivación determinista de trust bundles, cofirma multi-operador k-de-n y publicación en S3/CDN (REQ-TRUST-003, REQ-TRUST-005, REQ-TRUST-008) |
+| F7.T03 `pip-indexer` | #96 | Antigravity (agente) | Hecha | Ingesta de bloques finalizados, PostgreSQL, idempotencia, reprocesamiento, detección divergencia RPC y métricas de lag (90,19% cobertura); resuelto #96 |
 | F7.T02 `pip-service-common` | #95 | Antigravity (agente) | Hecha | Crate L5 pip-service-common con configuración tipada, OpenTelemetry, /healthz, /readyz y redacción no-PII (94,86% cobertura); resuelto #95 |
 | F7.T01 ADR-0013 e IaC base | #94 | Antigravity (agente) | Hecha | ADR-0013 Aceptado, Dockerfile.service multi-stage, docker-compose local, módulos OpenTofu/Terraform dev/testnet, check-deploy-hygiene (REQ-REL-001); resuelto #94 |
 | F6.T11 Despliegue en testnet y Gate G6 | #93 | Antigravity (agente) | Hecha | Scripts reproducibles en Foundry, esquemas y artefactos en deploy/environments/testnet/contracts.json; Gate G6 cerrado (#93) |
@@ -150,6 +151,24 @@
 | Tamaño binario del SDK | — | — | — | — | — |
 
 ## Última nota de traspaso
+
+### Traspaso — 2026-10-17 (F7.T03: pip-indexer — Ingesta continua de bloques finalizados, detección de divergencia multi-RPC, almacenamiento relacional idempotente y métricas de lag) — Antigravity (agente)
+- Tarea: F7.T03 — #96 — rama `main`
+- Estado: **hecha**
+- Hecho en esta sesión:
+  - **F7.T03 (`services/pip-indexer`):** Microservicio en capa L5 para la ingesta continua y determinista de eventos del ledger y mantenimiento de proyecciones relacionales (`REQ-LEDG-005`, `REQ-LEDG-006`, `REQ-REL-001`, `REQ-OBS-001`, `REQ-PRIV-003`, `INV-01`, `INV-02`, `INV-10`, `INV-11`).
+  - **Detección de divergencia y quórum multi-RPC (`divergence.rs`):** Detección de consistencia cruzada (`RpcDivergenceDetector`) comparando muestras de cabeceras entre múltiples proveedores RPC independientes, rechazo fail-closed de divergencias en hash de bloque, hash padre o altura (`REQ-LEDG-006`), y resolución determinista de la cabeza finalizada segura (`safe_finalized_head`).
+  - **Almacenamiento relacional e idempotencia (`storage.rs`, `postgres.rs`, `schema/V1__indexer_schema.sql`):** Persistencia abstracta (`IndexerStorage`) con implementaciones en memoria (`InMemoryIndexerStorage`) y relacional SQLite/PostgreSQL (`SqliteIndexerStorage`) con inserción idempotente (`ON CONFLICT DO NOTHING`), serialización y deserialización de los 13 eventos del ledger, y proyección determinista de estado puro (`build_ledger_state`).
+  - **Motor central de indexación (`engine.rs`):** Orquestación con `IndexerEngine` consumiendo únicamente bloques finalizados (`finalized_head`), fragmentación por lotes acotados (`chunk_size_blocks`), rebobinado ante reorganizaciones de frontera (`rewind_to_block`), reprocesamiento histórico (`reprocess_from_block`), y bucle continuo con parada limpia (`ShutdownCoordinator`).
+  - **Salud y observabilidad (`health.rs`, `metrics.rs`):** Registro de métricas de retraso (`LagMetrics`) y comprobador de salud (`IndexerHealthCheck`) que expone `/healthz` y `/readyz` reportando degradación si el retraso excede `max_allowed_lag`.
+  - **Punto de entrada (`main.rs`) y configuración (`config.rs`):** Carga y validación estricta de variables de entorno (`PIP_INDEXER_*`), cableado de servidor HTTP en puerto 8081 y ejecución con usuario no root.
+  - **Cobertura de código (`llvm-cov`):** 90,19% de cobertura total de líneas en `pip-indexer` (93,87% en biblioteca). 22 pruebas unitarias y de integración pasando al 100%.
+- Pendiente (siguiente paso concreto):
+  - Iniciar `F7.T04`: `pip-trust-service` (derivación determinista de trust bundles desde el indexador, cofirma con umbral k-de-n y llaves KMS/dev, publicación en S3/CDN, `REQ-TRUST-003`, `REQ-TRUST-005`, `REQ-TRUST-008`).
+- Bugs/issues abiertos durante la sesión: ninguno.
+- Decisiones tomadas (con enlace a ADR/issue): Implementado indexador en L5 conforme a `ADR-0013`, `REQ-LEDG-005` y `REQ-LEDG-006` (#96).
+- Riesgos o dudas: ninguna.
+- Comprobaciones locales: fmt ✅ clippy ✅ tests (100% verde en todo el workspace) ✅ layers ✅ trace ✅ check-error-codes ✅ check-contracts-privacy ✅ check-deploy-hygiene ✅ deny ✅ llvm-cov (90,19% indexer) ✅
 
 ### Traspaso — 2026-10-17 (F7.T02: pip-service-common — Configuración tipada, telemetría estructurada OpenTelemetry, health server y redacción estricta no-PII) — Antigravity (agente)
 - Tarea: F7.T02 — #95 — rama `main`

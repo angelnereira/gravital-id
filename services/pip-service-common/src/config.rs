@@ -43,7 +43,7 @@ impl Environment {
 }
 
 /// Configuración de red y servidor HTTP.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ServerConfig {
     /// Dirección IP o host donde escuchar (por defecto "0.0.0.0").
     pub host: String,
@@ -64,7 +64,7 @@ impl Default for ServerConfig {
 }
 
 /// Configuración de observabilidad y telemetría.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct TelemetryConfig {
     /// Nombre del servicio para spans de OpenTelemetry y logs.
     pub service_name: String,

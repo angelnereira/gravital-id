@@ -1,0 +1,29 @@
+[package]
+name = "pip-indexer"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+readme = "README.md"
+description = "Servicio indexador de eventos del ledger y mantenimiento de proyecciones para Gravital ID."
+
+[lints]
+workspace = true
+
+[dependencies]
+pip-service-common = { path = "../pip-service-common", version = "0.1.0" }
+gravital-id-ledger = { workspace = true }
+gravital-id-ledger-evm = { workspace = true }
+gravital-id-types = { workspace = true }
+gravital-id-crypto = { workspace = true }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "2.0"
+tracing = "0.1"
+rusqlite = { version = "0.32", features = ["bundled"] }
+
+[dev-dependencies]
+gravital-id-testkit = { path = "../../crates/gravital-id-testkit", version = "0.1.0" }

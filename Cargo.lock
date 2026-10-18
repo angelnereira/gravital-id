@@ -955,6 +955,23 @@ dependencies = [
 ]
 
 [[package]]
+name = "pip-indexer"
+version = "0.1.0"
+dependencies = [
+ "gravital-id-crypto",
+ "gravital-id-ledger",
+ "gravital-id-ledger-evm",
+ "gravital-id-testkit",
+ "gravital-id-types",
+ "pip-service-common",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tracing",
+]
+
+[[package]]
 name = "pip-service-common"
 version = "0.1.0"
 dependencies = [
