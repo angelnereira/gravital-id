@@ -66,13 +66,13 @@
 | REQ-LEDG-005 | F7 | DEBE | T | P-08 | adapter.rs, client.rs, error.rs, lib.rs, evm_adapter_integration.rs, evm_fault_tolerance.rs, config.rs, divergence.rs, engine.rs, error.rs, lib.rs, main.rs, metrics.rs, storage.rs, config_test.rs, divergence_test.rs, engine_test.rs, storage_test.rs | Cubierto |
 | REQ-LEDG-006 | F7 | DEBE | T | P-10 | adapter.rs, client.rs, error.rs, lib.rs, transport.rs, evm_adapter_integration.rs, evm_fault_tolerance.rs, divergence.rs, error.rs, lib.rs, main.rs, divergence_test.rs | Cubierto |
 | REQ-LEDG-007 | F6 | DEBE | I | P-02 | event.rs, lib.rs, ledger_state_and_derivation.rs, contracts_privacy.rs | Cubierto |
-| REQ-SYNC-001 | F7 | DEBE | T | P-01 | error.rs, types.rs | Cubierto |
-| REQ-SYNC-002 | F7 | DEBE | T | — | — | Pendiente (Fase futura) |
-| REQ-SYNC-003 | F7 | DEBE | T | — | client.rs, evm_fault_tolerance.rs, backoff.rs | Cubierto |
-| REQ-SYNC-004 | F7 | DEBE | T | P-08 | manifest.rs, config.rs, lib.rs, main.rs, server.rs, store.rs, config_test.rs, limiter_test.rs, server_test.rs, store_test.rs | Cubierto |
-| REQ-SYNC-005 | F7 | DEBE | T, I | P-09 | — | Pendiente (Fase futura) |
-| REQ-SYNC-006 | F7 | DEBE | T | P-09 | types.rs, config.rs, lib.rs, main.rs, server.rs, store.rs, config_test.rs, limiter_test.rs, server_test.rs, store_test.rs | Cubierto |
-| REQ-SYNC-007 | F7 | DEBE | T | P-10 | config.rs | Cubierto |
+| REQ-SYNC-001 | F7 | DEBE | T | P-01 | engine.rs, lib.rs, model.rs, queue.rs, transport.rs, types.rs, sync_test.rs, lib.rs | Cubierto |
+| REQ-SYNC-002 | F7 | DEBE | T | — | dedup.rs, engine.rs, lib.rs, transport.rs, sync_test.rs | Cubierto |
+| REQ-SYNC-003 | F7 | DEBE | T | — | client.rs, evm_fault_tolerance.rs, backoff.rs, engine.rs, lib.rs, sync_test.rs | Cubierto |
+| REQ-SYNC-004 | F7 | DEBE | T | P-08 | manifest.rs, engine.rs, error.rs, lib.rs, transport.rs, verifier.rs, sync_test.rs, config.rs, lib.rs, main.rs, server.rs, store.rs, config_test.rs, limiter_test.rs, server_test.rs, store_test.rs | Cubierto |
+| REQ-SYNC-005 | F7 | DEBE | T, I | P-09 | engine.rs, error.rs, lib.rs, transport.rs, verifier.rs, sync_test.rs | Cubierto |
+| REQ-SYNC-006 | F7 | DEBE | T | P-09 | engine.rs, error.rs, hpke_envelope.rs, lib.rs, model.rs, transport.rs, types.rs, sync_test.rs, config.rs, lib.rs, main.rs, server.rs, store.rs, config_test.rs, limiter_test.rs, server_test.rs, store_test.rs | Cubierto |
+| REQ-SYNC-007 | F7 | DEBE | T | P-10 | config.rs, engine.rs, error.rs, lib.rs, relay_pool.rs, sync_test.rs, lib.rs | Cubierto |
 | REQ-STOR-001 | F5 | DEBE | T | P-03 | lib.rs, cli_m1_demonstration.rs, credential.rs, wallet.rs, holder_credential_management.rs, envelope.rs, lib.rs, record.rs, storage_envelope_and_indices.rs | Cubierto |
 | REQ-STOR-002 | F9 | DEBE | T, D | P-03 | envelope.rs, lib.rs, storage_envelope_and_indices.rs | Cubierto |
 | REQ-STOR-003 | F5 | DEBE | T, I | P-09 | wallet.rs, holder_credential_management.rs, backend.rs, blind_index.rs, envelope.rs, lib.rs, storage_envelope_and_indices.rs, storage.rs, sqlite_storage_integration.rs | Cubierto |
@@ -126,6 +126,18 @@
 | REQ-IDDOC-001 | F24 | DEBE | T | P-08 | — | Pendiente (Fase futura) |
 | REQ-IDDOC-002 | F24 | DEBE | T, I | P-09 | — | Pendiente (Fase futura) |
 | REQ-IDDOC-003 | F24 | DEBE | T, I | P-09 | — | Pendiente (Fase futura) |
+| REQ-TENANT-001 | F10 | DEBE | T | P-09 | — | Pendiente (Fase futura) |
+| REQ-TENANT-002 | F11 | DEBE | T, D | P-03 | — | Pendiente (Fase futura) |
+| REQ-TENANT-003 | F10 | DEBE | T | P-01 | — | Pendiente (Fase futura) |
+| REQ-TENANT-004 | F10 | DEBE | T, D | P-11 | — | Pendiente (Fase futura) |
+| REQ-UNIQ-001 | F10 | DEBE | T | P-04 | — | Pendiente (Fase futura) |
+| REQ-UNIQ-002 | F10 | DEBE | T, I | P-02 | — | Pendiente (Fase futura) |
+| REQ-UNIQ-003 | F10 | DEBE | T | P-08 | — | Pendiente (Fase futura) |
+| REQ-UNIQ-004 | F10 | DEBE | T, I | P-14 | — | Pendiente (Fase futura) |
+| REQ-DEVSLOT-001 | F8 | DEBE | T | P-08 | — | Pendiente (Fase futura) |
+| REQ-DEVSLOT-002 | F10 | DEBE | T, I | P-03 | — | Pendiente (Fase futura) |
+| REQ-DEVSLOT-003 | F8 | DEBE | T | P-08 | — | Pendiente (Fase futura) |
+| REQ-DEVSLOT-004 | F10 | DEBE | T, I | P-02 | — | Pendiente (Fase futura) |
 | REQ-SEC-001 | F1 | DEBE | T, I | — | layers.rs | Cubierto |
 | REQ-SEC-002 | F2 | DEBE | I | — | aead.rs, ecdh.rs, hpke.rs, kdf.rs, rng.rs, sha.rs, api_coverage.rs, external_vectors.rs | Cubierto |
 | REQ-SEC-003 | F2 | DEBE | T, I | — | aead.rs, secret.rs, api_coverage.rs, secret_hygiene.rs, software.rs, signer.rs, state.rs, verifier_state_integration.rs | Cubierto |
@@ -169,3 +181,7 @@
 | REQ-DOC-002 | F0 | DEBE | I | — | — | Inspección / Auditoría |
 | REQ-DOC-003 | F1 | DEBE | T | — | trace.rs | Cubierto |
 | REQ-DOC-004 | F17 | DEBE | I | — | — | Inspección / Auditoría |
+| REQ-UI-001 | F11 | DEBE | T, I | — | — | Pendiente (Fase futura) |
+| REQ-UI-002 | F11 | DEBE | T, I | — | — | Pendiente (Fase futura) |
+| REQ-UI-003 | F11 | DEBE | T, D | — | — | Pendiente (Fase futura) |
+| REQ-UI-004 | F11 | DEBE | T | — | — | Pendiente (Fase futura) |

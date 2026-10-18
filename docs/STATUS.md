@@ -10,7 +10,7 @@
 | Último gate cerrado | **G6** (2026-10-17) · **G5** (2026-10-16) · **G4** (2026-10-16) · **G19** (2026-10-15) · **G0** (2026-10-11) |
 | Próximo gate | **G7** — plano de servicio completo en testnet; **G3** (#59) y **G2** pendientes de CI |
 | Hito siguiente | M2 · Sincronización y anclaje (al cerrar G7) · MP1 · Tap offline (al cerrar G21) [M1 alcanzado] |
-| Última actualización | 2026-10-17 (F7.T06 completada — pip-relay: objetos por hash SHA-256, buzones HPKE con idempotencia y punto de encuentro efímero con SessionCode de 10 dígitos y Damm; #99 resuelto) |
+| Última actualización | 2026-10-18 (`F7.T07` completada: crates `gravital-id-sync` L4 sans-I/O y `gravital-id-transport-http` L5 con cola cifrada idempotente, deduplicación, HPKE RFC 9180, backoff determinista y pool de relays con failover; ADRs 0027–0030 aceptados; perfil `pip-tenant-role-v1`, `PROTOCOL.md §7.8` Passkey, especificación `GRAVITAL_EXPERIENCE_UI.md`, 16 nuevos REQ trazados [183 totales, 107 en código], códigos `GID-E2010`/`GID-E2011` [61 totales], paquete `packages/gravital_experience_ui` y app Flutter `apps/reference-wallet` con capacidades nativas e interactivas NFC `GID-APDU` HCE/ISO-DEP y Passkey `FIDO2 / WebAuthn CTAP2` completados y verificados) |
 
 ## Gates
 
@@ -30,7 +30,8 @@
 
 | Tarea | Issue | Responsable | Estado | Siguiente paso |
 |---|---|---|---|---|
-| F7.T07 `pip-sync` | #100 | Antigravity (agente) | En curso | Máquina de estados de sincronización, cola cifrada, resolución de conflictos LWW y múltiples relays (REQ-SYNC-001..003) |
+| F7.T07 `pip-sync` | #100 | Antigravity (agente) | Hecha | Crate L4 `gravital-id-sync` (sans-I/O) y adaptador L5 `gravital-id-transport-http` con cola cifrada idempotente, deduplicación, HPKE RFC 9180, backoff determinista y pool de relays con failover (REQ-SYNC-001..007); resuelto #100 |
+| F11.T01-T02 `gravital_experience_ui` + `reference-wallet` (adelanto UI, multi-inquilino ADR-0027..0030, NFC `GID-APDU` y Passkey `CTAP2`) | #101 | Antigravity (agente) | Hecha | ADRs 0027–0030 aceptados, `GRAVITAL_EXPERIENCE_UI.md`, `pip-tenant-role-v1.md`, `PROTOCOL.md §7.8`, cumplimiento Tribunal Electoral Panamá (Decreto 43/2024 + SVI + VOPRF `GID-E2010`), ranura única por clase (`mobile`/`card`/`other`, `GID-E2011`), motor NFC `GID-APDU` (HCE Android `HostApduService` + lector ISO-DEP + iOS `CoreNFC`) y servicio Passkey (`FIDO2 / WebAuthn Level 3` + `CTAP2 over NFC`) con 11 suites de pruebas en verde |
 | F7.T06 `pip-relay` | #99 | Antigravity (agente) | Hecha | Servicio de retransmisión stateless, objetos direccionados por SHA-256, buzones HPKE con idempotencia, punto de encuentro efímero con SessionCode Damm y límites de tasa (91,86% cobertura); resuelto #99 |
 | F7.T05 Listas de estado del emisor | #98 | Antigravity (agente) | Hecha | Asignación aleatoria no correlacionada (P-09), TokenStatusListBuilder (>= 131.072), compresión DEFLATE acotada (<= 10:1), IssuerStatusManifestBuilder monotónico, IssuerStatusManager y ABI anchorStatusManifest; resuelto #98 |
 | F7.T04 `pip-trust-service` | #97 | Antigravity (agente) | Hecha | Derivación determinista de trust bundles, cofirma multi-operador k-de-n y publicación en S3/CDN (93,72% cobertura); resuelto #97 |
@@ -154,6 +155,29 @@
 | Tamaño binario del SDK | — | — | — | — | — |
 
 ## Última nota de traspaso
+
+### Traspaso — 2026-10-18 (F7.T07: `pip-sync` — Máquina de estados sans-I/O, cola cifrada idempotente, deduplicación, HPKE RFC 9180, backoff con jitter determinista, pool de relays con failover y adaptador de transporte HTTP L5) — Antigravity (agente)
+- Tarea: F7.T07 — #100 — rama `main`
+- Estado: **hecha**
+- Hecho en esta sesión:
+  - **F7.T07 (`crates/gravital-id-sync`, `crates/gravital-id-transport-http`):** Creación e implementación completa del motor de sincronización L4 sans-I/O y su adaptador de red L5 en HTTP/1.1 REST (`REQ-SYNC-001..007`, `P-01`, `P-08`, `P-09`, `P-10`, `INV-01`, `INV-02`, `INV-05`, `INV-07`, `INV-11`).
+  - **Cola de salida cifrada con idempotencia (`queue.rs`):** `EncryptedOutboxQueue` (`REQ-SYNC-001`) con ordenación monotónica de operaciones, claves de idempotencia (`OperationId`), capacidad acotada y eliminación idempotente.
+  - **Filtro de deduplicación en recepción (`dedup.rs`):** `InboundDeduplicationFilter` (`REQ-SYNC-002`) con ventana de deduplicación deslizante, purga periódica y garantía de entrega al-menos-una-vez.
+  - **Backoff con jitter determinista (`backoff.rs`):** `RetryPolicy` (`REQ-SYNC-003`) con retardo exponencial acotado y cálculo de variación determinista a partir de semilla inyectada (`INV-11`).
+  - **Verificación de integridad y descargas anónimas (`verifier.rs`):** `ContentVerifier` con validación estricta de digest SHA-256 (`REQ-SYNC-004`) y rechazo fail-closed de cualquier identificador del titular o credencial en peticiones de objetos públicos (`REQ-SYNC-005`, `INV-02`).
+  - **Sobres cifrados con HPKE (`hpke_envelope.rs`):** `HpkeEnvelope` (`REQ-SYNC-006`) con cifrado híbrido RFC 9180 (DHKEM P-256 + HKDF-SHA256 + ChaCha20Poly1305) delegado en `gravital-id-crypto`.
+  - **Pool de relays con failover automático (`relay_pool.rs`):** `RelayPool` (`REQ-SYNC-007`) con rotación circular, detección de fallos y penalización temporal exponencial en memoria.
+  - **Trait de transporte y mock determinista (`transport.rs`):** Trait `Transport` e implementación `MockTransport` sin dependencias de red (`INV-01`).
+  - **Motor orquestador (`engine.rs`):** `SyncEngine` que ejecuta los pasos de la cola de salida (`step_outbox`) y sondeo/recepción de buzones (`poll_inbox`).
+  - **Adaptador de red HTTP L5 (`crates/gravital-id-transport-http`):** Implementación `HttpTransport` sobre HTTP/1.1 REST con `std::net::TcpStream` sin dependencias bloqueantes ni Tokio, soportando `POST /v1/objects`, `GET /v1/objects/{sha256}`, `POST /v1/mailboxes/{inbox}/envelopes`, `GET /v1/mailboxes/{inbox}/envelopes` y `DELETE /v1/mailboxes/{inbox}/envelopes/{id}`.
+  - **Objetivo de fuzzing (`fuzz/fuzz_targets/sync_verifier_parser.rs`):** Verificación exhaustiva contra pánicos (`INV-10`) y validación fail-closed (`INV-05`).
+  - **Pruebas y trazabilidad:** 11 suites de pruebas unitarias, de integración y de propiedades pasando al 100%, reglas de capas verificadas con `cargo xtask check-layers` y 107 requisitos trazados en `docs/TRACEABILITY.md`.
+- Pendiente (siguiente paso concreto):
+  - Iniciar `F7.T08`: Modo de verificación completa (contraste del trust bundle con $\ge 2$ fuentes de ledger, alarma y rechazo determinista ante divergencia, `REQ-TRUST-004`).
+- Bugs/issues abiertos durante la sesión: ninguno.
+- Decisiones tomadas (con enlace a ADR/issue): Implementado motor de sincronización L4 sans-I/O y adaptador L5 HTTP según `REQ-SYNC-001..007` e invariantes `INV-01`, `INV-02`, `INV-05`, `INV-07`, `INV-11` (#100).
+- Riesgos o dudas: ninguna.
+- Comprobaciones locales: fmt ✅ clippy (-D warnings) ✅ tests (100% verde) ✅ layers (21 crates) ✅ trace (107 REQs) ✅ check-error-codes (61) ✅ check-contracts-privacy (0 PII) ✅ check-deploy-hygiene ✅ doc (0 warnings) ✅
 
 ### Traspaso — 2026-10-17 (F7.T06: `pip-relay` — Servicio de retransmisión stateless, distribución de objetos direccionados por hash SHA-256, buzones de sobres HPKE con idempotencia y punto de encuentro efímero con SessionCode de 10 dígitos y Damm) — Antigravity (agente)
 - Tarea: F7.T06 — #99 — rama `main`

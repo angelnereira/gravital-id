@@ -14,7 +14,17 @@ description = "Máquina de sincronización de operaciones sans-I/O para Gravital
 workspace = true
 
 [dependencies]
+gravital-id-types = { workspace = true }
+gravital-id-codec = { workspace = true }
+gravital-id-crypto = { workspace = true }
+gravital-id-storage = { workspace = true }
 gravital-id-protocol = { workspace = true }
 gravital-id-trust = { workspace = true }
 gravital-id-status = { workspace = true }
-gravital-id-storage = { workspace = true }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "2.0"
+
+[dev-dependencies]
+gravital-id-testkit = { path = "../gravital-id-testkit", version = "0.1.0" }
+proptest = "=1.5.0"

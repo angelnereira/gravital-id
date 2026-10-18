@@ -629,10 +629,18 @@ dependencies = [
 name = "gravital-id-sync"
 version = "0.1.0"
 dependencies = [
+ "gravital-id-codec",
+ "gravital-id-crypto",
  "gravital-id-protocol",
  "gravital-id-status",
  "gravital-id-storage",
+ "gravital-id-testkit",
  "gravital-id-trust",
+ "gravital-id-types",
+ "proptest",
+ "serde",
+ "serde_json",
+ "thiserror",
 ]
 
 [[package]]
@@ -647,7 +655,13 @@ dependencies = [
 name = "gravital-id-transport-http"
 version = "0.1.0"
 dependencies = [
+ "gravital-id-codec",
  "gravital-id-sync",
+ "gravital-id-testkit",
+ "gravital-id-types",
+ "serde",
+ "serde_json",
+ "thiserror",
 ]
 
 [[package]]

@@ -17,6 +17,7 @@ gravital-id-codec = { path = "../crates/gravital-id-codec" }
 gravital-id-crypto = { path = "../crates/gravital-id-crypto" }
 gravital-id-credential = { path = "../crates/gravital-id-credential" }
 gravital-id-status = { path = "../crates/gravital-id-status" }
+gravital-id-sync = { path = "../crates/gravital-id-sync" }
 
 # Workspace independiente del principal: cargo-fuzz gestiona aquí sus perfiles.
 [workspace]
@@ -73,6 +74,12 @@ doc = false
 [[bin]]
 name = "jwk_parser"
 path = "fuzz_targets/jwk_parser.rs"
+test = false
+doc = false
+
+[[bin]]
+name = "sync_verifier_parser"
+path = "fuzz_targets/sync_verifier_parser.rs"
 test = false
 doc = false
 
