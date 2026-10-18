@@ -1,0 +1,86 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ContractsDeploymentEnvironment",
+  "description": "Esquema normativo para artefactos de despliegue de contratos en Gravital ID (CONTRACTS.md §9, REQ-LEDG-003).",
+  "type": "object",
+  "required": [
+    "network",
+    "chainId",
+    "deployedAt",
+    "commit",
+    "compiler",
+    "roles",
+    "contracts"
+  ],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "network": {
+      "type": "string",
+      "description": "Nombre canónico del entorno de red (ej. arbitrum-sepolia, arbitrum-one, local-anvil)."
+    },
+    "chainId": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Identificador numérico EIP-155 de la cadena EVM."
+    },
+    "deployedAt": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Marca de tiempo ISO 8601 del despliegue."
+    },
+    "commit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{7,40}$",
+      "description": "Hash del commit de Git desde el que se compilaron y desplegaron los contratos."
+    },
+    "compiler": {
+      "type": "object",
+      "required": ["solc", "optimizer", "viaIr", "evmVersion"],
+      "properties": {
+        "solc": { "type": "string" },
+        "optimizer": {
+          "type": "object",
+          "required": ["enabled", "runs"],
+          "properties": {
+            "enabled": { "type": "boolean" },
+            "runs": { "type": "integer" }
+          }
+        },
+        "viaIr": { "type": "boolean" },
+        "evmVersion": { "type": "string" }
+      }
+    },
+    "roles": {
+      "type": "object",
+      "required": ["admin", "emergencyAdmin", "timelockDelaySeconds"],
+      "properties": {
+        "admin": { "type": "string", "pattern": "^0x[0-9a-fA-F]{40}$" },
+        "emergencyAdmin": { "type": "string", "pattern": "^0x[0-9a-fA-F]{40}$" },
+        "timelockDelaySeconds": { "type": "integer", "minimum": 172800 }
+      }
+    },
+    "contracts": {
+      "type": "object",
+      "required": ["GovernanceTimelock", "TrustRegistry", "StatusAnchor"],
+      "properties": {
+        "GovernanceTimelock": { "$ref": "#/$defs/ContractInfo" },
+        "TrustRegistry": { "$ref": "#/$defs/ContractInfo" },
+        "StatusAnchor": { "$ref": "#/$defs/ContractInfo" }
+      }
+    }
+  },
+  "$defs": {
+    "ContractInfo": {
+      "type": "object",
+      "required": ["address", "deploymentTx", "verified"],
+      "properties": {
+        "address": { "type": "string", "pattern": "^0x[0-9a-fA-F]{40}$" },
+        "deploymentTx": { "type": "string", "pattern": "^0x[0-9a-fA-F]{64}$" },
+        "verified": { "type": "boolean" },
+        "explorerUrl": { "type": "string" }
+      }
+    }
+  }
+}

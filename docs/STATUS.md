@@ -6,11 +6,11 @@
 
 | Campo | Valor |
 |---|---|
-| Fase actual | **F6 — Contratos y adaptador de ledger** |
-| Último gate cerrado | **G5** (2026-10-16) · **G4** (2026-10-16) · **G19** (2026-10-15) · **G0** (2026-10-11) |
-| Próximo gate | **G6** — contratos en testnet y adaptador de ledger; **G3** (#59) y **G2** pendientes de CI |
+| Fase actual | **F7 — Servicios y sincronización** |
+| Último gate cerrado | **G6** (2026-10-17) · **G5** (2026-10-16) · **G4** (2026-10-16) · **G19** (2026-10-15) · **G0** (2026-10-11) |
+| Próximo gate | **G7** — plano de servicio completo en testnet; **G3** (#59) y **G2** pendientes de CI |
 | Hito siguiente | M2 · Sincronización y anclaje (al cerrar G7) · MP1 · Tap offline (al cerrar G21) [M1 alcanzado] |
-| Última actualización | 2026-10-17 (F6.T09 y F6.T10 completadas — gravital-id-ledger-evm implementado con MultiRpcClient, failover sticky, consistencia cruzada, tolerancia a reorganizaciones y suites de fallos con 91,44% de cobertura; actualización del workspace a Rust 1.99.0; #92 resuelto) |
+| Última actualización | 2026-10-17 (F6.T11 completada — scripts reproducibles en Foundry, esquemas y artefactos en deploy/environments/testnet/contracts.json; Gate G6 cerrado formalmente tras aprobar invariantes, fallos, multi-RPC y verificación sin PII; #93 resuelto) |
 
 ## Gates
 
@@ -23,13 +23,15 @@
 | G4 | **Cerrado** | 2026-10-16 | Demostración scriptada determinista offline con los 4 estados reproducidos a voluntad (`pip-cli demo-offline` y `cli_integration.rs`), cobertura `gravital-id-verifier` al 90,65% regions / 97,87% functions y `gravital-id-status/cache.rs` al 94,85%, matriz negativa exhaustiva de las 11 etapas (`verifier_negative_matrix_and_precedence.rs`), verificación 100% sans-I/O sin red (INV-01) y determinismo estricto con propiedades (INV-11) (#82). |
 | G5 | **Cerrado** | 2026-10-16 | **Hito M1 alcanzado**: Demostración reproducible de los escenarios MVP-01 (verificación 100% offline y sans-I/O), MVP-02 (rechazo determinista de manipulaciones en firma, emisor no autorizado, revocación y divulgación manipulada) y MVP-03 (rechazo determinista de replay en base de datos SQLite cifrada con `VerifierStateStore`) mediante `pip-cli demo-m1` y suite `cli_m1_demonstration.rs` (94,71% de cobertura en `pip-cli`); informe de legibilidad física y óptica QR `docs/reports/2026-10-16-legibilidad-qr.md` (100% éxito en Xiaomi Redmi 9A, Samsung Galaxy A53 5G, Apple iPhone 15 Pro y Honeywell Xenon 1900g); e inspección forense de SQLite demostrando 0 datos personales o presentaciones en claro en reposo (`INV-01`, `INV-02`, `INV-04`, `INV-05`, `INV-11`, `REQ-PRES-005`, `REQ-PERF-003`, `REQ-STOR-001`, `REQ-STOR-004`, `REQ-PRIV-005`; #88). |
 | G19 | **Cerrado** | 2026-10-15 | `ADR-0021` a `ADR-0026` aceptados; especificaciones normativas (`PROTOCOL.md §7`, `ERROR_CODES.md` fam. 8, `THREAT_MODEL.md §5`, `pip-identity-v1.md`, `docs/legal/` v0.2) integradas; spikes `F19.T12` (`spikes/nfc-hce/`), `F19.T13` (`spikes/javacard/`) y `F19.T14` (`spikes/qr/`, `keystore/`, `wasm/`, `ledger/`) con arneses reproducibles y CSVs versionados; 5 issues `type:spec-gap` (`#73`–`#77`) cerrados. |
-| G6 … G18, G20 … G25 | Pendiente | — | — |
+| G6 | **Cerrado** | 2026-10-17 | Contratos en testnet (`contracts/script/Deploy.s.sol`, `deploy/environments/testnet/contracts.json`), 25 pruebas Foundry pasando (unitarias, fuzz e invariantes), adaptador `gravital-id-ledger-evm` con pruebas de fallos (91,44% cobertura) y verificación "sin datos personales" (`check-contracts-privacy`) aprobada con 0 PII (#90, #91, #92, #93). |
+| G7 … G18, G20 … G25 | Pendiente | — | — |
 
 ## Tareas en curso
 
 | Tarea | Issue | Responsable | Estado | Siguiente paso |
 |---|---|---|---|---|
-| F6.T11 Despliegue en testnet y Gate G6 | #93 | Antigravity (agente) | Por iniciar | Configuración de entorno testnet y cierre de Gate G6 (REQ-LEDG-003) |
+| F7.T01 ADR-0013 e IaC base | — | Antigravity (agente) | Por iniciar | Proveedor inicial, entornos dev y testnet como código, sin secretos (REQ-REL-001) |
+| F6.T11 Despliegue en testnet y Gate G6 | #93 | Antigravity (agente) | Hecha | Scripts reproducibles en Foundry, esquemas y artefactos en deploy/environments/testnet/contracts.json; Gate G6 cerrado (#93) |
 | F6.T09-T10 `pip-ledger-evm` y pruebas de fallos | #92 | Antigravity (agente) | Hecha | EvmLedgerAdapter con MultiRpcClient, failover, consistencia cruzada, tolerancia a reorgs y fallos (91,44% cobertura); resuelto #92 |
 | F6.T08 `pip-ledger` | #91 | Antigravity (agente) | Hecha | Trait LedgerAdapter, eventos, reconstrucción pura y derivación de bundle (REQ-LEDG-002, REQ-TRUST-008); resuelto #91 |
 | F6.T02-T07 Contratos inteligentes y pruebas | #90 | Antigravity (agente) | Hecha | TrustRegistry, StatusAnchor, Gobernanza timelock, 25 pruebas Foundry, snapshot gas y verificación check-contracts-privacy (no PII); resuelto #90 |
