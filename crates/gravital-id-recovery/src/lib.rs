@@ -6,6 +6,7 @@
 //! - **Garantía no_std:** Sí (`#![no_std]` + `alloc`)
 //!
 //! Trazabilidad:
+//! - **REQ-REC-001:** La migración entre dispositivos DEBE usar canal efímero ECDH con compromiso previo de claves y verificación SAS.
 //! - **REQ-REC-002:** El respaldo cifrado DEBE protegerse con un código de recuperación generado de ≥ 128 bits.
 //! - **REQ-REC-004:** La clave de recuperación DEBE tener propósito exclusivo (`HolderRecovery`).
 //! - **REQ-REC-007:** Las claves de recuperación DEBEN derivarse por emisor; la misma huella NO DEBE registrarse ante dos emisores.
@@ -27,6 +28,7 @@ pub mod gf256;
 pub mod kdf;
 pub mod key;
 pub mod manager;
+pub mod migration;
 pub mod package;
 pub mod payload;
 pub mod rebinding;
@@ -42,6 +44,12 @@ pub use kdf::{
 };
 pub use key::HolderRecoveryKey;
 pub use manager::RecoveryManager;
+pub use migration::{
+    compute_commitment, compute_transcript, MigrationCommitment, MigrationCompleteAck,
+    MigrationCompletedResult, MigrationEncryptedPackage, MigrationEngagement, MigrationRevelation,
+    PendingRebinding, SasCode, SourceMigrationMachine, TargetMigrationMachine,
+    MIGRATION_COMMITMENT_PREFIX, MIGRATION_QR_PREFIX, MIGRATION_SAS_PREFIX,
+};
 pub use package::{
     EncryptedBackupPackage, BACKUP_HEADER_LEN, BACKUP_MAGIC_GIDB, BACKUP_MAGIC_PIPB,
     BACKUP_PACKAGE_FORMAT_VERSION, CIPHER_SUITE_XCHACHA20_POLY1305,

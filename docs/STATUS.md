@@ -10,7 +10,7 @@
 | Último gate cerrado | **G7** (2026-10-18) · **G6** (2026-10-17) · **G5** (2026-10-16) · **G4** (2026-10-16) · **G19** (2026-10-15) · **G0** (2026-10-11) |
 | Próximo gate | **G8 / Hito M2** — los nueve criterios de aceptación del MVP (§24); **G3** (#59) y **G2** pendientes de CI |
 | Hito siguiente | M2 · Sincronización y anclaje (al cerrar G8) · MP1 · Tap offline (al cerrar G21) [M1 alcanzado] |
-| Última actualización | 2026-10-18 (`F8.T04` completada: re-vinculación y reemplazo atómico por clase de factor de dispositivo `DeviceFactorClass` en `gravital-id-recovery` y `gravital-id-issuer`, `ADR-0029`, `SPEC-PIP-REBIND-001`, `DeviceSlotManager`, revocación atómica del índice previo en Token Status List preservando intactos los dispositivos de otras clases, suite de 5 pruebas de integración en verde y auditoría forense cero PII; resuelto #104; siguiente tarea: F8.T05 Migración entre dispositivos con SAS y compromiso previo) |
+| Última actualización | 2026-10-18 (`F8.T05` completada: migración directa entre dispositivos con compromiso previo de clave efímera y verificación SAS de 6 dígitos en `gravital-id-recovery`, `ADR-0009`, `SPEC-PIP-MIGRATE-001`, máquinas de estados sans-I/O `TargetMigrationMachine` y `SourceMigrationMachine`, cifrado AEAD XChaCha20-Poly1305 de bóveda, encolado de re-vinculaciones para nuevo hardware sin exportar claves privadas de silicio, y suite de 7 pruebas de integración en verde; resuelto #105; siguiente tarea: F8.T06 Rotación de clave de emisor E2E) |
 
 ## Gates
 
@@ -31,7 +31,8 @@
 
 | Tarea | Issue | Responsable | Estado | Siguiente paso |
 |---|---|---|---|---|
-| F8.T05 Migración entre dispositivos con SAS y compromiso previo | — | Antigravity (agente) | Por iniciar | Protocolo de migración directa entre dispositivos con Short Authentication String (SAS), verificación visual de compromiso y transferencia cifrada E2E (`REQ-REC-001`, `REQ-PROX-001`) |
+| F8.T06 Rotación de clave de emisor E2E | — | Antigravity (agente) | Por iniciar | Registro de rotación en TrustRegistry, propagación indexador -> trust service -> bundle -> verificadores offline, verificación de credenciales previas (`REQ-KEY-006`) |
+| F8.T05 Migración entre dispositivos con SAS y compromiso previo | #105 | Antigravity (agente) | Hecha | Engagement QR, máquinas de estados sans-I/O `TargetMigrationMachine` y `SourceMigrationMachine`, compromiso SHA-256 pre-revelación contra MitM, derivación HKDF-SHA256 de código SAS (6 dígitos `xxx-xxx`) y claves de sesión, transferencia cifrada de bóveda con `XChaCha20-Poly1305` y encolado de re-vinculaciones sin exportar claves privadas de hardware (`REQ-REC-001`, `ADR-0009`, `SPEC-PIP-MIGRATE-001`); resuelto #105 |
 | F8.T04 Re-vinculación y reemplazo atómico por clase de dispositivo | #104 | Antigravity (agente) | Hecha | `RebindingChallenge`, `RebindingRequest`, transcrito canónico `SPEC-PIP-REBIND-001`, `DeviceSlotManager` con revocación atómica de ranura previa (`mobile`/`card`/`other`) en `TokenStatusList` preservando ranuras activas de otras clases y re-emisión (`REQ-REC-004`, `REQ-ISS-006`, `REQ-DEVSLOT-001..004`, `ADR-0029`); resuelto #104 |
 | F8.T03 Clave de recuperación | #103 | Antigravity (agente) | Hecha | `KeyPurpose::HolderRecovery`, `HolderRecoveryKey`, derivación no correlacionable por emisor, extensión de emisión `cnf.rec` (`PROTOCOL.md §2.2`), 8 pruebas de integración y auditoría cero PII (`REQ-REC-004`, `REQ-REC-007`); resuelto #103 |
 | F8.T02 Shamir k-de-n | #102 | Antigravity (agente) | Hecha | Aritmética $GF(2^8)$, interpolación de Lagrange de Shamir $k$-de-$n$, contenedor `GIDS` canónico, Crockford Base32, 44 pruebas verdes y auditoría cero PII (`REQ-REC-003`, `SPEC-PIP-SHAMIR-001`); resuelto #102 |
@@ -166,6 +167,32 @@
 | Tamaño binario del SDK | — | — | — | — | — |
 
 ## Última nota de traspaso
+
+### Traspaso — 2026-10-18 (F8.T05: Migración entre dispositivos con SAS y compromiso previo — gravital-id-recovery L3 no_std, SPEC-PIP-MIGRATE-001, ADR-0009, TargetMigrationMachine, SourceMigrationMachine, SAS de 6 dígitos xxx-xxx, transferencia cifrada con XChaCha20-Poly1305 y encolado de re-vinculaciones sin exportar claves de silicio) — Antigravity (agente)
+- Tarea: F8.T05 — #105 — rama `main`
+- Estado: **hecha**
+- Hecho en esta sesión:
+  - **`docs/specs/PROTOCOL.md §8` (`SPEC-PIP-MIGRATE-001`, `ADR-0009`, `REQ-REC-001`):** Especificación normativa del protocolo de migración directa en 4 fases: Engagement QR con clave efímera P-256 $B$ y nonce $N_B$, Compromiso criptográfico previo del origen $C_A = \text{SHA-256}(\dots)$ para mitigar ataques MitM por búsqueda de colisiones de SAS ($2^{20}$ intentos), Revelación de clave efímera $A$, verificación en tiempo constante fail-closed (`CommitmentMismatch`), derivación determinista de SAS (6 dígitos `xxx-xxx`) y claves de sesión con HKDF-SHA256, transferencia cifrada de `BackupPayload` con `XChaCha20-Poly1305` autenticada contra el resumen del transcrito, y encolado automático de re-vinculaciones en el nuevo hardware sin exportar claves privadas de silicio (`INV-03`).
+  - **`crates/gravital-id-recovery` (L3 `no_std` + `alloc`, `#![forbid(unsafe_code)]`):**
+    - `migration.rs`:
+      - Tipos de soporte: `SasCode` (con formateo `xxx-xxx`), `MigrationEngagement` (con serialización y parsing de código QR compacto `pip-migrate-v1:<target_id>:<target_pub>:<target_nonce>:<created_at>`), `MigrationCommitment`, `TargetCommitmentAck`, `MigrationRevelation`, `MigrationEncryptedPackage`, `MigrationCompleteAck` y `PendingRebinding`.
+      - `TargetMigrationMachine`: Máquina de estados sans-I/O para el nuevo dispositivo (`WaitingForCommitment` $\to$ `WaitingForRevelation` $\to$ `SasVerification` $\to$ `ReadyForData` $\to$ `Completed`). Comprueba en tiempo constante la coincidencia del compromiso previo, deriva SAS y claves con HKDF-SHA256, exige confirmación explícita del titular (`SasNotConfirmed`), descifra y valida `BackupPayload` y encola las re-vinculaciones.
+      - `SourceMigrationMachine`: Máquina de estados sans-I/O para el dispositivo antiguo (`WaitingForAck` $\to$ `SasVerification` $\to$ `ReadyToTransmit` $\to$ `WaitingForCompletion` $\to$ `Completed`). Emite el compromiso SHA-256 antes de revelar la clave efímera, deriva SAS y claves de sesión, exige confirmación explícita del titular antes de sellar con AEAD y finaliza tras el acuse del nuevo dispositivo.
+    - `error.rs`: Variantes `InvalidMigrationMessage`, `CommitmentMismatch`, `SasNotConfirmed`, `MigrationAeadFailed` e `InvalidSessionId` mapeadas de forma canónica a `ErrorCode`.
+  - **`crates/gravital-id-recovery/tests/migration_tests.rs`:** Suite de 7 pruebas de integración:
+    1. `test_e2e_nominal_device_migration_journey`: Flujo nominal completo en 4 fases, validación de coincidencia de SAS derivado en ambos dispositivos, transferencia cifrada y encolado de 2 re-vinculaciones (`gobierno.pa` y `banco.example.com`).
+    2. `test_mitm_tampered_key_commitment_mismatch_fails_closed`: Detección de clave manipulada por MitM en la revelación y aborto inmediato fail-closed (`CommitmentMismatch` $\to$ `ErrorCode::InvalidSignature`).
+    3. `test_mitm_unconfirmed_sas_refuses_to_transmit_or_decrypt`: Rechazo estricto de cifrado o descifrado si el titular no confirmó interactivamente el código SAS (`SasNotConfirmed` $\to$ `ErrorCode::ConsentPending`).
+    4. `test_mitm_ciphertext_tampering_fails_closed`: Rechazo fail-closed ante manipulación de 1 bit en el ciphertext AEAD (`MigrationAeadFailed` $\to$ `ErrorCode::AeadAuthenticationFailed`).
+    5. `test_qr_format_and_tampered_uri_validation`: Validación de prefijo, campos y codificación hexadecimal en URIs QR de enganche.
+    6. `test_migration_zero_hardware_private_keys_exported_audit`: Auditoría forense verificando ausencia absoluta de claves privadas de hardware en el paquete de migración (`INV-03`).
+    7. `test_migration_zero_pii_audit`: Auditoría forense verificando ausencia de datos personales, IMEIs, MACs o seriales en enganches, compromisos o transcritos (`INV-02`).
+- Pendiente (siguiente paso concreto):
+  - Iniciar `F8.T06`: Rotación de clave de emisor E2E (`REQ-KEY-006`): Registro de rotación en TrustRegistry, propagación a través de indexador -> trust service -> bundle -> verificadores offline, y verificación de que las credenciales emitidas antes de la rotación siguen siendo válidas.
+- Bugs/issues abiertos durante la sesión: ninguno.
+- Decisiones tomadas (con enlace a ADR/issue): Implementado protocolo normativo de migración directa entre dispositivos según `ADR-0009` y `SPEC-PIP-MIGRATE-001` (#105).
+- Riesgos o dudas: ninguna.
+- Comprobaciones locales: fmt ✅ clippy ✅ tests (100% verde en todo el workspace, 66 tests en recovery) ✅ layers (21 crates válidos) ✅ trace (118 REQs trazados) ✅ check-error-codes (61) ✅ check-contracts-privacy (0 PII) ✅ check-deploy-hygiene (0 secretos) ✅
 
 ### Traspaso — 2026-10-18 (F8.T04: Re-vinculación y reemplazo atómico por clase de dispositivo — gravital-id-recovery y gravital-id-issuer L3 no_std, DeviceFactorClass, SPEC-PIP-REBIND-001, ADR-0029, DeviceSlotManager, revocación atómica selectiva en TokenStatusList y auditoría forense cero PII) — Antigravity (agente)
 - Tarea: F8.T04 — #104 — rama `main`

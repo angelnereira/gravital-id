@@ -7,6 +7,18 @@ Cada componente publicado (SDK, servicios, contratos, especificación) indica su
 ## [Unreleased]
 
 ### Added
+- [recovery, migration, crypto, protocol] Migración directa entre dispositivos con compromiso previo y SAS (`crates/gravital-id-recovery`, `docs/specs/PROTOCOL.md §8`, `F8.T05`, `REQ-REC-001`, `ADR-0009`, `SPEC-PIP-MIGRATE-001`, `INV-01`, `INV-02`, `INV-03`, `INV-05`, `INV-10`, `INV-11`; #105):
+  - `docs/specs/PROTOCOL.md §8` (`SPEC-PIP-MIGRATE-001`): Especificación normativa del protocolo de migración dispositivo a dispositivo en 4 fases (Engagement QR, Compromiso previo con SHA-256, Revelación de clave efímera y código SAS de 6 dígitos numéricos, Transferencia cifrada con XChaCha20-Poly1305 y encolado de solicitudes de re-vinculación).
+  - `crates/gravital-id-recovery`:
+    - `migration.rs`:
+      - Estructuras `MigrationEngagement` (con codificación/decodificación QR compacta `pip-migrate-v1:...`), `MigrationCommitment`, `TargetCommitmentAck`, `MigrationRevelation`, `MigrationEncryptedPackage`, `MigrationCompleteAck` y `SasCode` (formateado `xxx-xxx`).
+      - Máquinas de estados sans-I/O `TargetMigrationMachine` (dispositivo nuevo) y `SourceMigrationMachine` (dispositivo antiguo) gobernando la secuencia determinista y el paso de mensajes sin I/O de red.
+      - Inmunidad a ataques de intermediario (MitM): compromiso previo $C_A = \text{SHA-256}(\dots)$ que previene la búsqueda de colisiones de SAS ($2^{20}$ intentos), con verificación en tiempo constante (`constant_time_eq`) y fallo cerrado (`CommitmentMismatch`).
+      - Derivación determinista de SAS y claves de sesión mediante HKDF-SHA256 vinculado al transcrito canónico (`SessionTranscript`).
+      - Transferencia cifrada de la bóveda (`BackupPayload`) con `XChaCha20-Poly1305` autenticada contra el resumen del transcrito.
+      - Encolado automático de re-vinculaciones (`queued_rebindings`) en el nuevo dispositivo para cada credencial migrada, garantizando que las claves privadas de hardware nunca se exportan (`INV-03`, `REQ-CARD-001`, `REQ-REC-001`).
+    - `error.rs`: Variantes de error `InvalidMigrationMessage`, `CommitmentMismatch`, `SasNotConfirmed`, `MigrationAeadFailed` e `InvalidSessionId` mapeadas de forma canónica a `ErrorCode`.
+  - `crates/gravital-id-recovery/tests/migration_tests.rs`: Suite de 7 pruebas de integración verificando el flujo nominal E2E de migración, detección y aborto fail-closed ante MitM por discrepancia de compromiso, rechazo de transmisión o descifrado si el SAS no ha sido confirmado interactivamente (`SasNotConfirmed`), fallo cerrado ante manipulación de ciphertext AEAD, validación de formatos y URIs de QR corruptos, auditoría forense de no exportación de claves privadas de hardware (`INV-03`) y auditoría forense de cero PII en tránsito (`INV-02`).
 - [recovery, issuer, devslot, protocol] Re-vinculación y reemplazo atómico por clase de dispositivo (`crates/gravital-id-recovery`, `crates/gravital-id-issuer`, `crates/gravital-id-types`, `docs/specs/PROTOCOL.md §2.3`, `ADR-0029`, `F8.T04`, `REQ-REC-004`, `REQ-ISS-006`, `REQ-DEVSLOT-001..004`, `INV-01`, `INV-02`, `INV-03`, `INV-05`, `INV-10`, `INV-11`; #104):
   - `docs/specs/PROTOCOL.md §2.3` (`SPEC-PIP-REBIND-001`): Especificación normativa del protocolo de re-vinculación de dispositivo y reemplazo atómico gobernado por `DeviceFactorClass` (`mobile`, `card`, `other`), cálculo canónico de `RebindingTranscript` (`pip-rebinding-v1:<iss>:<nonce>:<class>:<new_holder_thumbprint>`) y verificación de firma ES256 P1363 contra `HolderRecoveryKey`.
   - `crates/gravital-id-types`: Enum `DeviceFactorClass` (`Mobile`, `Card`, `Other`) con parsing canónico, representación de cadena y derivación `Ord`/`PartialOrd`/`Hash`.

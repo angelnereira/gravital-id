@@ -73,7 +73,7 @@
 | REQ-SYNC-005 | F7 | DEBE | T, I | P-09 | engine.rs, error.rs, lib.rs, transport.rs, verifier.rs, sync_test.rs, sync_verifier_parser.rs | Cubierto |
 | REQ-SYNC-006 | F7 | DEBE | T | P-09 | lib.rs, chaos_fault_injection.rs, container_stack_integration.rs, engine.rs, error.rs, hpke_envelope.rs, lib.rs, model.rs, transport.rs, types.rs, sync_test.rs, config.rs, lib.rs, main.rs, server.rs, store.rs, config_test.rs, limiter_test.rs, server_test.rs, store_test.rs | Cubierto |
 | REQ-SYNC-007 | F7 | DEBE | T | P-10 | lib.rs, chaos_fault_injection.rs, config.rs, engine.rs, error.rs, lib.rs, relay_pool.rs, sync_test.rs, lib.rs | Cubierto |
-| REQ-STOR-001 | F5 | DEBE | T | P-03 | lib.rs, cli_m1_demonstration.rs, credential.rs, wallet.rs, holder_credential_management.rs, lib.rs, package.rs, payload.rs, envelope.rs, lib.rs, record.rs, storage_envelope_and_indices.rs | Cubierto |
+| REQ-STOR-001 | F5 | DEBE | T | P-03 | lib.rs, cli_m1_demonstration.rs, credential.rs, wallet.rs, holder_credential_management.rs, lib.rs, package.rs, payload.rs, migration_tests.rs, envelope.rs, lib.rs, record.rs, storage_envelope_and_indices.rs | Cubierto |
 | REQ-STOR-002 | F9 | DEBE | T, D | P-03 | envelope.rs, lib.rs, storage_envelope_and_indices.rs | Cubierto |
 | REQ-STOR-003 | F5 | DEBE | T, I | P-09 | wallet.rs, holder_credential_management.rs, backend.rs, blind_index.rs, envelope.rs, lib.rs, storage_envelope_and_indices.rs, storage.rs, sqlite_storage_integration.rs | Cubierto |
 | REQ-STOR-004 | F5 | DEBE | T | — | lib.rs, cli_m1_demonstration.rs, wallet.rs, holder_credential_management.rs, backend.rs, lib.rs, storage_envelope_and_indices.rs, lib.rs, migration.rs, storage.rs, sqlite_fault_tolerance.rs, sqlite_storage_integration.rs | Cubierto |
@@ -81,10 +81,10 @@
 | REQ-STOR-006 | F5 | DEBE | T, I | P-09 | audit.rs, lib.rs, wallet.rs, holder_credential_management.rs, holder_privacy_and_forensics.rs, migration.rs | Cubierto |
 | REQ-STOR-007 | F9 | DEBE | D, I | P-03 | — | Inspección / Auditoría |
 | REQ-STOR-008 | F5 | DEBE | T | P-11 | holder_credential_management.rs, holder_privacy_and_forensics.rs, backend.rs, lib.rs, storage_envelope_and_indices.rs, lib.rs, storage.rs, sqlite_storage_integration.rs | Cubierto |
-| REQ-REC-001 | F8 | DEBE | T, D | P-03 | — | Pendiente (Fase futura) |
-| REQ-REC-002 | F8 | DEBE | T | P-03 | code.rs, error.rs, kdf.rs, lib.rs, manager.rs, package.rs, payload.rs, wordlist.rs, recovery_tests.rs | Cubierto |
+| REQ-REC-001 | F8 | DEBE | T, D | P-03 | lib.rs, migration.rs, migration_tests.rs | Cubierto |
+| REQ-REC-002 | F8 | DEBE | T | P-03 | code.rs, error.rs, kdf.rs, lib.rs, manager.rs, package.rs, payload.rs, wordlist.rs, migration_tests.rs, recovery_tests.rs | Cubierto |
 | REQ-REC-003 | F8 | DEBERÍA | T | P-10 | gf256.rs, shamir.rs, shamir_tests.rs | Cubierto |
-| REQ-REC-004 | F8 | DEBE | T | P-07 | vc.rs, lib.rs, request.rs, slot_manager.rs, kdf.rs, key.rs, lib.rs, payload.rs, rebinding.rs, rebinding_tests.rs, recovery_key_tests.rs, recovery_tests.rs | Cubierto |
+| REQ-REC-004 | F8 | DEBE | T | P-07 | vc.rs, lib.rs, request.rs, slot_manager.rs, kdf.rs, key.rs, lib.rs, payload.rs, rebinding.rs, migration_tests.rs, rebinding_tests.rs, recovery_key_tests.rs, recovery_tests.rs | Cubierto |
 | REQ-REC-005 | F8 | DEBE | I | — | — | Inspección / Auditoría |
 | REQ-REC-006 | F8 | DEBE | I | P-10 | — | Inspección / Auditoría |
 | REQ-REC-007 | F8 | DEBE | T | P-09 | vc.rs, lib.rs, request.rs, kdf.rs, key.rs, lib.rs, rebinding.rs, rebinding_tests.rs, recovery_key_tests.rs, recovery_tests.rs | Cubierto |

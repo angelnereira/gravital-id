@@ -518,3 +518,91 @@ Para transmitir credenciales verificables hacia aplicaciones web, móviles o pas
    - La wallet transmite en una única operación atómica la tupla `{ credential_id, authenticator_data, client_data_json, assertion_signature, hpke_or_sd_jwt_presentation }`.
    - El verificador comprueba sin conexión: (a) la firma `ES256` de la aserción WebAuthn, (b) la presencia de los bits `UP` y `UV` en `authenticatorData.flags`, (c) la coincidencia exacta del `challenge` con `SHA-256(transcript_hash || sd_hash)`, y (d) el pipeline `VerifierPipeline::verify` sobre la presentación SD-JWT+KB.
 
+---
+
+## 8. Protocolo Normativo de Migración Directa entre Dispositivos (`SPEC-PIP-MIGRATE-001`, `ADR-0009`, `REQ-REC-001`)
+
+### 8.1 Alcance e Invariantes del Canal de Migración
+Cuando un titular adquiere o reemplaza su dispositivo principal por uno nuevo, la transferencia directa de la identidad digital y credenciales entre ambos dispositivos debe cumplir los siguientes requisitos criptográficos y de privacidad:
+1. **Canal Efímero Cifrado Extremo a Extremo:** Toda la comunicación se cifra mediante `XChaCha20-Poly1305` bajo claves efímeras derivadas con ECDH P-256 y HKDF-SHA256 (`REQ-REC-001`, `ADR-0009`).
+2. **Inmunidad a Ataques de Intermediario (MitM) vía Compromiso Previo y Código SAS:** Para evitar que un atacante en el medio calcule una clave colisionante que genere el mismo código SAS de 6 dígitos ($\approx 2^{20}$ intentos), el dispositivo emisor compromete previamente el hash de su clave efímera antes de revelarla (`ADR-0009`, `THREAT_MODEL.md §4.3`).
+3. **No Exportabilidad de Claves de Hardware (`INV-03`, `REQ-CARD-001`):** Las claves privadas de vinculación alojadas en StrongBox, Secure Enclave o elementos seguros Java Card **NUNCA** se transfieren por el canal de migración. El nuevo dispositivo genera sus propias claves locales y encola solicitudes de **re-vinculación atómica** (`SPEC-PIP-REBIND-001`, `REQ-DEVSLOT-003`) ante cada emisor.
+4. **Sans-I/O y Determinismo (`INV-01`, `INV-11`):** Los motores de migración `SourceMigrationMachine` y `TargetMigrationMachine` no realizan I/O de red; se ejecutan de manera pura y determinista mediante paso de mensajes sobre cualquier transporte (código QR, BLE, Wi-Fi Direct, NFC o paso en memoria).
+5. **Cero Datos Personales en Tránsito no Cifrado (`INV-02`):** Los mensajes de enganche, compromiso, acuse y revelación no contienen identificadores de hardware (IMEI, MAC, seriales), nombres, datos personales ni metadatos de las credenciales.
+
+### 8.2 Diagrama de Secuencia del Flujo de 4 Fases
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant New as Dispositivo Destino (Nuevo)
+    participant Old as Dispositivo Origen (Viejo)
+    participant User as Titular (Humano)
+
+    Note over New: Fase 1: Engagement (QR)
+    New->>New: Genera par efímero (b, B) y nonce N_B
+    New-->>User: Muestra código QR de enganche
+    User-->>Old: Escanea código QR con cámara
+
+    Note over Old: Fase 2: Compromiso Previo (Commitment)
+    Old->>Old: Genera par efímero (a, A) y nonce N_A
+    Old->>Old: C_A = SHA-256("pip-migrate-commit-v1:" || target_id || ":" || N_B || ":" || N_A || ":" || A)
+    Old->>New: MigrationCommitment { target_id, commitment: C_A }
+    New->>New: Almacena compromiso C_A
+    New-->>Old: TargetCommitmentAck { target_id, status: OK }
+
+    Note over Old: Fase 3: Revelación y SAS (Short Authentication String)
+    Old->>New: MigrationRevelation { target_id, source_pub: A, source_nonce: N_A }
+    New->>New: Verifica SHA-256(...) == C_A (fail-closed ante discrepancia)
+    Note over Old,New: Ambos calculan secreto compartido ECDH Z y transcrito canónico
+    Old->>Old: Deriva SAS (6 dígitos) y SessionKey/Nonce con HKDF
+    New->>New: Deriva SAS (6 dígitos) y SessionKey/Nonce con HKDF
+    Old-->>User: Muestra SAS ("xxx-xxx")
+    New-->>User: Muestra SAS ("xxx-xxx")
+    User->>User: Compara visualmente los 6 dígitos en ambas pantallas
+    User->>Old: Confirma coincidencia en pantalla
+    User->>New: Confirma coincidencia en pantalla
+
+    Note over Old: Fase 4: Transferencia Cifrada y Encolado de Re-vinculaciones
+    Old->>Old: Empaqueta BackupPayload (recovery_secret, credenciales SD-JWT)
+    Old->>Old: Cifra con XChaCha20-Poly1305 (SessionKey, SessionNonce, AAD = SHA256(Transcript))
+    Old->>New: MigrationEncryptedPackage { ciphertext, tag }
+    New->>New: Descifra y autentica payload con XChaCha20-Poly1305
+    New->>New: Restaura credenciales y encola re-vinculaciones con nuevas claves locales
+    New-->>Old: MigrationCompleteAck { status: OK }
+    Old->>Old: Marca bóveda local como migrada / purga secretos
+```
+
+### 8.3 Formato Canónico de Mensajes y Transcritos
+
+#### 8.3.1 Mensaje 1: `MigrationEngagement` (QR)
+Codificado como URI compacto `pip-migrate-v1:<target_session_id_hex>:<target_pub_hex>:<target_nonce_hex>:<created_at_secs>`:
+- `target_session_id`: 16 bytes pseudoaleatorios generados con CSPRNG (32 caracteres hexadecimales).
+- `target_pub`: 65 bytes de clave pública P-256 SEC1 sin comprimir (130 caracteres hexadecimales, prefijo `04`).
+- `target_nonce`: 16 bytes pseudoaleatorios (32 caracteres hexadecimales).
+- `created_at`: Segundos enteros UNIX.
+
+#### 8.3.2 Mensaje 2: `MigrationCommitment`
+- `target_session_id`: 16 bytes (32 caracteres hexadecimales).
+- `commitment`: 32 bytes de SHA-256 evaluado sobre:
+  $$\text{CommitmentPreimage} = \text{"pip-migrate-commit-v1:"} \mathbin{\Vert} \text{target\_session\_id\_hex} \mathbin{\Vert} \text{":"} \mathbin{\Vert} \text{target\_nonce\_hex} \mathbin{\Vert} \text{":"} \mathbin{\Vert} \text{source\_nonce\_hex} \mathbin{\Vert} \text{":"} \mathbin{\Vert} \text{source\_pub\_hex}$$
+
+#### 8.3.3 Mensaje 3: `MigrationRevelation`
+- `target_session_id`: 16 bytes.
+- `source_pub`: 65 bytes SEC1 sin comprimir (130 caracteres hexadecimales).
+- `source_nonce`: 16 bytes (32 caracteres hexadecimales).
+
+#### 8.3.4 Transcrito Canónico y Derivación SAS
+$$\text{Transcript} = \text{"pip-migrate-sas-v1:"} \mathbin{\Vert} \text{target\_session\_id\_hex} \mathbin{\Vert} \text{":"} \mathbin{\Vert} \text{source\_pub\_hex} \mathbin{\Vert} \text{":"} \mathbin{\Vert} \text{target\_pub\_hex} \mathbin{\Vert} \text{":"} \mathbin{\Vert} \text{source\_nonce\_hex} \mathbin{\Vert} \text{":"} \mathbin{\Vert} \text{target\_nonce\_hex}$$
+Con $Z = \text{ECDH}(a, B) = \text{ECDH}(b, A) \in [u8; 32]$:
+$$\text{PRK} = \text{HKDF-Extract}(\text{salt} = Z, \text{IKM} = \text{Transcript})$$
+$$\text{SAS\_Bytes} = \text{HKDF-Expand}(\text{PRK}, \text{info} = \text{"pip-sas-code"}, \text{len} = 4)$$
+$$\text{SAS\_Value} = (\text{u32::from\_be\_bytes}(\text{SAS\_Bytes})) \pmod{1\,000\,000}$$
+Formateado para visualización humana con guion intermedio: `format!("{:03}-{:03}", sas / 1000, sas % 1000)`.
+
+#### 8.3.5 Derivación de Clave y Cifrado de Transferencia
+$$\text{SessionKey} = \text{HKDF-Expand}(\text{PRK}, \text{info} = \text{"pip-migrate-session-key"}, \text{len} = 32)$$
+$$\text{SessionNonce} = \text{HKDF-Expand}(\text{PRK}, \text{info} = \text{"pip-migrate-session-nonce"}, \text{len} = 24)$$
+$$\text{AAD} = \text{SHA-256}(\text{Transcript})$$
+La carga útil se cifra con `XChaCha20-Poly1305(SessionKey, SessionNonce, Plaintext, AAD)`.
+

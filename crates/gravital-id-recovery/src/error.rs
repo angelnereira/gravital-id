@@ -47,6 +47,16 @@ pub enum RecoveryError {
     InvalidRebindingSignature,
     /// Parámetro de solicitud o desafío de re-vinculación inválido o malformado.
     InvalidRebindingParameter(&'static str),
+    /// Mensaje de migración entre dispositivos malformado o inválido.
+    InvalidMigrationMessage(&'static str),
+    /// El compromiso previo del emisor no coincide con la clave efímera revelada (posible MitM).
+    CommitmentMismatch,
+    /// Intento de transmitir o descifrar sin haber confirmado interactivamente el código SAS.
+    SasNotConfirmed,
+    /// Fallo de descifrado o autenticación AEAD en el paquete de migración.
+    MigrationAeadFailed,
+    /// Identificador de sesión de migración no coincide o es inválido.
+    InvalidSessionId,
 }
 
 impl fmt::Display for RecoveryError {
@@ -106,6 +116,27 @@ impl fmt::Display for RecoveryError {
             Self::InvalidRebindingParameter(msg) => {
                 write!(f, "Parámetro de re-vinculación inválido: {msg}")
             }
+            Self::InvalidMigrationMessage(msg) => {
+                write!(f, "Mensaje de migración inválido: {msg}")
+            }
+            Self::CommitmentMismatch => {
+                write!(
+                    f,
+                    "Discrepancia en el compromiso previo de migración (posible MitM)"
+                )
+            }
+            Self::SasNotConfirmed => {
+                write!(f, "El código SAS no ha sido confirmado interactivamente")
+            }
+            Self::MigrationAeadFailed => {
+                write!(f, "Fallo al descifrar el paquete de migración cifrado")
+            }
+            Self::InvalidSessionId => {
+                write!(
+                    f,
+                    "Identificador de sesión de migración inválido o no coincide"
+                )
+            }
         }
     }
 }
@@ -122,9 +153,9 @@ impl From<RecoveryError> for GidError {
             RecoveryError::InvalidBackupHeader(_) => {
                 GidError::new(ErrorCode::MalformedMessage, "cabecera de respaldo inválida")
             }
-            RecoveryError::DecryptionFailed => GidError::new(
+            RecoveryError::DecryptionFailed | RecoveryError::MigrationAeadFailed => GidError::new(
                 ErrorCode::AeadAuthenticationFailed,
-                "fallo de autenticación en respaldo",
+                "fallo de autenticación en respaldo o migración",
             ),
             RecoveryError::DecompressionFailed => GidError::new(
                 ErrorCode::DecompressionRatioExceeded,
@@ -146,9 +177,19 @@ impl From<RecoveryError> for GidError {
                 ErrorCode::InvalidSignature,
                 "firma de re-vinculación inválida",
             ),
-            RecoveryError::InvalidRebindingParameter(_) => GidError::new(
+            RecoveryError::CommitmentMismatch => GidError::new(
+                ErrorCode::InvalidSignature,
+                "compromiso previo de migración no coincide",
+            ),
+            RecoveryError::SasNotConfirmed => GidError::new(
+                ErrorCode::ConsentPending,
+                "código SAS pendiente de confirmación",
+            ),
+            RecoveryError::InvalidRebindingParameter(_)
+            | RecoveryError::InvalidMigrationMessage(_)
+            | RecoveryError::InvalidSessionId => GidError::new(
                 ErrorCode::MalformedMessage,
-                "parámetro de re-vinculación inválido",
+                "parámetro o mensaje de migración inválido",
             ),
             _ => GidError::new(
                 ErrorCode::MalformedMessage,
