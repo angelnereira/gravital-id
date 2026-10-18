@@ -40,7 +40,7 @@ El protocolo PIP / Gravital ID busca convertirse en un estándar industrial abie
 Se adopta la **Opción C**:
 1. El proyecto se publica bajo **licencia dual MIT y Apache-2.0** (a elección del receptor).
 2. Toda contribución se rige por el **Developer Certificate of Origin (DCO 1.1)**, certificado mediante la cabecera `Signed-off-by: Nombre <email>` en los commits de colaboradores externos.
-3. Las dependencias externas en Rust se restringirán en `deny.toml` a licencias permisivas equivalentes: `MIT`, `Apache-2.0`, `BSD-2-Clause`, `BSD-3-Clause`, `ISC`, `CC0-1.0` y `Unicode-DFS-2016`. Cualquier licencia con copyleft fuerte (`GPL`, `AGPL`, `SSPL`) o restrictiva queda expresamente prohibida en el núcleo y los SDKs.
+3. Las dependencias externas en Rust se restringirán en `deny.toml` a licencias permisivas equivalentes: `MIT`, `Apache-2.0`, `BSD-2-Clause`, `BSD-3-Clause`, `ISC`, `CC0-1.0` y `Unicode-DFS-2016`. Cualquier licencia con copyleft fuerte (`GPL`, `AGPL`, `SSPL`) o restrictiva queda expresamente prohibida en el núcleo y los SDKs. Excepción acotada y documentada (issue #7): `unicode-ident` (dependencia de compilación de `proc-macro2`) declara `(MIT OR Apache-2.0) AND Unicode-3.0`; Unicode-3.0 es permisiva y OSI-approved, y se permite únicamente para ese crate mediante `[[licenses.exceptions]]` en `deny.toml`, sin relajar la allowlist general.
 
 ---
 

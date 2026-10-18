@@ -30,7 +30,7 @@
 | REQ-KEY-004 | El `KeyStore` DEBE ser un trait implementable por el host; DEBE existir una implementación software para pruebas y para perfiles que la permitan. | DEBE | T | F2 | P-11 |
 | REQ-KEY-005 | Las claves de emisor DEBEN tener estados `active`, `retired`, `suspended` y `compromised` con la semántica de `ARCHITECTURE.md §11.6`. | DEBE | T | F4 | P-08 |
 | REQ-KEY-006 | La rotación de una clave de emisor NO DEBE invalidar credenciales firmadas antes de su retiro. | DEBE | T | F4 | — |
-| REQ-KEY-007 | Los identificadores de clave DEBEN ser JWK Thumbprints (RFC 7638, SHA-256). | DEBE | T | F2 | P-04 |
+| REQ-KEY-007 | Los identificadores de clave (`kid`) DEBEN ser identificadores kebab-case validados por `Kid::parse` (F2.T02); la huella JWK (RFC 7638, SHA-256) se almacena como atributo separado cuando el perfil lo requiera. | DEBE | T | F2 | P-04 |
 | REQ-KEY-008 | Cada credencial o copia de lote DEBE usar una clave de vinculación distinta. | DEBE | T | F5 | P-09 |
 | REQ-KEY-009 | Las claves de acuerdo (HPKE) DEBEN tener un `KeyPurpose` propio; una misma clave NO DEBE usarse para firmar y para acuerdo de claves. | DEBE | T | F2 | P-07 |
 | REQ-KEY-010 | La conversión de firmas ECDSA entre DER y P1363 DEBE realizarse en el núcleo Rust; la verificación NO DEBE exigir *low-S* y ninguna firma DEBE usarse como identificador ni como clave de deduplicación. | DEBE | T | F2 | P-11 |

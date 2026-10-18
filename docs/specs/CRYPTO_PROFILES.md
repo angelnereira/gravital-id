@@ -47,7 +47,7 @@ Para evitar divergencias de interoperabilidad entre implementaciones:
   * Curva estándar NIST P-256 (FIPS 186-4 / RFC 5480).
   * Generación de firmas: Debe seguir RFC 6979 (k determinista) o utilizar un generador CSPRNG verificado.
   * Formato de firma en JWS: IEEE P1363 (concatenación estricta de enteros $r \parallel s$, exactamente 64 bytes).
-  * **Mitigación de Maleabilidad (ECDSA Low-S):** El verificador **DEBE** rechazar cualquier firma cuyo componente $s$ sea mayor que la mitad del orden de la curva ($s > n/2$). Todo firmante debe normalizar $s$ a su valor inferior.
+  * **Mitigación de Maleabilidad (ECDSA):** La verificación **NO** exige *low-S* (REQ-KEY-010): el conversor DER ↔ P1363 se realiza en Rust y la firma nunca se usa como identificador ni como clave de deduplicación (INV-02, INV-04). Todo firmante PUEDE normalizar $s$ a su valor inferior, pero el verificador acepta ambos. `CRYPTO_PROFILES.md` se alinea con `ARCHITECTURE.md §4` (decisión registrada en issue #23).
 
 #### Funciones de Dispersión Criptográfica (Hash)
 * **`SHA-256` (FIPS 180-4):**

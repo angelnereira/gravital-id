@@ -314,7 +314,7 @@ Reglas:
 ## 7. Modelo de errores
 
 - Cada crate define su error con `thiserror`. `anyhow` solo en binarios, `xtask` y pruebas.
-- `gravital-id-sdk` define `GidError` (y alias `PipError`) con **código estable** `GID-Exxxx` / `PIP-Exxxx` (catálogo en `docs/specs/ERROR_CODES.md`):
+- `gravital-id-types` define `GidError` (y alias `PipError`) con **código estable** `GID-Exxxx` / `PIP-Exxxx` (catálogo en `docs/specs/ERROR_CODES.md`); `gravital-id-sdk` lo re-exporta para los integradores:
 
 | Rango | Área |
 |---|---|
