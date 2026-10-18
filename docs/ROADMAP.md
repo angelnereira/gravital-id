@@ -357,7 +357,7 @@ Solapamientos permitidos: **F6** puede empezar cuando cierra G2 (los contratos n
 | F8.T01 | Código de recuperación y respaldo | Generación ≥ 128 bits, codificación legible con suma de verificación, derivación HKDF, formato de respaldo versionado y cifrado. | REQ-REC-002 |
 | F8.T02 | Shamir k-de-n | Biblioteca revisada (o ADR si no existe una adecuada); pruebas de umbral y de fragmentos insuficientes. | REQ-REC-003 |
 | F8.T03 | Clave de recuperación | `KeyPurpose::Recovery`; una clave por emisor derivada del secreto de recuperación y del `IssuerId`; registro de su huella en la emisión como extensión documentada en `PROTOCOL.md`; prueba de que dos emisores nunca reciben la misma huella. | REQ-REC-004, REQ-REC-007 |
-| F8.T04 | Re-vinculación | Solicitud firmada, nonce del emisor, revocación de la credencial anterior, emisión nueva; biblioteca y endpoint del emisor. | REQ-REC-004, REQ-ISS-006 |
+| F8.T04 | Re-vinculación y reemplazo atómico por clase de dispositivo | Solicitud firmada, nonce del emisor, revocación atómica del índice anterior de la misma clase (`mobile`/`card`/`other`), emisión nueva; biblioteca y endpoint del emisor (`ADR-0029`). | REQ-REC-004, REQ-ISS-006, REQ-DEVSLOT-001, REQ-DEVSLOT-003, REQ-DEVSLOT-004 |
 | F8.T05 | Migración entre dispositivos | QR con clave efímera, ECDH con compromiso previo, SAS, transferencia cifrada, re-vinculación en cola. | REQ-REC-001 |
 | F8.T06 | Rotación de clave de emisor E2E | Registro → indexador → bundle → verificadores; credenciales anteriores al retiro siguen válidas. | REQ-KEY-006 |
 | F8.T07 | Compromiso de clave de emisor E2E | Suspensión de emergencia → bundle → `Unverifiable` en todos los verificadores sincronizados; confirmación por la multisig → `compromised` → `Invalid`; y caso de suspensión levantada → la clave vuelve a aceptarse. | REQ-KEY-005, REQ-LEDG-004 |
@@ -409,12 +409,12 @@ Solapamientos permitidos: **F6** puede empezar cuando cierra G2 (los contratos n
 |---|---|---|---|
 | F10.T01 | OID4VCI (emisor) | Metadatos del emisor, credential offer, flujos pre-authorized code y authorization code con PKCE, endpoint de nonce, endpoint de credencial, prueba de posesión, emisión por lotes. | REQ-ISS-001, REQ-ISS-004 |
 | F10.T02 | OID4VCI (wallet) | Cliente en `pip-holder`/`pip-protocol`. | REQ-ISS-001 |
-| F10.T03 | Puerto de verificación de identidad | Interfaz `IdentityVerificationPort` para conectar el KYC/proceso propio de cada emisor; adaptador de prueba. | — |
-| F10.T04 | Atestación de clave/dispositivo | Android Key Attestation y Apple App Attest verificados en el emisor; obligatorio en perfil financiero. | REQ-ISS-005 |
-| F10.T05 | OID4VP (verificador) | Solicitud por referencia, DCQL, modo de respuesta para entre-dispositivos, esquema de identificación del cliente según perfil. | REQ-PRES-008 |
-| F10.T06 | OID4VP (wallet) | Cliente con validación de solicitudes y consentimiento. | REQ-PRES-008 |
+| F10.T03 | Puerto de verificación de identidad y anti-duplicidad ciudadana | Interfaz `IdentityVerificationPort`, perfiles nacionales (`NationalIdProfile`, Tribunal Electoral de Panamá Decreto 43/2024 + SVI) y etiqueta ciega `UniquenessTag` (VOPRF RFC 9497) para evitar duplicidad de cuentas (`ADR-0028`). | REQ-UNIQ-001, REQ-UNIQ-002, REQ-UNIQ-003, REQ-UNIQ-004 |
+| F10.T04 | Atestación de clave, factor de dispositivo e IMEI/CPLC | Android Key Attestation (+ ID Attestation IMEI en MDM), Apple App Attest y CPLC Java Card verificados en el emisor con control de ranura única por clase (`ADR-0029`). | REQ-ISS-005, REQ-DEVSLOT-001, REQ-DEVSLOT-002 |
+| F10.T05 | OID4VP y pasarela multi-inquilino (`Tenant Gateway`) | Solicitud por referencia, DCQL, modo de respuesta entre dispositivos, flujo dual "Ingresar con Gravital ID / Crear Gravital ID", `TenantSubjectId`, manifiesto de portabilidad y perfil `pip-tenant-role-v1` (`ADR-0027`). | REQ-PRES-008, REQ-TENANT-001, REQ-TENANT-002, REQ-TENANT-003, REQ-TENANT-004 |
+| F10.T06 | OID4VP (wallet) | Cliente con validación de solicitudes, consentimiento en dos pasos y gestión de inquilinos/roles. | REQ-PRES-008, REQ-TENANT-003, REQ-TENANT-004 |
 | F10.T07 | Mismo dispositivo y entre dispositivos | Ambos flujos con pruebas E2E. | REQ-PRES-008 |
-| F10.T08 | `pip-issuer-service` completo | OID4VCI, listas de estado, re-vinculación, KMS; desplegable en contenedor o serverless. | REQ-ISS-001..006 |
+| F10.T08 | `pip-issuer-service` completo | OID4VCI, listas de estado por ranura de dispositivo, re-vinculación, unicidad VOPRF y KMS; desplegable en contenedor o serverless. | REQ-ISS-001..006, REQ-UNIQ-002, REQ-DEVSLOT-001 |
 | F10.T09 | Conformidad OpenID | Ejecución de la suite de conformidad de la OpenID Foundation en la medida en que cubra las versiones finales; brechas documentadas como issues. | REQ-ISS-001, REQ-PRES-008 |
 | F10.T10 | Endurecimiento de endpoints | Límites de tasa, validación estricta, CORS mínimo, cabeceras de seguridad, autenticación fuerte para administración. | REQ-SEC-008 |
 
@@ -426,19 +426,19 @@ Solapamientos permitidos: **F6** puede empezar cuando cierra G2 (los contratos n
 
 ## 16. F11 — Aplicaciones de referencia
 
-**Objetivo:** demostrar el protocolo con aplicaciones usables y probadas en campo.
+**Objetivo:** demostrar el protocolo con aplicaciones usables y probadas en campo bajo el sistema de diseño **Gravital-Experience-UI** (`ADR-0030`, `SPEC-PIP-UI-001`).
 **Entrada:** G9 y G10 cerrados.
 
 | ID | Tarea | Entregable y criterio de aceptación | REQ |
 |---|---|---|---|
-| F11.T01 | Diseño de consentimiento | Pantallas que muestran qué, a quién y para qué; claims sensibles destacados; español e inglés. | REQ-PRES-003 |
-| F11.T02 | `reference-wallet` | Onboarding con código de recuperación, recepción OID4VCI, listado, presentación offline QR, OID4VP, sincronización, respaldo, recuperación y migración. | REQ-REC-*, REQ-PRES-* |
-| F11.T03 | `reference-verifier` | Móvil y web: solicitud, escaneo, resultado con estado y evidencia, configuración de política, actualización de bundle, funcionamiento offline. | REQ-VER-002 |
+| F11.T01 | Sistema de diseño `gravital_experience_ui` y consentimiento | Paquete compartido `packages/gravital_experience_ui` (5 capas, HCT tonal, `SemanticColors`, `Google Sans Flex`, `GxMotion`, `WindowClass`) y pantallas de consentimiento en dos pasos. | REQ-PRES-003, REQ-UI-001, REQ-UI-002, REQ-UI-003 |
+| F11.T02 | `reference-wallet` (Flutter) | App Flutter con `gravital_experience_ui`: bóveda de credenciales, presentación QR/NFC/SessionCode, portabilidad e inquilinos/roles (`pip-tenant-role-v1`), gestión de soportes por clase (`mobile`/`card`/`other`), sincronización y recuperación. | REQ-REC-*, REQ-PRES-*, REQ-TENANT-*, REQ-DEVSLOT-*, REQ-UI-* |
+| F11.T03 | `reference-verifier` | Móvil y web: solicitud, escaneo, resultado con 4 estados y evidencia semántica (`SemanticColors`), configuración de política, actualización de bundle, funcionamiento offline. | REQ-VER-002, REQ-UI-001, REQ-UI-002 |
 | F11.T04 | `issuer-console` | Emisión de prueba, revocación/suspensión, estado de listas, monitoreo. | REQ-ISS-003 |
 | F11.T05 | E2E automatizados | Escenarios: emisión → presentación offline → revocación → sincronización → `Invalid`; pérdida de dispositivo → recuperación; rotación de claves. | — |
 | F11.T06 | Prueba de campo QR | Matriz de dispositivos (gamas, sistemas, iluminación, brillo); presupuesto confirmado o ajustado por ADR. | REQ-PERF-003 |
 | F11.T07 | Usabilidad | ≥ 5 participantes por rol; hallazgos como issues y corregidos los críticos. | — |
-| F11.T08 | Accesibilidad | WCAG 2.2 AA en web y guías de accesibilidad de cada plataforma móvil. | — |
+| F11.T08 | Accesibilidad y responsividad | WCAG 2.2 AA, objetivos táctiles ≥ 48×48 dp, escalado de texto al 200%, alto contraste (`contrastLevel` 0.5/1.0) y puntos de quiebre `WindowClass`. | REQ-UI-004 |
 
 **Gate G11:** E2E verdes; prueba de campo aprobada; hallazgos críticos de usabilidad cerrados.
 

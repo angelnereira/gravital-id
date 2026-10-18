@@ -64,6 +64,7 @@ gravital-id/
 │   │   ├── STORAGE_FORMAT.md
 │   │   ├── SDK_API.md
 │   │   ├── ERROR_CODES.md
+│   │   ├── GRAVITAL_EXPERIENCE_UI.md # Sistema de diseño de interfaces Flutter (ADR-0030)
 │   │   ├── TEST_STRATEGY.md
 │   │   ├── models/               # (F13) Modelos formales de protocolo
 │   │   ├── CONTRACTS.md
@@ -71,7 +72,8 @@ gravital-id/
 │   │       ├── pip-personal-v1.md
 │   │       ├── pip-financial-v1.md
 │   │       ├── pip-enterprise-v1.md
-│   │       └── pip-identity-v1.md            # (F19, según ADR-0021 / ADR-0026)
+│   │       ├── pip-identity-v1.md            # (F19, según ADR-0021 / ADR-0026 / ADR-0028)
+│   │       └── pip-tenant-role-v1.md         # (F19/F10, según ADR-0027)
 │   ├── guides/                   # (F9 / F24) Integración por lenguaje y caso de uso
 │   ├── runbooks/                 # (F15) Operación, incidentes, ceremonias
 │   ├── postmortems/              # Análisis de incidentes y bugs S0/S1
@@ -129,10 +131,13 @@ gravital-id/
 │   ├── script/                   # Despliegue reproducible
 │   └── foundry.toml
 │
+├── packages/
+│   └── gravital_experience_ui/   # Paquete Dart/Flutter compartido del sistema de diseño Gravital-Experience-UI (ADR-0030)
+│
 ├── apps/
 │   ├── pip-cli/                  # Herramienta de desarrollo y operación
 │   ├── gid-perso/                # (F22) Herramienta de personalización de tarjetas físicas
-│   ├── reference-wallet/         # (F11) Wallet de referencia
+│   ├── reference-wallet/         # (F11) Wallet de referencia Flutter sobre Gravital-Experience-UI
 │   ├── reference-verifier/       # (F11) Verificador de referencia
 │   └── issuer-console/           # (F11) Consola mínima de emisor
 │

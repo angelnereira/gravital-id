@@ -1,0 +1,24 @@
+name: gravital_reference_wallet
+description: >-
+  Aplicación Flutter de referencia de Gravital ID construida con el sistema
+  de diseño propio Gravital-Experience-UI (SPEC-PIP-UI-001, ADR-0027..0030).
+version: 0.1.0
+publish_to: 'none'
+
+environment:
+  sdk: '>=3.5.0 <4.0.0'
+  flutter: '>=3.24.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  gravital_experience_ui:
+    path: ../../packages/gravital_experience_ui
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^5.0.0
+
+flutter:
+  uses-material-design: true

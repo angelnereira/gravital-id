@@ -408,3 +408,20 @@ Para canales en línea sin cámara ni lector NFC (p. ej. atención telefónica o
    - Tras el consentimiento del titular, la wallet calcula `transcript_hash` con `transport_type = 4` y `holder_engagement = h''`, firma el KB-JWT, sella `ProximityResponse` con HPKE hacia `ProximityRequest.eph_pub` y la envía al relay.
    - El relay acepta únicamente la **primera** `ProximityResponse` para ese `SessionCode`, marca la sesión como consumida de forma atómica y rechaza cualquier intento posterior con `GID-E8010` (`REQ-CODE-001`).
    - El verificador recibe `ProximityResponse`, abre el sobre HPKE y ejecuta `VerifierPipeline::verify`.
+
+---
+
+### 7.8 Flujo de Presentación y Transmisión vía Passkey (`FIDO2 / WebAuthn CTAP2`, `ADR-0027`, `REQ-TENANT-001`)
+
+Para transmitir credenciales verificables hacia aplicaciones web, móviles o pasarelas multi-inquilino (`Tenant Gateway`) aprovechando la infraestructura nativa de **Passkeys** del sistema operativo (`Android CredentialManager`, `iOS/macOS ASAuthorizationPlatformPublicKeyCredentialProvider`) o llaves FIDO2 por NFC/BLE/USB (`CTAP2`):
+
+1. **Desafío Ligado al Transcrito y a las Divulgaciones (`challenge`):**
+   - El verificador o `Tenant Gateway` emite una `PublicKeyCredentialRequestOptions` cuyo `rpId` coincide con el dominio autenticado del verificador en el `TrustBundle` (`ProximityRequest.aud`).
+   - Cuando se combina con divulgación selectiva SD-JWT VC, el desafío firmado por el autenticador FIDO2 vincula criptográficamente el transcrito de la sesión y el resumen de las divulgaciones autorizadas por el titular:
+     $$\text{webauthn\_challenge} = \text{Base64UrlNoPad}\bigl(\text{SHA-256}(\text{transcript\_hash} \parallel \text{sd\_hash})\bigr)$$
+2. **Aserción `ES256` (`COSE Alg -7`) y Verificación de Usuario (`UV`):**
+   - El autenticador genera `authenticatorData` (37+ bytes: `SHA-256(rpId)` de 32 bytes, byte de banderas con `UP = 1` y `UV = 1` para Nivel 1, y contador `signCount` de 4 bytes big-endian) y `clientDataJSON`, firmándolos en hardware con `ES256` (P-256 Low-S).
+3. **Sobre de Transmisión Passkey + SD-JWT+KB (`PasskeyPresentationEnvelope`):**
+   - La wallet transmite en una única operación atómica la tupla `{ credential_id, authenticator_data, client_data_json, assertion_signature, hpke_or_sd_jwt_presentation }`.
+   - El verificador comprueba sin conexión: (a) la firma `ES256` de la aserción WebAuthn, (b) la presencia de los bits `UP` y `UV` en `authenticatorData.flags`, (c) la coincidencia exacta del `challenge` con `SHA-256(transcript_hash || sd_hash)`, y (d) el pipeline `VerifierPipeline::verify` sobre la presentación SD-JWT+KB.
+

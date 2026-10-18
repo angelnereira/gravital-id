@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Configuración normativa de Host Card Emulation (HCE) para Gravital ID (ADR-0022, PROTOCOL.md §7.4.1).
+     requireDeviceUnlock="true" garantiza que nunca se transmitan credenciales con la pantalla bloqueada (REQ-PROX-006). -->
+<host-apdu-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:description="@string/app_name"
+    android:requireDeviceUnlock="true"
+    android:requireDeviceScreenOn="true">
+    <aid-group
+        android:category="other"
+        android:description="@string/app_name">
+        <!-- AID oficial de desarrollo y pilotos: F0 47 52 41 56 49 54 41 4C 01 ("GRAVITAL" + v1) -->
+        <aid-filter android:name="F0475241564954414C01" />
+    </aid-group>
+</host-apdu-service>

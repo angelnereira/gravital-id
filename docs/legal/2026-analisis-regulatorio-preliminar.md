@@ -80,11 +80,14 @@ El perfil `pip-financial-v1` se orienta a operaciones reguladas bajo la Ley 23 d
 
 Con la incorporación del alcance de identidad portable (**ADR-0021** a **ADR-0026**), este análisis se amplía a cuatro ámbitos regulatorios específicos:
 
-### 4.1 Competencia del Tribunal Electoral vs. Credenciales de Identidad Derivadas (`REQ-IDDOC-001`)
-* En la República de Panamá, la emisión de la cédula de identidad personal oficial es competencia constitucional y legal exclusiva del **Tribunal Electoral (TE)**.
-* Por consiguiente, **ADR-0026** y `docs/specs/profiles/pip-identity-v1.md` establecen dos identificadores `vct` estrictamente separados:
+### 4.1 Competencia del Tribunal Electoral, Decreto N.° 43 de 2024, SVI y Prevención de Duplicidad (`REQ-IDDOC-001`, `REQ-UNIQ-001..004`)
+* En la República de Panamá, la emisión de la cédula de identidad personal oficial y la certificación de la identidad civil son competencia constitucional y legal exclusiva del **Tribunal Electoral (TE)** conforme al Código Electoral, la **Ley 68 de 2015** y la **Ley 31 de 2006**.
+* Mediante el **Decreto N.° 43 de 8 de octubre de 2024**, el Tribunal Electoral creó y reglamentó oficialmente la **Cédula Digital** y la *Billetera de Identidad Digital*, otorgándole idéntica validez jurídica que a la cédula física y exigiendo resguardo mediante **verificación biométrica, reconocimiento facial con prueba de vida (*liveness*) y cifrado avanzado**.
+* Asimismo, el Tribunal Electoral opera el **Servicio de Verificación de Identidad (SVI)**, al cual se afilian entidades públicas, bancos, notarías y empresas privadas mediante convenio formal para cotejar datos biográficos y biométricos contra el padrón oficial de cedulación.
+* Por consiguiente, **ADR-0026**, **ADR-0028** y `docs/specs/profiles/pip-identity-v1.md` establecen:
   1. `urn:gravital-id:vct:pip-identity-official-v1`: reservado única y exclusivamente para el Tribunal Electoral (o la autoridad nacional de registro civil de la jurisdicción correspondiente) cuando opere como emisor dentro del marco de confianza (`F24.T04`).
-  2. `urn:gravital-id:vct:pip-identity-derived-v1`: utilizado por entidades públicas o privadas acreditadas (bancos, instituciones educativas, empresas) para emitir una **credencial de identidad verificada derivada** tras haber comprobado la cédula oficial del titular (`F24.T03`).
+  2. `urn:gravital-id:vct:pip-identity-derived-v1`: utilizado por entidades públicas o privadas acreditadas (bancos, instituciones financieras, empresas afiliadas al **SVI** del TE) para emitir una **credencial de identidad verificada derivada** tras haber comprobado la cédula oficial y la biometría del titular (`F24.T03`).
+  3. **Prevención de duplicidad ciudadana compatible con la Ley 81 de 2019 e `INV-02` (`ADR-0028`):** Para impedir que un mismo ciudadano registre múltiples identidades Gravital ID sin publicar la cédula ni un hash reversible en la blockchain, el servicio de emisión calcula un **`UniquenessTag` mediante una Función Pseudoaleatoria Oblicua Verificable (VOPRF, RFC 9497) o HMAC cuya clave secreta reside exclusivamente en HSM** sobre el identificador normalizado (`PA:CEDULA:8-888-8888`). Si ya existe un `UniquenessTag` activo, se bloquea la creación duplicada (`GID-E2010`) y se redirige a recuperación/re-vinculación.
 * Ni la interfaz de usuario ni la documentación comercial deben presentar jamás una credencial `pip-identity-derived-v1` como sustituto legal de la cédula ante autoridades policiales o electorales sin marco normativo que lo habilite (`R-19`).
 
 ### 4.2 Tratamiento del Retrato Facial (`portrait`) bajo la Ley 81 de 2019 (`REQ-IDDOC-002`)
@@ -98,11 +101,12 @@ Con la incorporación del alcance de identidad portable (**ADR-0021** a **ADR-00
 * Mientras que el `SessionCode` efímero (Opción A por defecto de **ADR-0025**) identifica únicamente una sesión temporal de $\le 180\text{ s}$ y no constituye dato personal, el **Número Gravital por emisor** (Opción B opcional, desactivada por defecto) es un identificador persistente asignado por un emisor a una persona natural y, por tanto, califica plenamente como **dato personal** bajo la Ley 81 de 2019.
 * Si un emisor habilita la Opción B, queda obligado a: (a) no publicarlo jamás en blockchain, logs, métricas ni errores (`INV-02`), (b) exigir consentimiento interactivo del titular en su wallet para cada resolución, y (c) permitir la revocación o rotación del número a solicitud del titular.
 
-### 4.4 Obligaciones del Emisor de Tarjetas Físicas (`REQ-CARD-002`, `REQ-CARD-005`)
-* El emisor que personalice y entregue tarjetas físicas Java Card (`gid-perso`, **ADR-0024**) actúa como responsable del tratamiento durante el aprovisionamiento y debe:
-  1. Verificar fehacientemente la identidad del titular antes de entregar la tarjeta activada.
-  2. Garantizar que la clave privada se genere dentro del chip seguro sin copia de respaldo en los servidores de personalización (`REQ-CARD-001`, `INV-03`).
-  3. Proveer un canal permanente (telefónico o web autenticado) para que el titular reporte el extravío o robo de la tarjeta y el emisor revoque o suspenda de inmediato su índice en la `Token Status List` (`REQ-CARD-005`).
+### 4.4 Obligaciones del Emisor de Tarjetas Físicas y Exclusión de Duplicidad por Clase de Dispositivo (`REQ-CARD-002`, `REQ-CARD-005`, `REQ-DEVSLOT-001..004`)
+* El emisor que personalice y entregue tarjetas físicas Java Card (`gid-perso`, **ADR-0024**) o aprovisione teléfonos móviles (**ADR-0029**) actúa como responsable del tratamiento durante el aprovisionamiento y debe:
+  1. Verificar fehacientemente la identidad del titular antes de entregar la tarjeta activada o vincular el dispositivo móvil.
+  2. Garantizar que la clave privada se genere dentro del chip seguro (`StrongBox`/`TEE`, `Secure Enclave` o `Java Card`) sin copia de respaldo en los servidores de personalización (`REQ-CARD-001`, `INV-03`).
+  3. **Aplicar la regla de Ranura Única por Clase de Dispositivo (`DeviceFactorClass`):** un titular puede mantener simultáneamente hasta un (1) teléfono móvil activo, una (1) tarjeta física tipo Visa activa y un (1) dispositivo auxiliar compatible activo, pero nunca dos dispositivos activos de la misma clase. El identificador físico del soporte (certificado de Key/IMEI Attestation en móvil o serial de silicio CPLC en tarjeta Java Card) solo se procesa mediante compromiso ciego con clave en HSM (`REQ-DEVSLOT-004`), nunca en claro ni en la blockchain.
+  4. Proveer un canal permanente para que el titular reporte el extravío o robo de un soporte y el emisor revoque inmediatamente el índice de esa ranura en la `Token Status List` sin afectar los soportes activos del titular en otras clases (`REQ-CARD-005`, `REQ-DEVSLOT-003`).
 
 ---
 
@@ -118,11 +122,12 @@ Como criterio preparatorio para la formalización del marco legal definitivo en 
    ¿Requiere la Autoridad Nacional de Transparencia y Acceso a la Información (ANTAI) el registro previo del sistema de gobernanza de PIP, considerando que la plataforma no custodia bases de datos centralizadas de usuarios?
 4. **Armonización Transfronteriza en Centroamérica (SICA):**  
    ¿Cuáles son los requisitos de equivalencia para que una credencial emitida bajo el perfil `pip-personal-v1` o `pip-identity-v1` en Panamá sea legalmente admisible en trámites cívicos o privados en Costa Rica o Colombia?
-5. **Convenio o Reconocimiento del Tribunal Electoral (`pip-identity-official-v1` vs `pip-identity-derived-v1`):**  
-   ¿Qué instrumento jurídico (convenio interinstitucional, reglamentación del TE o acuerdo sectorial bancario/privado) se requiere en Panamá para: (a) que el Tribunal Electoral actúe como emisor oficial de `pip-identity-official-v1`, y (b) delimitar el valor probatorio contractual de `pip-identity-derived-v1` entre privados?
+5. **Convenio SVI y Reconocimiento bajo el Decreto N.° 43 de 2024 del Tribunal Electoral (`pip-identity-official-v1` vs `pip-identity-derived-v1`):**  
+   ¿Qué instrumento jurídico (convenio de afiliación al **SVI** del Tribunal Electoral, homologación bajo el Decreto N.° 43 de 8 de octubre de 2024 o acuerdo sectorial bancario/privado) se requiere en Panamá para: (a) que el Tribunal Electoral actúe como emisor oficial de `pip-identity-official-v1`, y (b) delimitar el valor probatorio contractual de `pip-identity-derived-v1` entre privados que verificaron al ciudadano vía SVI?
 6. **Clasificación del Retrato (`portrait`) bajo el Art. 9 de la Ley 81 de 2019:**  
    ¿La transmisión de una imagen JPEG del rostro únicamente para inspección visual presencial (sin extracción automatizada de vectores biométricos) requiere el régimen reforzado de datos sensibles del Art. 9 de la Ley 81, y qué cláusula de consentimiento expreso debe firmar el titular en el momento de la emisión?
 7. **Régimen Legal del Número por Emisor (Opción B de `ADR-0025`):**  
    En caso de que un emisor adopte un número de cuenta Gravital de 10 dígitos para enrutamiento con consentimiento tipo 3-D Secure, ¿qué avisos de privacidad y plazos de conservación de metadatos de enrutamiento exige el Decreto Ejecutivo 285 de 2021?
-8. **Responsabilidad ante Pérdida o Uso No Autorizado de Tarjeta Física (`ADR-0024`):**  
+8. **Responsabilidad ante Pérdida o Uso No Autorizado de Tarjeta Física (`ADR-0024` / `ADR-0029`):**  
    ¿Qué límite de responsabilidad asume el titular y cuál el emisor desde el instante en que el titular notifica el extravío de su tarjeta física Gravital hasta que los verificadores offline sincronizan la `Token Status List` actualizada (según la ventana `max_status_age` del perfil)?
+

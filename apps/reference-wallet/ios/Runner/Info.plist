@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleName</key>
+    <string>Gravital ID</string>
+    <key>CFBundleIdentifier</key>
+    <string>pa.gravital.id.wallet</string>
+    <key>NFCReaderUsageDescription</key>
+    <string>Gravital ID utiliza NFC (ISO/IEC 7816-4 GID-APDU y FIDO2 CTAP2) para transmitir y verificar tus credenciales sin conexión.</string>
+    <key>NSFaceIDUsageDescription</key>
+    <string>Gravital ID requiere Face ID / Touch ID para autorizar divulgaciones de Nivel 1 y firmar con Passkeys en el Secure Enclave.</string>
+    <key>com.apple.developer.nfc.readersession.iso7816.select-identifiers</key>
+    <array>
+        <!-- AID GID-APDU (ADR-0022) -->
+        <string>F0475241564954414C01</string>
+        <!-- AID FIDO2 / CTAP2 NFC Passkey (A0000006472F0001) -->
+        <string>A0000006472F0001</string>
+    </array>
+</dict>
+</plist>

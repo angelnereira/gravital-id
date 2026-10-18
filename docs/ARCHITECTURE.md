@@ -84,7 +84,10 @@ Este análisis existe para que ningún agente o desarrollador intente construir 
 | Validar **solo** con un número de 9–10 dígitos **sin Internet** | **Imposible de forma segura** | 10 dígitos con uno de control dejan ~10⁹ combinaciones (≈ 30 bits): no hay firma ni prueba de posesión. Dictar un número estático equivale a una transacción sin tarjeta presente, que siempre requiere validación en línea. |
 | Validar con un número de 9–10 dígitos **con Internet** | **Sí, como código de sesión** | El número (`SessionCode`, 10 dígitos con control Damm) identifica una **sesión efímera** en el relay, nunca a una persona. La seguridad recae en la solicitud firmada del verificador, el cifrado HPKE y la firma KB-JWT del titular (ADR-0021 / ADR-0025, F23). |
 | Número persistente y global por persona | **No como identificador del protocolo** | Contradice §7.1 ("no existe un identificador global del titular") y P-09 (no correlación). Cualquier número por emisor es opcional, se trata como dato personal fuera de ledger/logs y exige consentimiento explícito (ADR-0025). |
-| Cédula o documento de identidad portable (`pip-identity-v1`) | **Sí técnicamente; validez legal depende del emisor** | El perfil soporta retrato facial y predicados, distinguiendo con `vct` distintos la credencial **oficial** (emitida por la autoridad de registro civil, p. ej. Tribunal Electoral) de la **derivada** (emitida por una entidad autorizada que verificó al titular). El retrato no cabe en un QR (~800 B útiles) y solo viaja por NFC o BLE (ADR-0021 / ADR-0026, F24). |
+| Cédula o documento de identidad portable (`pip-identity-v1`) | **Sí técnicamente; validez legal depende del emisor** | El perfil soporta retrato facial y predicados, distinguiendo con `vct` distintos la credencial **oficial** (emitida por la autoridad de registro civil, p. ej. Tribunal Electoral bajo el Decreto N.° 43 de 2024) de la **derivada** (emitida por una entidad autorizada que verificó al titular vía SVI). El retrato no cabe en un QR (~800 B útiles) y solo viaja por NFC o BLE (ADR-0021 / ADR-0026 / ADR-0028, F24). |
+| Autenticación multi-inquilino, portabilidad y roles por app (`pip-tenant-role-v1`) | **Sí, sin servidor central global** | La identidad se centraliza en la bóveda del titular y cada app/servidor aloja su instancia del módulo (`Tenant Gateway`). La integridad del sujeto por inquilino se mantiene mediante `TenantSubjectId` determinista por inquilino y los roles se emiten como credenciales verificables offline/online (ADR-0027, F10/F11). |
+| Evitar duplicidad de usuario por cédula/documento nacional | **Sí, en emisión con VOPRF/HSM** | La emisión normaliza el documento según el perfil del país (`NationalIdProfile`, en Panamá validado contra el SVI del Tribunal Electoral) y calcula un `UniquenessTag` ciego mediante clave en HSM (VOPRF RFC 9497 / HMAC-HSM), nunca en claro ni en la blockchain (`INV-02`). Si ya existe, redirige a re-vinculación (ADR-0028, F10). |
+| Un solo dispositivo activo por tipo de soporte (1 móvil + 1 tarjeta Visa + 1 otro) y uso de IMEI | **Sí, con Atestación de Hardware / CPLC y ranuras por clase** | Android 10+ e iOS bloquean la lectura del IMEI por software para apps generales. En su lugar, la unicidad por clase (`DeviceFactorClass`: `mobile`, `card`, `other`) se garantiza con **Hardware Key Attestation** (StrongBox/TEE, incluyendo IMEI atestado por hardware en modo *Device Owner*/OEM) / **App Attest** en móviles y con el serial de silicio **CPLC** en tarjetas Java Card, asignando un índice de estado independiente por ranura y revocando atómicamente el dispositivo anterior de la misma clase al reemplazarlo (ADR-0029, F8/F10/F22). |
 | Recuperar claves sin terceros | **Parcial** | Solo si se preconfiguró un mecanismo (código de recuperación de alta entropía, fragmentos Shamir entre guardianes). Las claves ligadas a hardware (móvil o tarjeta física) **no se pueden recuperar**: se recupera la capacidad de solicitar **reemisión** o **re-vinculación** al emisor. |
 | Gobernanza de confianza descentralizada | **Parcial** | El ledger hace la gobernanza transparente, auditable y resistente a un solo operador (multisig, timelock). Las decisiones de quién es confiable siguen siendo humanas y legales (marco de confianza). |
 | Datos personales en la blockchain | **Prohibido** | La blockchain es inmutable y pública; incompatible con el derecho de supresión (Ley 81 de 2019 de Panamá, RGPD). **Incluye hashes de datos personales**: un hash de un dato de baja entropía (cédula, fecha de nacimiento, teléfono) se revierte por fuerza bruta. |
@@ -717,6 +720,10 @@ El índice vivo está en `docs/adr/README.md`. Las decisiones marcadas "Bloquea"
 | 0024 | Arquitectura de tarjeta física Java Card y personalización | Applet Java Card con P-256 en elemento seguro, niveles de PIN y herramienta `gid-perso` | F19 / F22 |
 | 0025 | Modelo de identificadores numéricos de 9–10 dígitos | Código efímero de sesión (10 dígitos + Damm) en línea; decisión sobre número por emisor | F19 / F23 |
 | 0026 | Perfil de identidad portable `pip-identity-v1` y retrato | Variantes oficial/derivada con `vct` distintos; retrato JPEG acotado solo por NFC/BLE | F19 / F24 |
+| [0027](adr/0027-autenticacion-multi-inquilino-y-roles-portables.md) | Autenticación multi-inquilino, portabilidad y credenciales de rol | `TenantSubjectId` consistente por inquilino, `Tenant Gateway` auto-alojable y perfil `pip-tenant-role-v1` | F10 / F11 |
+| [0028](adr/0028-unicidad-ciudadana-por-pais-y-tribunal-electoral.md) | Unicidad ciudadana por país y Tribunal Electoral de Panamá | `NationalIdProfile` (Panamá TE SVI / Decreto 43 de 2024) + `UniquenessTag` ciego con VOPRF/HSM (`INV-02`) | F10 / F24 |
+| [0029](adr/0029-ranura-unica-por-clase-dispositivo-y-atestacion.md) | Ranura única por clase de dispositivo y atestación de hardware/IMEI/CPLC | Máx. 1 dispositivo activo por `DeviceFactorClass` (`mobile`, `card`, `other`); Key/IMEI Attestation + CPLC Java Card | F8 / F10 / F22 |
+| [0030](adr/0030-sistema-diseno-gravital-experience-ui-flutter.md) | Sistema de diseño `Gravital-Experience-UI` y arquitectura Flutter | Paquete compartido `gravital_experience_ui` (`SPEC-PIP-UI-001`) obligatorio en todas las apps (`apps/reference-wallet`) | F11 |
 
 ---
 
@@ -758,6 +765,7 @@ Las versiones exactas se fijan en `docs/specs/CRYPTO_PROFILES.md`.
 - RFC 8785 — JSON Canonicalization Scheme (JCS), para la derivación determinista del trust bundle.
 - RFC 9180 — HPKE.
 - RFC 9285 — Base45.
+- RFC 9497 — Oblivious Pseudorandom Functions (OPRFs) Using Prime-Order Groups (para `UniquenessTag` ciego en ADR-0028).
 - RFC 2119 / RFC 8174 — Palabras clave normativas.
 - W3C Bitstring Status List v1.0 (referencia de tamaño de listas).
 - W3C Data Integrity BBS Cryptosuites (seguimiento, no normativo en v1).
@@ -765,4 +773,6 @@ Las versiones exactas se fijan en `docs/specs/CRYPTO_PROFILES.md`.
 - OpenID4VC High Assurance Interoperability Profile (HAIP) 1.0 (Final, diciembre de 2025): referencia de interoperabilidad; su alineación se decide en ADR-0003.
 - RFC 9964 — ML-DSA para JOSE y COSE (seguimiento, no normativo en v1).
 - IRTF CFRG draft-google-cfrg-libzk — Longfellow ZK (seguimiento, no normativo en v1).
-- Ley 81 de 2019 de Panamá sobre protección de datos personales.
+- Ley 81 de 2019 de Panamá sobre protección de datos personales y Decreto Ejecutivo 285 de 2021.
+- Ley 68 de 2015, Ley 31 de 2006 y Decreto N.° 43 de 8 de octubre de 2024 del Tribunal Electoral de la República de Panamá (Cédula Digital y Servicio de Verificación de Identidad - SVI).
+

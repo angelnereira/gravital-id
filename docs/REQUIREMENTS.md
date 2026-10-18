@@ -229,6 +229,33 @@
 | REQ-IDDOC-002 | El retrato DEBE validarse en formato y tamaño, viajar solo por los transportes que el perfil permita y no persistirse en el verificador salvo base legal. | DEBE | T, I | F24 | P-09 |
 | REQ-IDDOC-003 | El número de documento DEBE ser de divulgación selectiva y nunca usarse como identificador de correlación del protocolo. | DEBE | T, I | F24 | P-09 |
 
+### 1.18 Autenticación Multi-Inquilino, Portabilidad y Roles (TENANT) — ADR-0027
+
+| ID | Requisito | Nivel | Verif. | Fase | P |
+|---|---|---|---|---|---|
+| REQ-TENANT-001 | El sistema DEBE proveer un identificador de sujeto consistente por inquilino (`tenant_subject_id`) derivado deterministamente sin permitir correlación no autorizada entre inquilinos distintos. | DEBE | T | F10 | P-09 |
+| REQ-TENANT-002 | La wallet DEBE registrar por cada aplicación/inquilino conectado qué atributos consintió portar el titular y permitir auditar o revocar el vínculo. | DEBE | T, D | F11 | P-03 |
+| REQ-TENANT-003 | El sistema DEBE soportar credenciales verificables de rol y permisos por aplicación/inquilino (`pip-tenant-role-v1`) verificables offline y online. | DEBE | T | F10 | P-01 |
+| REQ-TENANT-004 | El servicio auto-alojable (`Tenant Gateway`) DEBE soportar el flujo dual de ingreso con Gravital ID existente y creación de usuario nuevo verificando la no-duplicidad ciudadana. | DEBE | T, D | F10 | P-11 |
+
+### 1.19 Unicidad Ciudadana por País y Tribunal Electoral (UNIQ) — ADR-0028
+
+| ID | Requisito | Nivel | Verif. | Fase | P |
+|---|---|---|---|---|---|
+| REQ-UNIQ-001 | La creación de un nuevo Gravital ID DEBE validar y normalizar el documento oficial según el perfil normativo del país (`NationalIdProfile`, incluyendo en Panamá las reglas y el SVI del Tribunal Electoral bajo el Decreto N.° 43 de 2024). | DEBE | T | F10 | P-04 |
+| REQ-UNIQ-002 | La prevención de duplicidad por documento nacional DEBE utilizar un `UniquenessTag` evaluado con clave secreta en HSM (VOPRF RFC 9497 o HMAC-HSM) y NUNCA publicar el documento ni un hash sin clave en el ledger ni en logs. | DEBE | T, I | F10 | P-02 |
+| REQ-UNIQ-003 | Si un documento nacional ya posee un `UniquenessTag` activo, el sistema DEBE rechazar la creación duplicada (`GID-E2010`) y redirigir al flujo de ingreso existente o de recuperación/re-vinculación. | DEBE | T | F10 | P-08 |
+| REQ-UNIQ-004 | La arquitectura de validación nacional DEBE ser modular por país (`IdentityVerificationPort`), aislando las reglas de cada autoridad civil sin acoplar el núcleo de verificación offline. | DEBE | T, I | F10 | P-14 |
+
+### 1.20 Ranura Única por Clase de Dispositivo y Atestación (DEVSLOT) — ADR-0029
+
+| ID | Requisito | Nivel | Verif. | Fase | P |
+|---|---|---|---|---|---|
+| REQ-DEVSLOT-001 | Un titular PUEDE mantener su Gravital ID activo en distintos tipos de soporte (`mobile`, `card`, `other`), pero NUNCA en dos dispositivos de la misma clase (`DeviceFactorClass`) simultáneamente. | DEBE | T | F8 | P-08 |
+| REQ-DEVSLOT-002 | La vinculación de un dispositivo móvil DEBE exigir atestación criptográfica de hardware (StrongBox/TEE Key Attestation o Secure Enclave App Attest, e IMEI atestado por hardware en modo MDM/OEM) y en tarjetas físicas la huella de silicio CPLC del chip Java Card. | DEBE | T, I | F10 | P-03 |
+| REQ-DEVSLOT-003 | Cada ranura de clase de dispositivo (`mobile`, `card`, `other`) DEBE tener un índice de `Token Status List` independiente; activar un reemplazo en una clase DEBE revocar atómicamente el dispositivo anterior de esa misma clase sin revocar los de otras clases. | DEBE | T | F8 | P-08 |
+| REQ-DEVSLOT-004 | Ningún identificador físico de dispositivo (IMEI o serial CPLC) DEBE almacenarse en claro ni publicarse en el ledger o logs; solo se permite su compromiso ciego con clave en HSM. | DEBE | T, I | F10 | P-02 |
+
 ---
 
 ## 2. Requisitos no funcionales
@@ -320,3 +347,13 @@
 | REQ-DOC-002 | Las decisiones arquitectónicas DEBEN registrarse como ADR. | DEBE | I | F0 |
 | REQ-DOC-003 | DEBE existir trazabilidad requisito → prueba generada automáticamente. | DEBE | T | F1 |
 | REQ-DOC-004 | Las especificaciones públicas del protocolo DEBEN publicarse en inglés antes de GA. | DEBE | I | F17 |
+
+### 2.10 Sistema de Diseño e Interfaces (`Gravital-Experience-UI`, UI) — ADR-0030
+
+| ID | Requisito | Nivel | Verif. | Fase |
+|---|---|---|---|---|
+| REQ-UI-001 | Toda aplicación Flutter del repositorio DEBE consumir exclusivamente los tokens, temas y componentes del paquete compartido `gravital_experience_ui` (`docs/specs/GRAVITAL_EXPERIENCE_UI.md`), sin valores literales de color, radio, espacio o duración en las pantallas. | DEBE | T, I | F11 |
+| REQ-UI-002 | Las interfaces DEBEN implementar contención tonal (elevación base 0), un único botón `FilledButton` principal por pantalla y transiciones espaciales por resortes (`GxMotion`) respetando la preferencia de movimiento reducido. | DEBE | T, I | F11 |
+| REQ-UI-003 | Todas las pantallas DEBEN ser adaptativas por clase de ventana (`WindowClass`: `compact` a `extraLarge`) y dibujar borde a borde respetando áreas seguras. | DEBE | T, D | F11 |
+| REQ-UI-004 | Las interfaces DEBEN cumplir WCAG 2.2 AA (objetivos táctiles $\ge 48\text{ dp}$, escalado de texto al 200 %, niveles de contraste 0.0 / 0.5 / 1.0 y etiquetas semánticas). | DEBE | T | F11 |
+

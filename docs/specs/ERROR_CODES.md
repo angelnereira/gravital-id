@@ -56,6 +56,8 @@ pub struct PipError {
 | `PIP-E2005` | `KeyNotFound` | Clave solicitada no presente en el almacén de claves del host. |
 | `PIP-E2006` | `AeadAuthenticationFailed` | Fallo de autenticación en descifrado simétrico (datos corruptos o KEK incorrecta). |
 | `PIP-E2007` | `InsufficientEntropy` | Generador CSPRNG falló al producir la entropía mínima requerida (128 bits). |
+| `PIP-E2010` | `CitizenIdentityAlreadyRegistered` | La identidad nacional o ciudadana verificada ya posee un registro activo en el emisor (`UniquenessTag` existente); redirigir a ingreso o recuperación (`ADR-0028`, `REQ-UNIQ-003`). |
+| `PIP-E2011` | `DuplicateDeviceClassActive` | Ya existe una credencial activa en la misma clase de factor de dispositivo (`mobile`, `card` u `other`) sin orden firmada de reemplazo atómico (`ADR-0029`, `REQ-DEVSLOT-001`). |
 
 ---
 

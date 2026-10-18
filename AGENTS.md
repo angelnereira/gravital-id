@@ -215,6 +215,13 @@ Escribe el issue como archivo en `.issues/pending/YYYYMMDD-<slug>.md` usando la 
 - Secretos solo por referencia a KMS/gestor de secretos; nunca en el repositorio ni en variables en claro en IaC.
 - Logs con capa de redacción; pruebas que verifican la ausencia de datos personales.
 
+### 9.5 Aplicaciones e interfaces de usuario (`Gravital-Experience-UI`)
+
+- Toda aplicación gráfica o móvil en Flutter (`apps/*`) **DEBE** seguir estrictamente el plano de diseño normativo **`Gravital-Experience-UI`** (`docs/specs/GRAVITAL_EXPERIENCE_UI.md`, ADR-0030) e importar sus tokens, temas, adaptadores y componentes exclusivamente desde el paquete compartido `packages/gravital_experience_ui/`.
+- **Cero valores literales de estilo en vistas:** ningún widget de aplicación define colores hexadecimales, radios de borde, espaciados ni duraciones de animación literales; todo proviene de `GxSpace`, `GxShape`, `GxMotion`, `GxTheme` y `SemanticColors`.
+- **Jerarquía y física:** elevación por defecto `0` con diferenciación por nivel tonal (`surfaceContainerLowest` … `surfaceContainerHighest`); un único botón `FilledButton` (acción principal) por pantalla; animaciones espaciales impulsadas por resortes (`SpringDescription.withDampingRatio`) respetando «reducir movimiento»; tipografía variable `Google Sans Flex` con cifras tabulares en montos, códigos `SessionCode`, cédulas y contadores.
+- **Adaptabilidad y accesibilidad:** diseño borde a borde (*edge-to-edge*) gobernado por clases de ventana (`WindowClass`: `compact`, `medium`, `expanded`, `large`, `extraLarge`), soporte para temas claro, oscuro y alto contraste (`contrastLevel` 0.0 / 0.5 / 1.0), escalado de texto al 200 % sin recortes y cumplimiento WCAG 2.2 AA verificado en pruebas (`flutter analyze` y `flutter test`).
+
 ---
 
 ## 10. Definition of Done

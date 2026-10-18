@@ -47,6 +47,10 @@ pub enum ErrorCode {
     AeadAuthenticationFailed = 2006,
     /// Generador CSPRNG falló al producir la entropía mínima requerida (128 bits).
     InsufficientEntropy = 2007,
+    /// La identidad nacional o ciudadana verificada ya posee un registro activo en el emisor (`UniquenessTag` existente).
+    CitizenIdentityAlreadyRegistered = 2010,
+    /// Ya existe una credencial activa en la misma clase de factor de dispositivo (`mobile`, `card` u `other`) sin reemplazo atómico.
+    DuplicateDeviceClassActive = 2011,
 
     // --- Familia 3: Credenciales y SD-JWT (3001..3006) ---
     /// Formato de credencial no se ajusta a RFC 9901 / draft-19.
@@ -179,6 +183,8 @@ impl ErrorCode {
             Self::KeyNotFound => "GID-E2005",
             Self::AeadAuthenticationFailed => "GID-E2006",
             Self::InsufficientEntropy => "GID-E2007",
+            Self::CitizenIdentityAlreadyRegistered => "GID-E2010",
+            Self::DuplicateDeviceClassActive => "GID-E2011",
 
             Self::MalformedSdJwt => "GID-E3001",
             Self::MissingRequiredClaim => "GID-E3002",
@@ -253,6 +259,8 @@ impl ErrorCode {
             Self::KeyNotFound => "PIP-E2005",
             Self::AeadAuthenticationFailed => "PIP-E2006",
             Self::InsufficientEntropy => "PIP-E2007",
+            Self::CitizenIdentityAlreadyRegistered => "PIP-E2010",
+            Self::DuplicateDeviceClassActive => "PIP-E2011",
 
             Self::MalformedSdJwt => "PIP-E3001",
             Self::MissingRequiredClaim => "PIP-E3002",
@@ -327,6 +335,8 @@ impl ErrorCode {
             Self::KeyNotFound => "KeyNotFound",
             Self::AeadAuthenticationFailed => "AeadAuthenticationFailed",
             Self::InsufficientEntropy => "InsufficientEntropy",
+            Self::CitizenIdentityAlreadyRegistered => "CitizenIdentityAlreadyRegistered",
+            Self::DuplicateDeviceClassActive => "DuplicateDeviceClassActive",
 
             Self::MalformedSdJwt => "MalformedSdJwt",
             Self::MissingRequiredClaim => "MissingRequiredClaim",
