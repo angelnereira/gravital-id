@@ -32,6 +32,10 @@ use gravital_id_credential::{to_canonical_json, KbIssuer, ParsedSdJwt, SdIssuer,
 use gravital_id_crypto::secret::SecretBytes;
 use gravital_id_holder::{CredentialQuery, DcqlQuery, HolderWallet, RequestedClaim};
 use gravital_id_keys::{HolderBinding, IssuerSigning, KeyStore, SoftwareKeyStore};
+use gravital_id_ledger::{
+    BlockHeader, FullVerificationEngine, FullVerificationOutcome, InMemoryLedgerAdapter,
+    LedgerAdapter, LedgerError, LedgerResult, SequencedLedgerEvent, StatusCommitmentRecord,
+};
 use gravital_id_protocol::offline_signed_request::sign_verification_request;
 use gravital_id_protocol::offline_wallet_policy::WalletRequestValidator;
 use gravital_id_protocol::{
@@ -42,7 +46,12 @@ use gravital_id_status::cache::StatusSnapshot;
 use gravital_id_status::manifest::StatusManifestVerifier;
 use gravital_id_status::status_list::StatusListVerifier;
 use gravital_id_storage_sqlite::SqliteStorage;
-use gravital_id_testkit::SeededRng;
+use gravital_id_sync::{
+    ContentVerifier, EncryptedOutboxQueue, HpkeEnvelope, InboundDeduplicationFilter, MailboxId,
+    MockTransport, OperationId, OutboxStepResult, RelayPool, RetryPolicy, SyncEngine, SyncError,
+    SyncOperation,
+};
+use gravital_id_testkit::{FixedClock, SeededRng};
 use gravital_id_trust::bundle::TrustBundle;
 use gravital_id_types::{ErrorCode, GidError, UnixTime, Vct};
 use gravital_id_verifier::pipeline::{VerificationRequest, VerifierPipeline};
@@ -86,6 +95,11 @@ SUBCOMANDOS:
         Ejecuta la demostración oficial de revocación durante periodos offline (F7.T11, ROADMAP.md §24 MVP-05):
         verificador offline -> revocación en emisor -> ValidWithStaleStatus mientras corresponde (REQ-STAT-004,
         REQ-REL-004) -> sincronización -> resultado Invalid reflejando la revocación, y anti-rollback (REQ-STAT-008).
+
+    demo-chaos
+        Ejecuta la demostración oficial de caos e inyección de fallos (F7.T12, REQ-REL-004, REQ-SYNC-004):
+        relay malicioso (rollback, retención, alteración), RPC caído, CDN caída, y degradación estricta
+        a estados canónicos explícitos (ValidWithStaleStatus, Unverifiable) sin pánico ni falsos positivos.
 
     qr-render --data <CADENA|FICHERO> [--invert]
         Renderiza en consola un código QR Dense1x2 de alto contraste escaneable directamente
@@ -137,6 +151,7 @@ pub fn run() -> Result<()> {
         Some("demo-flow-offline") => run_demo_flow_offline()?,
         Some("demo-m1") => run_demo_m1()?,
         Some("demo-mvp05") => run_demo_mvp05()?,
+        Some("demo-chaos") => run_demo_chaos()?,
         Some("qr-render") => run_qr_render(&args[1..])?,
         Some("dev-issuer") => run_dev_issuer(&args[1..])?,
         Some("dev-verifier") => run_dev_verifier(&args[1..])?,
@@ -369,7 +384,8 @@ fn run_dev_bundle(args: &[String]) -> Result<()> {
     Ok(())
 }
 
-fn pack_status_lst(bits: u8, values: &[u32]) -> String {
+/// Comprime y codifica en Base64URL una lista de valores de estado según la especificación Token Status List.
+pub fn pack_status_lst(bits: u8, values: &[u32]) -> String {
     let mut bytes = Vec::new();
     let mut current = 0u8;
     let mut used = 0u32;
@@ -2756,6 +2772,606 @@ pub fn run_demo_mvp05() -> Result<()> {
     Ok(())
 }
 
+#[derive(Debug, Clone)]
+struct ChaosFailingLedgerAdapter {
+    chain_id: u64,
+}
+
+impl LedgerAdapter for ChaosFailingLedgerAdapter {
+    fn chain_id(&self) -> u64 {
+        self.chain_id
+    }
+    fn finalized_head(&self) -> LedgerResult<BlockHeader> {
+        Err(LedgerError::Adapter(
+            "simulated RPC outage: connection refused (500)".into(),
+        ))
+    }
+    fn fetch_events(&self, _from: u64, _to: u64) -> LedgerResult<Vec<SequencedLedgerEvent>> {
+        Err(LedgerError::Adapter(
+            "simulated RPC outage: failed fetching events".into(),
+        ))
+    }
+    fn get_status_commitment(
+        &self,
+        _issuer: &[u8; 32],
+    ) -> LedgerResult<Option<StatusCommitmentRecord>> {
+        Err(LedgerError::Adapter(
+            "simulated RPC outage: status commitment unavailable".into(),
+        ))
+    }
+}
+
+/// Ejecuta la demostración oficial de caos e inyección de fallos (F7.T12, REQ-REL-004, REQ-SYNC-004).
+///
+/// Inyecciones evaluadas:
+/// 1. Relay malicioso: Intento de rollback de versión de manifiesto y de sobres -> Rechazo fail-closed (REQ-STAT-008, INV-05).
+/// 2. Relay malicioso: Retención / indisponibilidad -> Detección, backoff determinista y failover de RelayPool (REQ-SYNC-007).
+/// 3. Relay malicioso: Alteración de bytes en objeto direccionado por contenido y en sobre HPKE -> Rechazo por hash mismatch y autenticación AEAD (REQ-SYNC-004, REQ-SYNC-006).
+/// 4. RPC caído y divergente: Caída de todos los RPCs -> InsufficientSources fail-closed; divergencia de bloques entre proveedores -> CrossLedgerDivergence con alarma (REQ-TRUST-004, REQ-OBS-002, INV-05, INV-16).
+/// 5. CDN / almacenamiento de bundles caído: Verificador offline degrada de forma limpia a ValidWithStaleStatus o Unverifiable con evidencia, nunca pánico ni falso positivo (REQ-REL-004, INV-04, INV-05, INV-10).
+/// 6. Auditoría forense: Cero PII en logs y mensajes de error durante todas las inyecciones de fallo (INV-02, REQ-PRIV-003).
+pub fn run_demo_chaos() -> Result<()> {
+    println!("================================================================================");
+    println!(" Gravital ID (PIP) — Demostración Oficial de Caos e Inyección de Fallos (F7.T12)");
+    println!(" Inyecciones: Relay malicioso (rollback, retención, alteración), RPC caído,");
+    println!("              CDN caída, y degradación estricta a estados canónicos explícitos.");
+    println!(" Requisitos: REQ-REL-004 (degradación canónica sin pánicos), REQ-SYNC-004 (verificación hash),");
+    println!(
+        "             REQ-SYNC-007 (failover relay), REQ-TRUST-004 (multi-fuente), INV-01, INV-02, INV-04, INV-05, INV-10"
+    );
+    println!("================================================================================\n");
+
+    let base_time = UnixTime::from_seconds(1_770_000_000);
+    let start_demo = std::time::Instant::now();
+    let mut audit_logs: Vec<String> = Vec::new();
+
+    // -------------------------------------------------------------------------
+    // ESCENARIO 1: Relay malicioso — Ataque de Rollback
+    // -------------------------------------------------------------------------
+    println!("--- [ESCENARIO 1] Relay malicioso: Ataque de rollback de estado y sobres ---");
+    let manifest_payload_v1 = Value::Object(vec![
+        (
+            "issuer_id".to_string(),
+            Value::String("https://issuer.te.gob.pa".to_string()),
+        ),
+        (
+            "manifest_version".to_string(),
+            Value::Number(Number::PosInt(1)),
+        ),
+        (
+            "issued_at".to_string(),
+            Value::Number(Number::PosInt(base_time.as_seconds())),
+        ),
+        (
+            "valid_until".to_string(),
+            Value::Number(Number::PosInt(
+                base_time.as_seconds().saturating_add(86_400),
+            )),
+        ),
+        ("status_lists".to_string(), Value::Array(vec![])),
+    ]);
+    let manifest_v1 = gid_err(
+        StatusManifestVerifier::from_payload(&manifest_payload_v1),
+        "manifest v1",
+    )?;
+    let last_accepted_version = 2u64;
+    let rollback_res = manifest_v1.check_monotonic_version(Some(last_accepted_version));
+    println!("    - Candidato v1 inyectado cuando la versión aceptada en verificador es v2.");
+    if rollback_res.is_ok() {
+        bail!("Fallo de seguridad: Rollback de manifiesto v1 <= v2 fue aceptado indebidamente");
+    }
+    audit_logs.push(format!("{rollback_res:?}"));
+    println!("    [CHAOS-1A OK] Rollback de versión de manifiesto rechazado fail-closed (REQ-STAT-008, INV-05).");
+
+    // Deduplicación de sobres retransmitidos
+    let mut dedup_filter = InboundDeduplicationFilter::new(50, 3600);
+    let replay_envelope = "op-replay-attack-001";
+    let first_seen = dedup_filter.check_and_record(replay_envelope, base_time);
+    assert!(first_seen);
+    let is_replayed = dedup_filter.is_duplicate(replay_envelope, base_time);
+    println!(
+        "    - Intento de reenvío malicioso del sobre '{replay_envelope}': duplicado detectado = {is_replayed}."
+    );
+    if !is_replayed {
+        bail!(
+            "Fallo de seguridad: Sobre de sincronización retransmitido no fue filtrado por dedup"
+        );
+    }
+    println!("    [CHAOS-1B OK] Reenvío de sobres antiguos descartado sin procesamiento (REQ-SYNC-002, INV-05).\n");
+
+    // -------------------------------------------------------------------------
+    // ESCENARIO 2: Relay malicioso — Retención, tiempo de espera y failover
+    // -------------------------------------------------------------------------
+    println!("--- [ESCENARIO 2] Relay malicioso: Retención de tráfico y failover de pool ---");
+    let pool = RelayPool::new(
+        vec![
+            "https://relay-primary.test".to_string(),
+            "https://relay-backup.test".to_string(),
+        ],
+        60,
+    )
+    .map_err(|e| anyhow!("create pool: {e}"))?;
+
+    let transport = MockTransport::new();
+    transport.set_simulate_failures("https://relay-primary.test", 1);
+
+    let mut outbox = EncryptedOutboxQueue::new(20);
+    let op_id =
+        OperationId::new("op-failover-001").ok_or_else(|| anyhow!("id de operación inválido"))?;
+    let mailbox =
+        MailboxId::new("inbox-verifier-01").ok_or_else(|| anyhow!("id de buzón inválido"))?;
+    outbox
+        .enqueue(SyncOperation::new(
+            op_id.clone(),
+            mailbox,
+            vec![10, 20, 30],
+            base_time,
+            Some(3600),
+        ))
+        .map_err(|e| anyhow!("enqueue: {e}"))?;
+
+    let retry_policy = RetryPolicy::new(5, 60, 3, 20);
+    let mut sync_engine = SyncEngine::new(
+        pool,
+        outbox,
+        InboundDeduplicationFilter::new(20, 3600),
+        retry_policy,
+    );
+    let test_clock = FixedClock::new(base_time.as_seconds());
+
+    // Paso 1: Intento contra primary falla por simulación de retención/error
+    let step1 = sync_engine.step_outbox(&transport, &test_clock, 0x1234);
+    println!("    - Intento 1 contra relay primario retenido: resultado = {step1:?}");
+    match step1 {
+        Ok(OutboxStepResult::RetryScheduled {
+            ref relay_url,
+            retry_count,
+            ..
+        }) => {
+            assert_eq!(relay_url, "https://relay-primary.test");
+            assert_eq!(retry_count, 1);
+        }
+        other => bail!("Esperaba RetryScheduled en fallo de relay primario, obtuve {other:?}"),
+    }
+
+    // Paso 2: Con reloj avanzado, SyncEngine conmuta a relay-backup
+    let step2_time = base_time.as_seconds().saturating_add(10);
+    let test_clock_advanced = FixedClock::new(step2_time);
+    let step2 = sync_engine.step_outbox(&transport, &test_clock_advanced, 0x1234);
+    println!("    - Intento 2 con conmutación automática (failover): resultado = {step2:?}");
+    match step2 {
+        Ok(OutboxStepResult::Delivered {
+            ref relay_url,
+            ref operation_id,
+        }) => {
+            assert_eq!(relay_url, "https://relay-backup.test");
+            assert_eq!(operation_id, &op_id);
+        }
+        other => bail!("Esperaba Delivered hacia relay-backup tras failover, obtuve {other:?}"),
+    }
+    println!("    [CHAOS-2 OK] Failover exitoso hacia endpoint de respaldo sin interrupción (REQ-SYNC-007, INV-01).\n");
+
+    // -------------------------------------------------------------------------
+    // ESCENARIO 3: Relay malicioso — Alteración de bytes y corrupción en tránsito
+    // -------------------------------------------------------------------------
+    println!("--- [ESCENARIO 3] Relay malicioso: Alteración de bytes y corrupción en tránsito ---");
+    let original_content = b"CANONICAL_TOKEN_STATUS_LIST_PAYLOAD_V2_DATA";
+    let authentic_hash = gravital_id_crypto::sha256(original_content);
+    let mut authentic_hex = String::new();
+    for b in authentic_hash {
+        use std::fmt::Write;
+        let _ = write!(&mut authentic_hex, "{b:02x}");
+    }
+
+    // A. Manipulación de contenido direccionado por hash
+    let mut tampered_content = original_content.to_vec();
+    if let Some(b) = tampered_content.get_mut(5) {
+        *b ^= 0xFF;
+    }
+    let verify_tampered = ContentVerifier::verify_object_sha256(&tampered_content, &authentic_hex);
+    println!("    - Hash esperado: {authentic_hex}");
+    println!("    - Verificación de payload alterado: {verify_tampered:?}");
+    match verify_tampered {
+        Err(SyncError::ContentIntegrityFailed { .. }) => {
+            audit_logs.push(format!("{verify_tampered:?}"));
+            println!("    [CHAOS-3A OK] Discrepancia de SHA-256 detectada y rechazada inmediatamente (REQ-SYNC-004, INV-05).");
+        }
+        other => bail!("Esperaba ContentIntegrityFailed al alterar contenido, obtuve {other:?}"),
+    }
+
+    // B. Manipulación de sobre HPKE
+    let recipient_pub: [u8; 65] = [
+        0x04, 0xa6, 0x97, 0xbf, 0xfd, 0xe9, 0x40, 0x5c, 0x99, 0x28, 0x83, 0xc5, 0xc4, 0x39, 0xd6,
+        0xcc, 0x35, 0x81, 0x70, 0xb5, 0x1a, 0xf7, 0x28, 0x12, 0x33, 0x3b, 0x01, 0x56, 0x21, 0xdc,
+        0x0f, 0x40, 0xba, 0xd9, 0xbb, 0x72, 0x6f, 0x68, 0xa5, 0xc0, 0x13, 0x80, 0x6a, 0x79, 0x0e,
+        0xc7, 0x16, 0xab, 0x86, 0x69, 0xf8, 0x4f, 0x6b, 0x69, 0x45, 0x96, 0xc2, 0x98, 0x7c, 0xf3,
+        0x5b, 0xab, 0xa2, 0xa0, 0x06,
+    ];
+    let recipient_priv: [u8; 32] = [
+        0xa4, 0xd1, 0xc5, 0x58, 0x36, 0xaa, 0x30, 0xf9, 0xb3, 0xfb, 0xb6, 0xac, 0x98, 0xd3, 0x38,
+        0xc8, 0x77, 0xc2, 0x86, 0x7d, 0xd3, 0xa7, 0x73, 0x96, 0xd1, 0x3f, 0x68, 0xd3, 0xab, 0x15,
+        0x0d, 0x3b,
+    ];
+    let ephem_sec: [u8; 32] = [0x55; 32];
+    let mut envelope = HpkeEnvelope::seal(
+        &recipient_pub,
+        &ephem_sec,
+        b"secret-payload",
+        b"aad-context",
+    )
+    .map_err(|e| anyhow!("hpke seal: {e}"))?;
+    // Corromper el último byte del tag de autenticación Poly1305
+    if let Some(last) = envelope.last_mut() {
+        *last ^= 0x01;
+    }
+    let open_res = HpkeEnvelope::open(&recipient_priv, &envelope, b"aad-context");
+    println!("    - Apertura de sobre HPKE con tag alterado: {open_res:?}");
+    match open_res {
+        Err(SyncError::DecryptionFailed(_)) => {
+            audit_logs.push(format!("{open_res:?}"));
+            println!("    [CHAOS-3B OK] Fallo de autenticación AEAD en sobre HPKE manipulado (REQ-SYNC-006, INV-05).\n");
+        }
+        other => {
+            bail!("Esperaba DecryptionFailed en sobre con tag Poly1305 corrupto, obtuve {other:?}")
+        }
+    }
+
+    // -------------------------------------------------------------------------
+    // ESCENARIO 4: RPC caído y divergencia de ledger
+    // -------------------------------------------------------------------------
+    println!("--- [ESCENARIO 4] RPC caído y divergencia entre proveedores de ledger ---");
+    let bundle_payload = Value::Object(vec![
+        (
+            "framework_id".to_string(),
+            Value::String("pip-global".to_string()),
+        ),
+        (
+            "bundle_version".to_string(),
+            Value::Number(Number::PosInt(1)),
+        ),
+        ("bundle_epoch".to_string(), Value::Number(Number::PosInt(1))),
+        ("chain_id".to_string(), Value::Number(Number::PosInt(1))),
+        (
+            "registry_address".to_string(),
+            Value::String("0x1234".to_string()),
+        ),
+        (
+            "finalized_block_number".to_string(),
+            Value::Number(Number::PosInt(100)),
+        ),
+        (
+            "finalized_block_hash".to_string(),
+            Value::String("0xdeadbeef".to_string()),
+        ),
+        (
+            "issued_at".to_string(),
+            Value::Number(Number::PosInt(
+                base_time.as_seconds().saturating_sub(86_400),
+            )),
+        ),
+        (
+            "valid_until".to_string(),
+            Value::Number(Number::PosInt(
+                base_time.as_seconds().saturating_add(86_400),
+            )),
+        ),
+        ("issuers".to_string(), Value::Array(vec![])),
+        ("verifiers".to_string(), Value::Array(vec![])),
+        ("operators".to_string(), Value::Array(vec![])),
+    ]);
+    let trust_bundle =
+        TrustBundle::from_payload(&bundle_payload).map_err(|e| anyhow!("parse bundle: {e}"))?;
+    let verification_engine = FullVerificationEngine::standard();
+
+    // A. Caída total de RPCs (ambos caídos)
+    let failing_adapter = ChaosFailingLedgerAdapter { chain_id: 1 };
+    let failing_sources: [(&str, &dyn LedgerAdapter); 2] = [
+        ("rpc-infura-down", &failing_adapter),
+        ("rpc-alchemy-down", &failing_adapter),
+    ];
+    let outcome_rpc_down =
+        verification_engine.verify_bundle(&trust_bundle, &failing_sources, base_time.as_seconds());
+    println!("    - Resultado ante caída total de RPC: {outcome_rpc_down:?}");
+    match outcome_rpc_down {
+        FullVerificationOutcome::InsufficientSources {
+            required,
+            available,
+            ref failed_sources,
+        } => {
+            assert_eq!(required, 2);
+            assert_eq!(available, 0);
+            assert_eq!(failed_sources.len(), 2);
+            audit_logs.push(format!("{outcome_rpc_down:?}"));
+            println!("    [CHAOS-4A OK] Caída total de RPC resulta en InsufficientSources fail-closed (INV-05, INV-16).");
+        }
+        other => bail!("Esperaba InsufficientSources ante RPC caído, obtuve {other:?}"),
+    }
+
+    // B. Divergencia de bloques / split-brain entre proveedores (drift > 100)
+    let head_alpha = BlockHeader::new(250, [0x11; 32], [0x10; 32], base_time.as_seconds());
+    let head_beta = BlockHeader::new(
+        100,
+        [0x22; 32],
+        [0x20; 32],
+        base_time.as_seconds().saturating_sub(150),
+    );
+    let adapter_alpha = InMemoryLedgerAdapter::new(1, head_alpha);
+    let adapter_beta = InMemoryLedgerAdapter::new(1, head_beta);
+    let drifting_sources: [(&str, &dyn LedgerAdapter); 2] = [
+        ("rpc-node-alpha", &adapter_alpha),
+        ("rpc-node-beta", &adapter_beta),
+    ];
+    let outcome_drift =
+        verification_engine.verify_bundle(&trust_bundle, &drifting_sources, base_time.as_seconds());
+    println!("    - Resultado ante divergencia de bloques (drift 150 > 100): {outcome_drift:?}");
+    match outcome_drift {
+        FullVerificationOutcome::CrossLedgerDivergence(ref alarm) => {
+            audit_logs.push(format!("{outcome_drift:?}"));
+            println!("    - Alarma estructurada emitida: {}", alarm.reason);
+            println!("    [CHAOS-4B OK] Divergencia entre RPCs genera CrossLedgerDivergence con alarma (REQ-TRUST-004, REQ-OBS-002, INV-04).\n");
+        }
+        other => bail!("Esperaba CrossLedgerDivergence ante drift excesivo, obtuve {other:?}"),
+    }
+
+    // -------------------------------------------------------------------------
+    // ESCENARIO 5: CDN / Object Storage caído — Degradación canónica offline
+    // -------------------------------------------------------------------------
+    println!("--- [ESCENARIO 5] Caída de CDN y falta de datos: Degradación limpia a estados canónicos ---");
+    let mut issuer_store = SoftwareKeyStore::new(SeededRng::new(0xCAFE_1111));
+    let issuer_handle = gid_err(issuer_store.generate_key::<IssuerSigning>(), "issuer key")?;
+    let issuer_jwk = gid_err(issuer_store.public_key(&issuer_handle), "issuer jwk")?;
+    let issuer_jwk_parsed = gid_err(
+        gravital_id_codec::json::parse(&issuer_jwk.to_canonical_json()),
+        "parse",
+    )?;
+
+    let mut holder_store = SoftwareKeyStore::new(SeededRng::new(0xCAFE_2222));
+    let holder_handle = gid_err(holder_store.generate_key::<HolderBinding>(), "holder key")?;
+    let holder_jwk = gid_err(holder_store.public_key(&holder_handle), "holder jwk")?;
+
+    let issuer_uri = "https://issuer.te.gob.pa";
+    let status_uri = "https://status.cdn.te.gob.pa/list/v1";
+    let kid = "te-key-chaos-01";
+    let credential_index = 10u32;
+    let audience = "https://aud.example.com";
+
+    let bundle_with_issuer = Value::Object(vec![
+        (
+            "framework_id".to_string(),
+            Value::String("pip-global".to_string()),
+        ),
+        (
+            "bundle_version".to_string(),
+            Value::Number(Number::PosInt(1)),
+        ),
+        ("bundle_epoch".to_string(), Value::Number(Number::PosInt(1))),
+        ("chain_id".to_string(), Value::Number(Number::PosInt(1))),
+        (
+            "registry_address".to_string(),
+            Value::String("0x1234".to_string()),
+        ),
+        (
+            "finalized_block_number".to_string(),
+            Value::Number(Number::PosInt(100)),
+        ),
+        (
+            "finalized_block_hash".to_string(),
+            Value::String("0xdeadbeef".to_string()),
+        ),
+        (
+            "issued_at".to_string(),
+            Value::Number(Number::PosInt(
+                base_time.as_seconds().saturating_sub(86_400),
+            )),
+        ),
+        (
+            "valid_until".to_string(),
+            Value::Number(Number::PosInt(
+                base_time.as_seconds().saturating_add(86_400),
+            )),
+        ),
+        (
+            "issuers".to_string(),
+            Value::Array(vec![Value::Object(vec![
+                (
+                    "issuer_id".to_string(),
+                    Value::String(issuer_uri.to_string()),
+                ),
+                (
+                    "profiles".to_string(),
+                    Value::Array(vec![Value::String("pip-personal-v1".to_string())]),
+                ),
+                (
+                    "vcts".to_string(),
+                    Value::Array(vec![Value::String("urn:pip:vct:id".to_string())]),
+                ),
+                (
+                    "valid_from".to_string(),
+                    Value::Number(Number::PosInt(
+                        base_time.as_seconds().saturating_sub(86_400),
+                    )),
+                ),
+                ("state".to_string(), Value::String("active".to_string())),
+                (
+                    "keys".to_string(),
+                    Value::Array(vec![Value::Object(vec![
+                        ("kid".to_string(), Value::String(kid.to_string())),
+                        ("jwk".to_string(), issuer_jwk_parsed),
+                        ("state".to_string(), Value::String("active".to_string())),
+                        (
+                            "state_since".to_string(),
+                            Value::Number(Number::PosInt(
+                                base_time.as_seconds().saturating_sub(86_400),
+                            )),
+                        ),
+                    ])]),
+                ),
+            ])]),
+        ),
+        ("verifiers".to_string(), Value::Array(vec![])),
+        ("operators".to_string(), Value::Array(vec![])),
+    ]);
+    let bundle_verified =
+        TrustBundle::from_payload(&bundle_with_issuer).map_err(|e| anyhow!("bundle: {e}"))?;
+
+    // Helper para armar presentación
+    let build_test_presentation = |step_nonce: &str, now: u64| -> Result<String> {
+        let claims = format!(
+            r#"{{"exp":{},"iat":{},"iss":"{}","cnf":{{"jwk":{}}},"status":{{"status_list":{{"idx":{},"uri":"{}"}}}},"vct":"urn:pip:vct:id"}}"#,
+            base_time.as_seconds().saturating_add(86_400),
+            base_time.as_seconds(),
+            issuer_uri,
+            holder_jwk.to_canonical_json(),
+            credential_index,
+            status_uri,
+        );
+        let jwt_header = r#"{"alg":"ES256","typ":"dc+sd-jwt"}"#;
+        let signing_input = format!(
+            "{}.{}",
+            base64url::encode(jwt_header.as_bytes()),
+            base64url::encode(claims.as_bytes())
+        );
+        let digest = gravital_id_crypto::sha256(signing_input.as_bytes());
+        let sig = gid_err(issuer_store.sign(&issuer_handle, &digest), "sign sd-jwt")?;
+        let issuer_jwt = format!("{signing_input}.{}", base64url::encode(&sig));
+        let prefix = format!("{issuer_jwt}~");
+
+        gid_err(
+            gravital_id_credential::KbIssuer::create_presentation(
+                &prefix,
+                audience,
+                step_nonce,
+                UnixTime::from_seconds(now),
+                &holder_store,
+                &holder_handle,
+            ),
+            "create kb presentation",
+        )
+    };
+
+    let mut state_store = InMemoryStateStore::new(StateIntegrityKey::new([0x77; 32]));
+    let policy = VerificationPolicy::default();
+
+    // 1. Estado disponible pero envejecido (> 1800s) -> ValidWithStaleStatus
+    let pres_stale = build_test_presentation("nonce-chaos-stale", base_time.as_seconds())?;
+    let header_status = r#"{"alg":"ES256","typ":"statuslist+jwt"}"#;
+    let values = vec![0u32; 64];
+    let payload_status = format!(
+        r#"{{"exp":{},"iat":{},"iss":"{}","status_list":{{"bits":2,"lst":"{}","uri":"{}"}}}}"#,
+        base_time.as_seconds().saturating_add(86_400),
+        base_time.as_seconds().saturating_sub(3_000),
+        issuer_uri,
+        pack_status_lst(2, &values),
+        status_uri
+    );
+    let jwt_status = format!(
+        "{}.{}.{}",
+        base64url::encode(header_status.as_bytes()),
+        base64url::encode(payload_status.as_bytes()),
+        base64url::encode(&[0u8; 64])
+    );
+    let list_stale = gid_err(StatusListVerifier::parse(&jwt_status), "status list parse")?;
+    let snapshot_stale = StatusSnapshot::new(
+        list_stale,
+        status_uri,
+        UnixTime::from_seconds(base_time.as_seconds().saturating_sub(2_500)),
+    );
+    let ver_req_stale = VerificationRequest::new(
+        "nonce-chaos-stale",
+        audience,
+        UnixTime::from_seconds(base_time.as_seconds().saturating_add(300)),
+        OperationClass::Transaction,
+    );
+    let result_stale = VerifierPipeline::verify(
+        &pres_stale,
+        Some(&ver_req_stale),
+        &bundle_verified,
+        Some(&snapshot_stale),
+        &mut state_store,
+        &policy,
+        base_time,
+        None,
+    );
+    println!(
+        "    - CDN caída; caché de estado local envejecida: resultado = {:?}",
+        result_stale.status()
+    );
+    if result_stale.status() != VerificationStatus::ValidWithStaleStatus {
+        for c in result_stale.checks() {
+            println!("      CHECK: {:?} - {} ({:?})", c.kind, c.message, c.status);
+        }
+        bail!(
+            "Esperaba ValidWithStaleStatus ante caché envejecida por caída de CDN, obtuve {:?}",
+            result_stale.status()
+        );
+    }
+    audit_logs.push(format!("{:?}", result_stale.status()));
+    println!("    [CHAOS-5A OK] Degradación limpia a ValidWithStaleStatus por falta de actualización en CDN (REQ-REL-004, REQ-STAT-004, INV-04).");
+
+    // 2. Estado ausente totalmente (sin caché local) -> Unverifiable
+    let pres_empty = build_test_presentation("nonce-chaos-empty", base_time.as_seconds())?;
+    let ver_req_empty = VerificationRequest::new(
+        "nonce-chaos-empty",
+        audience,
+        UnixTime::from_seconds(base_time.as_seconds().saturating_add(300)),
+        OperationClass::Transaction,
+    );
+    let result_empty = VerifierPipeline::verify(
+        &pres_empty,
+        Some(&ver_req_empty),
+        &bundle_verified,
+        None,
+        &mut state_store,
+        &policy,
+        base_time,
+        None,
+    );
+    println!(
+        "    - CDN caída; sin estado local disponible: resultado = {:?}",
+        result_empty.status()
+    );
+    if result_empty.status() != VerificationStatus::Unverifiable {
+        bail!(
+            "Esperaba Unverifiable ante ausencia total de estado, obtuve {:?}",
+            result_empty.status()
+        );
+    }
+    audit_logs.push(format!("{:?}", result_empty.status()));
+    println!("    [CHAOS-5B OK] Degradación estricta a Unverifiable sin aceptar datos no comprobados (REQ-REL-004, INV-05).\n");
+
+    // -------------------------------------------------------------------------
+    // ESCENARIO 6: Auditoría forense de Cero PII y Ausencia de Pánicos
+    // -------------------------------------------------------------------------
+    println!("--- [ESCENARIO 6] Auditoría forense: Cero PII y ausencia total de pánicos ---");
+    let forbidden_pii = [
+        "Angel",
+        "8-888-888",
+        "secret-payload",
+        "te-issuer-private",
+        "private_key",
+    ];
+    for log_entry in &audit_logs {
+        for forbidden in &forbidden_pii {
+            if log_entry.contains(forbidden) {
+                bail!("Violación de INV-02: Se encontró PII o secreto '{forbidden}' en log de caos: {log_entry}");
+            }
+        }
+    }
+    println!(
+        "    - Auditados {} eventos y diagnósticos de fallos inyectados.",
+        audit_logs.len()
+    );
+    println!("    [CHAOS-6 OK] Cero datos personales o secretos registrados en errores de caos (INV-02, REQ-PRIV-003).\n");
+
+    println!("================================================================================");
+    println!(
+        " PRUEBAS DE CAOS APROBADAS (F7.T12): Resiliencia demostrada sin pánicos en {:.2?}",
+        start_demo.elapsed()
+    );
+    println!("================================================================================");
+    Ok(())
+}
+
 #[cfg(test)]
 #[allow(
     clippy::unwrap_used,
@@ -3015,5 +3631,10 @@ mod tests {
     #[test]
     fn test_in_process_run_demo_m1() {
         assert!(run_demo_m1().is_ok());
+    }
+
+    #[test]
+    fn test_in_process_run_demo_chaos() {
+        assert!(run_demo_chaos().is_ok());
     }
 }

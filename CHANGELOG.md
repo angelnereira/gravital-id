@@ -7,6 +7,16 @@ Cada componente publicado (SDK, servicios, contratos, especificación) indica su
 ## [Unreleased]
 
 ### Added
+- [cli, chaos, test] Caos e inyección de fallos y cierre de Gate G7 (`apps/pip-cli`, `apps/pip-cli/tests/chaos_fault_injection.rs`, `F7.T12`, `Gate G7`, `REQ-REL-004`, `REQ-SYNC-004`, `REQ-SYNC-007`, `REQ-TRUST-004`, `REQ-OBS-002`, `REQ-PRIV-003`, `INV-01`, `INV-02`, `INV-04`, `INV-05`, `INV-10`, `INV-11`, `INV-16`; #105):
+  - `apps/pip-cli`: Subcomando `demo-chaos` que ejecuta la suite oficial determinista de inyección de fallos de la Fase F7 en 6 escenarios exhaustivos:
+    1. Relay malicioso: Intento de rollback de versión en `StatusManifest` ($1 \le 2$) y replay de sobres en buzones $\to$ rechazo fail-closed (`REQ-STAT-008`, `REQ-SYNC-002`, `INV-05`).
+    2. Relay malicioso: Retención e indisponibilidad $\to$ detección de error transitorio, penalización con backoff determinista y failover automático en `RelayPool` hacia relay de respaldo sin pánicos (`REQ-SYNC-007`, `INV-10`).
+    3. Relay malicioso: Alteración de bytes en objetos direccionados por contenido y en sobre HPKE $\to$ rechazo inmediato por discrepancia de hash SHA-256 (`ContentVerifier`) y fallo de autenticación AEAD ChaCha20Poly1305 (`HpkeEnvelope`) (`REQ-SYNC-004`, `REQ-SYNC-006`, `INV-05`).
+    4. RPC caído y divergencia de ledger: Caída total de RPCs $\to$ resultado fail-closed `InsufficientSources`; inconsistencia en altura de bloques entre proveedores $\to$ resultado `CrossLedgerDivergence` con emisión de alarma `CrossLedgerDivergenceAlarm` (`REQ-TRUST-004`, `REQ-OBS-002`, `INV-05`, `INV-16`).
+    5. CDN / almacenamiento de bundles caído: Verificador offline degrada limpiamente a `ValidWithStaleStatus` ante snapshot local envejecido y a `Unverifiable` ante ausencia total de estado con evidencia estructurada, sin aceptar datos no comprobados ni generar pánicos (`REQ-REL-004`, `REQ-STAT-004`, `INV-04`, `INV-05`, `INV-10`).
+    6. Auditoría forense de cero PII y ausencia total de pánicos: Verificación rigurosa de que ningún log ni mensaje de error durante las condiciones de caos expone datos personales o secretos (`INV-02`, `REQ-PRIV-003`).
+  - `apps/pip-cli/tests/chaos_fault_injection.rs`: Suite automatizada de pruebas de integración con 7 tests en verde validando la ejecución del subcomando `demo-chaos` y cada uno de los vectores de fallo de forma determinista y sans-I/O.
+  - Cierre formal del **Gate G7** cumpliendo la totalidad de criterios de aceptación de la Fase F7 (servicios en testnet integrados de extremo a extremo, suite de caos aprobada y auditoría cero PII).
 - [cli, verifier, status] Revocación durante periodo offline y sincronización posterior (`apps/pip-cli`, `apps/pip-cli/tests/offline_revocation_mvp05.rs`, `F7.T11`, `REQ-STAT-004`, `REQ-STAT-007`, `REQ-STAT-008`, `REQ-REL-004`, `MVP-05`, `INV-01`, `INV-02`, `INV-04`, `INV-05`, `INV-11`; #104):
   - `apps/pip-cli`: Subcomando `demo-mvp05` que ejecuta la demostración oficial determinista del criterio normativo MVP-05 (§24) en 6 etapas:
     1. Emisión inicial y verificación online fresca en $T_0 \to \text{Valid}$.

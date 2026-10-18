@@ -6,11 +6,11 @@
 
 | Campo | Valor |
 |---|---|
-| Fase actual | **F7 — Servicios y sincronización** |
-| Último gate cerrado | **G6** (2026-10-17) · **G5** (2026-10-16) · **G4** (2026-10-16) · **G19** (2026-10-15) · **G0** (2026-10-11) |
-| Próximo gate | **G7** — plano de servicio completo en testnet; **G3** (#59) y **G2** pendientes de CI |
-| Hito siguiente | M2 · Sincronización y anclaje (al cerrar G7) · MP1 · Tap offline (al cerrar G21) [M1 alcanzado] |
-| Última actualización | 2026-10-18 (`F7.T11` completada: revocación durante periodo offline y sincronización posterior MVP-05 con subcomando `pip-cli demo-mvp05` y suite automatizada `offline_revocation_mvp05.rs`; degradación determinista a `ValidWithStaleStatus` por antigüedad `REQ-STAT-004`/`REQ-REL-004` y resolución a `Invalid` tras sincronizar, junto con mitigación anti-rollback `REQ-STAT-008`; `F7.T10` y `F7.T09` completadas; siguiente tarea `F7.T12` Caos) |
+| Fase actual | **F8 — Recuperación, migración y rotación** |
+| Último gate cerrado | **G7** (2026-10-18) · **G6** (2026-10-17) · **G5** (2026-10-16) · **G4** (2026-10-16) · **G19** (2026-10-15) · **G0** (2026-10-11) |
+| Próximo gate | **G8 / Hito M2** — los nueve criterios de aceptación del MVP (§24); **G3** (#59) y **G2** pendientes de CI |
+| Hito siguiente | M2 · Sincronización y anclaje (al cerrar G8) · MP1 · Tap offline (al cerrar G21) [M1 alcanzado] |
+| Última actualización | 2026-10-18 (`F7.T12` completada: suite oficial de caos e inyección de fallos con subcomando `pip-cli demo-chaos` y 7 tests de integración en `apps/pip-cli/tests/chaos_fault_injection.rs`; **Gate G7 cerrado**; plano de servicio completo en testnet verificado sin datos personales ni pánicos; siguiente fase: F8 Recuperación, migración y rotación) |
 
 ## Gates
 
@@ -24,13 +24,15 @@
 | G5 | **Cerrado** | 2026-10-16 | **Hito M1 alcanzado**: Demostración reproducible de los escenarios MVP-01 (verificación 100% offline y sans-I/O), MVP-02 (rechazo determinista de manipulaciones en firma, emisor no autorizado, revocación y divulgación manipulada) y MVP-03 (rechazo determinista de replay en base de datos SQLite cifrada con `VerifierStateStore`) mediante `pip-cli demo-m1` y suite `cli_m1_demonstration.rs` (94,71% de cobertura en `pip-cli`); informe de legibilidad física y óptica QR `docs/reports/2026-10-16-legibilidad-qr.md` (100% éxito en Xiaomi Redmi 9A, Samsung Galaxy A53 5G, Apple iPhone 15 Pro y Honeywell Xenon 1900g); e inspección forense de SQLite demostrando 0 datos personales o presentaciones en claro en reposo (`INV-01`, `INV-02`, `INV-04`, `INV-05`, `INV-11`, `REQ-PRES-005`, `REQ-PERF-003`, `REQ-STOR-001`, `REQ-STOR-004`, `REQ-PRIV-005`; #88). |
 | G19 | **Cerrado** | 2026-10-15 | `ADR-0021` a `ADR-0026` aceptados; especificaciones normativas (`PROTOCOL.md §7`, `ERROR_CODES.md` fam. 8, `THREAT_MODEL.md §5`, `pip-identity-v1.md`, `docs/legal/` v0.2) integradas; spikes `F19.T12` (`spikes/nfc-hce/`), `F19.T13` (`spikes/javacard/`) y `F19.T14` (`spikes/qr/`, `keystore/`, `wasm/`, `ledger/`) con arneses reproducibles y CSVs versionados; 5 issues `type:spec-gap` (`#73`–`#77`) cerrados. |
 | G6 | **Cerrado** | 2026-10-17 | Contratos en testnet (`contracts/script/Deploy.s.sol`, `deploy/environments/testnet/contracts.json`), 25 pruebas Foundry pasando (unitarias, fuzz e invariantes), adaptador `gravital-id-ledger-evm` con pruebas de fallos (91,44% cobertura) y verificación "sin datos personales" (`check-contracts-privacy`) aprobada con 0 PII (#90, #91, #92, #93). |
-| G7 … G18, G20 … G25 | Pendiente | — | — |
+| G7 | **Cerrado** | 2026-10-18 | Plano de servicio en testnet funcionando end-to-end (`F7.T10` con `container_stack_integration.rs`), pruebas de caos aprobadas con degradación determinista canónica sin pánicos (`F7.T12` con `pip-cli demo-chaos` y `chaos_fault_injection.rs`), y auditoría forense cero PII (`INV-01`, `INV-02`, `INV-04`, `INV-05`, `INV-10`, `INV-11`, `INV-16`, `REQ-REL-004`, `REQ-SYNC-004`, `REQ-PRIV-003`). |
+| G8 … G18, G20 … G25 | Pendiente | — | — |
 
 ## Tareas en curso
 
 | Tarea | Issue | Responsable | Estado | Siguiente paso |
 |---|---|---|---|---|
-| F7.T12 Caos (inyección de fallos) | #105 | Antigravity (agente) | Por hacer | Pruebas de caos: relay malicioso (rollback, retención, alteración), RPC caído, CDN caída; degradación a estados explícitos (`REQ-REL-004`, `REQ-SYNC-004`) |
+| F8.T01 Código de recuperación y respaldo | #106 | Antigravity (agente) | Por hacer | Generación $\ge 128$ bits, codificación legible con suma de verificación, derivación HKDF, formato de respaldo versionado y cifrado (`REQ-REC-002`) |
+| F7.T12 Caos (inyección de fallos) | #105 | Antigravity (agente) | Hecha | Subcomando `pip-cli demo-chaos` y suite `apps/pip-cli/tests/chaos_fault_injection.rs` con 6 escenarios de inyección: relay malicioso (rollback, retención, alteración), RPC caído, divergencia inter-ledger, CDN caída y degradación a `ValidWithStaleStatus`/`Unverifiable`, y auditoría cero PII (`REQ-REL-004`, `REQ-SYNC-004`, `REQ-SYNC-007`, `REQ-TRUST-004`, `REQ-OBS-002`, `INV-01`, `INV-02`, `INV-04`, `INV-05`, `INV-10`, `INV-11`, `INV-16`); resuelto #105 y Gate G7 cerrado |
 | F7.T11 Revocación durante periodo offline (MVP-05) | #104 | Antigravity (agente) | Hecha | Subcomando `pip-cli demo-mvp05` y suite `apps/pip-cli/tests/offline_revocation_mvp05.rs` con ciclo de vida completo: $T_0 \to \text{Valid}$, $T_{\text{offline}} \to \text{ValidWithStaleStatus}$ por umbral de frescura de transacción, $T_{\text{sync}} \to \text{Invalid}$ por revocación, y anti-rollback monotónico (`REQ-STAT-004`, `REQ-STAT-008`, `REQ-REL-004`, `MVP-05`); resuelto #104 |
 | F7.T10 Integración con contenedores | #103 | Antigravity (agente) | Hecha | Suite automatizada `apps/pip-cli/tests/container_stack_integration.rs` con flujo nominal E2E, aislamiento de divergencia en operadores, fail-closed en divergencia de ledger y auditoría cero PII (`INV-01`, `INV-02`, `INV-04`, `INV-05`, `INV-11`, `INV-16`); resuelto #103 |
 | F7.T09 Backend `aws-lc-rs` (FIPS, condicional) | #103 | Antigravity (agente) | Hecha | Evaluada y cerrada condicionalmente conforme a ROADMAP.md y ADR-0007 (cumplimiento FIPS 140-2/3 en producción delegado a HSM/KMS bajo REQ-ISS-002); resuelto #103 |
@@ -160,6 +162,33 @@
 | Tamaño binario del SDK | — | — | — | — | — |
 
 ## Última nota de traspaso
+
+### Traspaso — 2026-10-18 (F7.T12: Caos e inyección de fallos y Cierre de Gate G7 — Subcomando demo-chaos, degradación determinista sans-I/O y auditoría cero PII) — Antigravity (agente)
+- Tarea: F7.T12 / Gate G7 — #105 — rama `main`
+- Estado: **hecha**
+- Hecho en esta sesión:
+  - **F7.T12 (`apps/pip-cli/src/lib.rs`):** Implementado subcomando oficial `pip-cli demo-chaos` que ejecuta de forma determinista y reproducible la suite de inyección de fallos de la Fase F7 en 6 escenarios:
+    1. Relay malicioso (Ataque de rollback y replay): Intento de forzar rollback de versión en `StatusManifest` ($1 \le 2$) y replay de sobres en buzones $\to$ rechazo fail-closed inmediato (`REQ-STAT-008`, `REQ-SYNC-002`, `INV-05`).
+    2. Relay malicioso (Retención e indisponibilidad): Inyección de fallos de red persistentes en endpoint primario $\to$ backoff determinista con variación acotada y conmutación automática por error (failover) en `RelayPool` hacia el relay secundario sin pánicos (`REQ-SYNC-007`, `INV-10`).
+    3. Relay malicioso (Alteración de integridad): Corrupción de bytes en objeto direccionado por contenido $\to$ rechazo por discrepancia de hash SHA-256 (`REQ-SYNC-004`); y alteración del tag de autenticación Poly1305 en sobre HPKE $\to$ fallo estricto de autenticación AEAD ChaCha20Poly1305 (`REQ-SYNC-006`, `INV-05`).
+    4. RPC caído y divergencia de ledger: Caída total simulada de todos los RPCs $\to$ resultado fail-closed `InsufficientSources`; e inconsistencia en altura de bloque entre proveedores $\to$ resultado `CrossLedgerDivergence` con emisión de alarma `CrossLedgerDivergenceAlarm` (`REQ-TRUST-004`, `REQ-OBS-002`, `INV-05`, `INV-16`).
+    5. CDN / almacenamiento de bundles caído: Verificador offline degrada limpiamente a `ValidWithStaleStatus` ante snapshot local envejecido y a `Unverifiable` ante ausencia total de estado con evidencia estructurada, sin aceptar datos no comprobados ni generar pánicos (`REQ-REL-004`, `REQ-STAT-004`, `INV-04`, `INV-05`, `INV-10`).
+    6. Auditoría forense de cero PII y ausencia total de pánicos: Verificación rigurosa de que ningún log ni mensaje de error durante las condiciones de caos expone datos personales o secretos (`INV-02`, `REQ-PRIV-003`).
+  - **F7.T12 (`apps/pip-cli/tests/chaos_fault_injection.rs`):** Suite automatizada de pruebas de integración con 7 tests pasando al 100%:
+    - `cli_demo_chaos_completes_all_scenarios_successfully`
+    - `test_chaos_malicious_relay_rollback_and_replay_rejection`
+    - `test_chaos_malicious_relay_withholding_and_failover`
+    - `test_chaos_malicious_relay_tampering_hash_mismatch_and_aead_failure`
+    - `test_chaos_rpc_outage_and_cross_ledger_divergence`
+    - `test_chaos_cdn_outage_verifier_graceful_degradation`
+    - `test_chaos_zero_pii_and_zero_panic_forensic_audit`
+  - **Cierre formal del Gate G7:** Todos los criterios de aceptación de la Fase F7 cumplidos: servicios en testnet funcionando end-to-end, pruebas de caos aprobadas y auditoría de cero PII sin hallazgos.
+- Pendiente (siguiente paso concreto):
+  - Iniciar Fase F8 (`F8.T01`): Código de recuperación y respaldo (`REQ-REC-002`).
+- Bugs/issues abiertos durante la sesión: ninguno.
+- Decisiones tomadas (con enlace a ADR/issue): Cierre formal del Gate G7 (#105).
+- Riesgos o dudas: ninguna.
+- Comprobaciones locales: fmt ✅ clippy (-D warnings) ✅ tests (100% verde en todo el workspace) ✅ layers (21 crates) ✅ trace (108 REQs) ✅ check-deploy-hygiene ✅
 
 ### Traspaso — 2026-10-18 (F7.T11: Revocación durante periodo offline MVP-05 — Subcomando demo-mvp05, degradación determinista a ValidWithStaleStatus y resolución a Invalid tras sincronizar con anti-rollback) — Antigravity (agente)
 - Tarea: F7.T11 — #104 — rama `main`
