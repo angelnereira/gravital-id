@@ -14,6 +14,16 @@ description = "Protocolos de respaldo, código de recuperación y migración par
 workspace = true
 
 [dependencies]
+gravital-id-types = { workspace = true }
+gravital-id-codec = { workspace = true }
 gravital-id-crypto = { workspace = true }
+gravital-id-credential = { workspace = true }
 gravital-id-keys = { workspace = true }
 gravital-id-holder = { workspace = true }
+gravital-id-storage = { workspace = true }
+zeroize = { workspace = true }
+
+[dev-dependencies]
+gravital-id-testkit = { path = "../gravital-id-testkit", version = "0.1.0" }
+gravital-id-storage-sqlite = { path = "../gravital-id-storage-sqlite", version = "0.1.0" }
+

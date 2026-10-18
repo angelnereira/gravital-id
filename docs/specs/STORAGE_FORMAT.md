@@ -129,3 +129,60 @@ Cualquier operador forense que inspeccione la base de datos de SQLite solo obser
   2. Se aplican secuencialmente las transformaciones $N \to N+1 \to \dots \to M$.
   3. Cada migración re-cifra los registros afectados recalculando el AAD correspondiente.
   4. La suite de pruebas de CI debe verificar compatibilidad hacia atrás con bases de datos sintéticas de cada versión de esquema publicada desde v1.0.0.
+
+---
+
+## 7. Formato Canónico del Paquete de Respaldo Cifrado (`SPEC-PIP-BACKUP-001`)
+
+> **Trazabilidad:** REQ-REC-002, REQ-REC-004, REQ-REC-007, REQ-STOR-001; ADR-0009; INV-01, INV-02, INV-03, INV-05, INV-11.
+
+El respaldo deliberado del titular (Nivel 2 de recuperación, `ADR-0009`) se empaqueta como un archivo binario autónomo cifrado con autenticación AEAD y vinculado a un **código de recuperación generado** de $\ge 128$ bits de entropía (`REQ-REC-002`).
+
+### 7.1 Estructura Binaria de la Cabecera y Paquete
+
+| Campo | Tipo | Tamaño | Descripción |
+|---|---|---|---|
+| `magic` | `[u8; 4]` | 4 bytes | Constante mágica `GIDB` (`0x47, 0x49, 0x44, 0x42`) para Gravital ID Backup (compatible con `PIPB` como alias legado). |
+| `format_version` | `u16` | 2 bytes | Versión de formato de respaldo en Big-Endian (versión actual = `1`). |
+| `cipher_suite` | `u8` | 1 byte | Suite de cifrado: `0x01` = XChaCha20-Poly1305 (clave 256 bits, nonce 192 bits, tag 128 bits). |
+| `created_at` | `u64` | 8 bytes | Timestamp Unix de emisión en segundos (Big-Endian, inyectado vía `UnixTime`, `INV-11`). |
+| `salt` | `[u8; 16]` | 16 bytes | Sal criptográfica aleatoria para derivación HKDF. |
+| `nonce` | `[u8; 24]` | 24 bytes | Nonce aleatorio de 192 bits para XChaCha20. |
+| `ciphertext_len` | `u32` | 4 bytes | Longitud en bytes del texto cifrado (Big-Endian). Máximo admitido: 16 MiB para prevenir DoS. |
+| `ciphertext` | `[u8; N]` | N bytes | Payload comprimido (DEFLATE acotado $\le 10:1$) con datos de la bóveda cifrados. |
+| `auth_tag` | `[u8; 16]` | 16 bytes | Etiqueta de autenticación Poly1305. |
+
+### 7.2 Datos Asociados Autenticados (AAD)
+
+Para vincular criptográficamente la cabecera completa y evitar cualquier ataque de trasplante de salt, manipulación temporal o alteración de metadatos:
+
+$$\text{AAD} = \texttt{"GID-BACKUP-AAD-v1"} \parallel \text{format\_version} \parallel \text{cipher\_suite} \parallel \text{created\_at} \parallel \text{salt}$$
+
+### 7.3 Derivación de Claves mediante HKDF-SHA256 (RFC 5869)
+
+A partir de la entropía de 128 bits del código de recuperación (`RecoveryCode`, codificado como mnemónico BIP-39 de 12 palabras o código compacto Crockford Base32 con suma de verificación):
+
+1. **Extracción:**
+   $$\text{PRK} = \text{HKDF-Extract}(\text{salt}, \text{RecoveryCode.entropy})$$
+2. **Expansión de la Clave de Cifrado del Respaldo:**
+   $$\text{BackupEncryptionKey} = \text{HKDF-Expand}(\text{PRK}, \texttt{"pip-backup-encryption-v1"}, 32)$$
+3. **Expansión del Secreto de Recuperación (`RecoverySecret`):**
+   $$\text{RecoverySecret} = \text{HKDF-Expand}(\text{PRK}, \texttt{"pip-recovery-secret-v1"}, 32)$$
+
+### 7.4 Claves de Recuperación por Emisor (`REQ-REC-004`, `REQ-REC-007`)
+
+Para garantizar la no correlación entre entidades emisoras (P-09, INV-02):
+$$\text{IssuerRecoveryKey} = \text{HKDF-Expand}(\text{HKDF-Extract}(\text{IssuerId.as\_bytes()}, \text{RecoverySecret}), \texttt{"pip-issuer-recovery-key-v1"}, 32)$$
+
+Dos emisores distintos $E_1 \neq E_2$ obtienen claves públicas de recuperación diferentes y matemáticamente independientes, impidiendo que la huella de recuperación actúe como un identificador global del titular.
+
+### 7.5 Estructura del Payload Cifrado
+
+El texto en claro antes de comprimir y cifrar contiene:
+* `schema_version`: versión del esquema de payload (`1`).
+* `recovery_secret`: secreto maestro de 32 bytes (`SecretBytes<32>`).
+* `credentials`: array de credenciales de la wallet con sus SD-JWTs, disclosures y metadatos de emisión.
+* `device_slots`: array de ranuras activas (`DeviceFactorClass`: `mobile`, `card`, `other`).
+* `tenant_roles`: array de credenciales de rol e inquilinos asociados (`pip-tenant-role-v1`).
+* `created_at`: `UnixTime` de generación del respaldo.
+

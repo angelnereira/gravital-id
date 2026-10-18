@@ -10,7 +10,7 @@
 | Último gate cerrado | **G7** (2026-10-18) · **G6** (2026-10-17) · **G5** (2026-10-16) · **G4** (2026-10-16) · **G19** (2026-10-15) · **G0** (2026-10-11) |
 | Próximo gate | **G8 / Hito M2** — los nueve criterios de aceptación del MVP (§24); **G3** (#59) y **G2** pendientes de CI |
 | Hito siguiente | M2 · Sincronización y anclaje (al cerrar G8) · MP1 · Tap offline (al cerrar G21) [M1 alcanzado] |
-| Última actualización | 2026-10-18 (`F7.T12` completada: suite oficial de caos e inyección de fallos con subcomando `pip-cli demo-chaos` y 7 tests de integración en `apps/pip-cli/tests/chaos_fault_injection.rs`; **Gate G7 cerrado**; plano de servicio completo en testnet verificado sin datos personales ni pánicos; siguiente fase: F8 Recuperación, migración y rotación) |
+| Última actualización | 2026-10-18 (`F8.T01` completada: implementación de `gravital-id-recovery` en capa L3 `no_std`, código de recuperación con $\ge 128$ bits de entropía en mnemónico BIP-39 de 12 palabras y Crockford Base32 con checksum, derivación KDF determinista por emisor para re-vinculación sin correlación, contenedor de respaldo binario cifrado `GIDB` con AAD autenticado y suite de 23 pruebas pasando al 100% con auditoría forense cero PII; siguiente tarea: F8.T02 Shamir k-de-n) |
 
 ## Gates
 
@@ -31,7 +31,8 @@
 
 | Tarea | Issue | Responsable | Estado | Siguiente paso |
 |---|---|---|---|---|
-| F8.T01 Código de recuperación y respaldo | #106 | Antigravity (agente) | Por hacer | Generación $\ge 128$ bits, codificación legible con suma de verificación, derivación HKDF, formato de respaldo versionado y cifrado (`REQ-REC-002`) |
+| F8.T02 Shamir k-de-n | — | Antigravity (agente) | Por hacer | División de secreto k-de-n sin I/O, formato de custodia y recuperación social (`REQ-REC-003`) |
+| F8.T01 Código de recuperación y respaldo | #101 | Antigravity (agente) | Hecha | Generación $\ge 128$ bits, codificación legible BIP-39/Crockford con checksum, derivación HKDF por emisor, formato de respaldo GIDB versionado y cifrado con XChaCha20-Poly1305 (`REQ-REC-002`, `REQ-REC-004`, `REQ-REC-007`, `SPEC-PIP-BACKUP-001`); resuelto #101 |
 | F7.T12 Caos (inyección de fallos) | #105 | Antigravity (agente) | Hecha | Subcomando `pip-cli demo-chaos` y suite `apps/pip-cli/tests/chaos_fault_injection.rs` con 6 escenarios de inyección: relay malicioso (rollback, retención, alteración), RPC caído, divergencia inter-ledger, CDN caída y degradación a `ValidWithStaleStatus`/`Unverifiable`, y auditoría cero PII (`REQ-REL-004`, `REQ-SYNC-004`, `REQ-SYNC-007`, `REQ-TRUST-004`, `REQ-OBS-002`, `INV-01`, `INV-02`, `INV-04`, `INV-05`, `INV-10`, `INV-11`, `INV-16`); resuelto #105 y Gate G7 cerrado |
 | F7.T11 Revocación durante periodo offline (MVP-05) | #104 | Antigravity (agente) | Hecha | Subcomando `pip-cli demo-mvp05` y suite `apps/pip-cli/tests/offline_revocation_mvp05.rs` con ciclo de vida completo: $T_0 \to \text{Valid}$, $T_{\text{offline}} \to \text{ValidWithStaleStatus}$ por umbral de frescura de transacción, $T_{\text{sync}} \to \text{Invalid}$ por revocación, y anti-rollback monotónico (`REQ-STAT-004`, `REQ-STAT-008`, `REQ-REL-004`, `MVP-05`); resuelto #104 |
 | F7.T10 Integración con contenedores | #103 | Antigravity (agente) | Hecha | Suite automatizada `apps/pip-cli/tests/container_stack_integration.rs` con flujo nominal E2E, aislamiento de divergencia en operadores, fail-closed en divergencia de ledger y auditoría cero PII (`INV-01`, `INV-02`, `INV-04`, `INV-05`, `INV-11`, `INV-16`); resuelto #103 |
@@ -162,6 +163,35 @@
 | Tamaño binario del SDK | — | — | — | — | — |
 
 ## Última nota de traspaso
+
+### Traspaso — 2026-10-18 (F8.T01: Código de recuperación y respaldo cifrado — gravital-id-recovery L3 no_std, mnemónico BIP-39, Crockford Base32, jerarquía KDF determinista por emisor, paquete GIDB con AAD y auditoría forense cero PII) — Antigravity (agente)
+- Tarea: F8.T01 — #101 — rama `main`
+- Estado: **hecha**
+- Hecho en esta sesión:
+  - **`docs/specs/STORAGE_FORMAT.md §7` (`SPEC-PIP-BACKUP-001`):** Especificación canónica y normativa del formato del paquete de respaldo binario (`GIDB`), layout con 59 bytes de cabecera AAD vinculada (`b"GID-BACKUP-AAD-v1" || format_version || cipher_suite || created_at || salt`), compresión DEFLATE previa y cifrado `XChaCha20-Poly1305` (`REQ-REC-002`, `INV-01`, `INV-02`, `INV-05`).
+  - **`crates/gravital-id-recovery` (Capa L3 `no_std` + `alloc`, `#![forbid(unsafe_code)]`):** Implementación completa y modular del núcleo de recuperación del titular:
+    - `RecoveryCode` (`code.rs`): Entropía criptográfica de 128 bits generada deterministamente mediante RNG inyectado (`INV-11`), codificación y validación de mnemónico BIP-39 de 12 palabras (wordlist canónica estricta de 2.048 palabras) con checksum SHA-256 de 4 bits, codificación y decodificación de Base32 Crockford compacto con dígito de control (26 caracteres de datos + 1 de control agrupados en 33 caracteres legibles), protección con `Zeroize`/`ZeroizeOnDrop` y `Debug` redactado.
+    - `kdf.rs`: Jerarquía HKDF-SHA256 (RFC 5869): `derive_backup_keys` (extracción de clave AEAD de 256 bits y secreto maestro de recuperación a partir del código y sal de 128 bits); y `derive_issuer_recovery_secret` / `derive_issuer_recovery_jwk` para la derivación determinista por emisor ($\text{RecoveryKey}_{\text{Issuer}} = \text{HKDF}(\text{RecoverySecret}, \text{IssuerId})$) de pares P-256 exclusivos con propósito `HolderRecovery` (`REQ-REC-004`), garantizando huellas disjuntas que imposibilitan la correlación cruzada del titular (`REQ-REC-007`, `P-09`, `INV-02`).
+    - `payload.rs`: Estructura canónica `BackupPayload` con versión de esquema, secreto de recuperación, credenciales (`BackupCredential`), ranuras de factor de dispositivo (`BackupDeviceSlot`) y roles de tenant (`BackupTenantRole`), serialización canónica en JSON determinista con límites estrictos de DoS (`MAX_BACKUP_PAYLOAD_BYTES`).
+    - `package.rs`: `EncryptedBackupPackage` con compresión DEFLATE previa, vinculación AAD estricta y sellado/apertura AEAD `XChaCha20-Poly1305`.
+    - `manager.rs`: `RecoveryManager` sans-I/O para exportación (`export_backup`) y restauración íntegra (`restore_backup`).
+    - `README.md`: Documentación técnica completa del crate L3 con arquitectura, tipos principales e invariantes aplicables.
+  - **Pruebas y trazabilidad (`crates/gravital-id-recovery/tests/recovery_tests.rs`):**
+    - 17 pruebas unitarias internas en verde.
+    - 6 pruebas de integración, propiedades, negativas y forenses:
+      - `e2e_recovery_export_and_restore_cycle`: Ciclo completo de vida de la bóveda verificado con identidad exacta de datos (`REQ-REC-002`).
+      - `test_zero_pii_in_backup_package`: Auditoría forense automática que comprueba que ningún dato personal o secreto confidencial aparece en texto claro en el paquete binario (`INV-02`).
+      - `test_per_issuer_recovery_keys_uncorrelated`: Verificación de aislamiento estricto de claves y JWKs públicos entre múltiples emisores (`REQ-REC-007`, `P-09`).
+      - `test_fail_closed_on_bit_tampering`: Verificación fail-closed probando mutación de 1 solo bit en 10 posiciones de la cabecera, criptograma y auth tag Poly1305 (`INV-05`).
+      - `test_recovery_code_property_roundtrips`: Prueba de roundtrip y preservación de entropía y checksums sobre 100 semillas deterministas independientes.
+      - `test_fuzz_style_arbitrary_inputs_no_panics`: Resistencia a entradas hostiles arbitrarias sin pánicos (`INV-10`).
+  - **Verificaciones del workspace:** `fmt` ✅, `clippy` (-D warnings) ✅, `test --workspace` ✅ (100% pasando), `check-layers` ✅ (21 crates), `check-deploy-hygiene` ✅, `trace` ✅ (111 REQs referenciados).
+- Pendiente (siguiente paso concreto):
+  - Iniciar `F8.T02`: Shamir $k$-de-$n$ (`REQ-REC-003`): división de secreto $k$-de-$n$ para recuperación social o custodia distribuida sin I/O de red.
+- Bugs/issues abiertos durante la sesión: ninguno.
+- Decisiones tomadas (con enlace a ADR/issue): Implementado formato canónico `SPEC-PIP-BACKUP-001` y crate `gravital-id-recovery` según `REQ-REC-002`, `REQ-REC-004`, `REQ-REC-007` y `STORAGE_FORMAT.md §7` (#101).
+- Riesgos o dudas: ninguna.
+- Comprobaciones locales: fmt ✅ clippy (-D warnings) ✅ tests (100% verde en todo el workspace) ✅ layers (21 crates) ✅ trace (111 REQs) ✅ check-deploy-hygiene ✅
 
 ### Traspaso — 2026-10-18 (F7.T12: Caos e inyección de fallos y Cierre de Gate G7 — Subcomando demo-chaos, degradación determinista sans-I/O y auditoría cero PII) — Antigravity (agente)
 - Tarea: F7.T12 / Gate G7 — #105 — rama `main`
