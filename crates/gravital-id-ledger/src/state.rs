@@ -429,11 +429,28 @@ impl LedgerState {
             return Err(LedgerError::IssuerNotActive(ev.issuer_id));
         }
 
-        if issuer.keys.contains_key(&ev.kid) {
-            return Err(LedgerError::KeyAlreadyExists {
-                issuer_id: ev.issuer_id,
-                kid: ev.kid,
-            });
+        if let Some(existing_key) = issuer.keys.get_mut(&ev.kid) {
+            match existing_key.state {
+                KeyLifecycleState::Suspended { .. } => {
+                    // Si la clave estaba suspendida, KeyAdded (emitido por liftKeySuspension / emergencyLiftSuspension)
+                    // rehabilita la clave al estado Active (REQ-LEDG-004, ADR-0018).
+                    existing_key.state = KeyLifecycleState::Active;
+                    existing_key.state_since = timestamp;
+                    return Ok(());
+                }
+                KeyLifecycleState::Compromised { .. } => {
+                    return Err(LedgerError::KeyAlreadyCompromised {
+                        issuer_id: ev.issuer_id,
+                        kid: ev.kid,
+                    });
+                }
+                _ => {
+                    return Err(LedgerError::KeyAlreadyExists {
+                        issuer_id: ev.issuer_id,
+                        kid: ev.kid,
+                    });
+                }
+            }
         }
 
         let jwk = JwkEcP256::from_sec1_bytes(&ev.public_key)

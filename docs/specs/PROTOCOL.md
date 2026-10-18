@@ -671,3 +671,77 @@ sequenceDiagram
 | `suspended` (en $T$) | Cualquier $iat$ | `Unverifiable` | `Indeterminate` en `KeyState` (`IssuerSuspended`) | Clave bajo investigación de seguridad (`REQ-KEY-005`). |
 | `compromised` (en $T$) | Cualquier $iat$ | `Invalid` | `Failed` en `KeyState` (`IssuerKeyCompromised`) | Compromiso total irreversible (`INV-05`). |
 
+---
+
+## 10. Protocolo Normativo de Suspensión de Emergencia y Compromiso de Clave de Emisor (`SPEC-PIP-KEYCOMP-001`, `REQ-KEY-005`, `REQ-LEDG-004`, `ADR-0018`)
+
+### 10.1 Alcance e Invariantes del Proceso de Suspensión y Compromiso
+La respuesta ante la sospecha o confirmación de una clave de emisor comprometida exige un diseño de gobernanza desacoplado que equilibre la rapidez operativa contra la prevención de censura maliciosa o denegación de servicio permanente (`ADR-0018`, `REQ-LEDG-004`):
+1. **Acción Rápida de Emergencia sin Timelock (`REQ-LEDG-004`):** El rol operativo de respuesta a incidentes (`EMERGENCY_ROLE`) puede invocar `emergencySuspendKey(issuerId, kid)` de forma inmediata sin esperar ventanas de timelock ni requerir la multisig completa de la TFA.
+2. **Reversibilidad y Caducidad Automática por TTL (`CONTRACTS.md §3.2`):** La suspensión preventiva es reversible y caduca automáticamente a los 14 días (`EMERGENCY_SUSPENSION_DURATION = 14 days`). Si la multisig no confirma el compromiso antes de la caducidad, la clave retorna de forma determinista al estado `active` en el ledger y en los trust bundles subsecuentes.
+3. **Prohibición de Auto-Renovación por el Rol de Emergencia (`ADR-0018`):** El rol de emergencia tiene prohibido renovar o extender una suspensión activa antes de que caduque (`EmergencyRenewalForbidden`). Si el rol operativo fuera capturado por un atacante, la perturbación queda estrictamente acotada a 14 días.
+4. **Declaración Irreversible Exclusiva de Multisig (`REQ-LEDG-004`):** Marcar una clave como `compromised` mediante `markKeyCompromised(issuerId, kid)` es un acto terminal e irreversible reservado de forma exclusiva a la multisig completa de la TFA (`DEFAULT_ADMIN_ROLE`). El rol de emergencia no tiene facultades para comprometer una clave.
+5. **Semántica Fail-Closed en Verificadores Offline (`REQ-KEY-005`, `INV-04`, `INV-05`, `INV-06`):**
+   - **Clave Suspendida (`suspended`):** El verificador offline emite `VerificationStatus::Unverifiable` con evidencia `CheckEvidence::indeterminate(CheckKind::KeyState, ErrorCode::IssuerSuspended)`. Las comprobaciones dependientes de datos no autenticados quedan `Skipped` (`REQ-VER-012`).
+   - **Clave Comprometida (`compromised`):** El verificador offline emite `VerificationStatus::Invalid` con evidencia `CheckEvidence::failed(CheckKind::KeyState, ErrorCode::IssuerKeyCompromised)`. **Todas** las credenciales firmadas con esa clave son inválidas, sin importar si $iat$ precedió a la fecha de compromiso, dado que un atacante en posesión de la clave privada pudo falsificar marcas temporales (`ARCHITECTURE.md §11.6`).
+   - **Suspensión Levantada o Caducada:** La clave retorna a `active` en el trust bundle y las credenciales legítimas vuelven a verificarse como `VerificationStatus::Valid`.
+
+### 10.2 Diagrama de Secuencia E2E: Ciclo de Suspensión, Compromiso y Rehabilitación
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Emergency as Rol de Emergencia (EMERGENCY_ROLE)
+    participant Multisig as Multisig TFA (DEFAULT_ADMIN_ROLE)
+    participant Registry as TrustRegistry (Ledger EVM)
+    participant Indexer as pip-indexer (Bloques Finalizados)
+    participant Trust as pip-trust-service (Quórum k-de-n)
+    participant Verifier as Verificador Offline (Dispositivo)
+
+    Note over Emergency,Registry: Paso 1: Suspensión Preventiva Inmediata (Sin Timelock)
+    Emergency->>Registry: emergencySuspendKey(issuerId, kid)
+    Registry-->>Indexer: emit KeySuspended(issuerId, kid, expiresAt, sender)
+    Indexer->>Indexer: Ingesta bloque, proyecta estado 'suspended'
+    Trust->>Trust: Deriva y cofirma TrustBundle v2 con key state 'suspended'
+    Trust-->>Verifier: Sincroniza TrustBundle v2
+    Verifier->>Verifier: Evalúa credencial previa -> KeyState: Indeterminate (IssuerSuspended)
+    Verifier-->>Verifier: Resultado: Unverifiable (Fail-closed)
+
+    alt Caso A: Compromiso Confirmado por Multisig (Irreversible)
+        Note over Multisig,Registry: Paso 2A: Confirmación de Compromiso (Multisig Completa)
+        Multisig->>Registry: markKeyCompromised(issuerId, kid)
+        Registry-->>Indexer: emit KeyCompromised(issuerId, kid, T_comp)
+        Indexer->>Indexer: Ingesta bloque, proyecta estado terminal 'compromised'
+        Trust->>Trust: Deriva y cofirma TrustBundle v3 con key state 'compromised'
+        Trust-->>Verifier: Sincroniza TrustBundle v3
+        Verifier->>Verifier: Evalúa credencial previa -> KeyState: Failed (IssuerKeyCompromised)
+        Verifier-->>Verifier: Resultado: Invalid (Irreversible para todas las credenciales)
+    else Caso B: Falsa Alarma - Suspensión Levantada Explícitamente
+        Note over Emergency,Registry: Paso 2B: Rehabilitación por Rol Operativo / Multisig
+        Emergency->>Registry: emergencyLiftSuspension(issuerId, kid)
+        Registry-->>Indexer: emit KeyAdded(issuerId, kid, pubKey)
+        Indexer->>Indexer: Ingesta bloque, proyecta estado 'active'
+        Trust->>Trust: Deriva y cofirma TrustBundle v3b con key state 'active'
+        Trust-->>Verifier: Sincroniza TrustBundle v3b
+        Verifier->>Verifier: Evalúa credencial previa -> KeyState: Passed (active) -> Validity: Passed
+        Verifier-->>Verifier: Resultado: Valid (Restauración completa)
+    else Caso C: Caducidad Automática de TTL (14 Días)
+        Note over Registry,Verifier: Paso 2C: Expiración Temporal del TTL sin Acción de Multisig
+        Note over Trust: En T >= expiresAt, el cálculo determinista retorna 'active'
+        Trust->>Trust: Deriva y cofirma TrustBundle v3c con key state 'active' (caducidad cumplida)
+        Trust-->>Verifier: Sincroniza TrustBundle v3c
+        Verifier->>Verifier: Evalúa credencial previa -> KeyState: Passed (active)
+        Verifier-->>Verifier: Resultado: Valid (Restauración por caducidad)
+    end
+```
+
+### 10.3 Reglas de Matriz de Estados para Suspensión y Compromiso
+
+| Estado de Clave en Bundle | Evento Disparador | Efecto en Verificación Offline | Código de Evidencia | Reversibilidad |
+|---|---|---|---|---|
+| `suspended` ($T \le \text{expiresAt}$) | `emergencySuspendKey` / `suspendKey` | `Unverifiable` | `IssuerSuspended` | Sí (por levantamiento o caducidad TTL). |
+| `compromised` ($T_{\text{comp}}$) | `markKeyCompromised` (solo multisig) | `Invalid` | `IssuerKeyCompromised` | **No** (irreversible; invalida toda credencial sin importar $iat$). |
+| `active` (rehabilitada) | `emergencyLiftSuspension` / `liftKeySuspension` | `Valid` | `Passed` en `KeyState` | Sí (retorna a operación nominal). |
+| `active` (por caducidad) | $T \ge \text{expiresAt}$ sin compromiso | `Valid` | `Passed` en `KeyState` | Sí (caducidad automática del TTL de 14 días). |
+
+

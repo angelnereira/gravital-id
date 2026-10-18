@@ -10,7 +10,7 @@
 | Último gate cerrado | **G7** (2026-10-18) · **G6** (2026-10-17) · **G5** (2026-10-16) · **G4** (2026-10-16) · **G19** (2026-10-15) · **G0** (2026-10-11) |
 | Próximo gate | **G8 / Hito M2** — los nueve criterios de aceptación del MVP (§24); **G3** (#59) y **G2** pendientes de CI |
 | Hito siguiente | M2 · Sincronización y anclaje (al cerrar G8) · MP1 · Tap offline (al cerrar G21) [M1 alcanzado] |
-| Última actualización | 2026-10-18 (`F8.T06` completada: rotación de clave de emisor de extremo a extremo probada y verificada mediante `apps/pip-cli/tests/issuer_key_rotation_e2e.rs`, `docs/specs/PROTOCOL.md §9`, `SPEC-PIP-KEYROT-001`, `REQ-KEY-006`, `REQ-KEY-005`, `REQ-TRUST-001`, `REQ-TRUST-004`, `REQ-TRUST-008`, ciclo completo on-chain en TrustRegistry, ingesta por pip-indexer, derivación determinista de TrustBundle v2 por operadores multi-firma k-de-n, verificación multi-fuente con FullVerificationEngine y demostración de que las credenciales emitidas antes del retiro siguen siendo `Valid`, mientras que emisiones posteriores se rechazan fail-closed como `Invalid` con `IssuerKeyRetired`; resuelto #106; siguiente tarea: F8.T07 Compromiso de clave de emisor E2E) |
+| Última actualización | 2026-10-18 (`F8.T07` completada: compromiso de clave de emisor de extremo a extremo probado y verificado mediante `apps/pip-cli/tests/issuer_key_compromise_e2e.rs`, `docs/specs/PROTOCOL.md §10`, `SPEC-PIP-KEYCOMP-001`, `REQ-KEY-005`, `REQ-LEDG-004`, `REQ-LEDG-001`, `REQ-LEDG-002`, `REQ-TRUST-001`, `REQ-TRUST-004`, `REQ-TRUST-008`, `REQ-VER-001..004`, `REQ-VER-012`, `ADR-0018`; ciclo completo de suspensión de emergencia inmediata con TTL de 14 días sin timelock por EMERGENCY_ROLE produciendo Unverifiable con IssuerSuspended, compromiso definitivo por multisig DEFAULT_ADMIN_ROLE invalidando fail-closed todas las credenciales de la clave comprometida independientemente de iat, rehabilitación por falsa alarma a Active y retorno automático a Active tras expirar el TTL; resuelto #107; siguiente tarea: F8.T08 Rotación de firmantes de bundle y de raíz) |
 
 ## Gates
 
@@ -31,7 +31,8 @@
 
 | Tarea | Issue | Responsable | Estado | Siguiente paso |
 |---|---|---|---|---|
-| F8.T07 Compromiso de clave de emisor E2E | — | Antigravity (agente) | Por iniciar | Suspensión de emergencia -> bundle -> Unverifiable; confirmación multisig -> compromised -> Invalid; suspensión levantada -> clave readmitida (`REQ-KEY-005`, `REQ-LEDG-004`) |
+| F8.T08 Rotación de firmantes de bundle y de raíz | — | Antigravity (agente) | Por iniciar | Raíz nueva encadenada; solapamiento sin interrupción de clientes con distintas versiones; simulacro de avance forzado y recuperación por `bundle_epoch` (`REQ-TRUST-006`) |
+| F8.T07 Compromiso de clave de emisor E2E | #107 | Antigravity (agente) | Hecha | Suspensión de emergencia (EMERGENCY_ROLE, TTL 14 días) -> Unverifiable (`IssuerSuspended`); compromiso multisig irreversible (DEFAULT_ADMIN_ROLE) -> fail-closed Invalid para todas las credenciales de la clave (`IssuerKeyCompromised`, $iat$ agnóstico); falsa alarma / rehabilitación -> Active / Valid; expiración de TTL -> retorno automático a Active; prohibición de renovación por emergencia probada (`REQ-KEY-005`, `REQ-LEDG-004`, `ADR-0018`); resuelto #107 |
 | F8.T06 Rotación de clave de emisor E2E | #106 | Antigravity (agente) | Hecha | Ciclo on-chain TrustRegistry (`addIssuerKey`, `retireIssuerKey`), ingesta en pip-indexer, derivación determinista de TrustBundle v2 por operadores k-de-n, verificación multi-fuente (`FullVerificationEngine`) y verificación offline probando que credenciales anteriores al retiro siguen siendo `Valid` (`REQ-KEY-006`), nuevas credenciales con clave activa son `Valid`, y emisiones posteriores al retiro se rechazan como `Invalid` (`IssuerKeyRetired`); resuelto #106 |
 | F8.T05 Migración entre dispositivos con SAS y compromiso previo | #105 | Antigravity (agente) | Hecha | Engagement QR, máquinas de estados sans-I/O `TargetMigrationMachine` y `SourceMigrationMachine`, compromiso SHA-256 pre-revelación contra MitM, derivación HKDF-SHA256 de código SAS (6 dígitos `xxx-xxx`) y claves de sesión, transferencia cifrada de bóveda con `XChaCha20-Poly1305` y encolado de re-vinculaciones sin exportar claves privadas de hardware (`REQ-REC-001`, `ADR-0009`, `SPEC-PIP-MIGRATE-001`); resuelto #105 |
 | F8.T04 Re-vinculación y reemplazo atómico por clase de dispositivo | #104 | Antigravity (agente) | Hecha | `RebindingChallenge`, `RebindingRequest`, transcrito canónico `SPEC-PIP-REBIND-001`, `DeviceSlotManager` con revocación atómica de ranura previa (`mobile`/`card`/`other`) en `TokenStatusList` preservando ranuras activas de otras clases y re-emisión (`REQ-REC-004`, `REQ-ISS-006`, `REQ-DEVSLOT-001..004`, `ADR-0029`); resuelto #104 |
@@ -168,6 +169,37 @@
 | Tamaño binario del SDK | — | — | — | — | — |
 
 ## Última nota de traspaso
+
+### Traspaso — 2026-10-18 (F8.T07: Compromiso de clave de emisor de extremo a extremo — apps/pip-cli, gravital-id-ledger, SPEC-PIP-KEYCOMP-001, REQ-KEY-005, REQ-LEDG-004, ADR-0018, ciclo de suspensión de emergencia por EMERGENCY_ROLE, compromiso multisig fail-closed por DEFAULT_ADMIN_ROLE, rehabilitación por falsa alarma y retorno automático tras TTL) — Antigravity (agente)
+- Tarea: F8.T07 — #107 — rama `main`
+- Estado: **hecha**
+- Hecho en esta sesión:
+  - **`docs/specs/PROTOCOL.md §10` (`SPEC-PIP-KEYCOMP-001`, `REQ-KEY-005`, `REQ-LEDG-004`, `ADR-0018`):** Especificación normativa del protocolo de compromiso de clave de emisor en dos fases:
+    - Fase 1: Suspensión de emergencia preventiva inmediata por `EMERGENCY_ROLE` sin timelock, con TTL estricto de 14 días (`EMERGENCY_SUSPENSION_DURATION`) y prohibición de renovación/extensión por emergencia (`EmergencyRenewalForbidden`).
+    - Fase 2: Confirmación de compromiso irreversible por multisig de gobierno (`DEFAULT_ADMIN_ROLE`).
+    - Semántica del verificador en 4 estados (`INV-04`, `REQ-VER-012`):
+      - Estado `suspended`: produce `Unverifiable` con evidencia `ErrorCode::IssuerSuspended` y downstream checks omitidos (`Skipped`).
+      - Estado `compromised`: produce `Invalid` con evidencia `ErrorCode::IssuerKeyCompromised` invalidando **todas** las credenciales emitidas con dicha clave, independientemente de $iat$ (`REQ-KEY-005`, `INV-05`).
+      - Levantamiento de suspensión (`emergencyLiftSuspension` / `liftKeySuspension`): restaura el estado a `Active` en `LedgerState` y devuelve `Valid` en la verificación.
+      - Caducidad de suspensión ($T \ge expires\_at$): retorno automático determinista a `Active` sin requerir transacciones adicionales.
+  - **`crates/gravital-id-ledger/src/state.rs`:**
+    - Ajustado `handle_key_added` para rehabilitar claves en estado `Suspended` al recibir `KeyAdded` (evento emitido por `TrustRegistry.sol` al invocar `liftKeySuspension` o `emergencyLiftSuspension`), actualizando su ciclo de vida a `Active` y $state\_since = timestamp$ (`REQ-LEDG-004`, `ADR-0018`).
+  - **`apps/pip-cli/tests/issuer_key_compromise_e2e.rs`:** Suite integral de pruebas E2E verificando:
+    1. `test_e2e_emergency_suspension_and_multisig_compromise_lifecycle`:
+       - Etapa 1: Registro inicial en ledger (bloque 10), derivación determinista de Bundle v1 por 3 operadores ($k=2$) y verificación exitosa de $C_1$ como `Valid`.
+       - Etapa 2: Suspensión de emergencia en bloque 20 por `EMERGENCY_ROLE` $\to$ Bundle v2 con clave en estado `suspended` $\to$ Verificación offline produce `Unverifiable` con `IssuerSuspended` y comprobaciones posteriores `Skipped` (`REQ-VER-012`).
+       - Etapa 3: Confirmación de compromiso en bloque 30 por multisig `DEFAULT_ADMIN_ROLE` $\to$ Bundle v3 con clave en estado `compromised` $\to$ Verificación de credencial preexistente $C_1$ ($iat < T_{\text{comp}}$) y nueva $C_{\text{post}}$ evaluadas tras el compromiso $\to$ Resultado `Invalid` con evidencia `IssuerKeyCompromised` (`REQ-KEY-005`, fail-closed $iat$ agnóstico).
+    2. `test_e2e_suspension_lifted_returns_to_valid`: Demostración de falsa alarma donde `emergencyLiftSuspension` restaura la clave a `Active` en bloque 25 $\to$ Verificación offline de credenciales retorna a `Valid`.
+    3. `test_e2e_automatic_suspension_expiration_without_multisig`: Verificación de que tras expirar el TTL de 14 días sin acción de la multisig ($T \ge expires\_at$), la clave retorna deterministamente a `Active` y un nuevo bundle la proyecta como `Active`.
+    4. `test_emergency_renewal_forbidden_in_ledger_state`: Verificación estricta de rechazo fail-closed (`LedgerError::EmergencyRenewalForbidden`) ante intentos de un operador de emergencia de extender una suspensión activa (`REQ-LEDG-004`).
+    5. `test_issuer_compromise_zero_pii_audit`: Auditoría forense automatizada verificando ausencia absoluta de PII o identificadores de titulares en eventos, transacciones, estado indexado o trust bundles (`INV-02`, `REQ-LEDG-001`).
+  - **Trazabilidad:** REQ-KEY-005, REQ-LEDG-004, REQ-LEDG-001, REQ-LEDG-002, REQ-TRUST-001, REQ-TRUST-004, REQ-TRUST-008, REQ-VER-001..004, REQ-VER-012, INV-01, INV-02, INV-04, INV-05, INV-06, INV-11, INV-16 verificados y actualizados en `docs/TRACEABILITY.md` (118 requisitos trazados).
+- Pendiente (siguiente paso concreto):
+  - Iniciar `F8.T08`: Rotación de firmantes de bundle y de raíz (`REQ-TRUST-006`): Raíz nueva encadenada; solapamiento sin interrupción de clientes con distintas versiones; simulacro de avance forzado y recuperación por `bundle_epoch`.
+- Bugs/issues abiertos durante la sesión: ninguno.
+- Decisiones tomadas (con enlace a ADR/issue): Implementado y probado flujo normativo de compromiso y suspensión de emergencia de extremo a extremo según `SPEC-PIP-KEYCOMP-001`, `REQ-KEY-005`, `REQ-LEDG-004` y `ADR-0018` (#107).
+- Riesgos o dudas: ninguna.
+- Comprobaciones locales: fmt ✅ clippy ✅ tests (100% verde en todo el workspace) ✅ layers (21 crates válidos) ✅ trace (118 REQs trazados) ✅ check-error-codes (61) ✅ check-contracts-privacy (0 PII) ✅ check-deploy-hygiene (0 secretos) ✅
 
 ### Traspaso — 2026-10-18 (F8.T06: Rotación de clave de emisor de extremo a extremo — apps/pip-cli, SPEC-PIP-KEYROT-001, REQ-KEY-006, REQ-KEY-005, REQ-TRUST-001, REQ-TRUST-004, REQ-TRUST-008, ciclo on-chain TrustRegistry, pip-indexer, pip-trust-service, FullVerificationEngine y verificación offline con validez de credenciales pre-retiro) — Antigravity (agente)
 - Tarea: F8.T06 — #106 — rama `main`
