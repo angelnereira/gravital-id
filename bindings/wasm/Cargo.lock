@@ -293,18 +293,24 @@ dependencies = [
 name = "gravital-id-holder"
 version = "0.1.0"
 dependencies = [
+ "gravital-id-codec",
  "gravital-id-credential",
+ "gravital-id-crypto",
  "gravital-id-keys",
  "gravital-id-storage",
+ "gravital-id-types",
 ]
 
 [[package]]
 name = "gravital-id-issuer"
 version = "0.1.0"
 dependencies = [
+ "gravital-id-codec",
  "gravital-id-credential",
+ "gravital-id-crypto",
  "gravital-id-keys",
  "gravital-id-status",
+ "gravital-id-types",
 ]
 
 [[package]]
@@ -319,6 +325,8 @@ dependencies = [
 name = "gravital-id-ledger"
 version = "0.1.0"
 dependencies = [
+ "gravital-id-codec",
+ "gravital-id-crypto",
  "gravital-id-trust",
  "gravital-id-types",
 ]
@@ -327,9 +335,14 @@ dependencies = [
 name = "gravital-id-protocol"
 version = "0.1.0"
 dependencies = [
+ "gravital-id-codec",
  "gravital-id-credential",
+ "gravital-id-crypto",
  "gravital-id-holder",
+ "gravital-id-keys",
  "gravital-id-recovery",
+ "gravital-id-trust",
+ "gravital-id-types",
  "gravital-id-verifier",
 ]
 
@@ -337,9 +350,14 @@ dependencies = [
 name = "gravital-id-recovery"
 version = "0.1.0"
 dependencies = [
+ "gravital-id-codec",
+ "gravital-id-credential",
  "gravital-id-crypto",
  "gravital-id-holder",
  "gravital-id-keys",
+ "gravital-id-storage",
+ "gravital-id-types",
+ "zeroize",
 ]
 
 [[package]]
@@ -378,16 +396,23 @@ version = "0.1.0"
 dependencies = [
  "gravital-id-crypto",
  "gravital-id-types",
+ "zeroize",
 ]
 
 [[package]]
 name = "gravital-id-sync"
 version = "0.1.0"
 dependencies = [
+ "gravital-id-codec",
+ "gravital-id-crypto",
  "gravital-id-protocol",
  "gravital-id-status",
  "gravital-id-storage",
  "gravital-id-trust",
+ "gravital-id-types",
+ "serde",
+ "serde_json",
+ "thiserror",
 ]
 
 [[package]]
@@ -395,6 +420,7 @@ name = "gravital-id-trust"
 version = "0.1.0"
 dependencies = [
  "gravital-id-codec",
+ "gravital-id-credential",
  "gravital-id-crypto",
  "gravital-id-status",
  "gravital-id-types",
@@ -408,9 +434,13 @@ version = "0.1.0"
 name = "gravital-id-verifier"
 version = "0.1.0"
 dependencies = [
+ "gravital-id-codec",
  "gravital-id-credential",
+ "gravital-id-crypto",
  "gravital-id-status",
  "gravital-id-trust",
+ "gravital-id-types",
+ "zeroize",
 ]
 
 [[package]]
@@ -753,6 +783,26 @@ dependencies = [
  "proc-macro2",
  "quote",
  "unicode-ident",
+]
+
+[[package]]
+name = "thiserror"
+version = "2.0.21"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "09e52cb86a36cede5cb101bf8908837b3e4c6e5e59fe7fd85c23fb56200d189e"
+dependencies = [
+ "thiserror-impl",
+]
+
+[[package]]
+name = "thiserror-impl"
+version = "2.0.21"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fe5197923287db20a58125f0bc85c062f7f2c892de97b18c356f9efb14b28524"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn 3.0.9",
 ]
 
 [[package]]

@@ -13,6 +13,14 @@ description = "Fachada y API pública del SDK de Gravital ID."
 [lints]
 workspace = true
 
+[features]
+default = ["verifier", "holder", "issuer"]
+verifier = []
+holder = []
+issuer = []
+sync = []
+full-verification = ["verifier"]
+
 [dependencies]
 gravital-id-types = { workspace = true }
 gravital-id-codec = { workspace = true }

@@ -10,17 +10,25 @@ use gravital_id_sdk::{ErrorCode, GidError};
 /// Versión semántica del SDK en uso.
 #[wasm_bindgen]
 pub fn sdk_version() -> String {
-    gravital_id_sdk::VERSION.to_string()
+    match std::panic::catch_unwind(|| gravital_id_sdk::VERSION.to_string()) {
+        Ok(v) => v,
+        Err(_) => "GID-E9999".to_string(),
+    }
 }
 
 /// Construye el error canónico para `message` y devuelve su identificador
 /// (`GID-Exxxx`). Andamiaje de F1: valida el catálogo de errores a través de
-/// la frontera FFI.
+/// la frontera FFI. Captura pánicos y los mapea a `GID-E9999` (INV-10).
 #[wasm_bindgen]
 pub fn error_identifier(message: &str) -> String {
-    GidError::new(ErrorCode::MalformedMessage, message)
-        .code_str()
-        .to_string()
+    match std::panic::catch_unwind(|| {
+        GidError::new(ErrorCode::MalformedMessage, message)
+            .code_str()
+            .to_string()
+    }) {
+        Ok(v) => v,
+        Err(_) => "GID-E9999".to_string(),
+    }
 }
 
 #[cfg(test)]
