@@ -24,6 +24,7 @@ members = [
     "apps/pip-cli",
     "services/pip-service-common",
     "services/pip-indexer",
+    "services/pip-trust-service",
     "xtask",
 ]
 
@@ -89,6 +90,7 @@ gravital-id-ledger-evm = { path = "crates/gravital-id-ledger-evm", version = "0.
 gravital-id-storage-sqlite = { path = "crates/gravital-id-storage-sqlite", version = "0.1.0" }
 pip-service-common = { path = "services/pip-service-common", version = "0.1.0" }
 pip-indexer = { path = "services/pip-indexer", version = "0.1.0" }
+pip-trust-service = { path = "services/pip-trust-service", version = "0.1.0" }
 anyhow = "1.0"
 # Ya usado por gravital-id-crypto para higiene de secretos (REQ-SEC-003); se comparte la
 # misma configuración para evitar divergencias entre crates.

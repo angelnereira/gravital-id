@@ -986,6 +986,24 @@ dependencies = [
 ]
 
 [[package]]
+name = "pip-trust-service"
+version = "0.1.0"
+dependencies = [
+ "gravital-id-codec",
+ "gravital-id-crypto",
+ "gravital-id-ledger",
+ "gravital-id-testkit",
+ "gravital-id-trust",
+ "gravital-id-types",
+ "pip-indexer",
+ "pip-service-common",
+ "serde",
+ "serde_json",
+ "thiserror",
+ "tracing",
+]
+
+[[package]]
 name = "pkg-config"
 version = "0.3.34"
 source = "registry+https://github.com/rust-lang/crates.io-index"

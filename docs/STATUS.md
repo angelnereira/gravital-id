@@ -10,7 +10,7 @@
 | Último gate cerrado | **G6** (2026-10-17) · **G5** (2026-10-16) · **G4** (2026-10-16) · **G19** (2026-10-15) · **G0** (2026-10-11) |
 | Próximo gate | **G7** — plano de servicio completo en testnet; **G3** (#59) y **G2** pendientes de CI |
 | Hito siguiente | M2 · Sincronización y anclaje (al cerrar G7) · MP1 · Tap offline (al cerrar G21) [M1 alcanzado] |
-| Última actualización | 2026-10-17 (F7.T03 completada — pip-indexer implementado con consumo determinista de bloques finalizados, detección de divergencia multi-RPC, almacenamiento relacional idempotente y métricas de lag al 90,19% de cobertura; #96 resuelto) |
+| Última actualización | 2026-10-17 (F7.T04 completada — pip-trust-service implementado con derivación determinista de bundles, cofirma multi-operador k-de-n, agregador no confiable y publicación en S3/CDN al 93,72% de cobertura; #97 resuelto) |
 
 ## Gates
 
@@ -30,7 +30,8 @@
 
 | Tarea | Issue | Responsable | Estado | Siguiente paso |
 |---|---|---|---|---|
-| F7.T04 `pip-trust-service` | — | Antigravity (agente) | Por iniciar | Derivación determinista de trust bundles, cofirma multi-operador k-de-n y publicación en S3/CDN (REQ-TRUST-003, REQ-TRUST-005, REQ-TRUST-008) |
+| F7.T05 Listas de estado del emisor | #98 | Antigravity (agente) | Por iniciar | Asignación aleatoria de índices, tamaño mínimo, actualización, firma, publicación direccionada por contenido, manifiesto de estado firmado y anclaje periódico en StatusAnchor (REQ-ISS-003, REQ-STAT-002, REQ-STAT-005, REQ-STAT-006, REQ-STAT-008) |
+| F7.T04 `pip-trust-service` | #97 | Antigravity (agente) | Hecha | Derivación determinista de trust bundles, cofirma multi-operador k-de-n y publicación en S3/CDN (93,72% cobertura); resuelto #97 |
 | F7.T03 `pip-indexer` | #96 | Antigravity (agente) | Hecha | Ingesta de bloques finalizados, PostgreSQL, idempotencia, reprocesamiento, detección divergencia RPC y métricas de lag (90,19% cobertura); resuelto #96 |
 | F7.T02 `pip-service-common` | #95 | Antigravity (agente) | Hecha | Crate L5 pip-service-common con configuración tipada, OpenTelemetry, /healthz, /readyz y redacción no-PII (94,86% cobertura); resuelto #95 |
 | F7.T01 ADR-0013 e IaC base | #94 | Antigravity (agente) | Hecha | ADR-0013 Aceptado, Dockerfile.service multi-stage, docker-compose local, módulos OpenTofu/Terraform dev/testnet, check-deploy-hygiene (REQ-REL-001); resuelto #94 |
@@ -151,6 +152,24 @@
 | Tamaño binario del SDK | — | — | — | — | — |
 
 ## Última nota de traspaso
+
+### Traspaso — 2026-10-17 (F7.T04: pip-trust-service — Derivación determinista de trust bundles, cofirma multi-operador k-de-n, agregador no confiable y publicación en S3/CDN) — Antigravity (agente)
+- Tarea: F7.T04 — #97 — rama `main`
+- Estado: **hecha**
+- Hecho en esta sesión:
+  - **F7.T04 (`services/pip-trust-service`):** Microservicio en capa L5 para la orquestación y derivación periódica del Trust Bundle canónico a partir de eventos y estados proyectados por el indexador (`REQ-TRUST-001`, `REQ-TRUST-003`, `REQ-TRUST-005`, `REQ-TRUST-008`, `REQ-OBS-001`, `REQ-PRIV-003`, `INV-01`, `INV-02`, `INV-05`, `INV-06`, `INV-07`, `INV-11`, `INV-16`).
+  - **Firmantes y gestión de claves (`signer.rs`):** Abstracción `OperatorSigner` con `LocalDevSigner` (utilizando `SecretKeyBytes` con `Zeroize` y `gravital_id_crypto::sign::sign_es256_digest` sin dependencias externas inseguras) y `MockKmsSigner` para entornos cloud con KMS (`REQ-SEC-003`).
+  - **Nodo operador institucional (`operator.rs`):** `TrustOperatorNode` que computa deterministamente el trust bundle desde `gravital-id-ledger::derive_trust_bundle`, firma únicamente su payload digest SHA-256 (`OperatorSignatureResponse`) y asla el acceso a claves privadas.
+  - **Agregador no confiable y aislamiento de divergencia (`aggregator.rs`):** `UntrustedBundleAggregator` que valida criptográficamente cada firma contra las claves autorizadas del TrustRoot, descarta firmas duplicadas o espurias, detecta divergencias entre operadores aislando nodos desincronizados o maliciosos, y ensambla el documento JWS JSON final serializado (`bundles/v{epoch}/{version}.json` y `bundles/current.json`).
+  - **Publicación atómica (`publisher.rs`):** Implementaciones `InMemoryBundlePublisher` y `FileSystemBundlePublisher` (compatible con almacenamiento S3 / CloudFront) garantizando atomicidad mediante archivos temporales y renombramiento atómico.
+  - **Motor orquestador y ciclo de vida (`engine.rs`, `health.rs`, `main.rs`):** Bucle continuo con tolerancia a particiones de red o fallos individuales de operadores sin violar el umbral $k$-de-$n$, comprobaciones de liveness/readiness en `/healthz` reportando degradación ante discrepancias detectadas, y apagado limpio con `ShutdownCoordinator`.
+  - **Pruebas y cobertura:** 42 pruebas unitarias y de integración pasando al 100% con un **93,72% de líneas cubiertas en la biblioteca** (`config_test`, `signer_test`, `publisher_test`, `aggregator_test`, `operator_test`, `health_test`, `engine_test`).
+- Pendiente (siguiente paso concreto):
+  - Iniciar `F7.T05`: Listas de estado del emisor (asignación aleatoria de índices, tamaño mínimo, actualización, firma, publicación direccionada por contenido, manifiesto de estado firmado y anclaje periódico en `StatusAnchor`, `REQ-ISS-003`, `REQ-STAT-002`, `REQ-STAT-005`, `REQ-STAT-006`, `REQ-STAT-008`).
+- Bugs/issues abiertos durante la sesión: ninguno.
+- Decisiones tomadas (con enlace a ADR/issue): Implementado servicio de confianza en L5 conforme a `ADR-0013`, `REQ-TRUST-003`, `REQ-TRUST-005`, `REQ-TRUST-008` (#97).
+- Riesgos o dudas: ninguna.
+- Comprobaciones locales: fmt ✅ clippy ✅ tests (100% verde en todo el workspace) ✅ layers ✅ trace ✅ check-error-codes ✅ check-contracts-privacy ✅ check-deploy-hygiene ✅ deny ✅ llvm-cov (93,72% trust-service) ✅
 
 ### Traspaso — 2026-10-17 (F7.T03: pip-indexer — Ingesta continua de bloques finalizados, detección de divergencia multi-RPC, almacenamiento relacional idempotente y métricas de lag) — Antigravity (agente)
 - Tarea: F7.T03 — #96 — rama `main`

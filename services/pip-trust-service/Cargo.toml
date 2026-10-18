@@ -1,0 +1,30 @@
+[package]
+name = "pip-trust-service"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+authors.workspace = true
+repository.workspace = true
+homepage.workspace = true
+readme = "README.md"
+description = "Servicio de derivación determinista de trust bundles, cofirma multi-operador k-de-n y publicación de confianza para Gravital ID."
+
+[lints]
+workspace = true
+
+[dependencies]
+pip-service-common = { path = "../pip-service-common", version = "0.1.0" }
+pip-indexer = { path = "../pip-indexer", version = "0.1.0" }
+gravital-id-ledger = { workspace = true }
+gravital-id-trust = { workspace = true }
+gravital-id-crypto = { workspace = true }
+gravital-id-types = { workspace = true }
+gravital-id-codec = { workspace = true }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+thiserror = "2.0"
+tracing = "0.1"
+
+[dev-dependencies]
+gravital-id-testkit = { path = "../../crates/gravital-id-testkit", version = "0.1.0" }
