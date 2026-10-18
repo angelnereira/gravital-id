@@ -10,7 +10,7 @@
 | Último gate cerrado | **G7** (2026-10-18) · **G6** (2026-10-17) · **G5** (2026-10-16) · **G4** (2026-10-16) · **G19** (2026-10-15) · **G0** (2026-10-11) |
 | Próximo gate | **G8 / Hito M2** — los nueve criterios de aceptación del MVP (§24); **G3** (#59) y **G2** pendientes de CI |
 | Hito siguiente | M2 · Sincronización y anclaje (al cerrar G8) · MP1 · Tap offline (al cerrar G21) [M1 alcanzado] |
-| Última actualización | 2026-10-18 (`F8.T02` completada: división de secreto $k$-de-$n$ de Shamir sobre $GF(2^8)$ con polinomio Rijndael `0x11B` en `gravital-id-recovery` L3 `no_std`, contenedor binario canónico `GIDS` según `SPEC-PIP-SHAMIR-001`, representación Crockford Base32, validación fail-closed de integridad con SHA-256 de 4 bytes e inmunidad a fragmentos corruptos o umbrales insuficientes; siguiente tarea: F8.T03 Clave de recuperación) |
+| Última actualización | 2026-10-18 (`F8.T03` completada: clave de recuperación del titular con propósito exclusivo `KeyPurpose::HolderRecovery` en `gravital-id-recovery` L3 `no_std`, derivación determinista no correlacionable por emisor según `REQ-REC-007` y `P-09`, extensión normativa en `PROTOCOL.md §2.2` con huella RFC 7638 en URI RFC 9278 `cnf.rec` en SD-JWT VC, suite de 8 pruebas de integración y auditoría forense cero PII; siguiente tarea: F8.T04 Re-vinculación y reemplazo atómico por clase de dispositivo) |
 
 ## Gates
 
@@ -31,7 +31,8 @@
 
 | Tarea | Issue | Responsable | Estado | Siguiente paso |
 |---|---|---|---|---|
-| F8.T03 Clave de recuperación | — | Antigravity (agente) | En curso | `KeyPurpose::HolderRecovery`, derivación por emisor, registro de huella en emisión (`PROTOCOL.md`) y prueba de no correlación (`REQ-REC-004`, `REQ-REC-007`) |
+| F8.T04 Re-vinculación y reemplazo atómico por clase de dispositivo | — | Antigravity (agente) | En curso | Solicitud firmada con clave de recuperación, revocación atómica de ranura de dispositivo (`mobile`/`card`/`other`) y re-emisión (`REQ-REC-004`, `REQ-ISS-006`, `REQ-DEVSLOT-001..004`, `ADR-0029`) |
+| F8.T03 Clave de recuperación | #103 | Antigravity (agente) | Hecha | `KeyPurpose::HolderRecovery`, `HolderRecoveryKey`, derivación no correlacionable por emisor, extensión de emisión `cnf.rec` (`PROTOCOL.md §2.2`), 8 pruebas de integración y auditoría cero PII (`REQ-REC-004`, `REQ-REC-007`); resuelto #103 |
 | F8.T02 Shamir k-de-n | #102 | Antigravity (agente) | Hecha | Aritmética $GF(2^8)$, interpolación de Lagrange de Shamir $k$-de-$n$, contenedor `GIDS` canónico, Crockford Base32, 44 pruebas verdes y auditoría cero PII (`REQ-REC-003`, `SPEC-PIP-SHAMIR-001`); resuelto #102 |
 | F8.T01 Código de recuperación y respaldo | #101 | Antigravity (agente) | Hecha | Generación $\ge 128$ bits, codificación legible BIP-39/Crockford con checksum, derivación HKDF por emisor, formato de respaldo GIDB versionado y cifrado con XChaCha20-Poly1305 (`REQ-REC-002`, `REQ-REC-004`, `REQ-REC-007`, `SPEC-PIP-BACKUP-001`); resuelto #101 |
 | F7.T12 Caos (inyección de fallos) | #105 | Antigravity (agente) | Hecha | Subcomando `pip-cli demo-chaos` y suite `apps/pip-cli/tests/chaos_fault_injection.rs` con 6 escenarios de inyección: relay malicioso (rollback, retención, alteración), RPC caído, divergencia inter-ledger, CDN caída y degradación a `ValidWithStaleStatus`/`Unverifiable`, y auditoría cero PII (`REQ-REL-004`, `REQ-SYNC-004`, `REQ-SYNC-007`, `REQ-TRUST-004`, `REQ-OBS-002`, `INV-01`, `INV-02`, `INV-04`, `INV-05`, `INV-10`, `INV-11`, `INV-16`); resuelto #105 y Gate G7 cerrado |
@@ -164,6 +165,43 @@
 | Tamaño binario del SDK | — | — | — | — | — |
 
 ## Última nota de traspaso
+
+### Traspaso — 2026-10-18 (F8.T03: Clave de recuperación — gravital-id-recovery L3 no_std, HolderRecoveryKey, propósito exclusivo KeyPurpose::HolderRecovery, derivación determinista no correlacionable por emisor, extensión normativa cnf.rec en PROTOCOL.md §2.2 y auditoría forense cero PII) — Antigravity (agente)
+- Tarea: F8.T03 — #103 — rama `main`
+- Estado: **hecha**
+- Hecho en esta sesión:
+  - **`docs/specs/PROTOCOL.md §2.2`:** Especificación normativa de la extensión de emisión para registro de la clave de recuperación del titular (`cnf.rec`):
+    - Derivación determinista por emisor: $\text{RecoveryKey}_{\text{Issuer}} = \text{HKDF-Expand}(\text{HKDF-Extract}(\text{IssuerId}, S_{\text{recovery}}), \text{"pip-issuer-recovery-key-v1"}, 32)$ con par público P-256.
+    - Propósito exclusivo `KeyPurpose::HolderRecovery`: restringido a la autorización de re-vinculación ante el emisor; prohibido para firmas de presentación KB-JWT o acuerdo HPKE (`REQ-REC-004`, `REQ-KEY-001`).
+    - Huella canónica RFC 7638 SHA-256 en formato URI RFC 9278 (`urn:ietf:params:oauth:jwk-thumbprint:sha-256:<b64u>`).
+    - Inclusión en el claim de nivel superior `cnf` (`cnf.rec`) de la credencial SD-JWT VC emitida.
+    - Demostración de no correlación matemática entre emisores ($I_1 \ne I_2 \implies \text{rec\_thumbprint}(I_1) \ne \text{rec\_thumbprint}(I_2)$, `REQ-REC-007`, `P-09`, `INV-02`).
+  - **`crates/gravital-id-recovery` (Capa L3 `no_std` + `alloc`, `#![forbid(unsafe_code)]`):**
+    - `HolderRecoveryKey` (`key.rs`): Encapsulación tipada de la clave de recuperación del titular por emisor, métodos de derivación determinista, cálculo de thumbprints SHA-256, base64url y URI RFC 9278, protección con `ZeroizeOnDrop` y `Debug` redactado (`[REDACTED]`).
+    - `kdf.rs`: Funciones de conveniencia `derive_issuer_recovery_thumbprint` y `derive_issuer_recovery_thumbprint_uri`.
+  - **`crates/gravital-id-credential`:**
+    - `ConfirmationClaim` (`vc.rs`): Soporte para campo opcional `rec: Option<String>`, método constructor `with_recovery_thumbprint`, serialización y deserialización JSON sin pérdida.
+    - `SdJwtVcBuilder`: Método helper `cnf_jwk_with_recovery`.
+  - **`crates/gravital-id-issuer`:**
+    - `CredentialRequest` (`request.rs`): Soporte para `recovery_thumbprint: Option<String>` con setter y getter.
+    - `Issuer::build` e `Issuer::issue`: Inyección automática de `cnf.rec` en el builder de credenciales y propagación al objeto `IssuedCredential`.
+  - **Pruebas y trazabilidad (`crates/gravital-id-recovery/tests/recovery_key_tests.rs`):**
+    - 8 pruebas de integración exhaustivas:
+      - `test_recovery_key_deterministic_derivation`: Verificación de identidad estricta de clave privada, JWK y thumbprints a partir de la misma semilla y emisor.
+      - `test_recovery_key_isolation_across_issuers`: Prueba combinatoria exhaustiva sobre 10 emisores distintos comprobando ausencia total de colisión de claves privadas, claves públicas, digests SHA-256 o huellas URI (`REQ-REC-007`, `P-09`).
+      - `test_recovery_key_different_seeds_different_keys`: Distintas semillas generan claves disjuntas para el mismo emisor.
+      - `test_key_purpose_holder_recovery_type_safety`: Aislamiento en el sistema de tipos bajo `KeyPurpose::HolderRecovery`, integración con `SoftwareKeyStore` y firma/verificación matemática de desafío de re-vinculación (`REQ-REC-004`).
+      - `test_credential_issuance_with_recovery_thumbprint_extension`: Ciclo completo de emisión con `gravital-id-issuer`, verificación de presencia de `cnf.jwk` y `cnf.rec` en el payload SD-JWT VC y verificación offline con `SdJwtVcClaims`.
+      - `test_zero_pii_in_recovery_extension`: Auditoría forense verificando ausencia absoluta de PII o secretos en la huella de recuperación (`INV-02`).
+      - `test_recovery_key_empty_issuer_fails_closed`: Emisor vacío falla cerrado con error tipado (`INV-05`).
+      - `test_recovery_key_debug_redaction`: Redacción estricta en `Debug` (`[REDACTED]`) sin filtración de material privado (`REQ-SEC-003`).
+  - **Verificaciones del workspace:** `fmt` ✅, `clippy` (-D warnings) ✅, `test --workspace` ✅ (100% pasando, 52 pruebas en `gravital-id-recovery`), `check-layers` ✅, `check-deploy-hygiene` ✅, `trace` ✅ (112 REQs referenciados).
+- Pendiente (siguiente paso concreto):
+  - Iniciar `F8.T04`: Re-vinculación y reemplazo atómico por clase de dispositivo (`ADR-0029`, `REQ-REC-004`, `REQ-ISS-006`, `REQ-DEVSLOT-001`, `REQ-DEVSLOT-003`, `REQ-DEVSLOT-004`).
+- Bugs/issues abiertos durante la sesión: ninguno.
+- Decisiones tomadas (con enlace a ADR/issue): Implementada extensión de emisión para registro de clave de recuperación según `PROTOCOL.md §2.2`, `REQ-REC-004` y `REQ-REC-007` (#103).
+- Riesgos o dudas: ninguna.
+- Comprobaciones locales: fmt ✅ clippy (-D warnings) ✅ tests (100% verde en todo el workspace) ✅ layers (21 crates) ✅ trace (112 REQs) ✅ check-deploy-hygiene ✅
 
 ### Traspaso — 2026-10-18 (F8.T02: Shamir k-de-n — gravital-id-recovery L3 no_std, aritmética GF(2^8) canónica, contenedor canónico GIDS SPEC-PIP-SHAMIR-001, Crockford Base32, validación de integridad fail-closed y auditoría forense cero PII) — Antigravity (agente)
 - Tarea: F8.T02 — #102 — rama `main`

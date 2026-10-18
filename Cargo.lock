@@ -569,11 +569,13 @@ dependencies = [
  "gravital-id-credential",
  "gravital-id-crypto",
  "gravital-id-holder",
+ "gravital-id-issuer",
  "gravital-id-keys",
  "gravital-id-storage",
  "gravital-id-storage-sqlite",
  "gravital-id-testkit",
  "gravital-id-types",
+ "gravital-id-verifier",
  "zeroize",
 ]
 

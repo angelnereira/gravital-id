@@ -52,6 +52,7 @@ pub struct IssuedCredential {
     profile: ProfileId,
     vct: Vct,
     holder_key: Option<JwkEcP256>,
+    recovery_thumbprint: Option<String>,
     status_idx: Option<u64>,
     issued_at: UnixTime,
     expires_at: Option<UnixTime>,
@@ -86,6 +87,12 @@ impl IssuedCredential {
     #[must_use]
     pub fn holder_key(&self) -> Option<&JwkEcP256> {
         self.holder_key.as_ref()
+    }
+
+    /// Huella de recuperación del titular registrada en `cnf.rec` (REQ-REC-004, REQ-REC-007).
+    #[must_use]
+    pub fn recovery_thumbprint(&self) -> Option<&str> {
+        self.recovery_thumbprint.as_deref()
     }
 
     /// Índice de estado asignado, si la credencial lleva referencia de estado.
@@ -167,7 +174,11 @@ impl Issuer {
             builder = builder.exp(expires_at);
         }
         if let Some(holder_key) = holder_key {
-            builder = builder.cnf_jwk(holder_key);
+            builder = if let Some(rec) = request.recovery_thumbprint_ref() {
+                builder.cnf_jwk_with_recovery(holder_key, rec)
+            } else {
+                builder.cnf_jwk(holder_key)
+            };
         }
         if let Some(status) = request.status_ref() {
             builder = builder.status_list(status_idx.unwrap_or(status.idx), status.uri.clone())?;
@@ -213,6 +224,7 @@ impl Issuer {
     ) -> Result<IssuedCredential, GidError> {
         let status_idx = request.status_ref().map(|status| status.idx);
         let holder_key = request.holder_key_ref().cloned();
+        let recovery_thumbprint = request.recovery_thumbprint_ref().map(ToString::to_string);
         let builder = Self::build(request, holder_key.clone(), status_idx)?;
         let issued = builder.issue_signed(key_store, signing_key, kid, rng)?;
 
@@ -221,6 +233,7 @@ impl Issuer {
             profile: request.profile().clone(),
             vct: request.vct()?,
             holder_key,
+            recovery_thumbprint,
             status_idx,
             issued_at: request.issued_at(),
             expires_at: request.expires_at_ref(),

@@ -22,6 +22,7 @@ Implementa los protocolos de respaldo cifrado, código de recuperación de 128 b
 - `ShamirShare`: Fragmento autosuficiente con cabecera canónica `GIDS`, umbral $k$, total $n$, índice $x \in [1, 255]$, identificador de secreto `secret_id` de 4 bytes, valor evaluado protegido con `ZeroizeOnDrop` y suma de verificación de integridad SHA-256.
 - `derive_backup_keys`: Jerarquía HKDF-SHA256 que extrae la clave de cifrado AEAD de 256 bits y el secreto maestro de recuperación a partir del código y una sal criptográfica de 128 bits.
 - `derive_issuer_recovery_secret` / `derive_issuer_recovery_jwk`: Derivación por emisor de claves privadas y públicas JWK `P-256` para re-vinculación no correlacionable.
+- `HolderRecoveryKey`: Encapsulación tipada de la clave de recuperación por emisor con propósito exclusivo `KeyPurpose::HolderRecovery`, cálculo de huellas RFC 7638 en base64url y URI RFC 9278 (`urn:ietf:params:oauth:jwk-thumbprint:sha-256:<b64u>`), y redacción estricta en `Debug`.
 - `BackupPayload`: Estructura canónica con versión de esquema, secreto de recuperación, credenciales (`BackupCredential`), ranuras de dispositivo (`BackupDeviceSlot`) y roles de tenant (`BackupTenantRole`), serializada en JSON canónico determinista con límites estrictos de DoS.
 - `EncryptedBackupPackage`: Empaquetador binario que aplica compresión DEFLATE previa, vinculación criptográfica AAD y cifrado AEAD autenticado (`XChaCha20-Poly1305`).
 - `RecoveryManager`: Fachada de alto nivel para exportar y restaurar la bóveda del titular.

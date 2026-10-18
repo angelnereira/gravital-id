@@ -7,6 +7,7 @@
 //! - `ADR-0009`: Jerarquía de derivación determinista $\text{RecoveryKey}_{\text{Issuer}} = \text{HKDF}(\text{RecoverySecret}, \text{IssuerId})$.
 //! - `INV-02`: Aislamiento estricto de huellas para prevenir correlación del titular entre entidades.
 
+use alloc::string::String;
 use gravital_id_crypto::jwk::JwkEcP256;
 use gravital_id_crypto::kdf::{hkdf_expand_sha256, hkdf_extract_sha256};
 use gravital_id_crypto::secret::{AeadKeyBytes, SecretBytes, SecretKeyBytes};
@@ -103,6 +104,25 @@ pub fn derive_issuer_recovery_jwk(
     let secret_key = SecretKeyBytes::new(*priv_key.expose_secret());
     public_key_from_secret_key(&secret_key)
         .map_err(|_| RecoveryError::KeyDerivationFailed("error al derivar clave pública P-256"))
+}
+
+/// Deriva el thumbprint canónico RFC 7638 en base64url de la clave de recuperación para un emisor (`REQ-REC-007`).
+pub fn derive_issuer_recovery_thumbprint(
+    recovery_secret: &SecretBytes<32>,
+    issuer_id: &str,
+) -> Result<String, RecoveryError> {
+    let jwk = derive_issuer_recovery_jwk(recovery_secret, issuer_id)?;
+    Ok(jwk.thumbprint_base64url())
+}
+
+/// Deriva el thumbprint canónico RFC 7638 en formato URI (`urn:ietf:params:oauth:jwk-thumbprint:sha-256:<b64u>`)
+/// de la clave de recuperación para un emisor (`REQ-REC-004`, `REQ-REC-007`).
+pub fn derive_issuer_recovery_thumbprint_uri(
+    recovery_secret: &SecretBytes<32>,
+    issuer_id: &str,
+) -> Result<String, RecoveryError> {
+    let jwk = derive_issuer_recovery_jwk(recovery_secret, issuer_id)?;
+    Ok(jwk.thumbprint_uri())
 }
 
 #[cfg(test)]

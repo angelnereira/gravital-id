@@ -210,13 +210,30 @@ impl StatusClaim {
 pub struct ConfirmationClaim {
     /// Clave pública JWK EC P-256 del titular.
     pub jwk: JwkEcP256,
+    /// Huella RFC 7638 de la clave de recuperación del titular específica de este emisor (REQ-REC-004, REQ-REC-007).
+    pub rec: Option<String>,
 }
 
 impl ConfirmationClaim {
     /// Construye una nueva confirmación de clave a partir de la clave pública del titular.
     #[must_use]
     pub fn new(jwk: JwkEcP256) -> Self {
-        Self { jwk }
+        Self { jwk, rec: None }
+    }
+
+    /// Construye una confirmación de clave incorporando la huella de la clave de recuperación del emisor.
+    #[must_use]
+    pub fn with_recovery_thumbprint(jwk: JwkEcP256, rec: impl Into<String>) -> Self {
+        Self {
+            jwk,
+            rec: Some(rec.into()),
+        }
+    }
+
+    /// Huella de recuperación asociada, si fue declarada en la emisión.
+    #[must_use]
+    pub fn recovery_thumbprint(&self) -> Option<&str> {
+        self.rec.as_deref()
     }
 
     /// Convierte la confirmación a [`Value`] JSON.
@@ -235,7 +252,11 @@ impl ConfirmationClaim {
                     format!("failed to serialize holder confirmation key: {e}"),
                 )
             })?;
-        Ok(Value::Object(vec![("jwk".to_string(), jwk_val)]))
+        let mut members = vec![("jwk".to_string(), jwk_val)];
+        if let Some(rec) = &self.rec {
+            members.push(("rec".to_string(), Value::String(rec.clone())));
+        }
+        Ok(Value::Object(members))
     }
 
     /// Analiza la confirmación desde un [`Value`] JSON, validando que el JWK no contenga
@@ -252,7 +273,11 @@ impl ConfirmationClaim {
         })?;
         let canonical_str = to_canonical_json(jwk_val);
         let jwk = JwkEcP256::parse(&canonical_str)?;
-        Ok(Self { jwk })
+        let rec = val
+            .member("rec")
+            .and_then(Value::as_str)
+            .map(ToString::to_string);
+        Ok(Self { jwk, rec })
     }
 }
 
@@ -731,6 +756,13 @@ impl SdJwtVcBuilder {
     #[must_use]
     pub fn cnf_jwk(mut self, jwk: JwkEcP256) -> Self {
         self.cnf = Some(ConfirmationClaim::new(jwk));
+        self
+    }
+
+    /// Configura la clave pública del titular (`cnf.jwk`) junto con la huella de recuperación (`cnf.rec`).
+    #[must_use]
+    pub fn cnf_jwk_with_recovery(mut self, jwk: JwkEcP256, rec: impl Into<String>) -> Self {
+        self.cnf = Some(ConfirmationClaim::with_recovery_thumbprint(jwk, rec));
         self
     }
 

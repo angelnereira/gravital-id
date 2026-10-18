@@ -87,6 +87,7 @@ pub struct CredentialRequest {
     attributes: Vec<Attribute>,
     status: Option<StatusAllocation>,
     holder_key: Option<JwkEcP256>,
+    recovery_thumbprint: Option<String>,
     decoys: usize,
 }
 
@@ -108,6 +109,7 @@ impl CredentialRequest {
             attributes: Vec::new(),
             status: None,
             holder_key: None,
+            recovery_thumbprint: None,
             decoys: 0,
         })
     }
@@ -199,6 +201,13 @@ impl CredentialRequest {
         self
     }
 
+    /// Configura la huella de la clave de recuperación del titular (`cnf.rec`, REQ-REC-004, REQ-REC-007).
+    #[must_use]
+    pub fn recovery_thumbprint(mut self, thumbprint: impl Into<String>) -> Self {
+        self.recovery_thumbprint = Some(thumbprint.into());
+        self
+    }
+
     /// Configura digests señuelo (REQ-CRED-003).
     #[must_use]
     pub fn decoys(mut self, decoys: usize) -> Self {
@@ -210,6 +219,12 @@ impl CredentialRequest {
     #[must_use]
     pub fn holder_key_ref(&self) -> Option<&JwkEcP256> {
         self.holder_key.as_ref()
+    }
+
+    /// Huella de recuperación declarada, si la hay.
+    #[must_use]
+    pub fn recovery_thumbprint_ref(&self) -> Option<&str> {
+        self.recovery_thumbprint.as_deref()
     }
 
     /// Asignación de estado declarada, si la hay.

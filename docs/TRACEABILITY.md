@@ -2,7 +2,7 @@
 
 | ID | Fase | Nivel | Verificación | Principio | Pruebas / Archivos | Estado |
 |---|---|---|---|---|---|---|
-| REQ-KEY-001 | F2 | DEBE | T, I | P-07 | keystore.rs, lib.rs, purpose.rs, compile_fail.rs, keys_tests.rs, agree_with_signing_key.rs, assign_wrong_purpose.rs, sign_with_hpke_key.rs, trace.rs | Cubierto |
+| REQ-KEY-001 | F2 | DEBE | T, I | P-07 | keystore.rs, lib.rs, purpose.rs, compile_fail.rs, keys_tests.rs, agree_with_signing_key.rs, assign_wrong_purpose.rs, sign_with_hpke_key.rs, key.rs, recovery_key_tests.rs, trace.rs | Cubierto |
 | REQ-KEY-002 | F9 | DEBE | T, D | P-03 | — | Pendiente (Fase futura) |
 | REQ-KEY-003 | F9 | DEBE | I, A | P-03 | keystore.rs | Cubierto |
 | REQ-KEY-004 | F2 | DEBE | T | P-11 | keystore.rs, lib.rs, software.rs, keys_tests.rs | Cubierto |
@@ -84,10 +84,10 @@
 | REQ-REC-001 | F8 | DEBE | T, D | P-03 | — | Pendiente (Fase futura) |
 | REQ-REC-002 | F8 | DEBE | T | P-03 | code.rs, error.rs, kdf.rs, lib.rs, manager.rs, package.rs, payload.rs, wordlist.rs, recovery_tests.rs | Cubierto |
 | REQ-REC-003 | F8 | DEBERÍA | T | P-10 | gf256.rs, shamir.rs, shamir_tests.rs | Cubierto |
-| REQ-REC-004 | F8 | DEBE | T | P-07 | kdf.rs, lib.rs, payload.rs, recovery_tests.rs | Cubierto |
+| REQ-REC-004 | F8 | DEBE | T | P-07 | vc.rs, lib.rs, request.rs, kdf.rs, key.rs, lib.rs, payload.rs, recovery_key_tests.rs, recovery_tests.rs | Cubierto |
 | REQ-REC-005 | F8 | DEBE | I | — | — | Inspección / Auditoría |
 | REQ-REC-006 | F8 | DEBE | I | P-10 | — | Inspección / Auditoría |
-| REQ-REC-007 | F8 | DEBE | T | P-09 | kdf.rs, lib.rs, recovery_tests.rs | Cubierto |
+| REQ-REC-007 | F8 | DEBE | T | P-09 | vc.rs, lib.rs, request.rs, kdf.rs, key.rs, lib.rs, recovery_key_tests.rs, recovery_tests.rs | Cubierto |
 | REQ-ISS-001 | F10 | DEBE | T | P-04 | — | Pendiente (Fase futura) |
 | REQ-ISS-002 | F15 | DEBE | I, A | P-03 | — | Inspección / Auditoría |
 | REQ-ISS-003 | F7 | DEBE | T | — | status_allocator.rs, status_manager.rs, status_lifecycle_test.rs, builder.rs, signer.rs, status_builder_test.rs | Cubierto |
@@ -140,7 +140,7 @@
 | REQ-DEVSLOT-004 | F10 | DEBE | T, I | P-02 | — | Pendiente (Fase futura) |
 | REQ-SEC-001 | F1 | DEBE | T, I | — | layers.rs | Cubierto |
 | REQ-SEC-002 | F2 | DEBE | I | — | aead.rs, ecdh.rs, hpke.rs, kdf.rs, rng.rs, sha.rs, api_coverage.rs, external_vectors.rs | Cubierto |
-| REQ-SEC-003 | F2 | DEBE | T, I | — | aead.rs, secret.rs, api_coverage.rs, secret_hygiene.rs, software.rs, signer.rs, state.rs, verifier_state_integration.rs | Cubierto |
+| REQ-SEC-003 | F2 | DEBE | T, I | — | aead.rs, secret.rs, api_coverage.rs, secret_hygiene.rs, software.rs, recovery_key_tests.rs, signer.rs, state.rs, verifier_state_integration.rs | Cubierto |
 | REQ-SEC-004 | F2 | DEBE | I | — | mac.rs, secret.rs, secret_hygiene.rs | Cubierto |
 | REQ-SEC-005 | F2 | DEBE | F | — | trust_bundle_integration.rs, base45_strict.rs, base64url_strict.rs, cbor_bounded.rs, deflate_bounded.rs, json_bounded.rs, jwk_parser.rs, sd_jwt_parser.rs, status_list_parser.rs, trace.rs | Cubierto |
 | REQ-SEC-006 | F1 | DEBE | T | — | — | Pendiente (Fase futura) |

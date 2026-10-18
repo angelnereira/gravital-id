@@ -7,6 +7,14 @@ Cada componente publicado (SDK, servicios, contratos, especificación) indica su
 ## [Unreleased]
 
 ### Added
+- [recovery, keys, issuer, protocol] Clave de recuperación del titular y extensión de emisión (`crates/gravital-id-recovery`, `crates/gravital-id-issuer`, `crates/gravital-id-credential`, `docs/specs/PROTOCOL.md §2.2`, `F8.T03`, `REQ-REC-004`, `REQ-REC-007`, `REQ-KEY-001`, `P-07`, `P-09`, `INV-01`, `INV-02`, `INV-03`, `INV-05`, `INV-10`, `INV-11`; #103):
+  - `docs/specs/PROTOCOL.md §2.2`: Especificación normativa de la extensión de emisión para registro de la huella de la clave de recuperación del titular (`cnf.rec`), gobernada por `KeyPurpose::HolderRecovery` para autorización de re-vinculación sin permitir correlación cruzada entre distintos emisores.
+  - `crates/gravital-id-recovery`:
+    - `HolderRecoveryKey` (`crates/gravital-id-recovery/src/key.rs`): Encapsulación de clave de recuperación específica por emisor derivada deterministamente de $\text{HKDF}(\text{RecoverySecret}, \text{IssuerId})$, con cálculo de huella canónica RFC 7638 en base64url y formato URI RFC 9278 (`urn:ietf:params:oauth:jwk-thumbprint:sha-256:<b64u>`), protección con `ZeroizeOnDrop` y `Debug` redactado (`INV-02`).
+    - `kdf.rs`: Funciones `derive_issuer_recovery_thumbprint` y `derive_issuer_recovery_thumbprint_uri`.
+  - `crates/gravital-id-credential`: Soporte para huella de recuperación en `ConfirmationClaim` (`cnf.rec`) y método de construcción `SdJwtVcBuilder::cnf_jwk_with_recovery`.
+  - `crates/gravital-id-issuer`: Extensión en `CredentialRequest::recovery_thumbprint` y propagación transparente en `Issuer::issue` e `IssuedCredential::recovery_thumbprint`.
+  - `crates/gravital-id-recovery/tests/recovery_key_tests.rs`: Suite de 8 pruebas de integración verificando derivación determinista, aislamiento mutuo entre 10 emisores distintos (cero colisiones de claves o huellas, `REQ-REC-007`), verificación de firmas de re-vinculación con `SoftwareKeyStore`, flujo de emisión completo con extensión `cnf.rec` y auditoría forense cero PII (`INV-02`).
 - [recovery, crypto, shamir] Recuperación social con partición secreta de Shamir $k$-de-$n$ (`crates/gravital-id-recovery`, `docs/specs/STORAGE_FORMAT.md §8`, `F8.T02`, `REQ-REC-003`, `SPEC-PIP-SHAMIR-001`, `P-10`, `INV-01`, `INV-02`, `INV-03`, `INV-05`, `INV-09`, `INV-10`, `INV-11`; #102):
   - `docs/specs/STORAGE_FORMAT.md §8` (`SPEC-PIP-SHAMIR-001`): Especificación canónica y normativa para la partición de secretos en campo de Galois $GF(2^8)$ con polinomio de Rijndael/AES ($x^8 + x^4 + x^3 + x + 1$), estructura binaria autosuficiente de fragmento (`GIDS`) y codificación alfanumérica Crockford Base32 agrupada.
   - `crates/gravital-id-recovery` (L3 `no_std` + `alloc`, `#![forbid(unsafe_code)]`):

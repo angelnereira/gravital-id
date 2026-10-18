@@ -25,6 +25,7 @@ pub mod code;
 pub mod error;
 pub mod gf256;
 pub mod kdf;
+pub mod key;
 pub mod manager;
 pub mod package;
 pub mod payload;
@@ -35,8 +36,10 @@ pub use code::{RecoveryCode, BIP39_WORD_COUNT, RECOVERY_ENTROPY_LEN};
 pub use error::RecoveryError;
 pub use gf256::{gf256_add, gf256_div, gf256_eval_poly, gf256_inv, gf256_mul, gf256_sub};
 pub use kdf::{
-    derive_backup_keys, derive_issuer_recovery_jwk, derive_issuer_recovery_secret, BACKUP_SALT_LEN,
+    derive_backup_keys, derive_issuer_recovery_jwk, derive_issuer_recovery_secret,
+    derive_issuer_recovery_thumbprint, derive_issuer_recovery_thumbprint_uri, BACKUP_SALT_LEN,
 };
+pub use key::HolderRecoveryKey;
 pub use manager::RecoveryManager;
 pub use package::{
     EncryptedBackupPackage, BACKUP_HEADER_LEN, BACKUP_MAGIC_GIDB, BACKUP_MAGIC_PIPB,

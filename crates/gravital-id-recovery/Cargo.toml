@@ -26,4 +26,6 @@ zeroize = { workspace = true }
 [dev-dependencies]
 gravital-id-testkit = { path = "../gravital-id-testkit", version = "0.1.0" }
 gravital-id-storage-sqlite = { path = "../gravital-id-storage-sqlite", version = "0.1.0" }
+gravital-id-issuer = { path = "../gravital-id-issuer", version = "0.1.0" }
+gravital-id-verifier = { path = "../gravital-id-verifier", version = "0.1.0" }
 

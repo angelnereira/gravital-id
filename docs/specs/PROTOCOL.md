@@ -45,6 +45,44 @@ Titular (Wallet)                                Emisor (Issuer Service)
 * **Divulgaciones y Sales (REQ-CRED-002):** Cada claim divulgado individualmente debe incorporar una sal criptográfica independiente de al menos 128 bits generada por un CSPRNG.
 * **Hashes Señuelo (Decoys, REQ-CRED-003):** El emisor debe inyectar digests señuelo aleatorios en el array `_sd` según la política del perfil para ocultar el número total de atributos emitidos.
 
+### 2.2 Extensión Normativa: Registro de Clave de Recuperación del Titular (`REQ-REC-004`, `REQ-REC-007`)
+
+Para permitir la re-vinculación de credenciales tras pérdida o migración de dispositivo (`F8.T04`, `REQ-REC-004`) sin comprometer la privacidad ni permitir la correlación del titular entre distintos emisores (`REQ-REC-007`, `P-09`), el protocolo define una extensión normativa en la solicitud y estructura de confirmación (`cnf`) de la credencial:
+
+1. **Derivación de clave por emisor:**
+   A partir del secreto maestro de recuperación del titular ($S_{\text{recovery}} \in \{0, 1\}^{256}$) generado a partir del `RecoveryCode` ($\ge 128$ bits de entropía), el titular deriva deterministamente una clave privada P-256 exclusiva para cada emisor:
+   $$\text{PRK} = \text{HKDF-Extract}(\text{salt} = \text{IssuerId}, \text{IKM} = S_{\text{recovery}})$$
+   $$\text{PrivKey}_{\text{Issuer}} = \text{HKDF-Expand}(\text{PRK}, \text{"pip-issuer-recovery-key-v1"}, 32)$$
+   A partir de $\text{PrivKey}_{\text{Issuer}}$ se obtiene la clave pública JWK EC P-256 ($\text{PubKey}_{\text{Issuer}}$).
+
+2. **Propósito exclusivo (`KeyPurpose::HolderRecovery`):**
+   La clave de recuperación se aísla en el sistema de tipos bajo `KeyPurpose::HolderRecovery` (`REQ-KEY-001`, `REQ-REC-004`). Su uso está restringido exclusivamente a la firma del desafío de re-vinculación ante el emisor específico; **NUNCA** se emplea para la firma de presentaciones de credenciales (KB-JWT) ni para operaciones de acuerdo de claves (HPKE).
+
+3. **Huella canónica RFC 7638:**
+   El titular calcula el thumbprint canónico SHA-256 de su JWK de recuperación según RFC 7638 y lo codifica como URI RFC 9278:
+   $$\text{rec\_thumbprint} = \text{"urn:ietf:params:oauth:jwk-thumbprint:sha-256:"} \mathbin{\Vert} \text{base64url}(\text{SHA-256}(\text{CanonicalJWK}(\text{PubKey}_{\text{Issuer}})))$$
+
+4. **Registro en el claim `cnf` (`cnf.rec`):**
+   En el momento de la emisión, el titular aporta la huella de recuperación al emisor en la solicitud de credencial. El emisor la registra en su base de datos de titulares/dispositivos vinculada a la credencial y la incluye en el claim de nivel superior `cnf` de la credencial SD-JWT VC emitida:
+   ```json
+   {
+     "cnf": {
+       "jwk": {
+         "kty": "EC",
+         "crv": "P-256",
+         "x": "...",
+         "y": "..."
+       },
+       "rec": "urn:ietf:params:oauth:jwk-thumbprint:sha-256:NzbLsXh8uuoIdNdAlq7hg0avcEbBNJUZxTyiRf5-DaE"
+     }
+   }
+   ```
+
+5. **Invariante de no-correlación (`REQ-REC-007`, `P-09`, `INV-02`):**
+   Dado que $\text{IssuerId}$ actúa como sal del extractor HKDF, para dos emisores distintos $I_1 \ne I_2$:
+   $$\text{PubKey}_{\text{Issuer}}(I_1) \ne \text{PubKey}_{\text{Issuer}}(I_2) \implies \text{rec\_thumbprint}(I_1) \ne \text{rec\_thumbprint}(I_2)$$
+   Dos emisores nunca reciben la misma huella de recuperación, imposibilitando la correlación cruzada de credenciales del mismo titular entre diferentes entidades.
+
 ---
 
 ## 3. Transporte Offline: Flujo QR de Dos Pasos
