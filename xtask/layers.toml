@@ -21,6 +21,7 @@ L3 = [
 ]
 L4 = [
     "gravital-id-protocol",
+    "gravital-id-proximity",
     "gravital-id-sync",
     "gravital-id-ledger",
 ]

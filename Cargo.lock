@@ -562,6 +562,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "gravital-id-proximity"
+version = "0.1.0"
+dependencies = [
+ "gravital-id-codec",
+ "gravital-id-crypto",
+ "gravital-id-types",
+]
+
+[[package]]
 name = "gravital-id-recovery"
 version = "0.1.0"
 dependencies = [
