@@ -92,6 +92,8 @@ gravital-id-storage-sqlite = { path = "crates/gravital-id-storage-sqlite", versi
 pip-service-common = { path = "services/pip-service-common", version = "0.1.0" }
 pip-indexer = { path = "services/pip-indexer", version = "0.1.0" }
 pip-trust-service = { path = "services/pip-trust-service", version = "0.1.0" }
+pip-relay = { path = "services/pip-relay", version = "0.1.0" }
+gravital-id-transport-http = { path = "crates/gravital-id-transport-http", version = "0.1.0" }
 anyhow = "1.0"
 # Ya usado por gravital-id-crypto para higiene de secretos (REQ-SEC-003); se comparte la
 # misma configuración para evitar divergencias entre crates.

@@ -16,7 +16,7 @@ services:
       - --block-time
       - "1"
     ports:
-      - "8545:8545"
+      - "${ANVIL_PORT:-8545}:8545"
     networks:
       - gravital_network
     healthcheck:
@@ -36,7 +36,7 @@ services:
       POSTGRES_USER: ${POSTGRES_USER:-gravital}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dev_postgres_password_local_only}
     ports:
-      - "5432:5432"
+      - "${POSTGRES_PORT:-5432}:5432"
     volumes:
       - gravital_pg_data:/var/lib/postgresql/data
     networks:
@@ -58,8 +58,8 @@ services:
       MINIO_ROOT_USER: ${S3_ACCESS_KEY:-minioadmin}
       MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY:-minioadmin}
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - "${MINIO_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
     volumes:
       - gravital_minio_data:/data
     networks:

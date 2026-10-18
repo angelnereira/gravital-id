@@ -33,3 +33,14 @@ gravital-id-testkit = { path = "../../crates/gravital-id-testkit", version = "0.
 anyhow = { workspace = true }
 qrcode = { version = "0.14", default-features = false }
 
+[dev-dependencies]
+gravital-id-ledger = { workspace = true }
+gravital-id-ledger-evm = { workspace = true }
+gravital-id-sync = { workspace = true }
+gravital-id-transport-http = { workspace = true }
+pip-service-common = { workspace = true }
+pip-indexer = { workspace = true }
+pip-trust-service = { workspace = true }
+pip-relay = { workspace = true }
+
+

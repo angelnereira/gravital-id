@@ -10,7 +10,7 @@
 | Último gate cerrado | **G6** (2026-10-17) · **G5** (2026-10-16) · **G4** (2026-10-16) · **G19** (2026-10-15) · **G0** (2026-10-11) |
 | Próximo gate | **G7** — plano de servicio completo en testnet; **G3** (#59) y **G2** pendientes de CI |
 | Hito siguiente | M2 · Sincronización y anclaje (al cerrar G7) · MP1 · Tap offline (al cerrar G21) [M1 alcanzado] |
-| Última actualización | 2026-10-18 (`F7.T08` completada: motor determinista sans-I/O de verificación completa multi-fuente `FullVerificationEngine` en L4 `gravital-id-ledger` contrastando el TrustBundle con $\ge 2$ fuentes de ledger independientes, detección de divergencias y consistencia cruzada, fail-closed `INV-05`, `INV-16`, 9 pruebas pasando incluyendo proptest y trazado `REQ-TRUST-004`; `F7.T07` y `F11.T01-T02` completadas) |
+| Última actualización | 2026-10-18 (`F7.T10` completada: integración automatizada de la pila de servicios en contenedores en `container_stack_integration.rs` validando nominal e2e ledger + indexador + trust-service k-de-n + relay por hash SHA-256 + SDK verificación completa multi-fuente, aislamiento de operadores divergentes, fail-closed `INV-05`, `INV-16` y auditoría forense cero PII `INV-02`; `F7.T09` evaluada y cerrada bajo ADR-0007 / REQ-ISS-002; siguiente tarea `F7.T11` revocación offline MVP-05) |
 
 ## Gates
 
@@ -30,6 +30,9 @@
 
 | Tarea | Issue | Responsable | Estado | Siguiente paso |
 |---|---|---|---|---|
+| F7.T11 Revocación durante periodo offline (MVP-05) | #104 | Antigravity (agente) | Por hacer | Escenario MVP-05: verificador offline; revocación ocurre; resultado `ValidWithStaleStatus` mientras corresponde e `Invalid` tras sincronizar (`REQ-STAT-004`) |
+| F7.T10 Integración con contenedores | #103 | Antigravity (agente) | Hecha | Suite automatizada `apps/pip-cli/tests/container_stack_integration.rs` con flujo nominal E2E, aislamiento de divergencia en operadores, fail-closed en divergencia de ledger y auditoría cero PII (`INV-01`, `INV-02`, `INV-04`, `INV-05`, `INV-11`, `INV-16`); resuelto #103 |
+| F7.T09 Backend `aws-lc-rs` (FIPS, condicional) | #103 | Antigravity (agente) | Hecha | Evaluada y cerrada condicionalmente conforme a ROADMAP.md y ADR-0007 (cumplimiento FIPS 140-2/3 en producción delegado a HSM/KMS bajo REQ-ISS-002); resuelto #103 |
 | F7.T08 Modo de verificación completa | #102 | Antigravity (agente) | Hecha | Motor `FullVerificationEngine` en capa L4 contrastando con $\ge 2$ fuentes de ledger, alarma y rechazo fail-closed ante divergencia o fuentes insuficientes (`REQ-TRUST-004`); resuelto #102 |
 | F7.T07 `pip-sync` | #100 | Antigravity (agente) | Hecha | Crate L4 `gravital-id-sync` (sans-I/O) y adaptador L5 `gravital-id-transport-http` con cola cifrada idempotente, deduplicación, HPKE RFC 9180, backoff determinista y pool de relays con failover (REQ-SYNC-001..007); resuelto #100 |
 | F11.T01-T02 `gravital_experience_ui` + `reference-wallet` (adelanto UI, multi-inquilino ADR-0027..0030, NFC `GID-APDU` y Passkey `CTAP2`) | #101 | Antigravity (agente) | Hecha | ADRs 0027–0030 aceptados, `GRAVITAL_EXPERIENCE_UI.md`, `pip-tenant-role-v1.md`, `PROTOCOL.md §7.8`, cumplimiento Tribunal Electoral Panamá (Decreto 43/2024 + SVI + VOPRF `GID-E2010`), ranura única por clase (`mobile`/`card`/`other`, `GID-E2011`), motor NFC `GID-APDU` (HCE Android `HostApduService` + lector ISO-DEP + iOS `CoreNFC`) y servicio Passkey (`FIDO2 / WebAuthn Level 3` + `CTAP2 over NFC`) con 11 suites de pruebas en verde |
@@ -156,6 +159,32 @@
 | Tamaño binario del SDK | — | — | — | — | — |
 
 ## Última nota de traspaso
+
+### Traspaso — 2026-10-18 (F7.T09: Backend aws-lc-rs condicional / F7.T10: Integración completa de la pila de contenedores en pruebas automatizadas) — Antigravity (agente)
+- Tarea: F7.T09 / F7.T10 — #103 — rama `main`
+- Estado: **hecha**
+- Hecho en esta sesión:
+  - **F7.T09 (Evaluación técnica `aws-lc-rs` / FIPS, `ADR-0007`, `REQ-ISS-002`):** Cierre condicional formalizado conforme a `ROADMAP.md` y `ADR-0007`. En producción corporativa e institucional, el cumplimiento FIPS 140-2/3 para emisión y custodia de claves raíz se delega a los módulos de hardware HSM/KMS bajo `REQ-ISS-002`, no requiriendo bifurcar `pip-crypto` para añadir `aws-lc-rs` como backend condicional alternativo a `p256` y `k256`.
+  - **F7.T10 (`deploy/docker/docker-compose.yml`, `deploy/docker/.env.example`):** Parametrización de puertos de host (`ANVIL_PORT`, `POSTGRES_PORT`, `MINIO_PORT`, `MINIO_CONSOLE_PORT`) para prevenir colisiones locales y en CI; validación de higiene de despliegue (`cargo xtask check-deploy-hygiene`) en verde con cero secretos en claro.
+  - **F7.T10 (`apps/pip-cli/tests/container_stack_integration.rs`):** Suite automatizada de pruebas de integración end-to-end multi-servicio ejecutando las interacciones coordinadas entre:
+    1. Cadena EVM local / adaptador de ledger en memoria (`gravital-id-ledger-evm`, `InMemoryLedgerAdapter`).
+    2. Indexador (`pip-indexer`): Ingesta de bloques finalizados, checkpoints monotónicos, proyecciones puras de estado (`LedgerState`) e idempotencia estricta.
+    3. Servicio de confianza (`pip-trust-service`): Derivación determinista de bundles, evaluación y cofirma $k$-de-$n$ (`LocalDevSigner`), agregación no confiable (`UntrustedBundleAggregator`) y publicación (`InMemoryBundlePublisher`).
+    4. Servicio de relay (`pip-relay`): Almacenamiento inmutable direccionado por contenido SHA-256 (`put_object`), buzones de sobres de sincronización HPKE y punto de encuentro efímero con código de sesión de 10 dígitos validado con algoritmo de Damm (`REQ-CODE-001..004`).
+    5. SDK y motor de verificación: Verificación formal contra `TrustRoot` activa (`TrustBundleVerifier`) y modo de verificación completa multi-fuente (`FullVerificationEngine`) contrastando $\ge 2$ fuentes de ledger independientes (`REQ-TRUST-004`).
+    6. Sincronización sans-I/O (`gravital-id-sync`): Encolado (`EncryptedOutboxQueue`), cifrado híbrido HPKE (RFC 9180), transmisión a buzón de relay y deduplicación por ventana deslizante (`InboundDeduplicationFilter`).
+  - **Casos de prueba implementados:**
+    - `test_container_stack_e2e_nominal_flow`: Flujo completo nominal entre todos los componentes.
+    - `test_container_stack_operator_divergence_tolerance_and_quorum_failure`: Aislamiento de operador divergente con quórum suficiente y fallo cerrado sin emisión si se pierde el quórum (`INV-05`, `INV-16`).
+    - `test_container_stack_ledger_divergence_fails_closed`: Detección de claves comprometidas entre nodos independientes y alarma crítica fail-closed.
+    - `test_container_stack_zero_pii_audit`: Auditoría forense exhaustiva garantizando 0 datos personales o identificadores de titular en payloads serializados (`INV-02`, `REQ-PRIV-003`).
+  - **Trazabilidad y capas:** 107 requisitos trazados en `docs/TRACEABILITY.md`, reglas de capas verificadas en 21 crates (`cargo xtask check-layers`), y 100% de pruebas del workspace pasando.
+- Pendiente (siguiente paso concreto):
+  - Iniciar `F7.T11`: Revocación durante periodo offline (escenario MVP-05 §24, `REQ-STAT-004`: verificador offline; revocación ocurre; resultado `ValidWithStaleStatus` mientras corresponde e `Invalid` tras sincronizar).
+- Bugs/issues abiertos durante la sesión: ninguno.
+- Decisiones tomadas (con enlace a ADR/issue): Integración completa de la pila de servicios en contenedores y cierre condicional de FIPS según ADR-0007 (#103).
+- Riesgos o dudas: ninguna.
+- Comprobaciones locales: fmt ✅ clippy (-D warnings) ✅ tests (100% verde en todo el workspace) ✅ layers (21 crates) ✅ trace (107 REQs) ✅ check-deploy-hygiene ✅ check-error-codes (61) ✅ check-contracts-privacy (0 PII) ✅ doc (0 warnings) ✅
 
 ### Traspaso — 2026-10-18 (F7.T08: Modo de verificación completa — Contraste determinista del TrustBundle con $\ge 2$ fuentes de ledger independientes, consistencia cruzada y alarmas estructuradas de divergencia) — Antigravity (agente)
 - Tarea: F7.T08 — #102 — rama `main`
