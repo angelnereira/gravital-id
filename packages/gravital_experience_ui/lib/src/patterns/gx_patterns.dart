@@ -197,7 +197,10 @@ class GxOfflineBanner extends StatelessWidget {
           horizontal: GxSpace.l,
           vertical: GxSpace.s,
         ),
-        child: Row(
+        child: Wrap(
+          spacing: GxSpace.s,
+          runSpacing: GxSpace.xs,
+          crossAxisAlignment: WrapCrossAlignment.center,
           children: <Widget>[
             Icon(
               isOffline
@@ -206,8 +209,13 @@ class GxOfflineBanner extends StatelessWidget {
               size: 18,
               color: tone.onContainer,
             ),
-            const SizedBox(width: GxSpace.s),
-            Expanded(
+            ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth: MediaQuery.sizeOf(context).width -
+                    (GxSpace.l * 2) -
+                    18 -
+                    GxSpace.s,
+              ),
               child: Text(
                 isOffline
                     ? 'Modo Offline Activo (INV-01) · TrustBundle v$trustBundleVersion · Caché: $statusFreshnessLabel'

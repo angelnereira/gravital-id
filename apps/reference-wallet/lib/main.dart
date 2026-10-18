@@ -5,6 +5,7 @@
 import 'package:gravital_experience_ui/gravital_experience_ui.dart';
 
 import 'src/domain/gravital_wallet_store.dart';
+import 'src/screens/consent_screen.dart';
 import 'src/screens/device_slots_screen.dart';
 import 'src/screens/present_access_screen.dart';
 import 'src/screens/recovery_screen.dart';
@@ -113,6 +114,11 @@ class _WalletHomeShell extends StatelessWidget {
         icon: Icons.sync_outlined,
         selectedIcon: Icons.sync_rounded,
       ),
+      const GxNavigationDestination(
+        label: 'Consentir',
+        icon: Icons.verified_user_outlined,
+        selectedIcon: Icons.verified_user_rounded,
+      ),
     ];
 
     final Widget primaryBody = switch (selectedIndex) {
@@ -131,6 +137,7 @@ class _WalletHomeShell extends StatelessWidget {
         ),
       4 => RecoveryScreen(store: store),
       5 => SyncTrustScreen(store: store),
+      6 => ConsentScreen(store: store),
       _ => DeviceSlotsScreen(store: store),
     };
 
@@ -149,12 +156,17 @@ class _WalletHomeShell extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Gravital ID · Bóveda & Accesos'),
         actions: <Widget>[
-          Padding(
-            padding: const EdgeInsets.only(right: GxSpace.m),
-            child: Center(
-              child: GxTabularCodeText(
-                'Cédula PA: 8-888-8888',
-                style: Theme.of(context).textTheme.labelMedium,
+          Flexible(
+            child: Padding(
+              padding: const EdgeInsets.only(right: GxSpace.m),
+              child: Center(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: GxTabularCodeText(
+                    'Cédula PA: 8-888-8888',
+                    style: Theme.of(context).textTheme.labelSmall,
+                  ),
+                ),
               ),
             ),
           ),
