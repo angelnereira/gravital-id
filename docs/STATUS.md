@@ -10,7 +10,7 @@
 | Último gate cerrado | **G6** (2026-10-17) · **G5** (2026-10-16) · **G4** (2026-10-16) · **G19** (2026-10-15) · **G0** (2026-10-11) |
 | Próximo gate | **G7** — plano de servicio completo en testnet; **G3** (#59) y **G2** pendientes de CI |
 | Hito siguiente | M2 · Sincronización y anclaje (al cerrar G7) · MP1 · Tap offline (al cerrar G21) [M1 alcanzado] |
-| Última actualización | 2026-10-17 (F7.T05 completada — Listas de estado del emisor, asignación aleatoria, publicación direccionada por contenido, manifiestos con versión monotónica y ABI de StatusAnchor; #98 resuelto) |
+| Última actualización | 2026-10-17 (F7.T06 completada — pip-relay: objetos por hash SHA-256, buzones HPKE con idempotencia y punto de encuentro efímero con SessionCode de 10 dígitos y Damm; #99 resuelto) |
 
 ## Gates
 
@@ -30,7 +30,8 @@
 
 | Tarea | Issue | Responsable | Estado | Siguiente paso |
 |---|---|---|---|---|
-| F7.T06 `pip-relay` | #99 | Antigravity (agente) | En curso | Servicio de relay sin almacenamiento persistente, reenvío sin estado, autenticación efímera, cifrado de transporte y límites de tasa (REQ-SYNC-004, REQ-SYNC-006) |
+| F7.T07 `pip-sync` | #100 | Antigravity (agente) | En curso | Máquina de estados de sincronización, cola cifrada, resolución de conflictos LWW y múltiples relays (REQ-SYNC-001..003) |
+| F7.T06 `pip-relay` | #99 | Antigravity (agente) | Hecha | Servicio de retransmisión stateless, objetos direccionados por SHA-256, buzones HPKE con idempotencia, punto de encuentro efímero con SessionCode Damm y límites de tasa (91,86% cobertura); resuelto #99 |
 | F7.T05 Listas de estado del emisor | #98 | Antigravity (agente) | Hecha | Asignación aleatoria no correlacionada (P-09), TokenStatusListBuilder (>= 131.072), compresión DEFLATE acotada (<= 10:1), IssuerStatusManifestBuilder monotónico, IssuerStatusManager y ABI anchorStatusManifest; resuelto #98 |
 | F7.T04 `pip-trust-service` | #97 | Antigravity (agente) | Hecha | Derivación determinista de trust bundles, cofirma multi-operador k-de-n y publicación en S3/CDN (93,72% cobertura); resuelto #97 |
 | F7.T03 `pip-indexer` | #96 | Antigravity (agente) | Hecha | Ingesta de bloques finalizados, PostgreSQL, idempotencia, reprocesamiento, detección divergencia RPC y métricas de lag (90,19% cobertura); resuelto #96 |
@@ -153,6 +154,29 @@
 | Tamaño binario del SDK | — | — | — | — | — |
 
 ## Última nota de traspaso
+
+### Traspaso — 2026-10-17 (F7.T06: `pip-relay` — Servicio de retransmisión stateless, distribución de objetos direccionados por hash SHA-256, buzones de sobres HPKE con idempotencia y punto de encuentro efímero con SessionCode de 10 dígitos y Damm) — Antigravity (agente)
+- Tarea: F7.T06 — #99 — rama `main`
+- Estado: **hecha**
+- Hecho en esta sesión:
+  - **F7.T06 (`services/pip-relay`):** Creación e implementación completa del microservicio `pip-relay` (Capa L5) para retransmisión y sincronización stateless entre dispositivos, transferencia de objetos por digest y punto de encuentro efímero (`REQ-SYNC-004`, `REQ-SYNC-006`, `REQ-CODE-001`, `REQ-CODE-002`, `REQ-CODE-003`, `REQ-CODE-004`, `REQ-REL-001`, `REQ-OBS-001`, `REQ-PRIV-003`, `ADR-0025`, `PROTOCOL.md §7.7`, `INV-01`, `INV-02`, `INV-05`, `INV-11`).
+  - **Almacenamiento en memoria con límites y TTL (`store.rs`):** `InMemoryRelayStore` que implementa:
+    - Distribución de objetos direccionados por hash SHA-256 inmutables (`REQ-SYNC-004`), verificación de digest, TTL acotado y purga periódica.
+    - Buzón de sobres de operación (`EnvelopeRecord`) cifrados con HPKE (`REQ-SYNC-006`), soporte de idempotencia por `envelope_id`, filtrado temporal incremental (`since`) y acuse de recibo / borrado (`delete_envelope`).
+    - Punto de encuentro efímero (`RendezvousSession`) con algoritmo antisimétrico de Damm (2004) de orden 10 para validación y generación de dígito de control de `SessionCode` (`ADR-0025`, `PROTOCOL.md §7.7`, `REQ-CODE-001..004`), derivación de clave de sesión mediante `sha256("gid-session-code-v1" || code)`, garantía atómica de consumo de un solo uso (`consumed: true`) y TTL estricto $\le 180$ segundos.
+  - **Limitador de tasa estricto (`limiter.rs`):** `RateLimiter` con algoritmo Token Bucket por cliente/IP implementado estrictamente con aritmética entera en militokens (`-D clippy::float-arithmetic`) para prevenir abusos y ataques DoS.
+  - **Despachador sans-I/O y servidor TCP (`server.rs`):** `RelayHttpService` desacoplado y comprobable en memoria con endpoints REST `/healthz`, `/readyz`, `/v1/objects`, `/v1/mailboxes/{inbox_id}/envelopes`, `/v1/rendezvous/{session_hash}/request`, `/v1/rendezvous/{session_hash}/response` y `/v1/rendezvous/code/validate`, más `start_relay_server` para enlace TCP multihilo y apagado ordenado.
+  - **Mapeo de errores y respuestas sanitizadas (`error.rs`):** `RelayError` con mapeo a códigos HTTP estándar (200, 201, 204, 400, 404, 405, 409, 410, 413, 429, 503) y serialización JSON sanitizada sin PII ni secretos en texto claro (`INV-02`).
+  - **Configuración tipada (`config.rs`):** Carga desde variables de entorno (`PIP_RELAY_*`) con validación fail-closed de puertos, TTLs, límites de payload y cuotas de memoria.
+  - **Registro de salud (`health.rs`):** `RelayHealthCheck` integrado con `HealthRegistry` de `pip-service-common` con degradación ante saturación de almacenamiento.
+  - **Pruebas y cobertura:** 30 pruebas unitarias y de integración pasando al 100% con **91,86% de cobertura de líneas en la biblioteca** (`clock.rs`: 100%, `config.rs`: 100%, `error.rs`: 100%, `health.rs`: 100%, `store.rs`: 94,37%, `limiter.rs`: 91,67%).
+  - **Trazabilidad:** REQ-SYNC-004, REQ-SYNC-006, REQ-CODE-001, REQ-CODE-002, REQ-CODE-003, REQ-CODE-004, REQ-REL-001 actualizados y verificados en `docs/TRACEABILITY.md`.
+- Pendiente (siguiente paso concreto):
+  - Iniciar `F7.T07`: `pip-sync` (Capa L4 sans-I/O): máquina de estados de sincronización, cola de operaciones cifradas, resolución de conflictos Last-Write-Wins (LWW) y orquestación con múltiples relays (`REQ-SYNC-001..007`).
+- Bugs/issues abiertos durante la sesión: ninguno.
+- Decisiones tomadas (con enlace a ADR/issue): Implementado microservicio `pip-relay` según `PROTOCOL.md §7.7`, `ADR-0025` y `REQ-SYNC-004,006` (#99).
+- Riesgos o dudas: ninguna.
+- Comprobaciones locales: fmt ✅ clippy ✅ tests (100% verde en todo el workspace) ✅ layers ✅ trace (103 REQs) ✅ check-error-codes (59) ✅ check-contracts-privacy (0 PII) ✅ check-deploy-hygiene (0 secretos) ✅ deny ✅ llvm-cov (91,86% pip-relay) ✅
 
 ### Traspaso — 2026-10-17 (F7.T05: Listas de estado del emisor — Asignación aleatoria, Token Status Lists, publicación direccionada por contenido, manifiesto de estado y anclaje en StatusAnchor) — Antigravity (agente)
 - Tarea: F7.T05 — #98 — rama `main`

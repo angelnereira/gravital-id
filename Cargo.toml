@@ -25,6 +25,7 @@ members = [
     "services/pip-service-common",
     "services/pip-indexer",
     "services/pip-trust-service",
+    "services/pip-relay",
     "xtask",
 ]
 

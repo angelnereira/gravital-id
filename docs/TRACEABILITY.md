@@ -69,9 +69,9 @@
 | REQ-SYNC-001 | F7 | DEBE | T | P-01 | — | Pendiente (Fase futura) |
 | REQ-SYNC-002 | F7 | DEBE | T | — | — | Pendiente (Fase futura) |
 | REQ-SYNC-003 | F7 | DEBE | T | — | client.rs, evm_fault_tolerance.rs | Cubierto |
-| REQ-SYNC-004 | F7 | DEBE | T | P-08 | manifest.rs | Cubierto |
+| REQ-SYNC-004 | F7 | DEBE | T | P-08 | manifest.rs, config.rs, lib.rs, main.rs, server.rs, store.rs, config_test.rs, limiter_test.rs, server_test.rs, store_test.rs | Cubierto |
 | REQ-SYNC-005 | F7 | DEBE | T, I | P-09 | — | Pendiente (Fase futura) |
-| REQ-SYNC-006 | F7 | DEBE | T | P-09 | — | Pendiente (Fase futura) |
+| REQ-SYNC-006 | F7 | DEBE | T | P-09 | config.rs, lib.rs, main.rs, server.rs, store.rs, config_test.rs, limiter_test.rs, server_test.rs, store_test.rs | Cubierto |
 | REQ-SYNC-007 | F7 | DEBE | T | P-10 | — | Pendiente (Fase futura) |
 | REQ-STOR-001 | F5 | DEBE | T | P-03 | lib.rs, cli_m1_demonstration.rs, credential.rs, wallet.rs, holder_credential_management.rs, envelope.rs, lib.rs, record.rs, storage_envelope_and_indices.rs | Cubierto |
 | REQ-STOR-002 | F9 | DEBE | T, D | P-03 | envelope.rs, lib.rs, storage_envelope_and_indices.rs | Cubierto |
@@ -119,10 +119,10 @@
 | REQ-CARD-003 | F22 | DEBE | T | P-08 | — | Pendiente (Fase futura) |
 | REQ-CARD-004 | F22 | DEBE | T | P-11 | — | Pendiente (Fase futura) |
 | REQ-CARD-005 | F22 | DEBE | T, D | P-08 | — | Pendiente (Fase futura) |
-| REQ-CODE-001 | F23 | DEBE | T | P-09 | — | Pendiente (Fase futura) |
-| REQ-CODE-002 | F23 | DEBE | T, F | P-08 | — | Pendiente (Fase futura) |
-| REQ-CODE-003 | F23 | DEBE | T, I | P-08 | — | Pendiente (Fase futura) |
-| REQ-CODE-004 | F23 | DEBE | T, I | P-02 | — | Pendiente (Fase futura) |
+| REQ-CODE-001 | F23 | DEBE | T | P-09 | lib.rs, store.rs, config_test.rs, server_test.rs, store_test.rs | Cubierto |
+| REQ-CODE-002 | F23 | DEBE | T, F | P-08 | server_test.rs, store_test.rs | Cubierto |
+| REQ-CODE-003 | F23 | DEBE | T, I | P-08 | server_test.rs, store_test.rs | Cubierto |
+| REQ-CODE-004 | F23 | DEBE | T, I | P-02 | server_test.rs, store_test.rs | Cubierto |
 | REQ-IDDOC-001 | F24 | DEBE | T | P-08 | — | Pendiente (Fase futura) |
 | REQ-IDDOC-002 | F24 | DEBE | T, I | P-09 | — | Pendiente (Fase futura) |
 | REQ-IDDOC-003 | F24 | DEBE | T, I | P-09 | — | Pendiente (Fase futura) |
@@ -139,14 +139,14 @@
 | REQ-SEC-011 | F0 | DEBE | I | — | — | Inspección / Auditoría |
 | REQ-PRIV-001 | F5 | DEBE | I | — | lib.rs, lib.rs, plan.rs, presentation.rs, query.rs, wallet.rs, holder_dcql_and_presentation.rs, status_allocator.rs, offline_wallet_policy.rs, protocol_wallet_request_validation.rs | Cubierto |
 | REQ-PRIV-002 | F4 | DEBE | T | — | verifier_offline_and_determinism.rs | Cubierto |
-| REQ-PRIV-003 | F7 | DEBE | T, I | — | lib.rs, main.rs, config.rs, lib.rs, redaction.rs, telemetry.rs, no_pii_logging_test.rs, main.rs, deploy_hygiene.rs | Cubierto |
+| REQ-PRIV-003 | F7 | DEBE | T, I | — | lib.rs, main.rs, main.rs, config.rs, lib.rs, redaction.rs, telemetry.rs, no_pii_logging_test.rs, main.rs, deploy_hygiene.rs | Cubierto |
 | REQ-PRIV-004 | F14 | DEBE | A | — | — | Inspección / Auditoría |
 | REQ-PRIV-005 | F5 | DEBE | T | — | lib.rs, cli_m1_demonstration.rs, audit.rs, lib.rs, presentation.rs, wallet.rs, holder_privacy_and_forensics.rs | Cubierto |
 | REQ-PORT-001 | F9 | DEBE | T | — | lib.rs | Cubierto |
 | REQ-PORT-002 | F2 | DEBE | T | — | — | Pendiente (Fase futura) |
 | REQ-PORT-003 | F2 | DEBE | T, I | — | layers.rs | Cubierto |
 | REQ-PORT-004 | F1 | DEBE | T | — | layers.rs | Cubierto |
-| REQ-REL-001 | F15 | DEBE | A, D | — | health.rs, main.rs, config_test.rs, health_test.rs, config.rs, health.rs, lib.rs, server.rs, shutdown.rs, config_test.rs, health_and_server_test.rs, config.rs, health.rs, main.rs, publisher.rs, config_test.rs, health_test.rs, deploy_hygiene.rs | Cubierto |
+| REQ-REL-001 | F15 | DEBE | A, D | — | health.rs, main.rs, config_test.rs, health_test.rs, config.rs, health.rs, lib.rs, main.rs, config_test.rs, server_test.rs, config.rs, health.rs, lib.rs, server.rs, shutdown.rs, config_test.rs, health_and_server_test.rs, config.rs, health.rs, main.rs, publisher.rs, config_test.rs, health_test.rs, deploy_hygiene.rs | Cubierto |
 | REQ-REL-002 | F15 | DEBE | I | — | — | Inspección / Auditoría |
 | REQ-REL-003 | F15 | DEBE | D | — | — | Inspección / Auditoría |
 | REQ-REL-004 | F4 | DEBE | T | — | verifier_negative_matrix_and_precedence.rs, verifier_offline_and_determinism.rs | Cubierto |
@@ -162,7 +162,7 @@
 | REQ-COMP-001 | F14 | DEBE | A | — | — | Inspección / Auditoría |
 | REQ-COMP-002 | F14 | DEBE | A | — | — | Inspección / Auditoría |
 | REQ-COMP-003 | F1 | DEBE | T | — | — | Pendiente (Fase futura) |
-| REQ-OBS-001 | F7 | DEBE | T | — | health.rs, lib.rs, main.rs, health_test.rs, lib.rs, telemetry.rs, health.rs, main.rs, health_test.rs | Cubierto |
+| REQ-OBS-001 | F7 | DEBE | T | — | health.rs, lib.rs, main.rs, health_test.rs, health.rs, lib.rs, main.rs, config_test.rs, lib.rs, telemetry.rs, health.rs, main.rs, health_test.rs | Cubierto |
 | REQ-OBS-002 | F15 | DEBE | D | — | — | Inspección / Auditoría |
 | REQ-OBS-003 | F9 | DEBE | T, I | — | — | Pendiente (Fase futura) |
 | REQ-DOC-001 | F0 | DEBE | I | — | — | Inspección / Auditoría |
