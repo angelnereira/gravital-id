@@ -7,8 +7,12 @@ import 'package:gravital_experience_ui/gravital_experience_ui.dart';
 import 'src/domain/gravital_wallet_store.dart';
 import 'src/screens/consent_screen.dart';
 import 'src/screens/device_slots_screen.dart';
+import 'src/screens/linked_accounts_screen.dart';
 import 'src/screens/present_access_screen.dart';
+import 'src/screens/profile_screen.dart';
+import 'src/screens/registration_screen.dart';
 import 'src/screens/recovery_screen.dart';
+import 'src/screens/settings_screen.dart';
 import 'src/screens/sync_trust_screen.dart';
 import 'src/screens/tenants_portability_screen.dart';
 import 'src/screens/vault_screen.dart';
@@ -119,6 +123,26 @@ class _WalletHomeShell extends StatelessWidget {
         icon: Icons.verified_user_outlined,
         selectedIcon: Icons.verified_user_rounded,
       ),
+      const GxNavigationDestination(
+        label: 'Perfil',
+        icon: Icons.person_outline_rounded,
+        selectedIcon: Icons.person_rounded,
+      ),
+      const GxNavigationDestination(
+        label: 'Cuentas',
+        icon: Icons.hub_outlined,
+        selectedIcon: Icons.hub_rounded,
+      ),
+      const GxNavigationDestination(
+        label: 'Registro',
+        icon: Icons.person_add_outlined,
+        selectedIcon: Icons.person_add_rounded,
+      ),
+      const GxNavigationDestination(
+        label: 'Ajustes',
+        icon: Icons.settings_outlined,
+        selectedIcon: Icons.settings_rounded,
+      ),
     ];
 
     final Widget primaryBody = switch (selectedIndex) {
@@ -138,6 +162,10 @@ class _WalletHomeShell extends StatelessWidget {
       4 => RecoveryScreen(store: store),
       5 => SyncTrustScreen(store: store),
       6 => ConsentScreen(store: store),
+      7 => ProfileScreen(store: store),
+      8 => LinkedAccountsScreen(store: store),
+      9 => RegistrationScreen(store: store),
+      10 => SettingsScreen(store: store),
       _ => DeviceSlotsScreen(store: store),
     };
 
