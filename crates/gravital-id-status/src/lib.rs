@@ -19,14 +19,22 @@
 
 extern crate alloc;
 
+pub mod builder;
 pub mod cache;
 pub mod manifest;
+pub mod manifest_builder;
+pub mod signer;
 pub mod status_list;
 
+pub use builder::{SignedTokenStatusList, TokenStatusListBuilder, MIN_STATUS_LIST_ENTRIES};
 pub use cache::{FreshnessPolicy, StatusCache, StatusSnapshot, DEFAULT_MAX_CACHED_LISTS};
 pub use manifest::{
     IssuerStatusManifest, ManifestListEntry, StatusManifestVerifier, DEFAULT_MANIFEST_MAX_BYTES,
 };
+pub use manifest_builder::{
+    IssuerStatusManifestBuilder, SignedStatusManifest, STATUS_MANIFEST_TYP,
+};
+pub use signer::{LocalStatusSigner, StatusSigner};
 pub use status_list::{
     StatusListVerifier, TokenStatus, TokenStatusList, MAX_DECOMPRESSED_BYTES, MAX_EXPANSION_RATIO,
     STATUS_LIST_ALG, STATUS_LIST_TYP, SUPPORTED_BITS_PER_ENTRY,

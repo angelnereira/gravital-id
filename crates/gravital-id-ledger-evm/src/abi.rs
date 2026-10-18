@@ -35,6 +35,9 @@ pub fn keccak256(data: &[u8]) -> [u8; 32] {
 /// Selector de función `getLatestCommitment(bytes32)` (4 bytes).
 pub const SELECTOR_GET_LATEST_COMMITMENT: [u8; 4] = [0xa1, 0x39, 0x68, 0x7c];
 
+/// Selector de función `anchorStatusManifest(bytes32,uint64,bytes32,string)` (4 bytes).
+pub const SELECTOR_ANCHOR_STATUS_MANIFEST: [u8; 4] = [0x6a, 0x02, 0x6f, 0x0a];
+
 /// Topic0 de `IssuerRegistered(bytes32,string,uint64,uint64)`.
 pub const TOPIC_ISSUER_REGISTERED: [u8; 32] = [
     0x99, 0x7a, 0x86, 0x2d, 0xa8, 0x3f, 0x70, 0x13, 0x0e, 0xb9, 0x5a, 0xf1, 0xa9, 0x05, 0x91, 0xd0,
@@ -582,6 +585,88 @@ pub fn decode_get_latest_commitment_return(
     }))
 }
 
+/// Codifica la llamada calldata para `IStatusAnchor.anchorStatusManifest(bytes32,uint64,bytes32,string)`.
+///
+/// Formato calldata ABI EVM:
+/// - Selector: 4 bytes (`SELECTOR_ANCHOR_STATUS_MANIFEST`).
+/// - Argumento 0: `issuerId` (32 bytes).
+/// - Argumento 1: `manifestVersion` (uint64, 32 bytes con padding de ceros a la izquierda).
+/// - Argumento 2: `manifestHash` (32 bytes).
+/// - Argumento 3: Offset a `uriHint` (uint256 = 128 / 0x80).
+/// - Tail (offset 128): Longitud de `uriHint` (uint256, 32 bytes).
+/// - Tail: Bytes de `uriHint` rellenados con ceros al siguiente múltiplo de 32 bytes.
+#[must_use]
+pub fn encode_anchor_status_manifest_call(
+    issuer_id: &[u8; 32],
+    manifest_version: u64,
+    manifest_hash: &[u8; 32],
+    uri_hint: &str,
+) -> Vec<u8> {
+    let uri_bytes = uri_hint.as_bytes();
+    let uri_len = uri_bytes.len();
+    let padded_uri_len = uri_len.div_ceil(32).saturating_mul(32);
+    let total_len = 164usize.saturating_add(padded_uri_len);
+
+    let mut calldata = Vec::with_capacity(total_len);
+    calldata.extend_from_slice(&SELECTOR_ANCHOR_STATUS_MANIFEST);
+    calldata.extend_from_slice(issuer_id);
+
+    let mut ver_word = [0u8; 32];
+    ver_word[24..32].copy_from_slice(&manifest_version.to_be_bytes());
+    calldata.extend_from_slice(&ver_word);
+
+    calldata.extend_from_slice(manifest_hash);
+
+    let mut offset_word = [0u8; 32];
+    offset_word[24..32].copy_from_slice(&128u64.to_be_bytes());
+    calldata.extend_from_slice(&offset_word);
+
+    let mut len_word = [0u8; 32];
+    len_word[24..32].copy_from_slice(&(uri_len as u64).to_be_bytes());
+    calldata.extend_from_slice(&len_word);
+
+    calldata.extend_from_slice(uri_bytes);
+    let padding = padded_uri_len.saturating_sub(uri_len);
+    calldata.resize(calldata.len().saturating_add(padding), 0);
+
+    calldata
+}
+
+/// Decodifica una llamada calldata a `IStatusAnchor.anchorStatusManifest(...)`.
+///
+/// Retorna `(issuer_id, manifest_version, manifest_hash, uri_hint)`.
+///
+/// # Errores
+/// [`EvmLedgerError::AbiDecoding`] si los datos están truncados o el selector no coincide.
+pub fn decode_anchor_status_manifest_call(
+    calldata: &[u8],
+) -> EvmLedgerResult<([u8; 32], u64, [u8; 32], String)> {
+    if calldata.len() < 4 + 128 + 32 {
+        return Err(EvmLedgerError::AbiDecoding(
+            "anchorStatusManifest calldata too short".into(),
+        ));
+    }
+
+    if calldata.get(0..4) != Some(&SELECTOR_ANCHOR_STATUS_MANIFEST) {
+        return Err(EvmLedgerError::AbiDecoding(
+            "invalid selector for anchorStatusManifest".into(),
+        ));
+    }
+
+    let args = calldata.get(4..).ok_or_else(|| {
+        EvmLedgerError::AbiDecoding("anchorStatusManifest calldata missing arguments".into())
+    })?;
+    let issuer_id = read_bytes32_at(args, 0)?;
+    let manifest_version = read_uint64_at(args, 32)?;
+    let manifest_hash = read_bytes32_at(args, 64)?;
+    let offset = usize::try_from(read_uint64_at(args, 96)?)
+        .map_err(|_| EvmLedgerError::AbiDecoding("offset exceeds usize".into()))?;
+
+    let uri_hint = read_dynamic_string(args, offset)?;
+
+    Ok((issuer_id, manifest_version, manifest_hash, uri_hint))
+}
+
 #[cfg(test)]
 #[allow(
     clippy::unwrap_used,
@@ -597,6 +682,10 @@ mod tests {
         assert_eq!(
             &keccak256(b"getLatestCommitment(bytes32)")[0..4],
             &SELECTOR_GET_LATEST_COMMITMENT
+        );
+        assert_eq!(
+            keccak256(b"anchorStatusManifest(bytes32,uint64,bytes32,string)")[..4],
+            SELECTOR_ANCHOR_STATUS_MANIFEST
         );
         assert_eq!(
             keccak256(b"IssuerRegistered(bytes32,string,uint64,uint64)"),
@@ -902,5 +991,39 @@ mod tests {
             .unwrap()
             .is_none());
         assert!(decode_get_latest_commitment_return(issuer_id, &[0u8; 64]).is_err());
+    }
+
+    #[test]
+    fn test_anchor_status_manifest_call_roundtrip_and_errors() {
+        let issuer_id = [0x42u8; 32];
+        let manifest_version = 7u64;
+        let manifest_hash = [0xabu8; 32];
+        let uri_hint = "https://issuer.example.com/status/manifest.jwt";
+
+        let calldata = encode_anchor_status_manifest_call(
+            &issuer_id,
+            manifest_version,
+            &manifest_hash,
+            uri_hint,
+        );
+
+        assert_eq!(&calldata[0..4], &SELECTOR_ANCHOR_STATUS_MANIFEST);
+
+        let (dec_issuer, dec_ver, dec_hash, dec_uri) =
+            decode_anchor_status_manifest_call(&calldata).expect("should decode valid calldata");
+
+        assert_eq!(dec_issuer, issuer_id);
+        assert_eq!(dec_ver, manifest_version);
+        assert_eq!(dec_hash, manifest_hash);
+        assert_eq!(dec_uri, uri_hint);
+
+        // Error cases:
+        // 1. Too short
+        assert!(decode_anchor_status_manifest_call(&calldata[..50]).is_err());
+
+        // 2. Invalid selector
+        let mut corrupted = calldata.clone();
+        corrupted[0] ^= 0xff;
+        assert!(decode_anchor_status_manifest_call(&corrupted).is_err());
     }
 }

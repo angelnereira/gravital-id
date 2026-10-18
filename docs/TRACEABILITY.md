@@ -41,14 +41,14 @@
 | REQ-VER-010 | F4 | DEBE | T | P-08 | pipeline.rs, result.rs, verifier_negative_matrix_and_precedence.rs, verifier_pipeline_integration.rs | Cubierto |
 | REQ-VER-011 | F4 | DEBE | T | P-08 | cache.rs, lib.rs, verifier_state.rs, error.rs, lib.rs, pipeline.rs, state.rs, verifier_negative_matrix_and_precedence.rs, verifier_pipeline_integration.rs, verifier_state_integration.rs | Cubierto |
 | REQ-VER-012 | F4 | DEBE | T, I | P-08 | pipeline.rs, result.rs, compile_fail.rs, cannot_construct_valid_directly.rs, verifier_pipeline_integration.rs | Cubierto |
-| REQ-STAT-001 | F4 | DEBE | T | P-04 | lib.rs, status_list.rs, status_list_integration.rs, status_list_parser.rs | Cubierto |
-| REQ-STAT-002 | F7 | DEBE | T | P-09 | — | Pendiente (Fase futura) |
-| REQ-STAT-003 | F4 | DEBE | T, F | P-08 | base45.rs, deflate.rs, lib.rs, status_list.rs, status_list_integration.rs, base45_strict.rs, deflate_bounded.rs, status_list_parser.rs | Cubierto |
+| REQ-STAT-001 | F4 | DEBE | T | P-04 | builder.rs, lib.rs, status_list.rs, status_builder_test.rs, status_list_integration.rs, status_list_parser.rs | Cubierto |
+| REQ-STAT-002 | F7 | DEBE | T | P-09 | status_allocator.rs, status_manager.rs, status_lifecycle_test.rs, builder.rs, status_builder_test.rs | Cubierto |
+| REQ-STAT-003 | F4 | DEBE | T, F | P-08 | base45.rs, deflate.rs, builder.rs, lib.rs, status_list.rs, status_list_integration.rs, base45_strict.rs, deflate_bounded.rs, status_list_parser.rs | Cubierto |
 | REQ-STAT-004 | F4 | DEBE | T | P-05 | cache.rs, lib.rs, manifest.rs, status_list_integration.rs, pipeline.rs, policy.rs, verifier_pipeline_integration.rs, verifier_policy_integration.rs | Cubierto |
-| REQ-STAT-005 | F7 | DEBE | T | P-10 | — | Pendiente (Fase futura) |
-| REQ-STAT-006 | F7 | DEBE | T | P-14 | ledger_state_and_derivation.rs, evm_adapter_integration.rs | Cubierto |
-| REQ-STAT-007 | F4 | DEBE | T | — | cache.rs, lib.rs, status_list.rs, status_list_integration.rs | Cubierto |
-| REQ-STAT-008 | F7 | DEBE | T | P-08 | lib.rs, manifest.rs, status_list_integration.rs, status_list_parser.rs | Cubierto |
+| REQ-STAT-005 | F7 | DEBE | T | P-10 | status_manager.rs, status_lifecycle_test.rs, builder.rs, manifest_builder.rs, status_builder_test.rs | Cubierto |
+| REQ-STAT-006 | F7 | DEBE | T | P-14 | status_manager.rs, status_lifecycle_test.rs, ledger_state_and_derivation.rs, evm_adapter_integration.rs, manifest_builder.rs | Cubierto |
+| REQ-STAT-007 | F4 | DEBE | T | — | status_manager.rs, status_lifecycle_test.rs, builder.rs, cache.rs, lib.rs, status_list.rs, status_builder_test.rs, status_list_integration.rs | Cubierto |
+| REQ-STAT-008 | F7 | DEBE | T | P-08 | status_manager.rs, status_lifecycle_test.rs, lib.rs, manifest.rs, manifest_builder.rs, signer.rs, status_builder_test.rs, status_list_integration.rs, status_list_parser.rs | Cubierto |
 | REQ-TRUST-001 | F4 | DEBE | T | P-08 | bundle.rs, jws_json.rs, lib.rs, trust_bundle_integration.rs, aggregator.rs, lib.rs, signer.rs, aggregator_test.rs, signer_test.rs | Cubierto |
 | REQ-TRUST-002 | F4 | DEBE | T | P-08 | bundle.rs, lib.rs, trust_bundle_integration.rs | Cubierto |
 | REQ-TRUST-003 | F7 | DEBE | T | P-14 | config.rs, engine.rs, error.rs, lib.rs, main.rs, operator.rs, config_test.rs, engine_test.rs, operator_test.rs | Cubierto |
@@ -90,7 +90,7 @@
 | REQ-REC-007 | F8 | DEBE | T | P-09 | — | Pendiente (Fase futura) |
 | REQ-ISS-001 | F10 | DEBE | T | P-04 | — | Pendiente (Fase futura) |
 | REQ-ISS-002 | F15 | DEBE | I, A | P-03 | — | Inspección / Auditoría |
-| REQ-ISS-003 | F7 | DEBE | T | — | — | Pendiente (Fase futura) |
+| REQ-ISS-003 | F7 | DEBE | T | — | status_allocator.rs, status_manager.rs, status_lifecycle_test.rs, builder.rs, signer.rs, status_builder_test.rs | Cubierto |
 | REQ-ISS-004 | F10 | DEBE | T | P-08 | — | Pendiente (Fase futura) |
 | REQ-ISS-005 | F10 | DEBE | T, D | P-08 | — | Pendiente (Fase futura) |
 | REQ-ISS-006 | F8 | DEBE | T | — | — | Pendiente (Fase futura) |
@@ -128,7 +128,7 @@
 | REQ-IDDOC-003 | F24 | DEBE | T, I | P-09 | — | Pendiente (Fase futura) |
 | REQ-SEC-001 | F1 | DEBE | T, I | — | layers.rs | Cubierto |
 | REQ-SEC-002 | F2 | DEBE | I | — | aead.rs, ecdh.rs, hpke.rs, kdf.rs, rng.rs, sha.rs, api_coverage.rs, external_vectors.rs | Cubierto |
-| REQ-SEC-003 | F2 | DEBE | T, I | — | aead.rs, secret.rs, api_coverage.rs, secret_hygiene.rs, software.rs, state.rs, verifier_state_integration.rs | Cubierto |
+| REQ-SEC-003 | F2 | DEBE | T, I | — | aead.rs, secret.rs, api_coverage.rs, secret_hygiene.rs, software.rs, signer.rs, state.rs, verifier_state_integration.rs | Cubierto |
 | REQ-SEC-004 | F2 | DEBE | I | — | mac.rs, secret.rs, secret_hygiene.rs | Cubierto |
 | REQ-SEC-005 | F2 | DEBE | F | — | trust_bundle_integration.rs, base45_strict.rs, base64url_strict.rs, cbor_bounded.rs, deflate_bounded.rs, json_bounded.rs, jwk_parser.rs, sd_jwt_parser.rs, status_list_parser.rs, trace.rs | Cubierto |
 | REQ-SEC-006 | F1 | DEBE | T | — | — | Pendiente (Fase futura) |
@@ -137,7 +137,7 @@
 | REQ-SEC-009 | F15 | DEBE | T | — | — | Pendiente (Fase futura) |
 | REQ-SEC-010 | F0 | DEBE | I | — | — | Inspección / Auditoría |
 | REQ-SEC-011 | F0 | DEBE | I | — | — | Inspección / Auditoría |
-| REQ-PRIV-001 | F5 | DEBE | I | — | lib.rs, lib.rs, plan.rs, presentation.rs, query.rs, wallet.rs, holder_dcql_and_presentation.rs, offline_wallet_policy.rs, protocol_wallet_request_validation.rs | Cubierto |
+| REQ-PRIV-001 | F5 | DEBE | I | — | lib.rs, lib.rs, plan.rs, presentation.rs, query.rs, wallet.rs, holder_dcql_and_presentation.rs, status_allocator.rs, offline_wallet_policy.rs, protocol_wallet_request_validation.rs | Cubierto |
 | REQ-PRIV-002 | F4 | DEBE | T | — | verifier_offline_and_determinism.rs | Cubierto |
 | REQ-PRIV-003 | F7 | DEBE | T, I | — | lib.rs, main.rs, config.rs, lib.rs, redaction.rs, telemetry.rs, no_pii_logging_test.rs, main.rs, deploy_hygiene.rs | Cubierto |
 | REQ-PRIV-004 | F14 | DEBE | A | — | — | Inspección / Auditoría |

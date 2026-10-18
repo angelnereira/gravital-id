@@ -10,7 +10,7 @@
 | Último gate cerrado | **G6** (2026-10-17) · **G5** (2026-10-16) · **G4** (2026-10-16) · **G19** (2026-10-15) · **G0** (2026-10-11) |
 | Próximo gate | **G7** — plano de servicio completo en testnet; **G3** (#59) y **G2** pendientes de CI |
 | Hito siguiente | M2 · Sincronización y anclaje (al cerrar G7) · MP1 · Tap offline (al cerrar G21) [M1 alcanzado] |
-| Última actualización | 2026-10-17 (F7.T04 completada — pip-trust-service implementado con derivación determinista de bundles, cofirma multi-operador k-de-n, agregador no confiable y publicación en S3/CDN al 93,72% de cobertura; #97 resuelto) |
+| Última actualización | 2026-10-17 (F7.T05 completada — Listas de estado del emisor, asignación aleatoria, publicación direccionada por contenido, manifiestos con versión monotónica y ABI de StatusAnchor; #98 resuelto) |
 
 ## Gates
 
@@ -30,7 +30,8 @@
 
 | Tarea | Issue | Responsable | Estado | Siguiente paso |
 |---|---|---|---|---|
-| F7.T05 Listas de estado del emisor | #98 | Antigravity (agente) | Por iniciar | Asignación aleatoria de índices, tamaño mínimo, actualización, firma, publicación direccionada por contenido, manifiesto de estado firmado y anclaje periódico en StatusAnchor (REQ-ISS-003, REQ-STAT-002, REQ-STAT-005, REQ-STAT-006, REQ-STAT-008) |
+| F7.T06 `pip-relay` | #99 | Antigravity (agente) | En curso | Servicio de relay sin almacenamiento persistente, reenvío sin estado, autenticación efímera, cifrado de transporte y límites de tasa (REQ-SYNC-004, REQ-SYNC-006) |
+| F7.T05 Listas de estado del emisor | #98 | Antigravity (agente) | Hecha | Asignación aleatoria no correlacionada (P-09), TokenStatusListBuilder (>= 131.072), compresión DEFLATE acotada (<= 10:1), IssuerStatusManifestBuilder monotónico, IssuerStatusManager y ABI anchorStatusManifest; resuelto #98 |
 | F7.T04 `pip-trust-service` | #97 | Antigravity (agente) | Hecha | Derivación determinista de trust bundles, cofirma multi-operador k-de-n y publicación en S3/CDN (93,72% cobertura); resuelto #97 |
 | F7.T03 `pip-indexer` | #96 | Antigravity (agente) | Hecha | Ingesta de bloques finalizados, PostgreSQL, idempotencia, reprocesamiento, detección divergencia RPC y métricas de lag (90,19% cobertura); resuelto #96 |
 | F7.T02 `pip-service-common` | #95 | Antigravity (agente) | Hecha | Crate L5 pip-service-common con configuración tipada, OpenTelemetry, /healthz, /readyz y redacción no-PII (94,86% cobertura); resuelto #95 |
@@ -152,6 +153,25 @@
 | Tamaño binario del SDK | — | — | — | — | — |
 
 ## Última nota de traspaso
+
+### Traspaso — 2026-10-17 (F7.T05: Listas de estado del emisor — Asignación aleatoria, Token Status Lists, publicación direccionada por contenido, manifiesto de estado y anclaje en StatusAnchor) — Antigravity (agente)
+- Tarea: F7.T05 — #98 — rama `main`
+- Estado: **hecha**
+- Hecho en esta sesión:
+  - **F7.T05 (`gravital-id-status`, `gravital-id-issuer`, `gravital-id-ledger-evm`):** Implementación completa de la infraestructura del emisor para listas de estado, asignación aleatoria, actualización y publicación periódica de estado y anclaje en el ledger (`REQ-ISS-003`, `REQ-STAT-002`, `REQ-STAT-005`, `REQ-STAT-006`, `REQ-STAT-008`, `P-09`, `INV-01`, `INV-02`, `INV-03`, `INV-05`, `INV-06`, `INV-07`, `INV-08`, `INV-11`, `INV-16`).
+  - **Firmante de estado (`gravital-id-status::signer`):** Abstracción `StatusSigner` desacoplada de claves privadas (`INV-03`) con `LocalStatusSigner` implementando firma ES256 P-256 (`ZeroizeOnDrop` vía `SecretKeyBytes`).
+  - **Constructor de listas (`gravital-id-status::builder`):** `TokenStatusListBuilder` para compilar y firmar Token Status Lists (1 bit y 2 bits por entrada) conforme a RFC 9901 / draft-19 (`typ: statuslist+jwt`), forzando capacidad mínima normativa $\ge 131.072$ entradas (`REQ-STAT-002`), compresión DEFLATE con control estricto de ratio de expansión ($\le 10:1$, mitigación de bombas de descompresión según `REQ-STAT-003`), auto-verificación fail-closed con `StatusListVerifier::parse` y producción de `SignedTokenStatusList` con digest SHA-256 y formato de URI direccionada por contenido (`{base_url}/{sha256}.jwt`, `REQ-STAT-005`).
+  - **Constructor de manifiestos (`gravital-id-status::manifest_builder`):** `IssuerStatusManifestBuilder` para emitir manifiestos `IssuerStatusManifest` firmados con versión monotónica incremental (`REQ-STAT-008`), verificación previa estricta y generación de `SignedStatusManifest` con hash de 32 bytes para anclaje.
+  - **Asignador de índices aleatorios (`gravital-id-issuer::status_allocator`):** `StatusIndexAllocator` con bitmap en memoria y algoritmo de muestreo uniforme sin sesgo de módulo (`sample_uniform_index`) sobre las posiciones libres mediante generador CSPRNG inyectado (`INV-11`), eliminando correlación de orden de emisión o sesgos temporales (`P-09`, `REQ-STAT-002`).
+  - **Gestor de estado del emisor (`gravital-id-issuer::status_manager`):** `IssuerStatusManager` para emisión, revocación (`revoke`), suspensión temporal (`suspend`) y reactivación (`reactivate`) sobre múltiples listas administradas, y generación atómica de instantáneas de publicación (`publish_snapshot`) con compromiso de estado `StatusCommitment` listo para anclaje en el ledger.
+  - **Codificación y decodificación ABI EVM (`gravital-id-ledger-evm::abi`):** Calldata para la función `anchorStatusManifest(bytes32,uint64,bytes32,string)` (`SELECTOR_ANCHOR_STATUS_MANIFEST: 0x6a026f0a`) en `StatusAnchor.sol` (`REQ-STAT-006`).
+  - **Pruebas y cobertura:** Cobertura de $>93\%$ de líneas en los nuevos módulos (`status_manager.rs`: 93,42%, `manifest_builder.rs`: 93,41%, `builder.rs`: 92,65% regions, `signer.rs`: 100% functions) con suites exhaustivas de pruebas unitarias y de integración (`status_builder_test.rs`, `status_lifecycle_test.rs`, tests ABI en `gravital-id-ledger-evm`).
+- Pendiente (siguiente paso concreto):
+  - Iniciar `F7.T06`: `pip-relay` (servicio de retransmisión de proximidad y sincronización, reenvío sin estado ni persistencia en disco, autenticación efímera, cifrado de transporte y límites de tasa, `REQ-SYNC-004`, `REQ-SYNC-006`).
+- Bugs/issues abiertos durante la sesión: ninguno.
+- Decisiones tomadas (con enlace a ADR/issue): Implementado constructor de listas y manifiestos y gestor de estado conforme a RFC 9901, `REQ-ISS-003`, `REQ-STAT-002`, `REQ-STAT-005`, `REQ-STAT-006` y `REQ-STAT-008` (#98).
+- Riesgos o dudas: ninguna.
+- Comprobaciones locales: fmt ✅ clippy ✅ tests (100% verde en todo el workspace) ✅ layers ✅ trace (98 REQs referenciados) ✅ check-error-codes (59) ✅ check-contracts-privacy (0 PII) ✅ check-deploy-hygiene ✅ deny ✅ llvm-cov (>= 90% en nuevos módulos) ✅
 
 ### Traspaso — 2026-10-17 (F7.T04: pip-trust-service — Derivación determinista de trust bundles, cofirma multi-operador k-de-n, agregador no confiable y publicación en S3/CDN) — Antigravity (agente)
 - Tarea: F7.T04 — #97 — rama `main`

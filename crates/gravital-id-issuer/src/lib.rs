@@ -35,9 +35,15 @@ use gravital_id_types::{ErrorCode, GidError, Kid, ProfileId, UnixTime, Vct};
 
 pub mod batch;
 pub mod request;
+pub mod status_allocator;
+pub mod status_manager;
 
 pub use batch::{BatchCopy, BatchPlan, MAX_BATCH_COPIES};
 pub use request::{Attribute, CredentialRequest, StatusAllocation, MAX_ATTRIBUTES};
+pub use status_allocator::StatusIndexAllocator;
+pub use status_manager::{
+    IssuerStatusManager, ManagedStatusList, PublishedStatusSnapshot, StatusCommitment,
+};
 
 /// Credencial emitida junto con los metadatos que el emisor necesita para operarla.
 #[derive(Debug, Clone, PartialEq)]

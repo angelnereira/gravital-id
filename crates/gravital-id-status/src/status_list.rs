@@ -331,7 +331,11 @@ impl StatusListVerifier {
                 format!("invalid base64url in status list payload: {e}"),
             )
         })?;
-        let payload_val = parse_bytes(&payload_bytes, &limits).map_err(|e| {
+        let payload_limits = JsonLimits {
+            max_string_bytes: 64 * 1024,
+            ..JsonLimits::profile_default()
+        };
+        let payload_val = parse_bytes(&payload_bytes, &payload_limits).map_err(|e| {
             GidError::new(
                 ErrorCode::MalformedStatusList,
                 format!("failed to parse status list payload: {e}"),
