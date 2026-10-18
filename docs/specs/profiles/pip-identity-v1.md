@@ -4,7 +4,7 @@
 > **Versión:** `1.0.0-draft` (Fase F19 / Tarea `F19.T11`)  
 > **Estado:** Normativo / En revisión  
 > **Fecha:** 2026-10-18  
-> **Trazabilidad:** REQ-IDDOC-001, REQ-IDDOC-002, REQ-IDDOC-003, REQ-UNIQ-001, REQ-UNIQ-002, REQ-UNIQ-003, REQ-DEVSLOT-001, REQ-DEVSLOT-002, REQ-DEVSLOT-003, REQ-CRED-004, REQ-PRES-007, REQ-CARD-003, REQ-PROX-001; ADR-0021, ADR-0024, ADR-0026, ADR-0028, ADR-0029; `ARCHITECTURE.md §16`, `§23`, `§24`
+> **Trazabilidad:** REQ-IDDOC-001, REQ-IDDOC-002, REQ-IDDOC-003, REQ-UNIQ-001, REQ-UNIQ-002, REQ-UNIQ-003, REQ-DEVSLOT-001, REQ-DEVSLOT-002, REQ-DEVSLOT-003, REQ-REC-005, REQ-REC-006, REQ-REC-004, REQ-REC-007, REQ-CRED-004, REQ-PRES-007, REQ-CARD-003, REQ-PROX-001; ADR-0009, ADR-0021, ADR-0024, ADR-0026, ADR-0028, ADR-0029; `ARCHITECTURE.md §16`, `§23`, `§24`
 
 ---
 
@@ -162,10 +162,40 @@ Añade los campos de trazabilidad de la verificación de origen (`evidence_type`
 
 ---
 
-## 7. Procedimiento de Recuperación y Revocación por Extravío (`Nivel 3`)
+## 7. Procedimiento Normativo de Recuperación Institucional y Re-vinculación de Dispositivo (`REQ-REC-005`, `REQ-REC-006`, `REQ-DEVSLOT-003`, `ADR-0009`, `ADR-0029`)
 
-1. **Pérdida o Robo de Tarjeta Física o Teléfono:** Dado que la clave privada reside en hardware no exportable (`REQ-CARD-001`), el titular reporta el extravío ante el emisor (o mediante su clave de recuperación en línea) y el emisor actualiza el índice correspondiente en la `Token Status List` a `01` (revocado) o `10` (suspendido) (`REQ-CARD-005`).
-2. **Efecto en Verificadores Offline:** En cuanto los verificadores sincronizan el siguiente snapshot de estado, cualquier toque con la tarjeta o teléfono extraviado produce `VerificationResult::Invalid` con código `GID-E4005` (`CredentialRevoked`) o `GID-E4006` (`CredentialSuspended`).
+Dado que las claves privadas del titular residen exclusivamente en hardware inexportable (elemento seguro Java Card o TEE/StrongBox/Secure Enclave, `REQ-CARD-001`, `INV-03`), ante pérdida, robo, avería o sustitución de soporte físico, el titular **no puede exportar ni restaurar la clave anterior**. La recuperación de la credencial civil se rige por el siguiente procedimiento institucional normativo:
+
+### 7.1 Marco de Verificación Fuera de Banda de la Autoridad Emisora (`REQ-REC-005`)
+
+1. **Procedimiento Oficial (Tribunal Electoral de Panamá / Registro Civil):**
+   - En cumplimiento de la **Ley 68 de 2015** y el **Decreto N.° 43 de 8 de octubre de 2024**, la re-emisión institucional de la credencial oficial (`urn:gravital-id:vct:pip-identity-official-v1`) o derivada (`urn:gravital-id:vct:pip-identity-derived-v1`) requiere la validación de identidad ciudadana mediante:
+     - **Canal Presencial:** Comparecencia física del ciudadano en una oficina del Tribunal Electoral / Registro Civil con cotejo biométrico dactilar o facial directo contra las bases de datos maestras del Registro Civil; O
+     - **Canal Remoto Certificado:** Verificación biométrica facial remota con prueba de vida activa (*active liveness detection*) certificada, cotejada en tiempo real a través del **Servicio de Verificación de Identidad (SVI)** (`IdentityVerificationPort`).
+2. **Prohibición Absoluta de Correo Electrónico, SMS o Custodio Único (`REQ-REC-006`):**
+   - **Regla Inviolable:** La recuperación de un documento de identidad civil **NUNCA DEBE depender de un correo electrónico (enlace web, *magic link*, OTP por email) ni de un mensaje SMS.** Dichos canales carecen de atestación de identidad fehaciente, son susceptibles de interceptación o *SIM swapping*, y violan los principios de soberanía (`P-08`, `P-10`).
+   - El sistema jamás delega la custodia de la identidad a un único operador humano ni custodio centralizado (`INV-03`, `INV-16`).
+
+### 7.2 Revocación Atómica por Ranura de Dispositivo (`REQ-DEVSLOT-001..004`, `ADR-0029`)
+
+El emisor gestiona las ranuras activas del titular de acuerdo con la regla de exclusión mutua por clase de factor:
+
+1. **Aislamiento de Ranura Afectada:**
+   - Si el ciudadano extravía su teléfono móvil (`device_class = "mobile"`), el emisor revoca de manera atómica el `status_list_index` asignado al teléfono móvil en la `TokenStatusList` oficial (marcando `01 = revocado`).
+   - **No Afectación de Otras Clases:** La tarjeta física (`device_class = "card"`) y cualquier dispositivo auxiliar (`"other"`) permanecen intactos, activos y 100 % funcionales para el titular (`ADR-0029`).
+2. **Atestación de Nuevo Hardware:**
+   - Para el nuevo soporte (nuevo teléfono o nueva tarjeta Java Card), se verifica obligatoriamente la cadena de atestación de hardware (`Key Attestation` / atestación CPLC en estación `gid-perso`).
+3. **Re-emisión y Preservación de Unicidad (`REQ-UNIQ-001..003`):**
+   - La nueva credencial se vincula a la nueva clave pública `cnf` de hardware y a un nuevo índice en la lista de estado.
+   - El `UniquenessTag` derivado del documento nacional (`ADR-0028`) permanece idéntico y vinculado al mismo ciudadano, impidiendo la duplicidad de identidad.
+   - Se publica el nuevo `IssuerStatusManifest` y se ancla en el `TrustLedger` sin registrar jamás datos personales ni identificadores en claro (`INV-02`).
+
+### 7.3 Efecto Inmediato en Verificadores Offline (`REQ-CARD-005`, `REQ-STAT-004`)
+
+- En cuanto los verificadores sincronizan el siguiente snapshot firmado de la `TokenStatusList` desde la red de relays o CDN, cualquier intento de presentación física u óptica con el soporte revocado produce de forma determinista:
+  $$\text{VerificationResult} = \text{Invalid}(\text{Evidence}\{\text{status: Revoked, code: GID-E4005}\})$$
+- Si la ranura fue colocada preventivamente en suspensión temporal durante la investigación de un presunto extravío, el verificador offline produce:
+  $$\text{VerificationResult} = \text{Invalid}(\text{Evidence}\{\text{status: Suspended, code: GID-E4006}\})$$
 
 ---
 

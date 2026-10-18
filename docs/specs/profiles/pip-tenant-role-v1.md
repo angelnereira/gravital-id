@@ -4,7 +4,7 @@
 > **Versión:** `1.0.0`  
 > **Estado:** Normativo  
 > **Fecha:** 2026-10-18  
-> **Trazabilidad:** REQ-TENANT-001, REQ-TENANT-002, REQ-TENANT-003, REQ-TENANT-004, REQ-UNIQ-001..004, REQ-DEVSLOT-001..004, REQ-CRED-004, REQ-PRES-003; ADR-0027, ADR-0028, ADR-0029; `ARCHITECTURE.md §7, §16, §18`
+> **Trazabilidad:** REQ-TENANT-001, REQ-TENANT-002, REQ-TENANT-003, REQ-TENANT-004, REQ-UNIQ-001..004, REQ-DEVSLOT-001..004, REQ-REC-005, REQ-REC-006, REQ-REC-004, REQ-REC-007, REQ-CRED-004, REQ-PRES-003; ADR-0009, ADR-0027, ADR-0028, ADR-0029; `ARCHITECTURE.md §7, §16, §18`
 
 ---
 
@@ -97,3 +97,41 @@ Cuando una aplicación o servidor integra Gravital ID (`gravital-id-sdk` / `pip-
 3. El sistema calcula el `UniquenessTag` mediante el módulo HSM/VOPRF (`ADR-0028`):
    - **Si ya existe un Gravital ID para ese ciudadano:** se bloquea la creación duplicada (`GID-E2010 CitizenIdentityAlreadyRegistered`) y se ofrece al usuario iniciar sesión con su Gravital ID existente o ejecutar la recuperación/re-vinculación (`F8.T04`).
    - **Si no existe:** se verifica la atestación de hardware del dispositivo para la ranura correspondiente (`mobile`, `card` u `other`, `ADR-0029`), se emite la credencial de identidad (`pip-identity-derived-v1` o `pip-identity-official-v1`) y se vincula al inquilino.
+
+---
+
+## 5. Procedimiento Normativo de Recuperación Institucional y Re-vinculación de Inquilino (`REQ-REC-005`, `REQ-REC-006`, `REQ-DEVSLOT-003`, `ADR-0009`, `ADR-0029`)
+
+Cuando un usuario pierde o reemplaza su soporte físico, la restitución de sus roles y permisos en aplicaciones hospedadas se rige por el siguiente procedimiento normativo:
+
+### 5.1 Soberanía del Inquilino sin Custodio Central (`REQ-REC-006`, `P-10`)
+
+1. **Gestión Descentralizada:** La emisión, suspensión, revocación y re-vinculación de credenciales `pip-tenant-role-v1` es administrada de forma autónoma por cada inquilino a través de su propio módulo emisor (`Tenant Gateway` / `pip-issuer-service`).
+2. **Sin Custodia Global:** Ningún operador de red, relay ni tercero centralizado posee claves ni facultades para alterar o transferir roles dentro de un inquilino privado (`INV-03`, `INV-16`).
+
+### 5.2 Prohibición Expresa de Correo Electrónico como Factor Único (`REQ-REC-006`)
+
+1. **Prohibición de Reseteo por Email:**
+   - **Regla Inviolable:** La re-vinculación de roles de un inquilino **NUNCA DEBE depender exclusivamente de un mensaje o enlace a correo electrónico (*magic link* / email OTP) ni de SMS.** Un correo electrónico no autentica criptográficamente la posesión del titular y es vulnerable a secuestro de buzón y ataques de ingeniería social.
+2. **Factores Autorizados de Re-vinculación:**
+   - Para vincular un nuevo dispositivo a su cuenta en el inquilino, el titular debe proporcionar:
+     1. **Prueba de Posesión de Identidad Civil:** Presentación de su credencial oficial (`pip-identity-v1`) con firma KB-JWT autenticada en un factor de hardware alternativo activo (p. ej. su tarjeta física tipo Visa o quiosco presencial), O
+     2. **Protocolo Criptográfico de Re-vinculación:** Desafío firmado con la clave de recuperación exclusiva del inquilino:
+        $$\text{RecoveryKey}_{\text{Tenant}} = \text{HKDF}(\text{RecoverySecret}, \text{TenantId})$$
+        registrada ante el inquilino en la emisión inicial (`REQ-REC-004`, `REQ-REC-007`), O
+     3. **Aprobación Dual Delegada:** Co-autorización del Administrador del Inquilino y un supervisor de seguridad institucional asignado.
+
+### 5.3 Aislamiento y Revocación Atómica por Ranura (`REQ-DEVSLOT-001..004`, `ADR-0029`)
+
+1. **Aislamiento por Ranura:**
+   - Si el usuario sustituye su teléfono móvil (`device_class = "mobile"`), el Tenant Gateway revoca atómicamente el `status_list_index` asignado a esa ranura en la `TokenStatusList` de 2 bits del inquilino (`01 = revocado`).
+   - Las credenciales y ranuras del titular en otros dispositivos (p. ej. tarjeta física `"card"`) o en otros inquilinos permanecen totalmente válidas y operativas (`REQ-DEVSLOT-003`).
+
+### 5.4 Continuidad Determinista de Identidad de Inquilino (`TenantSubjectId`, `INV-02`, `P-09`)
+
+1. **Preservación del Sujeto en el Inquilino:**
+   - La nueva credencial `pip-tenant-role-v1` re-emitida para el nuevo dispositivo conserva de manera estricta y determinista el mismo:
+     $$\text{tenant\_subject\_id} = \text{Base64UrlNoPad}(\text{HMAC-SHA256}(\text{holder\_root\_secret}, \text{"gid-tenant-sub-v1"} \parallel \text{tenant\_id}))$$
+   - Esto asegura que los historiales, autorizaciones de base de datos y auditorías internas del sistema anfitrión continúen funcionando sin interrupciones ni desajustes de identidad.
+2. **No Correlación Cruzada:**
+   - Como $\text{tenant\_subject\_id}$ depende criptográficamente de $\text{tenant\_id}$, dos inquilinos diferentes nunca obtienen el mismo identificador para un mismo titular, preservando la no-correlación (`P-09`) y la ausencia total de datos personales en el registro (`INV-02`).

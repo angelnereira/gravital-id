@@ -84,10 +84,10 @@
 | REQ-REC-001 | F8 | DEBE | T, D | P-03 | lib.rs, migration.rs, migration_tests.rs | Cubierto |
 | REQ-REC-002 | F8 | DEBE | T | P-03 | code.rs, error.rs, kdf.rs, lib.rs, manager.rs, package.rs, payload.rs, wordlist.rs, migration_tests.rs, recovery_tests.rs | Cubierto |
 | REQ-REC-003 | F8 | DEBERÍA | T | P-10 | gf256.rs, shamir.rs, shamir_tests.rs | Cubierto |
-| REQ-REC-004 | F8 | DEBE | T | P-07 | vc.rs, lib.rs, request.rs, slot_manager.rs, kdf.rs, key.rs, lib.rs, payload.rs, rebinding.rs, migration_tests.rs, rebinding_tests.rs, recovery_key_tests.rs, recovery_tests.rs | Cubierto |
-| REQ-REC-005 | F8 | DEBE | I | — | — | Inspección / Auditoría |
-| REQ-REC-006 | F8 | DEBE | I | P-10 | — | Inspección / Auditoría |
-| REQ-REC-007 | F8 | DEBE | T | P-09 | vc.rs, lib.rs, request.rs, kdf.rs, key.rs, lib.rs, rebinding.rs, rebinding_tests.rs, recovery_key_tests.rs, recovery_tests.rs | Cubierto |
+| REQ-REC-004 | F8 | DEBE | T | P-07 | institutional_recovery_profiles_audit.rs, vc.rs, lib.rs, request.rs, slot_manager.rs, kdf.rs, key.rs, lib.rs, payload.rs, rebinding.rs, migration_tests.rs, rebinding_tests.rs, recovery_key_tests.rs, recovery_tests.rs | Cubierto |
+| REQ-REC-005 | F8 | DEBE | I | — | institutional_recovery_profiles_audit.rs | Cubierto |
+| REQ-REC-006 | F8 | DEBE | I | P-10 | institutional_recovery_profiles_audit.rs | Cubierto |
+| REQ-REC-007 | F8 | DEBE | T | P-09 | institutional_recovery_profiles_audit.rs, vc.rs, lib.rs, request.rs, kdf.rs, key.rs, lib.rs, rebinding.rs, rebinding_tests.rs, recovery_key_tests.rs, recovery_tests.rs | Cubierto |
 | REQ-ISS-001 | F10 | DEBE | T | P-04 | — | Pendiente (Fase futura) |
 | REQ-ISS-002 | F15 | DEBE | I, A | P-03 | — | Inspección / Auditoría |
 | REQ-ISS-003 | F7 | DEBE | T | — | status_allocator.rs, status_manager.rs, status_lifecycle_test.rs, builder.rs, signer.rs, status_builder_test.rs | Cubierto |
@@ -134,9 +134,9 @@
 | REQ-UNIQ-002 | F10 | DEBE | T, I | P-02 | — | Pendiente (Fase futura) |
 | REQ-UNIQ-003 | F10 | DEBE | T | P-08 | — | Pendiente (Fase futura) |
 | REQ-UNIQ-004 | F10 | DEBE | T, I | P-14 | — | Pendiente (Fase futura) |
-| REQ-DEVSLOT-001 | F8 | DEBE | T | P-08 | slot_manager.rs, rebinding.rs, rebinding_tests.rs, ids.rs | Cubierto |
+| REQ-DEVSLOT-001 | F8 | DEBE | T | P-08 | institutional_recovery_profiles_audit.rs, slot_manager.rs, rebinding.rs, rebinding_tests.rs, ids.rs | Cubierto |
 | REQ-DEVSLOT-002 | F10 | DEBE | T, I | P-03 | slot_manager.rs, rebinding_tests.rs | Cubierto |
-| REQ-DEVSLOT-003 | F8 | DEBE | T | P-08 | slot_manager.rs, rebinding.rs, rebinding_tests.rs | Cubierto |
+| REQ-DEVSLOT-003 | F8 | DEBE | T | P-08 | institutional_recovery_profiles_audit.rs, slot_manager.rs, rebinding.rs, rebinding_tests.rs | Cubierto |
 | REQ-DEVSLOT-004 | F10 | DEBE | T, I | P-02 | slot_manager.rs, rebinding.rs, rebinding_tests.rs | Cubierto |
 | REQ-SEC-001 | F1 | DEBE | T, I | — | layers.rs | Cubierto |
 | REQ-SEC-002 | F2 | DEBE | I | — | aead.rs, ecdh.rs, hpke.rs, kdf.rs, rng.rs, sha.rs, api_coverage.rs, external_vectors.rs | Cubierto |
