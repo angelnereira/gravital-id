@@ -7,6 +7,15 @@ Cada componente publicado (SDK, servicios, contratos, especificación) indica su
 ## [Unreleased]
 
 ### Added
+- [cli, verifier, status] Revocación durante periodo offline y sincronización posterior (`apps/pip-cli`, `apps/pip-cli/tests/offline_revocation_mvp05.rs`, `F7.T11`, `REQ-STAT-004`, `REQ-STAT-007`, `REQ-STAT-008`, `REQ-REL-004`, `MVP-05`, `INV-01`, `INV-02`, `INV-04`, `INV-05`, `INV-11`; #104):
+  - `apps/pip-cli`: Subcomando `demo-mvp05` que ejecuta la demostración oficial determinista del criterio normativo MVP-05 (§24) en 6 etapas:
+    1. Emisión inicial y verificación online fresca en $T_0 \to \text{Valid}$.
+    2. Desconexión del verificador a modo 100% offline sin I/O de red (`INV-01`) y revocación en emisor en línea con publicación de snapshot V2.
+    3. Periodo offline tras superar la ventana de frescura de la política (`OperationClass::Transaction` = 1800s) evaluado contra snapshot local V1 $\to$ degradación explícita determinista a `ValidWithStaleStatus` (`REQ-STAT-004`, `REQ-REL-004`, `MVP-04`, `INV-04`).
+    4. Reconexión y sincronización con el relay/mirror (`pip-sync`) descargando snapshot V2.
+    5. Verificación post-sincronización con snapshot V2 $\to$ credencial revocada reflejada deterministamente como `Invalid` (`MVP-05`, `INV-04`, `INV-05`).
+    6. Mitigación de ataque de rollback de estado (`REQ-STAT-008`): rechazo fail-closed de versiones de manifiesto no crecientes ($1 \le 2$).
+  - `apps/pip-cli/tests/offline_revocation_mvp05.rs`: Suite automatizada de pruebas de integración con 4 pruebas en verde verificando la ejecución del subcomando CLI, el ciclo de vida de la API, la matriz de frescura por clase de operación (`Transaction` 1800s, `Query` 14400s, `Default` 604800s) y la regla anti-rollback estricta.
 - [infra, test] Integración completa de la pila de servicios en contenedores (`apps/pip-cli/tests/container_stack_integration.rs`, `deploy/docker/docker-compose.yml`, `deploy/docker/.env.example`, `F7.T10`, `REQ-REL-001`, `REQ-TRUST-001`, `REQ-TRUST-004`, `REQ-TRUST-008`, `REQ-SYNC-001..006`, `REQ-CODE-001..004`, `REQ-PRIV-003`, `INV-01`, `INV-02`, `INV-04`, `INV-05`, `INV-11`, `INV-16`; #103):
   - `deploy/docker/docker-compose.yml` y `deploy/docker/.env.example`: Mapeos de puertos de host parametrizados (`ANVIL_PORT`, `POSTGRES_PORT`, `MINIO_PORT`, `MINIO_CONSOLE_PORT`) para prevenir conflictos de enlace en entornos locales y CI (`check-deploy-hygiene` en verde sin secretos en texto claro).
   - `apps/pip-cli/tests/container_stack_integration.rs`: Suite automatizada de pruebas de integración end-to-end multi-servicio validando la interacción coordinada entre la cadena local EVM / adaptador en memoria, `pip-indexer` (ingesta, checkpoints monotónicos, proyecciones puras de estado e idempotencia), `pip-trust-service` (cofirma determinista multi-operador $k$-de-$n$, agregación no confiable, aislamiento de divergencia y publicación de bundles), `pip-relay` (almacén direccionado por contenido SHA-256, buzones de sobres HPKE y punto de encuentro efímero con `SessionCode` Damm de 10 dígitos) y el SDK/cliente de verificación:

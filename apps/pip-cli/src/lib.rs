@@ -39,6 +39,7 @@ use gravital_id_protocol::{
     VerificationRequest as ProtocolVerificationRequest,
 };
 use gravital_id_status::cache::StatusSnapshot;
+use gravital_id_status::manifest::StatusManifestVerifier;
 use gravital_id_status::status_list::StatusListVerifier;
 use gravital_id_storage_sqlite::SqliteStorage;
 use gravital_id_testkit::SeededRng;
@@ -80,6 +81,11 @@ SUBCOMANDOS:
         Ejecuta la demostración oficial del Hito M1 y Gate G5 (F5.T14, ROADMAP.md §24):
         escenarios normativos MVP-01 (offline sans-I/O), MVP-02 (rechazo de firmas y emisores no autorizados),
         MVP-03 (rechazo de replay con SQLite persistente) e inspección forense de cero PII en almacenamiento.
+
+    demo-mvp05
+        Ejecuta la demostración oficial de revocación durante periodos offline (F7.T11, ROADMAP.md §24 MVP-05):
+        verificador offline -> revocación en emisor -> ValidWithStaleStatus mientras corresponde (REQ-STAT-004,
+        REQ-REL-004) -> sincronización -> resultado Invalid reflejando la revocación, y anti-rollback (REQ-STAT-008).
 
     qr-render --data <CADENA|FICHERO> [--invert]
         Renderiza en consola un código QR Dense1x2 de alto contraste escaneable directamente
@@ -130,6 +136,7 @@ pub fn run() -> Result<()> {
         Some("demo-offline") => run_demo_offline()?,
         Some("demo-flow-offline") => run_demo_flow_offline()?,
         Some("demo-m1") => run_demo_m1()?,
+        Some("demo-mvp05") => run_demo_mvp05()?,
         Some("qr-render") => run_qr_render(&args[1..])?,
         Some("dev-issuer") => run_dev_issuer(&args[1..])?,
         Some("dev-verifier") => run_dev_verifier(&args[1..])?,
@@ -2385,6 +2392,367 @@ pub fn run_demo_m1() -> Result<()> {
     println!("  - INV-01, INV-02, INV-04, INV-05, INV-11: Todos los invariantes cumplidos rigurosamente.");
     println!("================================================================================");
 
+    Ok(())
+}
+
+/// Ejecuta la demostración oficial del escenario MVP-05 (F7.T11, ROADMAP.md §24):
+/// Verificador offline -> Revocación en emisor -> ValidWithStaleStatus mientras
+/// corresponde (REQ-STAT-004, REQ-REL-004) -> Sincronización -> Invalid.
+pub fn run_demo_mvp05() -> Result<()> {
+    println!("================================================================================");
+    println!(" Gravital ID (PIP) — Demostración Oficial de Revocación Offline (F7.T11, MVP-05)");
+    println!(" Escenario: Verificador offline; revocación ocurre en emisor; resultado");
+    println!(
+        "            'ValidWithStaleStatus' mientras corresponde e 'Invalid' tras sincronizar."
+    );
+    println!(" Requisitos: REQ-STAT-004 (frescura por clase), REQ-STAT-008 (anti-rollback),");
+    println!(
+        "             REQ-REL-004 (degradación explícita), INV-01 (cero red), INV-04 (4 estados)"
+    );
+    println!("================================================================================\n");
+
+    let base_time = UnixTime::from_seconds(1_770_000_000);
+    let start_demo = std::time::Instant::now();
+
+    // 1. Claves y configuración del emisor y titular
+    let mut issuer_store = SoftwareKeyStore::new(SeededRng::new(0xABCD_1111));
+    let issuer_handle = gid_err(issuer_store.generate_key::<IssuerSigning>(), "issuer key")?;
+    let issuer_jwk = gid_err(issuer_store.public_key(&issuer_handle), "issuer jwk")?;
+    let issuer_jwk_parsed = gid_err(
+        gravital_id_codec::json::parse(&issuer_jwk.to_canonical_json()),
+        "jwk parse",
+    )?;
+
+    let mut holder_store = SoftwareKeyStore::new(SeededRng::new(0xABCD_2222));
+    let holder_handle = gid_err(holder_store.generate_key::<HolderBinding>(), "holder key")?;
+    let holder_jwk = gid_err(holder_store.public_key(&holder_handle), "holder jwk")?;
+
+    let issuer_uri = "https://issuer.te.gob.pa";
+    let status_list_uri = "https://status.te.gob.pa/lists/2026-10";
+    let vct = "urn:gravital-id:vct:pip-personal-v1";
+    let audience = "https://migracion.gob.pa/checkpoint-border";
+    let kid = "te-issuer-key-01";
+    let credential_index = 42u32;
+
+    // Trust bundle con emisor registrado
+    let bundle_payload = Value::Object(vec![
+        (
+            "framework_id".to_string(),
+            Value::String("pip-global".to_string()),
+        ),
+        (
+            "bundle_version".to_string(),
+            Value::Number(Number::PosInt(1)),
+        ),
+        ("bundle_epoch".to_string(), Value::Number(Number::PosInt(1))),
+        ("chain_id".to_string(), Value::Number(Number::PosInt(1))),
+        (
+            "registry_address".to_string(),
+            Value::String("0x1234".to_string()),
+        ),
+        (
+            "finalized_block_number".to_string(),
+            Value::Number(Number::PosInt(200)),
+        ),
+        (
+            "finalized_block_hash".to_string(),
+            Value::String("0xdeadbeef".to_string()),
+        ),
+        (
+            "issued_at".to_string(),
+            Value::Number(Number::PosInt(
+                base_time.as_seconds().saturating_sub(86_400),
+            )),
+        ),
+        (
+            "valid_until".to_string(),
+            Value::Number(Number::PosInt(
+                base_time.as_seconds().saturating_add(86_400),
+            )),
+        ),
+        (
+            "issuers".to_string(),
+            Value::Array(vec![Value::Object(vec![
+                (
+                    "issuer_id".to_string(),
+                    Value::String(issuer_uri.to_string()),
+                ),
+                (
+                    "profiles".to_string(),
+                    Value::Array(vec![Value::String("pip-personal-v1".to_string())]),
+                ),
+                (
+                    "vcts".to_string(),
+                    Value::Array(vec![Value::String(vct.to_string())]),
+                ),
+                (
+                    "valid_from".to_string(),
+                    Value::Number(Number::PosInt(
+                        base_time.as_seconds().saturating_sub(86_400),
+                    )),
+                ),
+                ("state".to_string(), Value::String("active".to_string())),
+                (
+                    "keys".to_string(),
+                    Value::Array(vec![Value::Object(vec![
+                        ("kid".to_string(), Value::String(kid.to_string())),
+                        ("jwk".to_string(), issuer_jwk_parsed),
+                        ("state".to_string(), Value::String("active".to_string())),
+                        (
+                            "state_since".to_string(),
+                            Value::Number(Number::PosInt(
+                                base_time.as_seconds().saturating_sub(86_400),
+                            )),
+                        ),
+                    ])]),
+                ),
+            ])]),
+        ),
+    ]);
+    let bundle = gid_err(TrustBundle::from_payload(&bundle_payload), "trust bundle")?;
+
+    // Helper para generar presentación SD-JWT con KB-JWT
+    let make_presentation = |now: UnixTime, step_nonce: &str| -> Result<String> {
+        let header = format!(r#"{{"alg":"ES256","typ":"dc+sd-jwt","kid":"{kid}"}}"#);
+        let payload = format!(
+            r#"{{"iss":"{issuer_uri}","vct":"{vct}","iat":{},"exp":{},"cnf":{{"jwk":{}}},"status":{{"status_list":{{"idx":{credential_index},"uri":"{status_list_uri}"}}}}}}"#,
+            base_time.as_seconds(),
+            base_time.as_seconds().saturating_add(86_400),
+            holder_jwk.to_canonical_json()
+        );
+        let h_b64 = base64url::encode(header.as_bytes());
+        let p_b64 = base64url::encode(payload.as_bytes());
+        let signing_input = format!("{h_b64}.{p_b64}");
+        let digest = gravital_id_crypto::sha256(signing_input.as_bytes());
+        let sig = gid_err(
+            issuer_store.sign(&issuer_handle, &digest),
+            "sign issuer jwt",
+        )?;
+        let issuer_jwt = format!("{signing_input}.{}", base64url::encode(&sig));
+        let prefix = format!("{issuer_jwt}~");
+
+        gid_err(
+            gravital_id_credential::KbIssuer::create_presentation(
+                &prefix,
+                audience,
+                step_nonce,
+                now,
+                &holder_store,
+                &holder_handle,
+            ),
+            "create kb presentation",
+        )
+    };
+
+    // Helper para construir snapshot
+    let build_snapshot = |status_bit: u32,
+                          issued_time: UnixTime,
+                          acquired_time: UnixTime|
+     -> Result<StatusSnapshot> {
+        let header = r#"{"alg":"ES256","typ":"statuslist+jwt"}"#;
+        let mut values = vec![0u32; 64];
+        if let Some(entry) = values.get_mut(credential_index as usize) {
+            *entry = status_bit;
+        }
+        let payload = format!(
+            r#"{{"exp":{},"iat":{},"iss":"{}","status_list":{{"bits":2,"lst":"{}","uri":"{}"}}}}"#,
+            base_time.as_seconds().saturating_add(86_400),
+            issued_time.as_seconds(),
+            issuer_uri,
+            pack_status_lst(2, &values),
+            status_list_uri
+        );
+        let jwt = format!(
+            "{}.{}.{}",
+            base64url::encode(header.as_bytes()),
+            base64url::encode(payload.as_bytes()),
+            base64url::encode(&[0u8; 64])
+        );
+        let list = gid_err(StatusListVerifier::parse(&jwt), "status list parse")?;
+        Ok(StatusSnapshot::new(list, status_list_uri, acquired_time))
+    };
+
+    let policy = VerificationPolicy::default();
+
+    println!(">>> PASO 1: Emisión inicial y verificación online fresca en T0");
+    println!("    - Emisor emite credencial con índice de estado = {credential_index} (Valid).");
+    println!(
+        "    - Snapshot V1 adquirido en T0 = {} con estado activo.",
+        base_time.as_seconds()
+    );
+    let nonce_step1 = "session-nonce-mvp05-step1-fresh";
+    let req_step1 = VerificationRequest::new(
+        nonce_step1,
+        audience,
+        UnixTime::from_seconds(base_time.as_seconds().saturating_add(7200)),
+        OperationClass::Transaction,
+    );
+    let pres_initial = make_presentation(base_time, nonce_step1)?;
+    let snap_v1 = build_snapshot(0, base_time, base_time)?;
+    let mut verifier_store = InMemoryStateStore::new(StateIntegrityKey::new([0xAA; 32]));
+
+    let res_initial = VerifierPipeline::verify(
+        &pres_initial,
+        Some(&req_step1),
+        &bundle,
+        Some(&snap_v1),
+        &mut verifier_store,
+        &policy,
+        base_time,
+        None,
+    );
+    println!("    - Resultado en T0: {}", res_initial.status().as_str());
+    if res_initial.status() != VerificationStatus::Valid {
+        anyhow::bail!("Resultado en T0 debe ser Valid");
+    }
+    println!("    [OK] Verificación inicial fresca: Valid.\n");
+
+    println!(">>> PASO 2: Verificador entra en modo Offline y el emisor revoca en línea");
+    println!("    - El verificador queda desconectado sin I/O de red (INV-01).");
+    println!(
+        "    - En T1 (T0 + 600s), el emisor revoca la credencial en su registro central (bit = 1)."
+    );
+    println!("    - El emisor publica el nuevo snapshot V2 en el relay/mirror.");
+    println!("    - El verificador offline NO tiene conocimiento de la revocación.\n");
+
+    println!(">>> PASO 3: Periodo Offline — Presentación tras vencer el umbral de frescura de Transaction");
+    let t_offline = UnixTime::from_seconds(base_time.as_seconds().saturating_add(3600)); // +1h (> 30 min)
+    println!(
+        "    - Tiempo actual T_offline = {} (antigüedad de snapshot V1: 3600s > 1800s).",
+        t_offline.as_seconds()
+    );
+    let nonce_offline = "session-nonce-mvp05-step3-offline";
+    let req_offline = VerificationRequest::new(
+        nonce_offline,
+        audience,
+        UnixTime::from_seconds(t_offline.as_seconds().saturating_add(7200)),
+        OperationClass::Transaction,
+    );
+    let pres_offline = make_presentation(t_offline, nonce_offline)?;
+    let res_offline = VerifierPipeline::verify(
+        &pres_offline,
+        Some(&req_offline),
+        &bundle,
+        Some(&snap_v1), // Sigue teniendo el snapshot V1
+        &mut verifier_store,
+        &policy,
+        t_offline,
+        None,
+    );
+    println!("    - Resultado offline: {}", res_offline.status().as_str());
+    if res_offline.status() != VerificationStatus::ValidWithStaleStatus {
+        for c in res_offline.checks() {
+            println!("      CHECK: {:?} - {} ({:?})", c.kind, c.message, c.status);
+        }
+        anyhow::bail!("Resultado offline debe ser ValidWithStaleStatus");
+    }
+    println!(
+        "    - Antigüedad reportada en evidencia: {}s (umbral Transaction = 1800s)",
+        res_offline.status_age_seconds().unwrap_or(0)
+    );
+    println!("    [OK] Degradación explícita determinista: ValidWithStaleStatus (REQ-STAT-004, REQ-REL-004, MVP-04).\n");
+
+    println!(">>> PASO 4: Reconexión y Sincronización con el Relay/Mirror");
+    println!("    - El verificador recupera conexión de red y ejecuta la sincronización.");
+    let t_sync = UnixTime::from_seconds(base_time.as_seconds().saturating_add(3650));
+    let t_revoke = UnixTime::from_seconds(base_time.as_seconds().saturating_add(600));
+    // Snapshot V2 emitido en t_revoke con índice 42 revocado (1) y adquirido en t_sync
+    let snap_v2 = build_snapshot(1, t_revoke, t_sync)?;
+    println!("    - Sincronización completada: snapshot V2 actualizado en almacén local.\n");
+
+    println!(">>> PASO 5: Verificación Post-Sincronización con Snapshot V2 Actualizado");
+    let nonce_sync = "session-nonce-mvp05-step5-sync";
+    let req_sync = VerificationRequest::new(
+        nonce_sync,
+        audience,
+        UnixTime::from_seconds(t_sync.as_seconds().saturating_add(7200)),
+        OperationClass::Transaction,
+    );
+    let pres_post_sync = make_presentation(t_sync, nonce_sync)?;
+    let res_post_sync = VerifierPipeline::verify(
+        &pres_post_sync,
+        Some(&req_sync),
+        &bundle,
+        Some(&snap_v2),
+        &mut verifier_store,
+        &policy,
+        t_sync,
+        None,
+    );
+    println!(
+        "    - Resultado post-sincronización: {}",
+        res_post_sync.status().as_str()
+    );
+    if res_post_sync.status() != VerificationStatus::Invalid {
+        anyhow::bail!("Resultado post-sincronización debe ser Invalid");
+    }
+    if res_post_sync.check(CheckKind::Status).map(|c| c.status) != Some(CheckStatus::Failed) {
+        anyhow::bail!("Comprobación de estado debe haber fallado");
+    }
+    println!("    [OK] Credencial revocada reflejada deterministamente tras sincronizar: Invalid (MVP-05, INV-04, INV-05).\n");
+
+    println!(">>> PASO 6: Demostración de Anti-Rollback de Manifiesto de Estado (REQ-STAT-008)");
+    let manifest_payload_v1 = Value::Object(vec![
+        (
+            "issuer_id".to_string(),
+            Value::String(issuer_uri.to_string()),
+        ),
+        (
+            "manifest_version".to_string(),
+            Value::Number(Number::PosInt(1)),
+        ),
+        (
+            "issued_at".to_string(),
+            Value::Number(Number::PosInt(base_time.as_seconds())),
+        ),
+        (
+            "valid_until".to_string(),
+            Value::Number(Number::PosInt(
+                base_time.as_seconds().saturating_add(86_400),
+            )),
+        ),
+        (
+            "status_lists".to_string(),
+            Value::Array(vec![Value::Object(vec![
+                (
+                    "status_list_id".to_string(),
+                    Value::String("list-1".to_string()),
+                ),
+                (
+                    "type".to_string(),
+                    Value::String("TokenStatusList".to_string()),
+                ),
+                (
+                    "uri".to_string(),
+                    Value::String(status_list_uri.to_string()),
+                ),
+                ("sha256".to_string(), Value::String("00".repeat(32))),
+            ])]),
+        ),
+    ]);
+    let manifest_v1 = gid_err(
+        StatusManifestVerifier::from_payload(&manifest_payload_v1),
+        "manifest v1",
+    )?;
+    let last_accepted_version = 2u64;
+    let rollback_check = manifest_v1.check_monotonic_version(Some(last_accepted_version));
+    println!(
+        "    - Intento de inyectar versión {} cuando la última aceptada es {last_accepted_version}.",
+        manifest_v1.manifest_version()
+    );
+    if rollback_check.is_ok() {
+        anyhow::bail!("Rollback de versión de manifiesto no fue rechazado");
+    }
+    println!(
+        "    [OK] Intento de rollback de estado rechazado fail-closed (REQ-STAT-008, INV-05).\n"
+    );
+
+    println!("================================================================================");
+    println!(
+        " HITO M2 & ESCENARIO MVP-05 CUMPLIDO: Demostración completada con éxito en {:.2?}",
+        start_demo.elapsed()
+    );
+    println!("================================================================================");
     Ok(())
 }
 

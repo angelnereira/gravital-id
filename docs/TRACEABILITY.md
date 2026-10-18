@@ -44,11 +44,11 @@
 | REQ-STAT-001 | F4 | DEBE | T | P-04 | builder.rs, lib.rs, status_list.rs, status_builder_test.rs, status_list_integration.rs, status_list_parser.rs | Cubierto |
 | REQ-STAT-002 | F7 | DEBE | T | P-09 | status_allocator.rs, status_manager.rs, status_lifecycle_test.rs, builder.rs, status_builder_test.rs | Cubierto |
 | REQ-STAT-003 | F4 | DEBE | T, F | P-08 | base45.rs, deflate.rs, builder.rs, lib.rs, status_list.rs, status_list_integration.rs, base45_strict.rs, deflate_bounded.rs, status_list_parser.rs | Cubierto |
-| REQ-STAT-004 | F4 | DEBE | T | P-05 | cache.rs, lib.rs, manifest.rs, status_list_integration.rs, pipeline.rs, policy.rs, verifier_pipeline_integration.rs, verifier_policy_integration.rs | Cubierto |
+| REQ-STAT-004 | F4 | DEBE | T | P-05 | lib.rs, offline_revocation_mvp05.rs, cache.rs, lib.rs, manifest.rs, status_list_integration.rs, pipeline.rs, policy.rs, verifier_pipeline_integration.rs, verifier_policy_integration.rs | Cubierto |
 | REQ-STAT-005 | F7 | DEBE | T | P-10 | status_manager.rs, status_lifecycle_test.rs, builder.rs, manifest_builder.rs, status_builder_test.rs | Cubierto |
 | REQ-STAT-006 | F7 | DEBE | T | P-14 | status_manager.rs, status_lifecycle_test.rs, ledger_state_and_derivation.rs, evm_adapter_integration.rs, manifest_builder.rs | Cubierto |
-| REQ-STAT-007 | F4 | DEBE | T | — | status_manager.rs, status_lifecycle_test.rs, builder.rs, cache.rs, lib.rs, status_list.rs, status_builder_test.rs, status_list_integration.rs | Cubierto |
-| REQ-STAT-008 | F7 | DEBE | T | P-08 | status_manager.rs, status_lifecycle_test.rs, lib.rs, manifest.rs, manifest_builder.rs, signer.rs, status_builder_test.rs, status_list_integration.rs, status_list_parser.rs | Cubierto |
+| REQ-STAT-007 | F4 | DEBE | T | — | offline_revocation_mvp05.rs, status_manager.rs, status_lifecycle_test.rs, builder.rs, cache.rs, lib.rs, status_list.rs, status_builder_test.rs, status_list_integration.rs | Cubierto |
+| REQ-STAT-008 | F7 | DEBE | T | P-08 | lib.rs, offline_revocation_mvp05.rs, status_manager.rs, status_lifecycle_test.rs, lib.rs, manifest.rs, manifest_builder.rs, signer.rs, status_builder_test.rs, status_list_integration.rs, status_list_parser.rs | Cubierto |
 | REQ-TRUST-001 | F4 | DEBE | T | P-08 | container_stack_integration.rs, bundle.rs, jws_json.rs, lib.rs, trust_bundle_integration.rs, aggregator.rs, lib.rs, signer.rs, aggregator_test.rs, signer_test.rs | Cubierto |
 | REQ-TRUST-002 | F4 | DEBE | T | P-08 | bundle.rs, lib.rs, trust_bundle_integration.rs | Cubierto |
 | REQ-TRUST-003 | F7 | DEBE | T | P-14 | container_stack_integration.rs, config.rs, engine.rs, error.rs, lib.rs, main.rs, operator.rs, config_test.rs, engine_test.rs, operator_test.rs | Cubierto |
@@ -161,7 +161,7 @@
 | REQ-REL-001 | F15 | DEBE | A, D | — | container_stack_integration.rs, health.rs, main.rs, config_test.rs, health_test.rs, config.rs, health.rs, lib.rs, main.rs, config_test.rs, server_test.rs, config.rs, health.rs, lib.rs, server.rs, shutdown.rs, config_test.rs, health_and_server_test.rs, config.rs, health.rs, main.rs, publisher.rs, config_test.rs, health_test.rs, deploy_hygiene.rs | Cubierto |
 | REQ-REL-002 | F15 | DEBE | I | — | — | Inspección / Auditoría |
 | REQ-REL-003 | F15 | DEBE | D | — | — | Inspección / Auditoría |
-| REQ-REL-004 | F4 | DEBE | T | — | verifier_negative_matrix_and_precedence.rs, verifier_offline_and_determinism.rs | Cubierto |
+| REQ-REL-004 | F4 | DEBE | T | — | lib.rs, offline_revocation_mvp05.rs, verifier_negative_matrix_and_precedence.rs, verifier_offline_and_determinism.rs | Cubierto |
 | REQ-PERF-001 | F2 | DEBE | T | — | crypto_primitives.rs | Cubierto |
 | REQ-PERF-002 | F9 | DEBE | T | — | — | Pendiente (Fase futura) |
 | REQ-PERF-003 | F5 | DEBE | T | — | lib.rs, cli_integration.rs, cli_m1_demonstration.rs, lib.rs, protocol_multi_qr_and_budgets.rs | Cubierto |

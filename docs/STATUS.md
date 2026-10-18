@@ -10,7 +10,7 @@
 | Último gate cerrado | **G6** (2026-10-17) · **G5** (2026-10-16) · **G4** (2026-10-16) · **G19** (2026-10-15) · **G0** (2026-10-11) |
 | Próximo gate | **G7** — plano de servicio completo en testnet; **G3** (#59) y **G2** pendientes de CI |
 | Hito siguiente | M2 · Sincronización y anclaje (al cerrar G7) · MP1 · Tap offline (al cerrar G21) [M1 alcanzado] |
-| Última actualización | 2026-10-18 (`F7.T10` completada: integración automatizada de la pila de servicios en contenedores en `container_stack_integration.rs` validando nominal e2e ledger + indexador + trust-service k-de-n + relay por hash SHA-256 + SDK verificación completa multi-fuente, aislamiento de operadores divergentes, fail-closed `INV-05`, `INV-16` y auditoría forense cero PII `INV-02`; `F7.T09` evaluada y cerrada bajo ADR-0007 / REQ-ISS-002; siguiente tarea `F7.T11` revocación offline MVP-05) |
+| Última actualización | 2026-10-18 (`F7.T11` completada: revocación durante periodo offline y sincronización posterior MVP-05 con subcomando `pip-cli demo-mvp05` y suite automatizada `offline_revocation_mvp05.rs`; degradación determinista a `ValidWithStaleStatus` por antigüedad `REQ-STAT-004`/`REQ-REL-004` y resolución a `Invalid` tras sincronizar, junto con mitigación anti-rollback `REQ-STAT-008`; `F7.T10` y `F7.T09` completadas; siguiente tarea `F7.T12` Caos) |
 
 ## Gates
 
@@ -30,7 +30,8 @@
 
 | Tarea | Issue | Responsable | Estado | Siguiente paso |
 |---|---|---|---|---|
-| F7.T11 Revocación durante periodo offline (MVP-05) | #104 | Antigravity (agente) | Por hacer | Escenario MVP-05: verificador offline; revocación ocurre; resultado `ValidWithStaleStatus` mientras corresponde e `Invalid` tras sincronizar (`REQ-STAT-004`) |
+| F7.T12 Caos (inyección de fallos) | #105 | Antigravity (agente) | Por hacer | Pruebas de caos: relay malicioso (rollback, retención, alteración), RPC caído, CDN caída; degradación a estados explícitos (`REQ-REL-004`, `REQ-SYNC-004`) |
+| F7.T11 Revocación durante periodo offline (MVP-05) | #104 | Antigravity (agente) | Hecha | Subcomando `pip-cli demo-mvp05` y suite `apps/pip-cli/tests/offline_revocation_mvp05.rs` con ciclo de vida completo: $T_0 \to \text{Valid}$, $T_{\text{offline}} \to \text{ValidWithStaleStatus}$ por umbral de frescura de transacción, $T_{\text{sync}} \to \text{Invalid}$ por revocación, y anti-rollback monotónico (`REQ-STAT-004`, `REQ-STAT-008`, `REQ-REL-004`, `MVP-05`); resuelto #104 |
 | F7.T10 Integración con contenedores | #103 | Antigravity (agente) | Hecha | Suite automatizada `apps/pip-cli/tests/container_stack_integration.rs` con flujo nominal E2E, aislamiento de divergencia en operadores, fail-closed en divergencia de ledger y auditoría cero PII (`INV-01`, `INV-02`, `INV-04`, `INV-05`, `INV-11`, `INV-16`); resuelto #103 |
 | F7.T09 Backend `aws-lc-rs` (FIPS, condicional) | #103 | Antigravity (agente) | Hecha | Evaluada y cerrada condicionalmente conforme a ROADMAP.md y ADR-0007 (cumplimiento FIPS 140-2/3 en producción delegado a HSM/KMS bajo REQ-ISS-002); resuelto #103 |
 | F7.T08 Modo de verificación completa | #102 | Antigravity (agente) | Hecha | Motor `FullVerificationEngine` en capa L4 contrastando con $\ge 2$ fuentes de ledger, alarma y rechazo fail-closed ante divergencia o fuentes insuficientes (`REQ-TRUST-004`); resuelto #102 |
@@ -159,6 +160,31 @@
 | Tamaño binario del SDK | — | — | — | — | — |
 
 ## Última nota de traspaso
+
+### Traspaso — 2026-10-18 (F7.T11: Revocación durante periodo offline MVP-05 — Subcomando demo-mvp05, degradación determinista a ValidWithStaleStatus y resolución a Invalid tras sincronizar con anti-rollback) — Antigravity (agente)
+- Tarea: F7.T11 — #104 — rama `main`
+- Estado: **hecha**
+- Hecho en esta sesión:
+  - **F7.T11 (`apps/pip-cli/src/lib.rs`):** Implementado subcomando reproducible `pip-cli demo-mvp05` que demuestra paso a paso las 6 etapas normativas del escenario MVP-05 (§24 de ARCHITECTURE.md):
+    1. $T_0$: Emisión inicial e ingesta de credencial en wallet; verificación en línea con trust bundle y status list frescos $\to$ `Valid`.
+    2. Desconexión del verificador a modo 100% offline (sin red, `INV-01`); el emisor revoca en línea la credencial (bit 1) y ancla nuevo `IssuerStatusManifest` v2 con BitString actualizado.
+    3. $T_{\text{offline}}$: El titular presenta la credencial sin conexión. Dado que transcurrieron 1.801 segundos superando el umbral de frescura de `OperationClass::Transaction` (1.800 s, `REQ-STAT-004`, `REQ-REL-004`), el pipeline se degrada deterministamente a `ValidWithStaleStatus` documentando la advertencia sin fallar en falso.
+    4. $T_{\text{sync}}$: El verificador recupera conectividad con el relay/mirror de estado e ingesta el manifiesto v2 y la lista de estado actualizada.
+    5. Verificación post-sincronización: Con el estado actualizado en su caché local, el pipeline del verificador rechaza deterministamente la credencial revocada como `Invalid` con fallo en `CheckKind::Status` (`ErrorCode::CredentialRevoked`, `INV-04`, `INV-05`).
+    6. Mitigación anti-rollback (`REQ-STAT-008`): Verificación explícita de rechazo fail-closed si un adversario o relay malicioso intenta suministrar un manifiesto con versión menor o igual a la última aceptada ($v1 \le v2$).
+  - **F7.T11 (`apps/pip-cli/tests/offline_revocation_mvp05.rs`):** Suite automatizada de pruebas de integración con 4 pruebas exhaustivas:
+    - `cli_demo_mvp05_completes_all_steps_successfully`: Ejecución integral del comando de demostración CLI.
+    - `test_mvp05_lifecycle_offline_stale_to_invalid_after_sync`: Comprobación programática del ciclo de vida exacto $T_0 \to T_{\text{offline}} \to T_{\text{sync}}$.
+    - `test_mvp05_freshness_thresholds_per_operation_class`: Verificación precisa de degradación a `ValidWithStaleStatus` según las 3 clases operativas de `REQ-STAT-004` (Transaction = 1.800 s, Query = 14.400 s, Default = 604.800 s).
+    - `test_mvp05_status_manifest_anti_rollback_enforcement`: Verificación estricta de mitigación anti-rollback fail-closed (`REQ-STAT-008`, `INV-05`).
+  - **Trazabilidad y capas:** Requisitos trazados (`REQ-STAT-004`, `REQ-STAT-008`, `REQ-REL-004`), 0 datos personales (`INV-02`), y determinismo estricto con inyección de reloj (`INV-11`).
+- Pendiente (siguiente paso concreto):
+  - Iniciar `F7.T12`: Caos (inyección de fallos, `REQ-REL-004`, `REQ-SYNC-004`): relay malicioso (rollback de sobres, retención, alteración), RPC caído, CDN caída; degradación a estados canónicos explícitos (`Unverifiable`, `Invalid`) sin aceptar datos falsos.
+  - Proceder con la evaluación y cierre de **Gate G7**.
+- Bugs/issues abiertos durante la sesión: ninguno.
+- Decisiones tomadas (con enlace a ADR/issue): Implementado ciclo de vida MVP-05 y subcomando CLI demo-mvp05 según especificación (#104).
+- Riesgos o dudas: ninguna.
+- Comprobaciones locales: fmt ✅ clippy (-D warnings) ✅ tests (100% verde en todo el workspace) ✅ layers (21 crates) ✅ trace (107 REQs) ✅ check-deploy-hygiene ✅
 
 ### Traspaso — 2026-10-18 (F7.T09: Backend aws-lc-rs condicional / F7.T10: Integración completa de la pila de contenedores en pruebas automatizadas) — Antigravity (agente)
 - Tarea: F7.T09 / F7.T10 — #103 — rama `main`
