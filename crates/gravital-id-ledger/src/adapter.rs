@@ -125,7 +125,7 @@ impl InMemoryLedgerAdapter {
     /// Agrega un evento secuenciado al historial del adaptador.
     pub fn add_event(&mut self, event: SequencedLedgerEvent) {
         self.events.push(event);
-        self.events.sort_by(|a, b| a.coordinate.cmp(&b.coordinate));
+        self.events.sort_by_key(|a| a.coordinate);
     }
 
     /// Registra un compromiso de estado en el adaptador.

@@ -58,13 +58,13 @@ fn pack_lst(bits: u8, values: &[u32]) -> String {
             let bit = (value >> shift) & 0b1;
             current = (current << 1) | (bit as u8);
             used = used.saturating_add(1);
-            if used % 8 == 0 {
+            if used.is_multiple_of(8) {
                 bytes.push(current);
                 current = 0;
             }
         }
     }
-    if used % 8 != 0 {
+    if !used.is_multiple_of(8) {
         current <<= 8u32.saturating_sub(used % 8);
         bytes.push(current);
     }

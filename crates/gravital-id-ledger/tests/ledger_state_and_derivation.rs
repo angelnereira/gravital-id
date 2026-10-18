@@ -38,7 +38,11 @@ fn sample_keys(seed: u64) -> (Vec<u8>, Vec<u8>, [u8; 32]) {
     uncompressed.extend_from_slice(jwk.y());
 
     // Clave comprimida (33 bytes: (0x02/0x03) || x)
-    let prefix = if jwk.y()[31] % 2 == 0 { 0x02 } else { 0x03 };
+    let prefix = if jwk.y()[31].is_multiple_of(2) {
+        0x02
+    } else {
+        0x03
+    };
     let mut compressed = vec![prefix];
     compressed.extend_from_slice(jwk.x());
 

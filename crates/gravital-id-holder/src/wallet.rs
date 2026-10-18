@@ -368,7 +368,7 @@ impl<B: StorageBackend, R: Rng> HolderWallet<B, R> {
             events.push(evt);
         }
 
-        events.sort_by(|a, b| a.timestamp.cmp(&b.timestamp));
+        events.sort_by_key(|a| a.timestamp);
         Ok(events)
     }
 

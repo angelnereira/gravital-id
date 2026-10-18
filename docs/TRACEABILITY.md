@@ -46,7 +46,7 @@
 | REQ-STAT-003 | F4 | DEBE | T, F | P-08 | base45.rs, deflate.rs, lib.rs, status_list.rs, status_list_integration.rs, base45_strict.rs, deflate_bounded.rs, status_list_parser.rs | Cubierto |
 | REQ-STAT-004 | F4 | DEBE | T | P-05 | cache.rs, lib.rs, manifest.rs, status_list_integration.rs, pipeline.rs, policy.rs, verifier_pipeline_integration.rs, verifier_policy_integration.rs | Cubierto |
 | REQ-STAT-005 | F7 | DEBE | T | P-10 | — | Pendiente (Fase futura) |
-| REQ-STAT-006 | F7 | DEBE | T | P-14 | ledger_state_and_derivation.rs | Cubierto |
+| REQ-STAT-006 | F7 | DEBE | T | P-14 | ledger_state_and_derivation.rs, evm_adapter_integration.rs | Cubierto |
 | REQ-STAT-007 | F4 | DEBE | T | — | cache.rs, lib.rs, status_list.rs, status_list_integration.rs | Cubierto |
 | REQ-STAT-008 | F7 | DEBE | T | P-08 | lib.rs, manifest.rs, status_list_integration.rs, status_list_parser.rs | Cubierto |
 | REQ-TRUST-001 | F4 | DEBE | T | P-08 | bundle.rs, jws_json.rs, lib.rs, trust_bundle_integration.rs | Cubierto |
@@ -56,19 +56,19 @@
 | REQ-TRUST-005 | F7 | DEBE | T, I | P-08 | — | Pendiente (Fase futura) |
 | REQ-TRUST-006 | F8 | DEBE | T | P-10 | — | Pendiente (Fase futura) |
 | REQ-TRUST-007 | F6 | DEBERÍA | T | P-09 | ledger_state_and_derivation.rs, bundle.rs | Cubierto |
-| REQ-TRUST-008 | F7 | DEBE | T | P-15 | derivation.rs, diff.rs, error.rs, event.rs, lib.rs, state.rs, ledger_proptest.rs, ledger_state_and_derivation.rs | Cubierto |
+| REQ-TRUST-008 | F7 | DEBE | T | P-15 | derivation.rs, diff.rs, error.rs, event.rs, lib.rs, state.rs, ledger_proptest.rs, ledger_state_and_derivation.rs, abi.rs, evm_adapter_integration.rs | Cubierto |
 | REQ-TRUST-009 | F4 | DEBE | T | P-15 | verifier_state.rs, sqlite_storage_integration.rs, jws_json.rs, lib.rs, root.rs, trust_bundle_integration.rs | Cubierto |
 | REQ-TRUST-010 | F4 | DEBE | T | P-14 | manifest.rs, bundle.rs, lib.rs, trust_bundle_integration.rs | Cubierto |
-| REQ-LEDG-001 | F6 | DEBE | T, A | P-02 | event.rs, lib.rs, ledger_state_and_derivation.rs, contracts_privacy.rs | Cubierto |
-| REQ-LEDG-002 | F6 | DEBE | T, I | P-14 | adapter.rs, derivation.rs, diff.rs, error.rs, event.rs, lib.rs, state.rs, ledger_proptest.rs, ledger_state_and_derivation.rs | Cubierto |
+| REQ-LEDG-001 | F6 | DEBE | T, A | P-02 | event.rs, lib.rs, ledger_state_and_derivation.rs, abi.rs, lib.rs, evm_adapter_integration.rs, contracts_privacy.rs | Cubierto |
+| REQ-LEDG-002 | F6 | DEBE | T, I | P-14 | adapter.rs, derivation.rs, diff.rs, error.rs, event.rs, lib.rs, state.rs, ledger_proptest.rs, ledger_state_and_derivation.rs, abi.rs, adapter.rs, lib.rs, transport.rs, evm_adapter_integration.rs | Cubierto |
 | REQ-LEDG-003 | F6 | DEBE | I, A | — | — | Inspección / Auditoría |
 | REQ-LEDG-004 | F6 | DEBE | T | P-10 | error.rs, lib.rs, state.rs, ledger_state_and_derivation.rs | Cubierto |
-| REQ-LEDG-005 | F7 | DEBE | T | P-08 | — | Pendiente (Fase futura) |
-| REQ-LEDG-006 | F7 | DEBE | T | P-10 | — | Pendiente (Fase futura) |
+| REQ-LEDG-005 | F7 | DEBE | T | P-08 | adapter.rs, client.rs, error.rs, lib.rs, evm_adapter_integration.rs, evm_fault_tolerance.rs | Cubierto |
+| REQ-LEDG-006 | F7 | DEBE | T | P-10 | adapter.rs, client.rs, error.rs, lib.rs, transport.rs, evm_adapter_integration.rs, evm_fault_tolerance.rs | Cubierto |
 | REQ-LEDG-007 | F6 | DEBE | I | P-02 | event.rs, lib.rs, ledger_state_and_derivation.rs, contracts_privacy.rs | Cubierto |
 | REQ-SYNC-001 | F7 | DEBE | T | P-01 | — | Pendiente (Fase futura) |
 | REQ-SYNC-002 | F7 | DEBE | T | — | — | Pendiente (Fase futura) |
-| REQ-SYNC-003 | F7 | DEBE | T | — | — | Pendiente (Fase futura) |
+| REQ-SYNC-003 | F7 | DEBE | T | — | client.rs, evm_fault_tolerance.rs | Cubierto |
 | REQ-SYNC-004 | F7 | DEBE | T | P-08 | manifest.rs | Cubierto |
 | REQ-SYNC-005 | F7 | DEBE | T, I | P-09 | — | Pendiente (Fase futura) |
 | REQ-SYNC-006 | F7 | DEBE | T | P-09 | — | Pendiente (Fase futura) |

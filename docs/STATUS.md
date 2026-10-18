@@ -10,7 +10,7 @@
 | Último gate cerrado | **G5** (2026-10-16) · **G4** (2026-10-16) · **G19** (2026-10-15) · **G0** (2026-10-11) |
 | Próximo gate | **G6** — contratos en testnet y adaptador de ledger; **G3** (#59) y **G2** pendientes de CI |
 | Hito siguiente | M2 · Sincronización y anclaje (al cerrar G7) · MP1 · Tap offline (al cerrar G21) [M1 alcanzado] |
-| Última actualización | 2026-10-16 (F6.T08 completada — pip-ledger implementado con Trait LedgerAdapter, proyección pura de estado, derivación determinista de TrustBundle y reconciliación de divergencias estado ↔ bundle con 93,90% de cobertura; #91 resuelto) |
+| Última actualización | 2026-10-17 (F6.T09 y F6.T10 completadas — gravital-id-ledger-evm implementado con MultiRpcClient, failover sticky, consistencia cruzada, tolerancia a reorganizaciones y suites de fallos con 91,44% de cobertura; actualización del workspace a Rust 1.99.0; #92 resuelto) |
 
 ## Gates
 
@@ -29,7 +29,8 @@
 
 | Tarea | Issue | Responsable | Estado | Siguiente paso |
 |---|---|---|---|---|
-| F6.T09 `pip-ledger-evm` | — | Antigravity (agente) | Por iniciar | Implementación de LedgerAdapter con alloy, lectura por rangos y multi-RPC (REQ-LEDG-005, REQ-LEDG-006) |
+| F6.T11 Despliegue en testnet y Gate G6 | #93 | Antigravity (agente) | Por iniciar | Configuración de entorno testnet y cierre de Gate G6 (REQ-LEDG-003) |
+| F6.T09-T10 `pip-ledger-evm` y pruebas de fallos | #92 | Antigravity (agente) | Hecha | EvmLedgerAdapter con MultiRpcClient, failover, consistencia cruzada, tolerancia a reorgs y fallos (91,44% cobertura); resuelto #92 |
 | F6.T08 `pip-ledger` | #91 | Antigravity (agente) | Hecha | Trait LedgerAdapter, eventos, reconstrucción pura y derivación de bundle (REQ-LEDG-002, REQ-TRUST-008); resuelto #91 |
 | F6.T02-T07 Contratos inteligentes y pruebas | #90 | Antigravity (agente) | Hecha | TrustRegistry, StatusAnchor, Gobernanza timelock, 25 pruebas Foundry, snapshot gas y verificación check-contracts-privacy (no PII); resuelto #90 |
 | F6.T01 `CONTRACTS.md` v1 | #89 | Antigravity (agente) | Hecha | Actualización de especificación técnica de contratos CONTRACTS.md a v1.0.0 normativa (interfaces, RBAC, eventos, inmutabilidad y no-PII); resuelto #89 |

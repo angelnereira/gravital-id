@@ -234,7 +234,7 @@ fn wallet_batch_delete_atomic() {
 
     // Borrado en lote con cred_id1
     let deleted_count = wallet
-        .delete_credentials_batch(&[cred_id1.clone()], now)
+        .delete_credentials_batch(std::slice::from_ref(&cred_id1), now)
         .expect("batch delete");
     assert_eq!(deleted_count, 1);
     assert_eq!(wallet.list_credentials().expect("list").len(), 0);

@@ -72,7 +72,7 @@ impl PresentationBuilder {
         let mut selected_disclosures = Vec::new();
         for disc in parsed.disclosures() {
             if let Some(cname) = disc.claim_name() {
-                if approved_claims.iter().any(|&c| c == cname) {
+                if approved_claims.contains(&cname) {
                     selected_disclosures.push(disc.encoded());
                 }
             }

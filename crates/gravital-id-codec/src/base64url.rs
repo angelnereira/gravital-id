@@ -98,8 +98,8 @@ pub fn decode_bounded(input: &str, max_output: usize) -> Result<Vec<u8>, GidErro
         ));
     }
 
-    let mut chunks = bytes.chunks_exact(4);
-    for chunk in &mut chunks {
+    let (chunks, remainder) = bytes.as_chunks::<4>();
+    for chunk in chunks {
         let c0 = lookup(chunk.first().copied().unwrap_or(0))?;
         let c1 = lookup(chunk.get(1).copied().unwrap_or(0))?;
         let c2 = lookup(chunk.get(2).copied().unwrap_or(0))?;
@@ -109,7 +109,6 @@ pub fn decode_bounded(input: &str, max_output: usize) -> Result<Vec<u8>, GidErro
         out.push(c2.wrapping_shl(6) | c3);
     }
 
-    let remainder = chunks.remainder();
     match remainder.len() {
         0 => {}
         2 => {
@@ -158,11 +157,11 @@ pub fn decode(input: &str) -> Result<Vec<u8>, GidError> {
 /// Codifica bytes a base64url sin relleno (salida canónica).
 #[must_use]
 pub fn encode(bytes: &[u8]) -> String {
-    let capacity = bytes.len().div_ceil(3).checked_mul(4).unwrap_or(usize::MAX);
+    let capacity = bytes.len().div_ceil(3).saturating_mul(4);
     let mut out = String::with_capacity(capacity);
 
-    let mut chunks = bytes.chunks_exact(3);
-    for chunk in &mut chunks {
+    let (chunks, remainder) = bytes.as_chunks::<3>();
+    for chunk in chunks {
         let b0 = chunk.first().copied().unwrap_or(0);
         let b1 = chunk.get(1).copied().unwrap_or(0);
         let b2 = chunk.get(2).copied().unwrap_or(0);
@@ -172,7 +171,6 @@ pub fn encode(bytes: &[u8]) -> String {
         out.push(encode_six_bits(b2 & 0x3F) as char);
     }
 
-    let remainder = chunks.remainder();
     match remainder.len() {
         0 => {}
         1 => {

@@ -720,7 +720,7 @@ fn f32_bits_fit_f16(bits: u32) -> bool {
     }
     if unbalanced >= -14 {
         // Rango normal f16: los 13 bits bajos de la mantisa deben ser cero.
-        mantissa % (1u32 << 13) == 0
+        mantissa.is_multiple_of(1u32 << 13)
     } else {
         // Rango subnormal f16: el valor debe ser múltiplo de 2^-24.
         let modulus_shift = unbalanced
@@ -748,7 +748,7 @@ fn f64_bits_fit_f32(bits: u64) -> bool {
     }
     if unbalanced >= -126 {
         // Rango normal f32: los 29 bits bajos de la mantisa deben ser cero.
-        mantissa % (1u64 << 29) == 0
+        mantissa.is_multiple_of(1u64 << 29)
     } else {
         // Rango subnormal f32: el valor debe ser múltiplo de 2^-149.
         let modulus_shift = unbalanced
@@ -1128,7 +1128,7 @@ mod tests {
         // sin acotar porque los fragmentos se parseaban a profundidad 0.
         let depth = 5_000usize;
         let mut input = vec![0x9fu8; depth];
-        input.extend(core::iter::repeat(0xff).take(depth));
+        input.extend(core::iter::repeat_n(0xff, depth));
 
         let limits = Limits::profile_default();
         let permissive = parse_with_options(&input, &limits, &Strictness::permissive());
@@ -1154,7 +1154,7 @@ mod tests {
         // recursaba sin cota (desbordamiento de pila bajo ASAN).
         let depth = 5_000usize;
         let mut input = vec![0x7fu8; depth];
-        input.extend(core::iter::repeat(0xff).take(depth));
+        input.extend(core::iter::repeat_n(0xff, depth));
 
         let limits = Limits::profile_default();
         let permissive = parse_with_options(&input, &limits, &Strictness::permissive());
@@ -1166,8 +1166,8 @@ mod tests {
 
         // Mezcla: array indefinido con cadenas indefinidas anidadas dentro.
         let mut mixed = vec![0x9fu8; 64];
-        mixed.extend(core::iter::repeat(0x7f).take(64));
-        mixed.extend(core::iter::repeat(0xff).take(128));
+        mixed.extend(core::iter::repeat_n(0x7f, 64));
+        mixed.extend(core::iter::repeat_n(0xff, 128));
         mixed.push(0xff);
         assert!(parse_with_options(&mixed, &limits, &Strictness::permissive()).is_err());
     }

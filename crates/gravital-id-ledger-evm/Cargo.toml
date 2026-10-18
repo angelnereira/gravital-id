@@ -15,3 +15,12 @@ workspace = true
 
 [dependencies]
 gravital-id-ledger = { workspace = true }
+gravital-id-types = { workspace = true }
+gravital-id-crypto = { workspace = true }
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+sha3 = "0.10"
+
+[dev-dependencies]
+gravital-id-testkit = { path = "../gravital-id-testkit", version = "0.1.0" }
+proptest = "=1.5.0"

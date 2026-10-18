@@ -81,11 +81,11 @@ fn lookup(byte: u8) -> Result<u8, GidError> {
 /// Codifica bytes a Base45 (RFC 9285 §4).
 #[must_use]
 pub fn encode(bytes: &[u8]) -> String {
-    let capacity = bytes.len().div_ceil(2).checked_mul(3).unwrap_or(usize::MAX);
+    let capacity = bytes.len().div_ceil(2).saturating_mul(3);
     let mut out = String::with_capacity(capacity);
 
-    let mut chunks = bytes.chunks_exact(2);
-    for chunk in &mut chunks {
+    let (chunks, remainder) = bytes.as_chunks::<2>();
+    for chunk in chunks {
         let a = chunk.first().copied().unwrap_or(0);
         let b = chunk.get(1).copied().unwrap_or(0);
         let n = u32::from(a).wrapping_mul(256).wrapping_add(u32::from(b));
@@ -102,7 +102,7 @@ pub fn encode(bytes: &[u8]) -> String {
     }
 
     // Byte final solitario: 2 caracteres.
-    if let Some(&a) = chunks.remainder().first() {
+    if let Some(&a) = remainder.first() {
         let n = u32::from(a);
         let c = n % 45;
         let d = n / 45;

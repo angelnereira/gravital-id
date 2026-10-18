@@ -28,7 +28,7 @@ members = [
 [workspace.package]
 version = "0.1.0"
 edition = "2021"
-rust-version = "1.85.0"
+rust-version = "1.99.0"
 license = "MIT OR Apache-2.0"
 authors = ["Angel Nereira <contact@angelnereira.com>", "Gravital ID Contributors"]
 repository = "https://github.com/angelnereira/gravital-id"

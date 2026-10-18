@@ -116,7 +116,7 @@ mod tests {
         // Punto que no está en la curva: todo 0xFF no es un punto P-256 válido
         // en forma SEC1 sin comprimir (el byte inicial 0x04 seguido de basura).
         let mut sec1 = vec![0x04u8];
-        sec1.extend(core::iter::repeat(0xFFu8).take(64));
+        sec1.extend(core::iter::repeat_n(0xFFu8, 64));
         let invalid = PublicKey::from_sec1_bytes(&sec1);
         if let Ok(peer) = invalid {
             // Algunas implementaciones aceptan cualquier X; en ese caso el
