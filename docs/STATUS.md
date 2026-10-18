@@ -10,7 +10,7 @@
 | Último gate cerrado | **G7** (2026-10-18) · **G6** (2026-10-17) · **G5** (2026-10-16) · **G4** (2026-10-16) · **G19** (2026-10-15) · **G0** (2026-10-11) |
 | Próximo gate | **G8 / Hito M2** — los nueve criterios de aceptación del MVP (§24); **G3** (#59) y **G2** pendientes de CI |
 | Hito siguiente | M2 · Sincronización y anclaje (al cerrar G8) · MP1 · Tap offline (al cerrar G21) [M1 alcanzado] |
-| Última actualización | 2026-10-18 (`F8.T07` completada: compromiso de clave de emisor de extremo a extremo probado y verificado mediante `apps/pip-cli/tests/issuer_key_compromise_e2e.rs`, `docs/specs/PROTOCOL.md §10`, `SPEC-PIP-KEYCOMP-001`, `REQ-KEY-005`, `REQ-LEDG-004`, `REQ-LEDG-001`, `REQ-LEDG-002`, `REQ-TRUST-001`, `REQ-TRUST-004`, `REQ-TRUST-008`, `REQ-VER-001..004`, `REQ-VER-012`, `ADR-0018`; ciclo completo de suspensión de emergencia inmediata con TTL de 14 días sin timelock por EMERGENCY_ROLE produciendo Unverifiable con IssuerSuspended, compromiso definitivo por multisig DEFAULT_ADMIN_ROLE invalidando fail-closed todas las credenciales de la clave comprometida independientemente de iat, rehabilitación por falsa alarma a Active y retorno automático a Active tras expirar el TTL; resuelto #107; siguiente tarea: F8.T08 Rotación de firmantes de bundle y de raíz) |
+| Última actualización | 2026-10-18 (`F8.T08` completada: rotación de firmantes de bundle y de raíz de confianza encadenada con doble umbral, solapamiento sin interrupción de clientes y recuperación determinista ante avance forzado de versión mediante incremento de `bundle_epoch` probada y verificada mediante `apps/pip-cli/tests/root_rotation_and_forced_advance_e2e.rs`, `docs/specs/PROTOCOL.md §11`, `SPEC-PIP-ROOTROT-001`, `REQ-TRUST-006`, `REQ-TRUST-009`, `REQ-TRUST-001`, `REQ-TRUST-002`, `REQ-TRUST-008`, `REQ-VER-001..004`, `ADR-0010`, `ADR-0016`; resuelto #108; siguiente tarea: F8.T09 Procedimientos por perfil) |
 
 ## Gates
 
@@ -31,7 +31,8 @@
 
 | Tarea | Issue | Responsable | Estado | Siguiente paso |
 |---|---|---|---|---|
-| F8.T08 Rotación de firmantes de bundle y de raíz | — | Antigravity (agente) | Por iniciar | Raíz nueva encadenada; solapamiento sin interrupción de clientes con distintas versiones; simulacro de avance forzado y recuperación por `bundle_epoch` (`REQ-TRUST-006`) |
+| F8.T09 Procedimientos por perfil | — | Antigravity (agente) | Por iniciar | Recuperación institucional documentada en cada perfil (`REQ-REC-005`, `REQ-REC-006`) |
+| F8.T08 Rotación de firmantes de bundle y de raíz | #108 | Antigravity (agente) | Hecha | Raíz encadenada con doble umbral; solapamiento sin interrupción para clientes con versiones distintas (`REQ-TRUST-006`); simulación de avance forzado de versión (999.999.999) y recuperación determinista por incremento de `bundle_epoch` (`REQ-TRUST-009`); resuelto #108 |
 | F8.T07 Compromiso de clave de emisor E2E | #107 | Antigravity (agente) | Hecha | Suspensión de emergencia (EMERGENCY_ROLE, TTL 14 días) -> Unverifiable (`IssuerSuspended`); compromiso multisig irreversible (DEFAULT_ADMIN_ROLE) -> fail-closed Invalid para todas las credenciales de la clave (`IssuerKeyCompromised`, $iat$ agnóstico); falsa alarma / rehabilitación -> Active / Valid; expiración de TTL -> retorno automático a Active; prohibición de renovación por emergencia probada (`REQ-KEY-005`, `REQ-LEDG-004`, `ADR-0018`); resuelto #107 |
 | F8.T06 Rotación de clave de emisor E2E | #106 | Antigravity (agente) | Hecha | Ciclo on-chain TrustRegistry (`addIssuerKey`, `retireIssuerKey`), ingesta en pip-indexer, derivación determinista de TrustBundle v2 por operadores k-de-n, verificación multi-fuente (`FullVerificationEngine`) y verificación offline probando que credenciales anteriores al retiro siguen siendo `Valid` (`REQ-KEY-006`), nuevas credenciales con clave activa son `Valid`, y emisiones posteriores al retiro se rechazan como `Invalid` (`IssuerKeyRetired`); resuelto #106 |
 | F8.T05 Migración entre dispositivos con SAS y compromiso previo | #105 | Antigravity (agente) | Hecha | Engagement QR, máquinas de estados sans-I/O `TargetMigrationMachine` y `SourceMigrationMachine`, compromiso SHA-256 pre-revelación contra MitM, derivación HKDF-SHA256 de código SAS (6 dígitos `xxx-xxx`) y claves de sesión, transferencia cifrada de bóveda con `XChaCha20-Poly1305` y encolado de re-vinculaciones sin exportar claves privadas de hardware (`REQ-REC-001`, `ADR-0009`, `SPEC-PIP-MIGRATE-001`); resuelto #105 |
@@ -169,6 +170,40 @@
 | Tamaño binario del SDK | — | — | — | — | — |
 
 ## Última nota de traspaso
+
+### Traspaso — 2026-10-18 (F8.T08: Rotación de firmantes de bundle y de raíz de confianza, solapamiento sin interrupción y recuperación por `bundle_epoch` — apps/pip-cli, SPEC-PIP-ROOTROT-001, REQ-TRUST-006, REQ-TRUST-009, REQ-TRUST-001, REQ-TRUST-002, REQ-TRUST-008, doble umbral de firmas, solapamiento de clientes y simulacro de avance forzado 999.999.999 superado por nueva época) — Antigravity (agente)
+- Tarea: F8.T08 — #108 — rama `main`
+- Estado: **hecha**
+- Hecho en esta sesión:
+  - **`docs/specs/PROTOCOL.md §11` (`SPEC-PIP-ROOTROT-001`, `REQ-TRUST-006`, `REQ-TRUST-009`, `REQ-TRUST-002`, `ADR-0010`, `ADR-0016`):** Especificación normativa del protocolo de rotación encadenada de raíces de confianza y firmantes de bundle, solapamiento operacional y algoritmo determinista de recuperación ante ataques de avance forzado de versión:
+    - Encadenamiento con doble umbral criptográfico (`REQ-TRUST-009`, `INV-16`): Toda nueva raíz $R_{N+1}$ exige cumplir simultáneamente el umbral de firmas de la raíz previa ($k_{\text{prev}}$ de $R_N$) y el umbral propio de la nueva raíz ($k_{\text{new}}$ de $R_{N+1}$), con versión estrictamente monótona creciente y época no decreciente.
+    - Solapamiento sin interrupción de clientes (`REQ-TRUST-006`): Co-existencia de clientes con la versión anterior de raíz ($R_1$) y clientes actualizados ($R_2$) verificando concurrentemente bundles cofirmados por operadores en común sin degradación de servicio.
+    - Mecanismo de recuperación ante avance forzado de versión (*Forced Advance Attack*, `TRUST_BUNDLE.md §6`): Emisión por la TFA de una nueva raíz encadenada con incremento de `bundle_epoch`, detección de `forces_new_epoch` por el verificador, reseteo del estado del bundle y reinicio limpio de la secuencia monotónica en la nueva época (`bundle_version = 1`).
+  - **`apps/pip-cli/tests/root_rotation_and_forced_advance_e2e.rs`:** Suite integral de pruebas E2E verificando:
+    1. `test_e2e_root_and_bundle_signer_rotation_chain_with_dual_threshold`:
+       - Emisión de raíz $R_1$ y candidata $R_2$ con rotación simultánea de operadores de bundle (sustitución de `op-gamma` por `op-delta`) y claves de raíz (sustitución de `root-2` por `root-3`).
+       - Verificación exitosa de `TrustRootVerifier::verify_chain` satisfaciendo el doble umbral con firmas válidas concurrentes.
+       - Matriz negativa exhaustiva: rechazo determinista de candidatos con versión no creciente (`TrustRootChainBroken`), marco de confianza divergente (`TrustRootChainBroken`), época decreciente (`TrustRootChainBroken`), firmas insuficientes de la raíz previa (`InsufficientBundleSignatures`) o firmas insuficientes de la raíz nueva (`InsufficientBundleSignatures`).
+    2. `test_e2e_overlap_without_client_disruption`:
+       - Verificador A (con raíz instalada $R_1$) y Verificador B (actualizado a raíz $R_2$) operando concurrentemente.
+       - Operadores en común (`op-alpha` y `op-beta`) cofirman bundle v10 en época 1.
+       - Ambos verificadores aceptan el bundle bajo sus respectivas raíces.
+       - Emisión y verificación offline de credencial legítima resultando en `VerificationStatus::Valid` con evidencia idéntica en ambos clientes (`REQ-TRUST-006`).
+    3. `test_e2e_forced_version_advance_and_epoch_recovery`:
+       - Simulación de ataque de avance forzado por operadores comprometidos en época 1 publicando `bundle_version = 999_999_999`.
+       - Bloqueo determinista fail-closed ante intentos posteriores de publicar bundles legítimos de versión normal en época 1 (`ErrorCode::BundleVersionRollback`, `REQ-TRUST-002`).
+       - Recuperación mediante emisión por la TFA de raíz encadenada $R_2$ con `bundle_epoch = 2` y purga de operadores maliciosos.
+       - Detección de `forces_new_epoch == true`, descarte de época anterior y reinicio del estado del verificador (`REQ-TRUST-009`).
+       - Operación restablecida con éxito en época 2 con `bundle_version = 1` evaluada a `Valid`.
+       - Rechazo fail-closed de repeticiones de bundles de épocas anteriores (`ErrorCode::MalformedSdJwt`).
+    4. `test_root_rotation_zero_pii_audit`: Auditoría forense automatizada confirmando ausencia de PII en documentos JWS de raíz y trust bundles (`INV-02`, `REQ-LEDG-001`).
+  - **Trazabilidad:** REQ-TRUST-006, REQ-TRUST-009, REQ-TRUST-001, REQ-TRUST-002, REQ-TRUST-008, REQ-VER-001..004, ADR-0010, ADR-0016, INV-01, INV-02, INV-04, INV-05, INV-11, INV-16 verificados y actualizados en `docs/TRACEABILITY.md` (119 requisitos trazados en el workspace).
+- Pendiente (siguiente paso concreto):
+  - Iniciar `F8.T09`: Procedimientos por perfil (`REQ-REC-005`, `REQ-REC-006`): Recuperación institucional documentada en cada perfil (mecanismos de contacto fuera de banda, reemisión de credenciales con nueva clave tras revocación de ranura previa, y auditoría en ledger).
+- Bugs/issues abiertos durante la sesión: ninguno.
+- Decisiones tomadas (con enlace a ADR/issue): Implementado y probado flujo normativo de rotación de firmantes y raíz, solapamiento y recuperación por época según `SPEC-PIP-ROOTROT-001`, `REQ-TRUST-006` y `REQ-TRUST-009` (#108).
+- Riesgos o dudas: ninguna.
+- Comprobaciones locales: fmt ✅ clippy ✅ tests (100% verde en todo el workspace) ✅ layers (21 crates válidos) ✅ trace (119 REQs trazados) ✅ check-error-codes (61) ✅ check-contracts-privacy (0 PII) ✅ check-deploy-hygiene (0 secretos) ✅
 
 ### Traspaso — 2026-10-18 (F8.T07: Compromiso de clave de emisor de extremo a extremo — apps/pip-cli, gravital-id-ledger, SPEC-PIP-KEYCOMP-001, REQ-KEY-005, REQ-LEDG-004, ADR-0018, ciclo de suspensión de emergencia por EMERGENCY_ROLE, compromiso multisig fail-closed por DEFAULT_ADMIN_ROLE, rehabilitación por falsa alarma y retorno automático tras TTL) — Antigravity (agente)
 - Tarea: F8.T07 — #107 — rama `main`

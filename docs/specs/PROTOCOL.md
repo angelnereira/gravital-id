@@ -744,4 +744,84 @@ sequenceDiagram
 | `active` (rehabilitada) | `emergencyLiftSuspension` / `liftKeySuspension` | `Valid` | `Passed` en `KeyState` | Sí (retorna a operación nominal). |
 | `active` (por caducidad) | $T \ge \text{expiresAt}$ sin compromiso | `Valid` | `Passed` en `KeyState` | Sí (caducidad automática del TTL de 14 días). |
 
+---
+
+## 11. Rotación Encadenada de Raíz y Firmantes de Bundle, Solapamiento y Recuperación por `bundle_epoch` (`SPEC-PIP-ROOTROT-001`)
+
+> **Requisitos:** REQ-TRUST-006, REQ-TRUST-009, REQ-TRUST-001, REQ-TRUST-002, REQ-TRUST-008, INV-01, INV-02, INV-04, INV-05, INV-11, INV-16.  
+> **ADRs:** ADR-0010, ADR-0016.  
+> **Especificaciones base:** `TRUST_BUNDLE.md §2.3, §5, §6`, `ARCHITECTURE.md §11.6`.
+
+### 11.1 Principios Normativos de Gobernanza de Raíz y Firmantes
+
+1. **Encadenamiento Criptográfico con Doble Umbral (`REQ-TRUST-009`, `INV-16`):**
+   - La raíz de confianza (`TrustRoot`) es el ancla criptográfica de confianza offline instalada en los verificadores y SDKs.
+   - Toda rotación de claves de raíz o actualización de firmantes de bundle se realiza mediante la emisión de una nueva raíz $R_{N+1}$ distribuida en formato JWS JSON Multi-Firma (RFC 7515 §7.2).
+   - Para ser aceptada por un verificador que mantiene instalada la raíz $R_N$, la candidata $R_{N+1}$ **DEBE** satisfacer simultáneamente:
+     - `candidate.framework_id == current.framework_id`.
+     - `candidate.root_version > current.root_version` (incremento monotónico).
+     - `candidate.bundle_epoch >= current.bundle_epoch` (la época no puede decrecer).
+     - **Umbral de la Raíz Previa:** Al menos $R_N.root\_threshold$ firmas criptográficas ES256 válidas emitidas por claves públicas autorizadas en $R_N.root\_keys$.
+     - **Umbral de la Nueva Raíz:** Al menos $R_{N+1}.root\_threshold$ firmas criptográficas ES256 válidas emitidas por claves públicas autorizadas en $R_{N+1}.root\_keys$.
+2. **Solapamiento sin Interrupción de Clientes (`REQ-TRUST-006`):**
+   - Durante la ventana de transición entre versiones de raíz o sustitución de operadores de bundle, los operadores de `pip-trust-service` cofirman los bundles de forma que la intersección de firmantes satisfaga tanto el umbral de la raíz instalada en clientes antiguos ($R_N$) como el umbral de clientes actualizados ($R_{N+1}$).
+   - Los verificadores offline continúan validando credenciales históricas legítimas y nuevas credenciales sin interrupción de servicio ni ventanas de indisponibilidad.
+3. **Amenaza de Avance Forzado de Versión (*Forced Version Advance Attack*):**
+   - Si un conjunto malicioso de operadores cofirma un bundle fraudulento con una versión astronómica (ej. `bundle_version: 999_999_999`), la regla de anti-rollback monotónico (`REQ-TRUST-002`: `bundle.bundle_version > state.bundle_version`) provocaría que el verificador bloquee permanentemente cualquier bundle legítimo subsecuente de versión menor (`VersionRollbackDetected`).
+4. **Recuperación Determinista mediante Cambio de Época (`bundle_epoch`, `REQ-TRUST-009`, `TRUST_BUNDLE.md §6`):**
+   - La TFA resuelve el avance forzado convocando a las claves frías de gobernanza y emitiendo una nueva raíz encadenada $R_{N+1}$ con:
+     - `bundle_epoch: current.bundle_epoch + 1`.
+     - Nueva nómina de `bundle_signers` que purga a los operadores maliciosos y habilita operadores íntegros.
+     - Doble umbral de firmas cumplido.
+   - Al ingestar $R_{N+1}$, el verificador detecta `TrustRootVerifier::forces_new_epoch(current, candidate) == true`.
+   - El verificador reemplaza la raíz, descarta el bundle de la época comprometida anterior y reinicia el contador de versión a `0`, aceptando bundles legítimos de la nueva época con `bundle_epoch: 2` y `bundle_version >= 1`.
+
+### 11.2 Diagrama de Secuencia E2E: Rotación de Raíz y Recuperación de Avance Forzado
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant TFA as Claves Frías TFA (Gobernanza)
+    participant OpOld as Operadores Comprometidos (Época 1)
+    participant OpNew as Operadores Íntegros (Época 2)
+    participant Verifier as Verificador Offline (Dispositivo)
+
+    Note over TFA,Verifier: Fase 1: Operación Nominal (Época 1, Raíz R1, bundle_epoch=1, version=10)
+    Verifier->>Verifier: Estado local: (bundle_epoch: 1, bundle_version: 10) -> Verificación nominal: Valid
+
+    Note over OpOld,Verifier: Fase 2: Ataque de Avance Forzado (Forced Version Advance)
+    OpOld->>Verifier: Publica Bundle fraudulento con bundle_epoch=1, bundle_version=999_999_999
+    Verifier->>Verifier: Verifica firmas con R1 y actualiza estado a (1, 999_999_999)
+    OpNew->>Verifier: Intenta publicar Bundle legítimo con bundle_epoch=1, bundle_version=11
+    Verifier-->>Verifier: RECHAZO Anti-Rollback (VersionRollbackDetected) -> Ecosistema Bloqueado
+
+    Note over TFA,Verifier: Fase 3: Recuperación por la TFA vía Raíz Encadenada R2 (bundle_epoch=2)
+    TFA->>TFA: Genera Raíz R2 (root_version=2, bundle_epoch=2, operadores íntegros)
+    TFA->>TFA: Firma R2 con Doble Umbral (k firmas de R1 + k firmas de R2)
+    TFA-->>Verifier: Distribuye Raíz Encadenada R2 en JWS JSON Multi-Firma
+    Verifier->>Verifier: TrustRootVerifier::verify_chain(R1, R2) -> OK (Doble Umbral Cumplido)
+    Verifier->>Verifier: TrustRootVerifier::forces_new_epoch(R1, R2) == true
+    Verifier->>Verifier: Descarta bundle de Época 1, actualiza a R2 y reinicia estado
+
+    Note over OpNew,Verifier: Fase 4: Restauración Nominal en Época 2
+    OpNew->>Verifier: Publica Bundle legítimo con bundle_epoch=2, bundle_version=1
+    Verifier->>Verifier: Verifica firmas contra R2 y bundle_epoch=2 -> Aceptado
+    Verifier->>Verifier: Verificación de credenciales offline restaurada al 100% -> Valid
+```
+
+### 11.3 Matriz Normativa de Transición de Raíz y Manejo de Errores
+
+| Condición en Raíz Candidata | Comprobación Técnica | Resultado Esperado | Código de Error |
+|---|---|---|---|
+| Mismo `framework_id` | `candidate.framework_id == current.framework_id` | Aceptado | `TrustRootChainBroken` |
+| `root_version` estrictamente mayor | `candidate.root_version > current.root_version` | Aceptado | `TrustRootChainBroken` |
+| `bundle_epoch` no decreciente | `candidate.bundle_epoch >= current.bundle_epoch` | Aceptado | `TrustRootChainBroken` |
+| Firmas de la raíz previa $\ge k_{\text{prev}}$ | `previous_kids.len() >= current.root_threshold` | Aceptado | `InsufficientBundleSignatures` |
+| Firmas de la raíz nueva $\ge k_{\text{new}}$ | `own_kids.len() >= candidate.root_threshold` | Aceptado | `InsufficientBundleSignatures` |
+| Intento de bundle con época anterior | `bundle.bundle_epoch < root.bundle_epoch` | Rechazado | `TrustBundleEpochMismatch` |
+| Intento de bundle con época futura | `bundle.bundle_epoch > root.bundle_epoch` | Rechazado | `TrustBundleEpochMismatch` |
+| Intento de bundle con versión menor/igual | `bundle.bundle_version <= state.bundle_version` | Rechazado | `VersionRollbackDetected` |
+| Nueva época legítima con versión inicial | `root.bundle_epoch > state.bundle_epoch` | Reinicio de versión y Aceptación | `Ok(())` |
+
+
 

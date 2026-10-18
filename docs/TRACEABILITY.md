@@ -29,7 +29,7 @@
 | REQ-PRES-006 | F5 | DEBE | T, D | P-01 | lib.rs, offline_multi_qr.rs, protocol_multi_qr_and_budgets.rs | Cubierto |
 | REQ-PRES-007 | F5 | DEBE | T | P-09 | lib.rs, cli_integration.rs, offline_signed_request.rs, offline_wallet_policy.rs, protocol_wallet_request_validation.rs, bundle.rs | Cubierto |
 | REQ-PRES-008 | F10 | DEBE | T | P-04 | — | Pendiente (Fase futura) |
-| REQ-VER-001 | F4 | DEBE | T, I | P-01 | lib.rs, cli_integration.rs, issuer_key_compromise_e2e.rs, issuer_key_rotation_e2e.rs, verifier_offline_and_determinism.rs | Cubierto |
+| REQ-VER-001 | F4 | DEBE | T, I | P-01 | lib.rs, cli_integration.rs, issuer_key_compromise_e2e.rs, issuer_key_rotation_e2e.rs, root_rotation_and_forced_advance_e2e.rs, verifier_offline_and_determinism.rs | Cubierto |
 | REQ-VER-002 | F4 | DEBE | T | P-05 | issuer_key_compromise_e2e.rs, issuer_key_rotation_e2e.rs, pipeline.rs, result.rs, verifier_negative_matrix_and_precedence.rs, verifier_pipeline_integration.rs | Cubierto |
 | REQ-VER-003 | F4 | DEBE | T, F | P-08 | issuer_key_compromise_e2e.rs, issuer_key_rotation_e2e.rs, kb.rs, lib.rs, parser.rs, profile.rs, vc.rs, kb_jwt_integration.rs, predicate_integration.rs, profile_schema_integration.rs, sd_jwt_parsing_verification.rs, sd_jwt_vc_integration.rs, holder_credential_management.rs, holder_dcql_and_presentation.rs, issuer_api.rs, cache.rs, status_list_integration.rs, verifier_negative_matrix_and_precedence.rs, verifier_state_integration.rs, sd_jwt_parser.rs, status_list_parser.rs | Cubierto |
 | REQ-VER-004 | F4 | DEBE | T | P-08 | issuer_key_rotation_e2e.rs, pipeline.rs, verifier_negative_matrix_and_precedence.rs, verifier_pipeline_integration.rs | Cubierto |
@@ -49,17 +49,17 @@
 | REQ-STAT-006 | F7 | DEBE | T | P-14 | status_manager.rs, status_lifecycle_test.rs, ledger_state_and_derivation.rs, evm_adapter_integration.rs, manifest_builder.rs | Cubierto |
 | REQ-STAT-007 | F4 | DEBE | T | — | offline_revocation_mvp05.rs, status_manager.rs, status_lifecycle_test.rs, builder.rs, cache.rs, lib.rs, status_list.rs, status_builder_test.rs, status_list_integration.rs | Cubierto |
 | REQ-STAT-008 | F7 | DEBE | T | P-08 | lib.rs, chaos_fault_injection.rs, offline_revocation_mvp05.rs, status_manager.rs, status_lifecycle_test.rs, lib.rs, manifest.rs, manifest_builder.rs, signer.rs, status_builder_test.rs, status_list_integration.rs, status_list_parser.rs | Cubierto |
-| REQ-TRUST-001 | F4 | DEBE | T | P-08 | container_stack_integration.rs, issuer_key_compromise_e2e.rs, issuer_key_rotation_e2e.rs, bundle.rs, jws_json.rs, lib.rs, trust_bundle_integration.rs, aggregator.rs, lib.rs, signer.rs, aggregator_test.rs, signer_test.rs | Cubierto |
-| REQ-TRUST-002 | F4 | DEBE | T | P-08 | bundle.rs, lib.rs, trust_bundle_integration.rs | Cubierto |
+| REQ-TRUST-001 | F4 | DEBE | T | P-08 | container_stack_integration.rs, issuer_key_compromise_e2e.rs, issuer_key_rotation_e2e.rs, root_rotation_and_forced_advance_e2e.rs, bundle.rs, jws_json.rs, lib.rs, trust_bundle_integration.rs, aggregator.rs, lib.rs, signer.rs, aggregator_test.rs, signer_test.rs | Cubierto |
+| REQ-TRUST-002 | F4 | DEBE | T | P-08 | root_rotation_and_forced_advance_e2e.rs, bundle.rs, lib.rs, trust_bundle_integration.rs | Cubierto |
 | REQ-TRUST-003 | F7 | DEBE | T | P-14 | container_stack_integration.rs, config.rs, engine.rs, error.rs, lib.rs, main.rs, operator.rs, config_test.rs, engine_test.rs, operator_test.rs | Cubierto |
 | REQ-TRUST-004 | F7 | DEBE | T | P-10 | lib.rs, chaos_fault_injection.rs, container_stack_integration.rs, issuer_key_compromise_e2e.rs, issuer_key_rotation_e2e.rs, diff.rs, full_verification.rs, lib.rs, full_verification_test.rs, ledger_state_and_derivation.rs | Cubierto |
 | REQ-TRUST-005 | F7 | DEBE | T, I | P-08 | container_stack_integration.rs, issuer_key_compromise_e2e.rs, issuer_key_rotation_e2e.rs, lib.rs, publisher_test.rs | Cubierto |
-| REQ-TRUST-006 | F8 | DEBE | T | P-10 | — | Pendiente (Fase futura) |
+| REQ-TRUST-006 | F8 | DEBE | T | P-10 | root_rotation_and_forced_advance_e2e.rs | Cubierto |
 | REQ-TRUST-007 | F6 | DEBERÍA | T | P-09 | ledger_state_and_derivation.rs, bundle.rs | Cubierto |
-| REQ-TRUST-008 | F7 | DEBE | T | P-15 | container_stack_integration.rs, issuer_key_compromise_e2e.rs, issuer_key_rotation_e2e.rs, derivation.rs, diff.rs, error.rs, event.rs, lib.rs, state.rs, ledger_proptest.rs, ledger_state_and_derivation.rs, abi.rs, evm_adapter_integration.rs, aggregator.rs, engine.rs, error.rs, lib.rs, operator.rs, signer.rs, aggregator_test.rs, engine_test.rs, operator_test.rs, signer_test.rs | Cubierto |
-| REQ-TRUST-009 | F4 | DEBE | T | P-15 | verifier_state.rs, sqlite_storage_integration.rs, jws_json.rs, lib.rs, root.rs, trust_bundle_integration.rs | Cubierto |
+| REQ-TRUST-008 | F7 | DEBE | T | P-15 | container_stack_integration.rs, issuer_key_compromise_e2e.rs, issuer_key_rotation_e2e.rs, root_rotation_and_forced_advance_e2e.rs, derivation.rs, diff.rs, error.rs, event.rs, lib.rs, state.rs, ledger_proptest.rs, ledger_state_and_derivation.rs, abi.rs, evm_adapter_integration.rs, aggregator.rs, engine.rs, error.rs, lib.rs, operator.rs, signer.rs, aggregator_test.rs, engine_test.rs, operator_test.rs, signer_test.rs | Cubierto |
+| REQ-TRUST-009 | F4 | DEBE | T | P-15 | root_rotation_and_forced_advance_e2e.rs, verifier_state.rs, sqlite_storage_integration.rs, jws_json.rs, lib.rs, root.rs, trust_bundle_integration.rs | Cubierto |
 | REQ-TRUST-010 | F4 | DEBE | T | P-14 | manifest.rs, bundle.rs, lib.rs, trust_bundle_integration.rs | Cubierto |
-| REQ-LEDG-001 | F6 | DEBE | T, A | P-02 | issuer_key_compromise_e2e.rs, issuer_key_rotation_e2e.rs, event.rs, lib.rs, ledger_state_and_derivation.rs, abi.rs, lib.rs, evm_adapter_integration.rs, contracts_privacy.rs | Cubierto |
+| REQ-LEDG-001 | F6 | DEBE | T, A | P-02 | issuer_key_compromise_e2e.rs, issuer_key_rotation_e2e.rs, root_rotation_and_forced_advance_e2e.rs, event.rs, lib.rs, ledger_state_and_derivation.rs, abi.rs, lib.rs, evm_adapter_integration.rs, contracts_privacy.rs | Cubierto |
 | REQ-LEDG-002 | F6 | DEBE | T, I | P-14 | issuer_key_compromise_e2e.rs, issuer_key_rotation_e2e.rs, adapter.rs, derivation.rs, diff.rs, error.rs, event.rs, lib.rs, state.rs, ledger_proptest.rs, ledger_state_and_derivation.rs, abi.rs, adapter.rs, lib.rs, transport.rs, evm_adapter_integration.rs | Cubierto |
 | REQ-LEDG-003 | F6 | DEBE | I, A | — | — | Inspección / Auditoría |
 | REQ-LEDG-004 | F6 | DEBE | T | P-10 | issuer_key_compromise_e2e.rs, error.rs, lib.rs, state.rs, ledger_state_and_derivation.rs | Cubierto |
