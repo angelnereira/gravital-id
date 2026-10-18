@@ -10,7 +10,7 @@
 | Último gate cerrado | **G7** (2026-10-18) · **G6** (2026-10-17) · **G5** (2026-10-16) · **G4** (2026-10-16) · **G19** (2026-10-15) · **G0** (2026-10-11) |
 | Próximo gate | **G8 / Hito M2** — los nueve criterios de aceptación del MVP (§24); **G3** (#59) y **G2** pendientes de CI |
 | Hito siguiente | M2 · Sincronización y anclaje (al cerrar G8) · MP1 · Tap offline (al cerrar G21) [M1 alcanzado] |
-| Última actualización | 2026-10-18 (`F8.T05` completada: migración directa entre dispositivos con compromiso previo de clave efímera y verificación SAS de 6 dígitos en `gravital-id-recovery`, `ADR-0009`, `SPEC-PIP-MIGRATE-001`, máquinas de estados sans-I/O `TargetMigrationMachine` y `SourceMigrationMachine`, cifrado AEAD XChaCha20-Poly1305 de bóveda, encolado de re-vinculaciones para nuevo hardware sin exportar claves privadas de silicio, y suite de 7 pruebas de integración en verde; resuelto #105; siguiente tarea: F8.T06 Rotación de clave de emisor E2E) |
+| Última actualización | 2026-10-18 (`F8.T06` completada: rotación de clave de emisor de extremo a extremo probada y verificada mediante `apps/pip-cli/tests/issuer_key_rotation_e2e.rs`, `docs/specs/PROTOCOL.md §9`, `SPEC-PIP-KEYROT-001`, `REQ-KEY-006`, `REQ-KEY-005`, `REQ-TRUST-001`, `REQ-TRUST-004`, `REQ-TRUST-008`, ciclo completo on-chain en TrustRegistry, ingesta por pip-indexer, derivación determinista de TrustBundle v2 por operadores multi-firma k-de-n, verificación multi-fuente con FullVerificationEngine y demostración de que las credenciales emitidas antes del retiro siguen siendo `Valid`, mientras que emisiones posteriores se rechazan fail-closed como `Invalid` con `IssuerKeyRetired`; resuelto #106; siguiente tarea: F8.T07 Compromiso de clave de emisor E2E) |
 
 ## Gates
 
@@ -31,7 +31,8 @@
 
 | Tarea | Issue | Responsable | Estado | Siguiente paso |
 |---|---|---|---|---|
-| F8.T06 Rotación de clave de emisor E2E | — | Antigravity (agente) | Por iniciar | Registro de rotación en TrustRegistry, propagación indexador -> trust service -> bundle -> verificadores offline, verificación de credenciales previas (`REQ-KEY-006`) |
+| F8.T07 Compromiso de clave de emisor E2E | — | Antigravity (agente) | Por iniciar | Suspensión de emergencia -> bundle -> Unverifiable; confirmación multisig -> compromised -> Invalid; suspensión levantada -> clave readmitida (`REQ-KEY-005`, `REQ-LEDG-004`) |
+| F8.T06 Rotación de clave de emisor E2E | #106 | Antigravity (agente) | Hecha | Ciclo on-chain TrustRegistry (`addIssuerKey`, `retireIssuerKey`), ingesta en pip-indexer, derivación determinista de TrustBundle v2 por operadores k-de-n, verificación multi-fuente (`FullVerificationEngine`) y verificación offline probando que credenciales anteriores al retiro siguen siendo `Valid` (`REQ-KEY-006`), nuevas credenciales con clave activa son `Valid`, y emisiones posteriores al retiro se rechazan como `Invalid` (`IssuerKeyRetired`); resuelto #106 |
 | F8.T05 Migración entre dispositivos con SAS y compromiso previo | #105 | Antigravity (agente) | Hecha | Engagement QR, máquinas de estados sans-I/O `TargetMigrationMachine` y `SourceMigrationMachine`, compromiso SHA-256 pre-revelación contra MitM, derivación HKDF-SHA256 de código SAS (6 dígitos `xxx-xxx`) y claves de sesión, transferencia cifrada de bóveda con `XChaCha20-Poly1305` y encolado de re-vinculaciones sin exportar claves privadas de hardware (`REQ-REC-001`, `ADR-0009`, `SPEC-PIP-MIGRATE-001`); resuelto #105 |
 | F8.T04 Re-vinculación y reemplazo atómico por clase de dispositivo | #104 | Antigravity (agente) | Hecha | `RebindingChallenge`, `RebindingRequest`, transcrito canónico `SPEC-PIP-REBIND-001`, `DeviceSlotManager` con revocación atómica de ranura previa (`mobile`/`card`/`other`) en `TokenStatusList` preservando ranuras activas de otras clases y re-emisión (`REQ-REC-004`, `REQ-ISS-006`, `REQ-DEVSLOT-001..004`, `ADR-0029`); resuelto #104 |
 | F8.T03 Clave de recuperación | #103 | Antigravity (agente) | Hecha | `KeyPurpose::HolderRecovery`, `HolderRecoveryKey`, derivación no correlacionable por emisor, extensión de emisión `cnf.rec` (`PROTOCOL.md §2.2`), 8 pruebas de integración y auditoría cero PII (`REQ-REC-004`, `REQ-REC-007`); resuelto #103 |
@@ -167,6 +168,38 @@
 | Tamaño binario del SDK | — | — | — | — | — |
 
 ## Última nota de traspaso
+
+### Traspaso — 2026-10-18 (F8.T06: Rotación de clave de emisor de extremo a extremo — apps/pip-cli, SPEC-PIP-KEYROT-001, REQ-KEY-006, REQ-KEY-005, REQ-TRUST-001, REQ-TRUST-004, REQ-TRUST-008, ciclo on-chain TrustRegistry, pip-indexer, pip-trust-service, FullVerificationEngine y verificación offline con validez de credenciales pre-retiro) — Antigravity (agente)
+- Tarea: F8.T06 — #106 — rama `main`
+- Estado: **hecha**
+- Hecho en esta sesión:
+  - **`docs/specs/PROTOCOL.md §9` (`SPEC-PIP-KEYROT-001`, `REQ-KEY-006`, `ADR-0018`):** Especificación normativa del ciclo de vida y protocolo de rotación de claves criptográficas de firma de emisores:
+    - Registro on-chain de nueva clave activa $K_2$ y retiro ordenado de $K_1$ con $state\_since = T_{\text{rot}}$ mediante `addIssuerKey` y `retireIssuerKey` en el contrato `TrustRegistry`.
+    - Ingesta determinista de bloques finalizados por `pip-indexer` proyectando la transición de estados.
+    - Derivación determinista idéntica byte a byte (RFC 8785 JCS) por operadores independientes del `pip-trust-service` y cofirma multi-firma con quórum $k$-de-$n$ (`REQ-TRUST-001`, `REQ-TRUST-008`).
+    - Verificación multi-fuente `FullVerificationEngine` contrastada contra $\ge 2$ fuentes de ledger independientes (`REQ-TRUST-004`, `INV-16`).
+    - Reglas normativas del verificador offline: validez de credenciales legítimas pre-retiro ($iat < state\_since$), validez de nuevas credenciales con la clave activa, y rechazo fail-closed de emisiones espurias posteriores al retiro ($iat \ge state\_since$) con `ErrorCode::IssuerKeyRetired` (`INV-05`).
+  - **`apps/pip-cli/tests/issuer_key_rotation_e2e.rs`:** Suite integral de pruebas E2E verificando:
+    1. `test_e2e_issuer_key_rotation_lifecycle_and_historical_validity`:
+       - Fase 1: Estado inicial en ledger (bloque 10, $T_0$) con clave $K_1$ activa, ingesta por indexador y publicación de Bundle v1 con quórum 2 de 3 operadores.
+       - Fase 2: Emisión de credencial $C_1$ con $K_1$ en $T_1 = T_0 + 100$. Verificación offline exitosa con Bundle v1 (`Valid`).
+       - Fase 3: Rotación en ledger en bloque 20 ($T_{\text{rot}} = T_0 + 500$): adición de $K_2$ y retiro de $K_1$ con $state\_since = T_{\text{rot}}$. Ingesta por indexador y derivación de Bundle v2 con $K_1$ en estado `retired` y $K_2$ en estado `active`.
+       - Fase 4: Verificación multi-fuente `FullVerificationEngine` sobre Bundle v2 contra RPC 1 y RPC 2 confirmando consistencia total (`FullVerificationOutcome::Verified`).
+       - Fase 5: Actualización del verificador offline a Bundle v2 validando firmas contra `TrustRoot` y anti-rollback monotónico contra Bundle v1 (`AcceptedBundleState`).
+       - Fase 6 (**REQ-KEY-006 Cumplido**): Verificación de credencial $C_1$ emitida antes del retiro ($iat < T_{\text{rot}}$) evaluada tras la rotación con Bundle v2 $\to$ Resultado `Valid` con `KeyState` en `Passed` (clave histórica `retired`) y `Validity` en `Passed`.
+       - Fase 7: Emisión y verificación de nueva credencial $C_2$ firmada con la clave activa $K_2$ $\to$ `Valid`.
+       - Fase 8 (**Fail-Closed, INV-05**): Rechazo determinista de credencial espuria firmada con la clave retirada $K_1$ emitida con $iat \ge T_{\text{rot}}$ $\to$ Resultado `Invalid` con evidencia `ErrorCode::IssuerKeyRetired`.
+       - Fase 9: Rechazo en el límite exacto $iat == T_{\text{rot}}$ con clave retirada $\to$ Resultado `Invalid` (`IssuerKeyRetired`).
+    2. `test_tampered_key_state_divergence_fails_closed`: Detección por `FullVerificationEngine` de divergencia entre fuentes de ledger cuando una fuente reporta fraudulentamente un estado alterado de clave, produciendo alarma de seguridad crítica (`BundleDivergence` con `has_critical_security_divergence = true`, `REQ-TRUST-004`).
+    3. `test_untrusted_header_keys_rejected_in_rotation`: Inyección en cabeceras JWT (`jwk`) de claves no autorizadas rechazada deterministamente (`INV-06`, `REQ-VER-004`) con `Unverifiable` y `ErrorCode::UntrustedIssuer`.
+    4. `test_key_rotation_zero_pii_audit`: Auditoría forense automatizada verificando ausencia absoluta de nombres, números de cédula, correos o datos personales en eventos, transacciones o bundles (`INV-02`, `REQ-LEDG-001`).
+  - **Trazabilidad:** REQ-KEY-006, REQ-KEY-005, REQ-TRUST-001, REQ-TRUST-004, REQ-TRUST-008, REQ-LEDG-001, REQ-LEDG-002, REQ-VER-001..004, REQ-VER-011, INV-01, INV-02, INV-04, INV-05, INV-06, INV-11, INV-16 verificados y trazados en `docs/TRACEABILITY.md` (118 requisitos trazados en el workspace).
+- Pendiente (siguiente paso concreto):
+  - Iniciar `F8.T07`: Compromiso de clave de emisor E2E (`REQ-KEY-005`, `REQ-LEDG-004`): Suspensión de emergencia sin timelock $\to$ bundle $\to$ `Unverifiable` con evidencia `IssuerKeySuspended` en verificadores sincronizados; confirmación por la multisig $\to$ `compromised` $\to$ `Invalid`; y caso de suspensión levantada o caducada $\to$ la clave vuelve a aceptarse.
+- Bugs/issues abiertos durante la sesión: ninguno.
+- Decisiones tomadas (con enlace a ADR/issue): Implementado y probado flujo normativo de rotación de clave de emisor de extremo a extremo según `SPEC-PIP-KEYROT-001` y `REQ-KEY-006` (#106).
+- Riesgos o dudas: ninguna.
+- Comprobaciones locales: fmt ✅ clippy ✅ tests (100% verde en todo el workspace) ✅ layers (21 crates válidos) ✅ trace (118 REQs trazados) ✅ check-error-codes (61) ✅ check-contracts-privacy (0 PII) ✅ check-deploy-hygiene (0 secretos) ✅
 
 ### Traspaso — 2026-10-18 (F8.T05: Migración entre dispositivos con SAS y compromiso previo — gravital-id-recovery L3 no_std, SPEC-PIP-MIGRATE-001, ADR-0009, TargetMigrationMachine, SourceMigrationMachine, SAS de 6 dígitos xxx-xxx, transferencia cifrada con XChaCha20-Poly1305 y encolado de re-vinculaciones sin exportar claves de silicio) — Antigravity (agente)
 - Tarea: F8.T05 — #105 — rama `main`

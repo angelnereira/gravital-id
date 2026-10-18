@@ -606,3 +606,68 @@ $$\text{SessionNonce} = \text{HKDF-Expand}(\text{PRK}, \text{info} = \text{"pip-
 $$\text{AAD} = \text{SHA-256}(\text{Transcript})$$
 La carga útil se cifra con `XChaCha20-Poly1305(SessionKey, SessionNonce, Plaintext, AAD)`.
 
+---
+
+## 9. Protocolo Normativo de Rotación de Clave de Emisor E2E (`SPEC-PIP-KEYROT-001`, `REQ-KEY-006`, `ADR-0018`)
+
+### 9.1 Alcance e Invariantes del Proceso de Rotación
+El ciclo de vida de las claves criptográficas de firma de los emisores institucionales exige procedimientos ordenados de rotación periódica programada (por calendario o directiva del marco de confianza) sin interrumpir la operación del ecosistema ni revocar credenciales emitidas válidamente:
+1. **Validez Continua de Credenciales Pre-Retiro (`REQ-KEY-006`):** La rotación de una clave de emisor **NO DEBE** invalidar credenciales firmadas antes de su fecha efectiva de retiro ($iat < state\_since$).
+2. **Rechazo Fail-Closed de Emisiones Posteriores al Retiro (`INV-05`, `REQ-KEY-005`):** Toda credencial firmada con una clave retirada cuya fecha de emisión sea igual o posterior al retiro ($iat \ge state\_since$) **DEBE** ser rechazada como `Invalid` con evidencia `IssuerKeyRetired` (`ErrorCode::IssuerKeyRetired`).
+3. **Resolución Exclusiva desde el Trust Bundle (`INV-06`, `REQ-VER-004`):** El verificador resuelve el estado y clave del emisor únicamente a partir del `TrustBundle` local offline. Cabeceras como `jku`, `x5u`, `x5c` o `jwk` se ignoran.
+4. **Cofirma Determinista Multi-Operador (`REQ-TRUST-001`, `REQ-TRUST-008`, `INV-16`):** La rotación reflejada en el ledger es ingerida por operadores independientes del `pip-trust-service`, derivando byte a byte el mismo payload canónico y cofirmando el nuevo bundle con quórum $k$-de-$n$.
+5. **Cero Datos Personales en el Ledger y Eventos (`INV-02`, `REQ-LEDG-001`):** Las transacciones de adición y retiro contienen exclusivamente identificadores criptográficos (`issuer_id`, `kid` JWK Thumbprint RFC 7638) y claves públicas SEC-1. Cero PII.
+
+### 9.2 Diagrama de Secuencia E2E: Registro, Indexación, Bundle y Verificación Offline
+
+```mermaid
+sequenceDiagram
+    autonumber
+    participant Issuer as Emisor Institucional
+    participant Registry as TrustRegistry (Ledger EVM)
+    participant Indexer as pip-indexer (Bloques Finalizados)
+    participant Trust as pip-trust-service (Quórum k-de-n)
+    participant Verifier as Verificador Offline (Dispositivo)
+
+    Note over Issuer,Registry: Paso 1: Rotación en Registro On-Chain (T_rot)
+    Issuer->>Registry: addIssuerKey(issuer_id, kid_new, pub_new)
+    Registry-->>Indexer: emit KeyAdded(issuer_id, kid_new, pub_new)
+    Issuer->>Registry: retireIssuerKey(issuer_id, kid_old)
+    Registry-->>Indexer: emit KeyRetired(issuer_id, kid_old, T_rot)
+
+    Note over Indexer,Trust: Paso 2: Ingesta Finalizada y Derivación Determinista
+    Indexer->>Indexer: Ingesta bloque finalizado, actualiza proyección local
+    Trust->>Indexer: Consulta estado finalizado en bloque N
+    Trust->>Trust: Deriva payload canónico (RFC 8785) con kid_old (retired) y kid_new (active)
+    Trust->>Trust: Operadores independientes firman payload (JWS multi-firma k-de-n)
+    Trust-->>Verifier: Publica y sincroniza TrustBundle v2 (bundle_version monotónica)
+
+    Note over Verifier: Paso 3: Verificación Offline Sin Red (INV-01)
+    Verifier->>Verifier: Instala TrustBundle v2 validando k firmas y anti-rollback
+    
+    Note over Verifier: Caso A: Credencial previa (iat < T_rot)
+    Verifier->>Verifier: Evalúa credencial C1 emitida con kid_old en T1 < T_rot
+    Verifier->>Verifier: KeyState: Passed (retired) -> Validity: Passed (iat < T_rot)
+    Verifier-->>Verifier: Resultado: Valid
+
+    Note over Verifier: Caso B: Nueva credencial (iat >= T_rot)
+    Verifier->>Verifier: Evalúa credencial C2 emitida con kid_new en T3 >= T_rot
+    Verifier->>Verifier: KeyState: Passed (active) -> Validity: Passed
+    Verifier-->>Verifier: Resultado: Valid
+
+    Note over Verifier: Caso C: Emisión espuria post-retiro (iat >= T_rot con kid_old)
+    Verifier->>Verifier: Evalúa credencial C_bad emitida con kid_old en T4 >= T_rot
+    Verifier->>Verifier: KeyState: Passed (retired) -> Validity: Failed (IssuerKeyRetired)
+    Verifier-->>Verifier: Resultado: Invalid (Fail-closed)
+```
+
+### 9.3 Reglas de Decisión Normativas para el Verificador
+
+| Estado en Bundle | Condición de Emisión | Resultado del Verificador | Código de Evidencia | Justificación |
+|---|---|---|---|---|
+| `active` | Cualquiera dentro de vigencia general | `Valid` | `Passed` en `KeyState` y `Validity` | Clave autorizada y vigente para emitir. |
+| `retired` (en $T$) | $iat < T$ | `Valid` | `Passed` en `KeyState` y `Validity` | Emisión legítima anterior a la rotación (`REQ-KEY-006`). |
+| `retired` (en $T$) | $iat \ge T$ | `Invalid` | `Failed` en `Validity` (`IssuerKeyRetired`) | Emisión posterior al retiro prohibida (`INV-05`). |
+| `suspended` (en $T$) | Cualquier $iat$ | `Unverifiable` | `Indeterminate` en `KeyState` (`IssuerSuspended`) | Clave bajo investigación de seguridad (`REQ-KEY-005`). |
+| `compromised` (en $T$) | Cualquier $iat$ | `Invalid` | `Failed` en `KeyState` (`IssuerKeyCompromised`) | Compromiso total irreversible (`INV-05`). |
+
