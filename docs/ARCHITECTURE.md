@@ -634,7 +634,7 @@ Reglas: los bindings **no contienen lógica de negocio**; los **códigos de erro
 
 **Serverless:** se usa donde no hay estado (APIs de emisión, publicación de objetos, tareas programadas). No se usa para el núcleo de verificación (vive en el dispositivo) ni para indexadores y nodos (larga duración). **Ninguna función serverless es punto único de fallo** para verificar ni para recuperar (P-10).
 
-**Neutralidad de proveedor:** imágenes OCI e infraestructura como código (OpenTofu/Terraform); el proveedor de nube se decide en ADR-0013 y debe poder sustituirse.
+**Neutralidad de proveedor (ADR-0013):** imágenes OCI e infraestructura como código (OpenTofu/Terraform) organizadas en `deploy/iac/`. AWS es el proveedor de nube de referencia inicial para `testnet` (ECS Fargate + RDS PostgreSQL + S3/CloudFront + KMS), asegurando interfaces estándar S3/PostgreSQL y neutralidad para que cualquier operador despliegue en GCP, Azure o infraestructura propia. Cero secretos en repositorio; orquestación local reproducible con Docker Compose (`deploy/docker/docker-compose.yml`).
 
 ---
 
@@ -703,7 +703,7 @@ El índice vivo está en `docs/adr/README.md`. Las decisiones marcadas "Bloquea"
 | 0010 | Formato del trust bundle | JWS JSON multi-firma (ES256) sobre payload canónico (JCS) con límites | F0 |
 | 0011 | Transporte offline | QR en dos pasos, transcodificación binaria + DEFLATE + Base45, multi-QR (indexado frente a códigos fuente) | F0 |
 | 0012 | Modelo de gobernanza | Multisig + timelock + rol de emergencia limitado a suspender | F0 |
-| 0013 | Proveedor de nube | Neutral (OCI images + IaC); proveedor inicial a decidir | F7 |
+| [0013](adr/0013-infraestructura-y-despliegue.md) | Infraestructura y proveedor de nube | Aceptado: neutralidad OCI + IaC (OpenTofu/Terraform); AWS referencia inicial testnet | F7 |
 | 0014 | Toolchain y MSRV | Rust estable fijado; MSRV declarado | F1 |
 | 0015 | SD-JWT: construir vs reutilizar | Evaluar crates existentes vs implementación propia | F3 |
 | 0016 | Confianza por umbral | Raíz encadenada + bundles cofirmados k-de-n con derivación determinista | F0 |

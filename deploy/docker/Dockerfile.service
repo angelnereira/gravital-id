@@ -1,0 +1,76 @@
+# syntax=docker/dockerfile:1.7
+# Multi-stage Dockerfile reproducible para los servicios backend de Gravital ID (Rust 1.99.0)
+# Cumple con ADR-0013, REQ-REL-001, REQ-PRIV-003, INV-01 e INV-02 (usuario non-root, sin privilegios).
+
+ARG SERVICE_NAME=pip-indexer
+
+# ------------------------------------------------------------------------------
+# Etapa 1: Constructor (Builder)
+# ------------------------------------------------------------------------------
+FROM rust:1.99.0-slim-bookworm AS builder
+
+ARG SERVICE_NAME
+WORKDIR /workspace
+
+# Dependencias de compilación para crates con bindings de sistema o FFI
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    pkg-config \
+    libssl-dev \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copiar configuración del workspace y manifiestos de dependencias
+COPY Cargo.toml Cargo.lock rust-toolchain.toml rustfmt.toml deny.toml clippy.toml ./
+COPY xtask ./xtask
+COPY crates ./crates
+COPY services ./services
+COPY apps ./apps
+COPY contracts ./contracts
+COPY deploy ./deploy
+
+# Compilar el binario del servicio específico en modo release con LTO
+RUN cargo build --release --bin "${SERVICE_NAME}" && \
+    cp "/workspace/target/release/${SERVICE_NAME}" /workspace/service-binary
+
+# ------------------------------------------------------------------------------
+# Etapa 2: Imagen mínima de ejecución (Runtime)
+# ------------------------------------------------------------------------------
+FROM debian:bookworm-slim AS runtime
+
+ARG SERVICE_NAME
+LABEL org.opencontainers.image.title="Gravital ID Service - ${SERVICE_NAME}" \
+      org.opencontainers.image.description="Servicio backend del plano de sincronización y confianza de Gravital ID" \
+      org.opencontainers.image.vendor="Gravital ID Contributors" \
+      org.opencontainers.image.licenses="MIT OR Apache-2.0"
+
+# Instalar únicamente certificados CA para conexiones TLS seguras y curl para healthchecks
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    ca-certificates \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Crear usuario y grupo sin privilegios de sistema (UID/GID 10001)
+RUN groupadd --gid 10001 gid && \
+    useradd --uid 10001 --gid 10001 --shell /bin/false --create-home gid
+
+# Directorio de datos y ejecución
+WORKDIR /app
+RUN chown -R gid:gid /app
+
+# Copiar binario compilado desde la etapa de construcción
+COPY --from=builder --chown=gid:gid /workspace/service-binary /app/service-binary
+
+# Ejecutar con usuario no privilegiado
+USER 10001:10001
+
+# Variables de entorno por defecto
+ENV RUST_LOG="info" \
+    RUST_BACKTRACE="1" \
+    PORT="8080"
+
+EXPOSE 8080
+
+HEALTHCHECK --interval=15s --timeout=5s --start-period=10s --retries=3 \
+    CMD curl -f http://127.0.0.1:8080/healthz || exit 1
+
+ENTRYPOINT ["/app/service-binary"]

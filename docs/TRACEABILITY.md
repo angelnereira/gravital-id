@@ -139,14 +139,14 @@
 | REQ-SEC-011 | F0 | DEBE | I | — | — | Inspección / Auditoría |
 | REQ-PRIV-001 | F5 | DEBE | I | — | lib.rs, lib.rs, plan.rs, presentation.rs, query.rs, wallet.rs, holder_dcql_and_presentation.rs, offline_wallet_policy.rs, protocol_wallet_request_validation.rs | Cubierto |
 | REQ-PRIV-002 | F4 | DEBE | T | — | verifier_offline_and_determinism.rs | Cubierto |
-| REQ-PRIV-003 | F7 | DEBE | T, I | — | — | Pendiente (Fase futura) |
+| REQ-PRIV-003 | F7 | DEBE | T, I | — | deploy_hygiene.rs | Cubierto |
 | REQ-PRIV-004 | F14 | DEBE | A | — | — | Inspección / Auditoría |
 | REQ-PRIV-005 | F5 | DEBE | T | — | lib.rs, cli_m1_demonstration.rs, audit.rs, lib.rs, presentation.rs, wallet.rs, holder_privacy_and_forensics.rs | Cubierto |
 | REQ-PORT-001 | F9 | DEBE | T | — | lib.rs | Cubierto |
 | REQ-PORT-002 | F2 | DEBE | T | — | — | Pendiente (Fase futura) |
 | REQ-PORT-003 | F2 | DEBE | T, I | — | layers.rs | Cubierto |
 | REQ-PORT-004 | F1 | DEBE | T | — | layers.rs | Cubierto |
-| REQ-REL-001 | F15 | DEBE | A, D | — | — | Inspección / Auditoría |
+| REQ-REL-001 | F15 | DEBE | A, D | — | deploy_hygiene.rs | Cubierto |
 | REQ-REL-002 | F15 | DEBE | I | — | — | Inspección / Auditoría |
 | REQ-REL-003 | F15 | DEBE | D | — | — | Inspección / Auditoría |
 | REQ-REL-004 | F4 | DEBE | T | — | verifier_negative_matrix_and_precedence.rs, verifier_offline_and_determinism.rs | Cubierto |

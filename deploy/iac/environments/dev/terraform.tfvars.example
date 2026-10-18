@@ -1,0 +1,12 @@
+# terraform.tfvars.example — Plantilla de valores para entorno dev (ADR-0013)
+# NUNCA incluyas secretos reales en este archivo ni lo comitees con valores confidenciales.
+
+aws_region           = "us-east-1"
+vpc_cidr             = "10.10.0.0/16"
+public_subnet_cidrs  = ["10.10.1.0/24", "10.10.2.0/24"]
+private_subnet_cidrs = ["10.10.10.0/24", "10.10.20.0/24"]
+availability_zones   = ["us-east-1a", "us-east-1b"]
+
+trust_registry_address = "0x89D227B04381014e41E9D70FE1dF49b99971D2Ac"
+status_anchor_address  = "0xC10E45E8F3C9010A51D68FE1e93De45B9071c3DA"
+indexer_image          = "ghcr.io/angelnereira/gravital-id/pip-indexer:dev-latest"

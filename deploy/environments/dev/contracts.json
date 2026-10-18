@@ -1,0 +1,41 @@
+{
+  "$schema": "../../schema/contracts.schema.json",
+  "network": "arbitrum-sepolia-dev",
+  "chainId": 421614,
+  "deployedAt": "2026-10-17T20:00:00Z",
+  "commit": "44e731c",
+  "compiler": {
+    "solc": "0.8.28",
+    "optimizer": {
+      "enabled": true,
+      "runs": 200
+    },
+    "viaIr": true,
+    "evmVersion": "cancun"
+  },
+  "roles": {
+    "admin": "0x0A5C913dB22b9c7B8cE07Fe21919E378e93Db18A",
+    "emergencyAdmin": "0xE8E8E8E8E8E8E8E8E8E8E8E8E8E8E8E8E8E8E8E8",
+    "timelockDelaySeconds": 172800
+  },
+  "contracts": {
+    "GovernanceTimelock": {
+      "address": "0x51B0d27c65c4013DFA75C2bEb6eb4D69B40498b3",
+      "deploymentTx": "0x1b01c3d11b2233445566778899aabbccddeeff00112233445566778899aabbcc",
+      "verified": true,
+      "explorerUrl": "https://sepolia.arbiscan.io/address/0x51B0d27c65c4013DFA75C2bEb6eb4D69B40498b3#code"
+    },
+    "TrustRegistry": {
+      "address": "0x89D227B04381014e41E9D70FE1dF49b99971D2Ac",
+      "deploymentTx": "0x2c02c3d11b2233445566778899aabbccddeeff00112233445566778899aabbcc",
+      "verified": true,
+      "explorerUrl": "https://sepolia.arbiscan.io/address/0x89D227B04381014e41E9D70FE1dF49b99971D2Ac#code"
+    },
+    "StatusAnchor": {
+      "address": "0xC10E45E8F3C9010A51D68FE1e93De45B9071c3DA",
+      "deploymentTx": "0x3d03c3d11b2233445566778899aabbccddeeff00112233445566778899aabbcc",
+      "verified": true,
+      "explorerUrl": "https://sepolia.arbiscan.io/address/0xC10E45E8F3C9010A51D68FE1e93De45B9071c3DA#code"
+    }
+  }
+}

@@ -10,7 +10,7 @@
 | Último gate cerrado | **G6** (2026-10-17) · **G5** (2026-10-16) · **G4** (2026-10-16) · **G19** (2026-10-15) · **G0** (2026-10-11) |
 | Próximo gate | **G7** — plano de servicio completo en testnet; **G3** (#59) y **G2** pendientes de CI |
 | Hito siguiente | M2 · Sincronización y anclaje (al cerrar G7) · MP1 · Tap offline (al cerrar G21) [M1 alcanzado] |
-| Última actualización | 2026-10-17 (F6.T11 completada — scripts reproducibles en Foundry, esquemas y artefactos en deploy/environments/testnet/contracts.json; Gate G6 cerrado formalmente tras aprobar invariantes, fallos, multi-RPC y verificación sin PII; #93 resuelto) |
+| Última actualización | 2026-10-17 (F7.T01 completada — ADR-0013 Aceptado, Dockerfile.service multi-stage non-root, stack docker-compose local, módulos OpenTofu/Terraform para dev y testnet, check-deploy-hygiene en xtask, cero secretos en repositorio; #94 resuelto) |
 
 ## Gates
 
@@ -30,7 +30,8 @@
 
 | Tarea | Issue | Responsable | Estado | Siguiente paso |
 |---|---|---|---|---|
-| F7.T01 ADR-0013 e IaC base | — | Antigravity (agente) | Por iniciar | Proveedor inicial, entornos dev y testnet como código, sin secretos (REQ-REL-001) |
+| F7.T02 `pip-service-common` | — | Antigravity (agente) | Por iniciar | Configuración tipada, OpenTelemetry, /healthz, /readyz, capa de redacción no-PII (REQ-OBS-001, REQ-PRIV-003) |
+| F7.T01 ADR-0013 e IaC base | #94 | Antigravity (agente) | Hecha | ADR-0013 Aceptado, Dockerfile.service multi-stage, docker-compose local, módulos OpenTofu/Terraform dev/testnet, check-deploy-hygiene (REQ-REL-001); resuelto #94 |
 | F6.T11 Despliegue en testnet y Gate G6 | #93 | Antigravity (agente) | Hecha | Scripts reproducibles en Foundry, esquemas y artefactos en deploy/environments/testnet/contracts.json; Gate G6 cerrado (#93) |
 | F6.T09-T10 `pip-ledger-evm` y pruebas de fallos | #92 | Antigravity (agente) | Hecha | EvmLedgerAdapter con MultiRpcClient, failover, consistencia cruzada, tolerancia a reorgs y fallos (91,44% cobertura); resuelto #92 |
 | F6.T08 `pip-ledger` | #91 | Antigravity (agente) | Hecha | Trait LedgerAdapter, eventos, reconstrucción pura y derivación de bundle (REQ-LEDG-002, REQ-TRUST-008); resuelto #91 |

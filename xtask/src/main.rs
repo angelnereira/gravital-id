@@ -6,6 +6,7 @@
 
 mod conformance;
 mod contracts_privacy;
+mod deploy_hygiene;
 mod error_codes;
 mod generate_vectors;
 mod layers;
@@ -44,11 +45,15 @@ fn main() -> anyhow::Result<()> {
             contracts_privacy::run_check_contracts_privacy(workspace_root)?;
             Ok(())
         }
+        Some("check-deploy-hygiene") => {
+            deploy_hygiene::run_check_deploy_hygiene(workspace_root)?;
+            Ok(())
+        }
         Some(cmd) => {
             anyhow::bail!("Comando desconocido en xtask: {cmd}");
         }
         None => {
-            println!("Uso: cargo xtask <check-layers|trace|check-error-codes|conformance|gen-conformance-vectors|check-contracts-privacy>");
+            println!("Uso: cargo xtask <check-layers|trace|check-error-codes|conformance|gen-conformance-vectors|check-contracts-privacy|check-deploy-hygiene>");
             Ok(())
         }
     }

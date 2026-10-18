@@ -1,0 +1,186 @@
+services:
+  # ----------------------------------------------------------------------------
+  # 1. Nodo EVM Local para Simulación de Ledger (Anvil)
+  # ----------------------------------------------------------------------------
+  anvil:
+    image: ghcr.io/foundry-rs/foundry:latest
+    container_name: gravital-anvil
+    entrypoint:
+      - anvil
+      - --host
+      - 0.0.0.0
+      - --port
+      - "8545"
+      - --chain-id
+      - "31337"
+      - --block-time
+      - "1"
+    ports:
+      - "8545:8545"
+    networks:
+      - gravital_network
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z 127.0.0.1 8545 || exit 1"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # ----------------------------------------------------------------------------
+  # 2. Base de Datos Relacional para Vistas del Indexador (PostgreSQL 16)
+  # ----------------------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: gravital-postgres
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-gravital_id_dev}
+      POSTGRES_USER: ${POSTGRES_USER:-gravital}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dev_postgres_password_local_only}
+    ports:
+      - "5432:5432"
+    volumes:
+      - gravital_pg_data:/var/lib/postgresql/data
+    networks:
+      - gravital_network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-gravital} -d ${POSTGRES_DB:-gravital_id_dev}"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # ----------------------------------------------------------------------------
+  # 3. Almacenamiento de Objetos S3-Compatible Local (MinIO)
+  # ----------------------------------------------------------------------------
+  minio:
+    image: minio/minio:RELEASE.2024-05-10T01-41-38Z
+    container_name: gravital-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${S3_ACCESS_KEY:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${S3_SECRET_KEY:-minioadmin}
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - gravital_minio_data:/data
+    networks:
+      - gravital_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://127.0.0.1:9000/minio/health/live"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # Creador idempotente de buckets en MinIO
+  minio-init:
+    image: minio/mc:RELEASE.2024-05-09T17-04-24Z
+    container_name: gravital-minio-init
+    depends_on:
+      minio:
+        condition: service_healthy
+    entrypoint: >
+      /bin/sh -c "
+      mc alias set local http://minio:9000 ${S3_ACCESS_KEY:-minioadmin} ${S3_SECRET_KEY:-minioadmin};
+      mc mb --ignore-existing local/${S3_TRUST_BUNDLE_BUCKET:-gravital-trust-bundles};
+      mc mb --ignore-existing local/${S3_STATUS_LIST_BUCKET:-gravital-status-lists};
+      mc anonymous set download local/${S3_TRUST_BUNDLE_BUCKET:-gravital-trust-bundles};
+      mc anonymous set download local/${S3_STATUS_LIST_BUCKET:-gravital-status-lists};
+      exit 0;
+      "
+    networks:
+      - gravital_network
+
+  # ----------------------------------------------------------------------------
+  # 4. Servicio de Indexación de Eventos del Ledger (pip-indexer)
+  # ----------------------------------------------------------------------------
+  pip-indexer:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile.service
+      args:
+        SERVICE_NAME: pip-indexer
+    container_name: gravital-indexer
+    depends_on:
+      postgres:
+        condition: service_healthy
+      anvil:
+        condition: service_healthy
+    environment:
+      PORT: "8081"
+      DATABASE_URL: postgres://${POSTGRES_USER:-gravital}:${POSTGRES_PASSWORD:-dev_postgres_password_local_only}@postgres:5432/${POSTGRES_DB:-gravital_id_dev}?sslmode=disable
+      EVM_RPC_URL: http://anvil:8545
+      EVM_CHAIN_ID: "31337"
+      TRUST_REGISTRY_ADDRESS: ${TRUST_REGISTRY_ADDRESS:-0xe7f1725E7734CE288F8367e1Bb143E90bb3F0512}
+      STATUS_ANCHOR_ADDRESS: ${STATUS_ANCHOR_ADDRESS:-0x9fE46736679d2D9a65F0992F2272dE9f3c7fa6e0}
+      RUST_LOG: info
+    ports:
+      - "${INDEXER_PORT:-8081}:8081"
+    networks:
+      - gravital_network
+    restart: unless-stopped
+
+  # ----------------------------------------------------------------------------
+  # 5. Servicio de Cofirma y Publicación de Trust Bundles (pip-trust-service)
+  # ----------------------------------------------------------------------------
+  pip-trust-service:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile.service
+      args:
+        SERVICE_NAME: pip-trust-service
+    container_name: gravital-trust-service
+    depends_on:
+      pip-indexer:
+        condition: service_started
+      minio:
+        condition: service_healthy
+    environment:
+      PORT: "8082"
+      INDEXER_URL: http://pip-indexer:8081
+      S3_ENDPOINT: http://minio:9000
+      S3_REGION: us-east-1
+      S3_BUCKET: ${S3_TRUST_BUNDLE_BUCKET:-gravital-trust-bundles}
+      AWS_ACCESS_KEY_ID: ${S3_ACCESS_KEY:-minioadmin}
+      AWS_SECRET_ACCESS_KEY: ${S3_SECRET_KEY:-minioadmin}
+      RUST_LOG: info
+    ports:
+      - "${TRUST_SERVICE_PORT:-8082}:8082"
+    networks:
+      - gravital_network
+    restart: unless-stopped
+
+  # ----------------------------------------------------------------------------
+  # 6. Servicio de Relay de Objetos y Sobres Cifrados (pip-relay)
+  # ----------------------------------------------------------------------------
+  pip-relay:
+    build:
+      context: ../..
+      dockerfile: deploy/docker/Dockerfile.service
+      args:
+        SERVICE_NAME: pip-relay
+    container_name: gravital-relay
+    depends_on:
+      minio:
+        condition: service_healthy
+    environment:
+      PORT: "8083"
+      S3_ENDPOINT: http://minio:9000
+      S3_REGION: us-east-1
+      S3_BUCKET: ${S3_STATUS_LIST_BUCKET:-gravital-status-lists}
+      AWS_ACCESS_KEY_ID: ${S3_ACCESS_KEY:-minioadmin}
+      AWS_SECRET_ACCESS_KEY: ${S3_SECRET_KEY:-minioadmin}
+      RELAY_RATE_LIMIT_PER_MINUTE: "120"
+      RELAY_MAX_PAYLOAD_BYTES: "65536"
+      RUST_LOG: info
+    ports:
+      - "${RELAY_PORT:-8083}:8083"
+    networks:
+      - gravital_network
+    restart: unless-stopped
+
+networks:
+  gravital_network:
+    driver: bridge
+
+volumes:
+  gravital_pg_data:
+  gravital_minio_data:

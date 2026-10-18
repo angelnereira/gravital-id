@@ -23,7 +23,7 @@ Un ADR registra una decisión difícil de revertir: contexto, opciones, decisió
 | [0010](0010-formato-trust-bundle.md) | Formato del trust bundle | Aceptado | JWS JSON multi-firma (ES256) sobre payload canónico (JCS) acotado | F0 |
 | [0011](0011-transporte-offline.md) | Transporte offline | Aceptado | QR en dos pasos, transcodificación binaria + DEFLATE + Base45, multi-QR (indexado frente a códigos fuente) | F0 |
 | [0012](0012-modelo-gobernanza.md) | Modelo de gobernanza del registro | Aceptado | Multisig + timelock + rol de emergencia limitado a suspender | F0 |
-| 0013 | Proveedor de nube inicial | Propuesto | Neutral (imágenes OCI + IaC) | F7 |
+| [0013](0013-infraestructura-y-despliegue.md) | Proveedor de nube inicial e infraestructura | Aceptado | Neutral (imágenes OCI + IaC con OpenTofu/Terraform; AWS referencia testnet) | F7 |
 | [0014](0014-toolchain-rust-y-msrv.md) | Toolchain de Rust y MSRV | Aceptado | Rust 1.85.0 fijado; MSRV declarado y verificado en CI | F1 |
 | [0015](0015-sd-jwt-construir-o-reutilizar.md) | SD-JWT: construir o reutilizar | Propuesto | Construir en `gravital-id-credential` (L2 `no_std`) sobre L1 | F3 |
 | [0016](0016-confianza-por-umbral.md) | Confianza por umbral: raíz encadenada y bundles cofirmados | Aceptado | Raíz offline k-de-n + bundles k-de-n con derivación determinista | F0 |
@@ -38,4 +38,4 @@ Un ADR registra una decisión difícil de revertir: contexto, opciones, decisió
 | [0025](0025-identificadores-numericos-sesion.md) | Modelo de identificadores numéricos de 9–10 dígitos | Aceptado | `SessionCode` efímero (10 dígitos + Damm) en línea; número por emisor opcional | F19 |
 | [0026](0026-perfil-identidad-retrato.md) | Perfil de identidad portable `pip-identity-v1` y tratamiento del retrato | Aceptado | Variantes oficial/derivada con `vct` distintos; retrato JPEG $\le 16\text{ KiB}$ solo por NFC/BLE | F19 |
 
-_Los ADRs de F0 (0001–0012, 0016–0018 y 0020), los ADRs de F1 (0014 y 0019) y los ADRs de F19 (0021–0026) han sido redactados y aceptados formalmente. El ADR-0015 (F3.T01) se encuentra redactado en estado **Propuesto**. El ADR 0013 queda planificado para Fase F7._
+_Los ADRs de F0 (0001–0012, 0016–0018 y 0020), los ADRs de F1 (0014 y 0019), los ADRs de F19 (0021–0026) y el ADR de F7 (0013) han sido redactados y aceptados formalmente. El ADR-0015 (F3.T01) se encuentra redactado en estado **Propuesto**._
