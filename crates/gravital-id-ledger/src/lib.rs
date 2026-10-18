@@ -8,11 +8,13 @@
 //!
 //! Trazabilidad:
 //! - **REQ-LEDG-002:** El acceso al ledger DEBE abstraerse con `LedgerAdapter`.
+//! - **REQ-TRUST-004:** El modo de verificación completa DEBE contrastar el bundle con $\ge 2$ fuentes de ledger independientes (F7.T08).
 //! - **REQ-TRUST-008:** El bundle DEBE derivarse de forma determinista del estado finalizado
 //!   (payload canónico), de modo que operadores independientes obtengan bytes idénticos.
 //! - **REQ-LEDG-004:** Control de ciclo de vida, estados irreversibles y retardo de timelock.
 //! - **REQ-LEDG-001 / REQ-LEDG-007 / INV-02:** Cero datos personales en tipos y eventos del ledger.
 //! - **INV-01:** Verificación y lógica de núcleo sans-I/O sin llamadas de red.
+//! - **INV-16:** Prohibición absoluta de confiar en una sola fuente en modo de verificación completa.
 
 #![forbid(unsafe_code)]
 
@@ -23,6 +25,7 @@ pub mod derivation;
 pub mod diff;
 pub mod error;
 pub mod event;
+pub mod full_verification;
 pub mod state;
 
 pub use adapter::{BlockHeader, InMemoryLedgerAdapter, LedgerAdapter, StatusCommitmentRecord};
@@ -35,6 +38,10 @@ pub use event::{
     KeyRetiredEvent, KeySuspendedEvent, LedgerEvent, SequencedLedgerEvent,
     StatusManifestAnchoredEvent, TrustRootUpdatedEvent, VerifierDeregisteredEvent,
     VerifierRegisteredEvent,
+};
+pub use full_verification::{
+    BundleDivergenceAlarm, CrossLedgerDivergenceAlarm, FullVerificationEngine,
+    FullVerificationOutcome, FullVerificationPolicy, SourceCheckpoint,
 };
 pub use state::{
     BundleSignerStateRecord, IssuerLifecycleState, IssuerStateRecord, KeyLifecycleState,

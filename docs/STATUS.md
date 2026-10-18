@@ -10,7 +10,7 @@
 | Último gate cerrado | **G6** (2026-10-17) · **G5** (2026-10-16) · **G4** (2026-10-16) · **G19** (2026-10-15) · **G0** (2026-10-11) |
 | Próximo gate | **G7** — plano de servicio completo en testnet; **G3** (#59) y **G2** pendientes de CI |
 | Hito siguiente | M2 · Sincronización y anclaje (al cerrar G7) · MP1 · Tap offline (al cerrar G21) [M1 alcanzado] |
-| Última actualización | 2026-10-18 (`F7.T07` completada: crates `gravital-id-sync` L4 sans-I/O y `gravital-id-transport-http` L5 con cola cifrada idempotente, deduplicación, HPKE RFC 9180, backoff determinista y pool de relays con failover; ADRs 0027–0030 aceptados; perfil `pip-tenant-role-v1`, `PROTOCOL.md §7.8` Passkey, especificación `GRAVITAL_EXPERIENCE_UI.md`, 16 nuevos REQ trazados [183 totales, 107 en código], códigos `GID-E2010`/`GID-E2011` [61 totales], paquete `packages/gravital_experience_ui` y app Flutter `apps/reference-wallet` con capacidades nativas e interactivas NFC `GID-APDU` HCE/ISO-DEP y Passkey `FIDO2 / WebAuthn CTAP2` completados y verificados) |
+| Última actualización | 2026-10-18 (`F7.T08` completada: motor determinista sans-I/O de verificación completa multi-fuente `FullVerificationEngine` en L4 `gravital-id-ledger` contrastando el TrustBundle con $\ge 2$ fuentes de ledger independientes, detección de divergencias y consistencia cruzada, fail-closed `INV-05`, `INV-16`, 9 pruebas pasando incluyendo proptest y trazado `REQ-TRUST-004`; `F7.T07` y `F11.T01-T02` completadas) |
 
 ## Gates
 
@@ -30,6 +30,7 @@
 
 | Tarea | Issue | Responsable | Estado | Siguiente paso |
 |---|---|---|---|---|
+| F7.T08 Modo de verificación completa | #102 | Antigravity (agente) | Hecha | Motor `FullVerificationEngine` en capa L4 contrastando con $\ge 2$ fuentes de ledger, alarma y rechazo fail-closed ante divergencia o fuentes insuficientes (`REQ-TRUST-004`); resuelto #102 |
 | F7.T07 `pip-sync` | #100 | Antigravity (agente) | Hecha | Crate L4 `gravital-id-sync` (sans-I/O) y adaptador L5 `gravital-id-transport-http` con cola cifrada idempotente, deduplicación, HPKE RFC 9180, backoff determinista y pool de relays con failover (REQ-SYNC-001..007); resuelto #100 |
 | F11.T01-T02 `gravital_experience_ui` + `reference-wallet` (adelanto UI, multi-inquilino ADR-0027..0030, NFC `GID-APDU` y Passkey `CTAP2`) | #101 | Antigravity (agente) | Hecha | ADRs 0027–0030 aceptados, `GRAVITAL_EXPERIENCE_UI.md`, `pip-tenant-role-v1.md`, `PROTOCOL.md §7.8`, cumplimiento Tribunal Electoral Panamá (Decreto 43/2024 + SVI + VOPRF `GID-E2010`), ranura única por clase (`mobile`/`card`/`other`, `GID-E2011`), motor NFC `GID-APDU` (HCE Android `HostApduService` + lector ISO-DEP + iOS `CoreNFC`) y servicio Passkey (`FIDO2 / WebAuthn Level 3` + `CTAP2 over NFC`) con 11 suites de pruebas en verde |
 | F7.T06 `pip-relay` | #99 | Antigravity (agente) | Hecha | Servicio de retransmisión stateless, objetos direccionados por SHA-256, buzones HPKE con idempotencia, punto de encuentro efímero con SessionCode Damm y límites de tasa (91,86% cobertura); resuelto #99 |
@@ -155,6 +156,24 @@
 | Tamaño binario del SDK | — | — | — | — | — |
 
 ## Última nota de traspaso
+
+### Traspaso — 2026-10-18 (F7.T08: Modo de verificación completa — Contraste determinista del TrustBundle con $\ge 2$ fuentes de ledger independientes, consistencia cruzada y alarmas estructuradas de divergencia) — Antigravity (agente)
+- Tarea: F7.T08 — #102 — rama `main`
+- Estado: **hecha**
+- Hecho en esta sesión:
+  - **F7.T08 (`crates/gravital-id-ledger/src/full_verification.rs`):** Implementación del motor `FullVerificationEngine` en Capa L4 sans-I/O (`#![forbid(unsafe_code)]`) para contrastar de forma determinista el `TrustBundle` contra $\ge 2$ fuentes de ledger independientes (`REQ-TRUST-004`, `P-10`, `INV-01`, `INV-02`, `INV-04`, `INV-05`, `INV-11`, `INV-16`).
+  - **Política de verificación completa (`FullVerificationPolicy`):** Validación estricta que exige `min_sources >= 2` en el constructor (`InvalidPolicy`), umbral de deriva de bloques (`max_allowed_block_drift`) y regla opcional de cobertura de bloque finalizado.
+  - **Resultado estructurado de 4 estados (`FullVerificationOutcome`):** `Verified`, `BundleDivergence`, `CrossLedgerDivergence`, `InsufficientSources` cumpliendo `INV-04` y sin reducción a booleanos.
+  - **Consistencia cruzada inter-ledger (`check_cross_ledger_consistency`):** Comprobación entre todas las fuentes saludables de que comparten el mismo `chain_id` y que la diferencia entre bloques finalizados no supera `max_allowed_block_drift`, emitiendo `CrossLedgerDivergenceAlarm` ante fallos.
+  - **Contraste estado ↔ bundle:** Reconstrucción del `LedgerState` de cada fuente a partir de sus eventos finalizados (`apply_event`) y comparación contra el `TrustBundle` (`compare_bundle_with_state`), detectando divergencias administrativas, emisores/verificadores dados de baja o suspendidos, y alertas críticas de seguridad ante claves comprometidas (`CompromisedKeyNotReflected`) emitiendo `BundleDivergenceAlarm`.
+  - **Cumplimiento de invariantes:** Fail-closed ante fuentes insuficientes o fallos de adaptador (`INV-05`, `INV-16`), cero I/O de red en L4 (`INV-01`), cero datos personales en alarmas o diagnósticos (`INV-02`), inyección explícita del instante temporal (`INV-11`).
+  - **Pruebas y trazabilidad (`full_verification_test.rs`):** 9 suites de pruebas unitarias, de integración y de propiedades con `proptest` (`prop_full_verification_agreement_iff_verified`), y requisito `REQ-TRUST-004` trazado en `docs/TRACEABILITY.md`.
+- Pendiente (siguiente paso concreto):
+  - Iniciar `F7.T09` / `F7.T10`: Evaluar backend `aws-lc-rs` (FIPS) según ADR-0007 / Integración con contenedores (`F7.T10`).
+- Bugs/issues abiertos durante la sesión: ninguno.
+- Decisiones tomadas (con enlace a ADR/issue): Implementado modo de verificación completa multi-fuente en `gravital-id-ledger` cumpliendo `REQ-TRUST-004` e invariante `INV-16` (#102).
+- Riesgos o dudas: ninguna.
+- Comprobaciones locales: fmt ✅ clippy (-D warnings) ✅ tests (100% verde en todo el workspace) ✅ layers (21 crates) ✅ trace (107 REQs) ✅ check-error-codes (61) ✅ check-contracts-privacy (0 PII) ✅ doc (0 warnings) ✅
 
 ### Traspaso — 2026-10-18 (F7.T07: `pip-sync` — Máquina de estados sans-I/O, cola cifrada idempotente, deduplicación, HPKE RFC 9180, backoff con jitter determinista, pool de relays con failover y adaptador de transporte HTTP L5) — Antigravity (agente)
 - Tarea: F7.T07 — #100 — rama `main`

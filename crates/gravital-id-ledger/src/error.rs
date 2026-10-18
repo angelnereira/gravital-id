@@ -101,6 +101,8 @@ pub enum LedgerError {
     BundleError(String),
     /// Error devuelto por la implementación concreta del adaptador de ledger.
     Adapter(String),
+    /// Política de verificación completa inválida (ej. min_sources < 2).
+    InvalidPolicy(&'static str),
 }
 
 impl fmt::Display for LedgerError {
@@ -169,6 +171,7 @@ impl fmt::Display for LedgerError {
             Self::Serialization(msg) => write!(f, "serialization error: {msg}"),
             Self::BundleError(msg) => write!(f, "bundle error: {msg}"),
             Self::Adapter(msg) => write!(f, "ledger adapter error: {msg}"),
+            Self::InvalidPolicy(msg) => write!(f, "invalid policy: {msg}"),
         }
     }
 }
@@ -197,6 +200,7 @@ impl From<LedgerError> for GidError {
             LedgerError::Serialization(_) => ErrorCode::MalformedSdJwt,
             LedgerError::BundleError(_) => ErrorCode::MalformedSdJwt,
             LedgerError::Adapter(_) => ErrorCode::MalformedMessage,
+            LedgerError::InvalidPolicy(_) => ErrorCode::MalformedMessage,
         };
         GidError::new(code, err.to_string())
     }

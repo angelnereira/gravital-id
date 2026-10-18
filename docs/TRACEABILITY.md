@@ -52,7 +52,7 @@
 | REQ-TRUST-001 | F4 | DEBE | T | P-08 | bundle.rs, jws_json.rs, lib.rs, trust_bundle_integration.rs, aggregator.rs, lib.rs, signer.rs, aggregator_test.rs, signer_test.rs | Cubierto |
 | REQ-TRUST-002 | F4 | DEBE | T | P-08 | bundle.rs, lib.rs, trust_bundle_integration.rs | Cubierto |
 | REQ-TRUST-003 | F7 | DEBE | T | P-14 | config.rs, engine.rs, error.rs, lib.rs, main.rs, operator.rs, config_test.rs, engine_test.rs, operator_test.rs | Cubierto |
-| REQ-TRUST-004 | F7 | DEBE | T | P-10 | diff.rs, ledger_state_and_derivation.rs | Cubierto |
+| REQ-TRUST-004 | F7 | DEBE | T | P-10 | diff.rs, full_verification.rs, lib.rs, full_verification_test.rs, ledger_state_and_derivation.rs | Cubierto |
 | REQ-TRUST-005 | F7 | DEBE | T, I | P-08 | lib.rs, publisher_test.rs | Cubierto |
 | REQ-TRUST-006 | F8 | DEBE | T | P-10 | — | Pendiente (Fase futura) |
 | REQ-TRUST-007 | F6 | DEBERÍA | T | P-09 | ledger_state_and_derivation.rs, bundle.rs | Cubierto |
@@ -69,8 +69,8 @@
 | REQ-SYNC-001 | F7 | DEBE | T | P-01 | engine.rs, lib.rs, model.rs, queue.rs, transport.rs, types.rs, sync_test.rs, lib.rs | Cubierto |
 | REQ-SYNC-002 | F7 | DEBE | T | — | dedup.rs, engine.rs, lib.rs, transport.rs, sync_test.rs | Cubierto |
 | REQ-SYNC-003 | F7 | DEBE | T | — | client.rs, evm_fault_tolerance.rs, backoff.rs, engine.rs, lib.rs, sync_test.rs | Cubierto |
-| REQ-SYNC-004 | F7 | DEBE | T | P-08 | manifest.rs, engine.rs, error.rs, lib.rs, transport.rs, verifier.rs, sync_test.rs, config.rs, lib.rs, main.rs, server.rs, store.rs, config_test.rs, limiter_test.rs, server_test.rs, store_test.rs | Cubierto |
-| REQ-SYNC-005 | F7 | DEBE | T, I | P-09 | engine.rs, error.rs, lib.rs, transport.rs, verifier.rs, sync_test.rs | Cubierto |
+| REQ-SYNC-004 | F7 | DEBE | T | P-08 | manifest.rs, engine.rs, error.rs, lib.rs, transport.rs, verifier.rs, sync_test.rs, sync_verifier_parser.rs, config.rs, lib.rs, main.rs, server.rs, store.rs, config_test.rs, limiter_test.rs, server_test.rs, store_test.rs | Cubierto |
+| REQ-SYNC-005 | F7 | DEBE | T, I | P-09 | engine.rs, error.rs, lib.rs, transport.rs, verifier.rs, sync_test.rs, sync_verifier_parser.rs | Cubierto |
 | REQ-SYNC-006 | F7 | DEBE | T | P-09 | engine.rs, error.rs, hpke_envelope.rs, lib.rs, model.rs, transport.rs, types.rs, sync_test.rs, config.rs, lib.rs, main.rs, server.rs, store.rs, config_test.rs, limiter_test.rs, server_test.rs, store_test.rs | Cubierto |
 | REQ-SYNC-007 | F7 | DEBE | T | P-10 | config.rs, engine.rs, error.rs, lib.rs, relay_pool.rs, sync_test.rs, lib.rs | Cubierto |
 | REQ-STOR-001 | F5 | DEBE | T | P-03 | lib.rs, cli_m1_demonstration.rs, credential.rs, wallet.rs, holder_credential_management.rs, envelope.rs, lib.rs, record.rs, storage_envelope_and_indices.rs | Cubierto |
