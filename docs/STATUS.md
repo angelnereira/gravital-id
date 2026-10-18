@@ -10,7 +10,7 @@
 | Último gate cerrado | **G7** (2026-10-18) · **G6** (2026-10-17) · **G5** (2026-10-16) · **G4** (2026-10-16) · **G19** (2026-10-15) · **G0** (2026-10-11) |
 | Próximo gate | **G8 / Hito M2** — los nueve criterios de aceptación del MVP (§24); **G3** (#59) y **G2** pendientes de CI |
 | Hito siguiente | M2 · Sincronización y anclaje (al cerrar G8) · MP1 · Tap offline (al cerrar G21) [M1 alcanzado] |
-| Última actualización | 2026-10-18 (`F8.T03` completada: clave de recuperación del titular con propósito exclusivo `KeyPurpose::HolderRecovery` en `gravital-id-recovery` L3 `no_std`, derivación determinista no correlacionable por emisor según `REQ-REC-007` y `P-09`, extensión normativa en `PROTOCOL.md §2.2` con huella RFC 7638 en URI RFC 9278 `cnf.rec` en SD-JWT VC, suite de 8 pruebas de integración y auditoría forense cero PII; siguiente tarea: F8.T04 Re-vinculación y reemplazo atómico por clase de dispositivo) |
+| Última actualización | 2026-10-18 (`F8.T04` completada: re-vinculación y reemplazo atómico por clase de factor de dispositivo `DeviceFactorClass` en `gravital-id-recovery` y `gravital-id-issuer`, `ADR-0029`, `SPEC-PIP-REBIND-001`, `DeviceSlotManager`, revocación atómica del índice previo en Token Status List preservando intactos los dispositivos de otras clases, suite de 5 pruebas de integración en verde y auditoría forense cero PII; resuelto #104; siguiente tarea: F8.T05 Migración entre dispositivos con SAS y compromiso previo) |
 
 ## Gates
 
@@ -31,7 +31,8 @@
 
 | Tarea | Issue | Responsable | Estado | Siguiente paso |
 |---|---|---|---|---|
-| F8.T04 Re-vinculación y reemplazo atómico por clase de dispositivo | — | Antigravity (agente) | En curso | Solicitud firmada con clave de recuperación, revocación atómica de ranura de dispositivo (`mobile`/`card`/`other`) y re-emisión (`REQ-REC-004`, `REQ-ISS-006`, `REQ-DEVSLOT-001..004`, `ADR-0029`) |
+| F8.T05 Migración entre dispositivos con SAS y compromiso previo | — | Antigravity (agente) | Por iniciar | Protocolo de migración directa entre dispositivos con Short Authentication String (SAS), verificación visual de compromiso y transferencia cifrada E2E (`REQ-REC-001`, `REQ-PROX-001`) |
+| F8.T04 Re-vinculación y reemplazo atómico por clase de dispositivo | #104 | Antigravity (agente) | Hecha | `RebindingChallenge`, `RebindingRequest`, transcrito canónico `SPEC-PIP-REBIND-001`, `DeviceSlotManager` con revocación atómica de ranura previa (`mobile`/`card`/`other`) en `TokenStatusList` preservando ranuras activas de otras clases y re-emisión (`REQ-REC-004`, `REQ-ISS-006`, `REQ-DEVSLOT-001..004`, `ADR-0029`); resuelto #104 |
 | F8.T03 Clave de recuperación | #103 | Antigravity (agente) | Hecha | `KeyPurpose::HolderRecovery`, `HolderRecoveryKey`, derivación no correlacionable por emisor, extensión de emisión `cnf.rec` (`PROTOCOL.md §2.2`), 8 pruebas de integración y auditoría cero PII (`REQ-REC-004`, `REQ-REC-007`); resuelto #103 |
 | F8.T02 Shamir k-de-n | #102 | Antigravity (agente) | Hecha | Aritmética $GF(2^8)$, interpolación de Lagrange de Shamir $k$-de-$n$, contenedor `GIDS` canónico, Crockford Base32, 44 pruebas verdes y auditoría cero PII (`REQ-REC-003`, `SPEC-PIP-SHAMIR-001`); resuelto #102 |
 | F8.T01 Código de recuperación y respaldo | #101 | Antigravity (agente) | Hecha | Generación $\ge 128$ bits, codificación legible BIP-39/Crockford con checksum, derivación HKDF por emisor, formato de respaldo GIDB versionado y cifrado con XChaCha20-Poly1305 (`REQ-REC-002`, `REQ-REC-004`, `REQ-REC-007`, `SPEC-PIP-BACKUP-001`); resuelto #101 |
@@ -165,6 +166,47 @@
 | Tamaño binario del SDK | — | — | — | — | — |
 
 ## Última nota de traspaso
+
+### Traspaso — 2026-10-18 (F8.T04: Re-vinculación y reemplazo atómico por clase de dispositivo — gravital-id-recovery y gravital-id-issuer L3 no_std, DeviceFactorClass, SPEC-PIP-REBIND-001, ADR-0029, DeviceSlotManager, revocación atómica selectiva en TokenStatusList y auditoría forense cero PII) — Antigravity (agente)
+- Tarea: F8.T04 — #104 — rama `main`
+- Estado: **hecha**
+- Hecho en esta sesión:
+  - **`docs/specs/PROTOCOL.md §2.3` (`SPEC-PIP-REBIND-001`, `ADR-0029`):** Especificación normativa del protocolo de re-vinculación de dispositivo y reemplazo atómico gobernado por `DeviceFactorClass` (`mobile`, `card`, `other`):
+    - Transcrito canónico de re-vinculación: $\text{"pip-rebinding-v1:"} \mathbin{\Vert} \text{issuer\_uri} \mathbin{\Vert} \text{":"} \mathbin{\Vert} \text{nonce} \mathbin{\Vert} \text{":"} \mathbin{\Vert} \text{device\_class} \mathbin{\Vert} \text{":"} \mathbin{\Vert} \text{new\_holder\_key\_thumbprint}$
+    - Firma digital IEEE P1363 (64 bytes) con `HolderRecoveryKey` (propósito exclusivo `KeyPurpose::HolderRecovery`).
+    - Flujo de desafío de un solo uso con anti-replay y expiración ($\le 300$ s).
+    - Regla de reemplazo atómico por clase: si el titular ya posee una ranura activa en esa clase, su `status_index` anterior se revoca atómicamente a `01 Revoked` en la `Token Status List`, mientras que las ranuras activas de otras clases (p. ej. tarjeta física `card`) permanecen 100% activas e inalteradas (`REQ-DEVSLOT-003`).
+  - **`crates/gravital-id-types`:**
+    - `DeviceFactorClass` (`ids.rs`): Enum `Mobile` (`"mobile"`), `Card` (`"card"`), `Other` (`"other"`) con parsing estricto, métodos canónicos `as_str()`, y derivaciones `PartialOrd`, `Ord`, `Hash` y `Display`.
+    - Código de error normativo `DuplicateDeviceClassActive` (`PIP-E2011`).
+  - **`crates/gravital-id-recovery` (Capa L3 `no_std` + `alloc`):**
+    - `rebinding.rs`:
+      - `compute_rebinding_transcript` y `compute_rebinding_digest`: Generación del transcrito canónico UTF-8 y digest SHA-256.
+      - `RebindingChallenge`: Modelado del desafío con `issuer_uri`, `nonce` y `expires_at`, validación contra tiempo inyectado (`now <= expires_at`).
+      - `RebindingRequest`: Creación y firma de la solicitud con `HolderRecoveryKey`, verificación de alcance de emisor y verificación criptográfica fail-closed contra clave pública de recuperación (`verify_signature`, `verify`).
+    - `key.rs`: Método `HolderRecoveryKey::create_rebinding_request` con propósito exclusivo `KeyPurpose::HolderRecovery`.
+    - `error.rs`: Variantes `RebindingExpired`, `InvalidRebindingSignature`, `InvalidRebindingParameter`.
+  - **`crates/gravital-id-issuer` (Capa L3 `no_std` + `alloc`):**
+    - `slot_manager.rs`:
+      - `ActiveDeviceSlot`: Registro de ranura activa de dispositivo (`device_class`, `status_list_id`, `status_index`, `holder_key`, `issued_at`, `expires_at`).
+      - `DeviceSlotManager`: Gestor de ranuras con control de unicidad (`REQ-DEVSLOT-001`, rechazo de duplicados sin re-vinculación con `DuplicateDeviceClassActive`), soporte de coexistencia independiente de clases (`REQ-DEVSLOT-002`: móvil y tarjeta física simultáneos), y ejecución de re-vinculación atómica (`execute_atomic_rebinding`).
+      - Revocación atómica selectiva: en la misma operación transaccional, revoca el índice del dispositivo anterior de esa clase en `IssuerStatusManager`, asigna un nuevo índice, emite la credencial con la nueva clave del dispositivo y activa la nueva ranura (`REQ-DEVSLOT-003`).
+      - Cero identificadores permanentes de hardware o IMEIs en claro (`REQ-DEVSLOT-004`, `INV-02`).
+    - `status_manager.rs`: Método `allocate_with_list_id` para asignación de índices con retorno del identificador de lista.
+    - `request.rs`: Método `clone_for_rebinding` en `CredentialRequest`.
+  - **Pruebas y calidad (`crates/gravital-id-recovery/tests/rebinding_tests.rs`):**
+    - 5 pruebas de integración exhaustivas:
+      - `test_e2e_atomic_rebinding_device_slots`: Ciclo de vida completo end-to-end (alta de móvil 1 -> alta de tarjeta física -> intento de alta directa de móvil 2 rechazado con `DuplicateDeviceClassActive` -> emisión de desafío -> firma con `HolderRecoveryKey` -> reemplazo atómico: móvil 1 pasa a `Revoked`, tarjeta física permanece `Valid`, móvil 2 queda `Valid`).
+      - `test_rebinding_corrupted_signature_fails_closed`: Rechazo fail-closed de firmas alteradas con `InvalidSignature` sin mutación de estado.
+      - `test_rebinding_expired_challenge_fails_closed`: Rechazo con `CredentialExpired` ante desafíos caducados.
+      - `test_rebinding_cross_issuer_isolation_enforced`: Claves de recuperación aisladas por emisor no permiten firmar desafíos de emisores ajenos (`REQ-REC-007`).
+      - `test_rebinding_zero_pii_audit`: Auditoría forense verificando la ausencia de IMEIs, IMSIs, MACs, cédulas o PII en transcritos y registros (`INV-02`, `REQ-DEVSLOT-004`).
+- Pendiente (siguiente paso concreto):
+  - Iniciar `F8.T05`: Protocolo de migración directa entre dispositivos con Short Authentication String (SAS), verificación visual de compromiso y transferencia cifrada E2E (`REQ-REC-001`, `REQ-PROX-001`).
+- Bugs/issues abiertos durante la sesión: ninguno.
+- Decisiones tomadas (con enlace a ADR/issue): Re-vinculación atómica por clase implementada conforme a `ADR-0029`, `REQ-DEVSLOT-001..004` y `SPEC-PIP-REBIND-001` (#104).
+- Riesgos o dudas: ninguna.
+- Comprobaciones locales: fmt ✅ clippy ✅ tests (100% verde en todo el workspace) ✅ layers ✅ trace (117 REQs) ✅ check-deploy-hygiene ✅
 
 ### Traspaso — 2026-10-18 (F8.T03: Clave de recuperación — gravital-id-recovery L3 no_std, HolderRecoveryKey, propósito exclusivo KeyPurpose::HolderRecovery, derivación determinista no correlacionable por emisor, extensión normativa cnf.rec en PROTOCOL.md §2.2 y auditoría forense cero PII) — Antigravity (agente)
 - Tarea: F8.T03 — #103 — rama `main`

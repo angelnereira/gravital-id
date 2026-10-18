@@ -323,6 +323,66 @@ impl From<u64> for BundleVersion {
     }
 }
 
+/// Clase de factor de dispositivo para la política de ranura única (`ADR-0029`, `REQ-DEVSLOT-001`).
+///
+/// Un titular puede portar su identidad simultáneamente en diferentes clases de soporte
+/// (p. ej. un móvil y una tarjeta inteligente física), pero nunca en dos dispositivos
+/// de la misma clase simultáneamente.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
+#[non_exhaustive]
+pub enum DeviceFactorClass {
+    /// Teléfono móvil (`"mobile"`). Clave en StrongBox/TEE o Secure Enclave.
+    Mobile,
+    /// Tarjeta física inteligente tipo Visa (`"card"`). Clave en chip Java Card con serial CPLC.
+    Card,
+    /// Dispositivo auxiliar compatible (`"other"`, p. ej. llave de seguridad FIDO2 o quiosco).
+    Other,
+}
+
+impl DeviceFactorClass {
+    /// Valor textual normativo para claims y metadatos (`"mobile"`, `"card"`, `"other"`).
+    #[must_use]
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Mobile => "mobile",
+            Self::Card => "card",
+            Self::Other => "other",
+        }
+    }
+
+    /// Parsea una clase de factor de dispositivo a partir de su cadena normativa.
+    ///
+    /// # Errores
+    /// [`ErrorCode::MalformedMessage`] si la cadena no es `"mobile"`, `"card"` ni `"other"`.
+    pub fn parse(s: &str) -> Result<Self, GidError> {
+        match s {
+            "mobile" => Ok(Self::Mobile),
+            "card" => Ok(Self::Card),
+            "other" => Ok(Self::Other),
+            _ => Err(GidError::new(
+                ErrorCode::MalformedMessage,
+                alloc::format!(
+                    "invalid device factor class '{s}': expected 'mobile', 'card', or 'other'"
+                ),
+            )),
+        }
+    }
+}
+
+impl fmt::Display for DeviceFactorClass {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        f.write_str(self.as_str())
+    }
+}
+
+impl TryFrom<&str> for DeviceFactorClass {
+    type Error = GidError;
+
+    fn try_from(value: &str) -> Result<Self, Self::Error> {
+        Self::parse(value)
+    }
+}
+
 #[cfg(test)]
 #[allow(clippy::expect_used, clippy::unwrap_used)] // Pruebas locales deterministas (PROJECT_STRUCTURE.md §5.1).
 mod tests {
@@ -418,5 +478,33 @@ mod tests {
         assert!(v.next().is_newer_than(v));
         assert!(!v.is_newer_than(v));
         assert_eq!(BundleVersion::new(u64::MAX).next().as_u64(), u64::MAX);
+    }
+
+    // // Verifies: REQ-DEVSLOT-001 (ADR-0029)
+    #[test]
+    fn device_factor_class_parse_and_display() {
+        assert_eq!(
+            DeviceFactorClass::parse("mobile").unwrap(),
+            DeviceFactorClass::Mobile
+        );
+        assert_eq!(
+            DeviceFactorClass::parse("card").unwrap(),
+            DeviceFactorClass::Card
+        );
+        assert_eq!(
+            DeviceFactorClass::parse("other").unwrap(),
+            DeviceFactorClass::Other
+        );
+
+        assert_eq!(DeviceFactorClass::Mobile.as_str(), "mobile");
+        assert_eq!(DeviceFactorClass::Card.as_str(), "card");
+        assert_eq!(DeviceFactorClass::Other.as_str(), "other");
+
+        assert_eq!(format!("{}", DeviceFactorClass::Mobile), "mobile");
+        assert_eq!(format!("{}", DeviceFactorClass::Card), "card");
+        assert_eq!(format!("{}", DeviceFactorClass::Other), "other");
+
+        assert!(DeviceFactorClass::parse("tablet").is_err());
+        assert!(DeviceFactorClass::parse("").is_err());
     }
 }

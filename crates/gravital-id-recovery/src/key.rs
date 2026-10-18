@@ -13,10 +13,12 @@ use core::fmt;
 use gravital_id_crypto::jwk::JwkEcP256;
 use gravital_id_crypto::secret::{SecretBytes, SecretKeyBytes};
 use gravital_id_crypto::sign::public_key_from_secret_key;
+use gravital_id_types::{DeviceFactorClass, UnixTime};
 use zeroize::ZeroizeOnDrop;
 
 use crate::error::RecoveryError;
 use crate::kdf::derive_issuer_recovery_secret;
+use crate::rebinding::{RebindingChallenge, RebindingRequest};
 
 /// Clave de recuperación del titular específica para un emisor concreto (`REQ-REC-004`, `REQ-REC-007`).
 ///
@@ -99,5 +101,21 @@ impl HolderRecoveryKey {
     #[must_use]
     pub fn thumbprint_uri(&self) -> String {
         self.public_key.thumbprint_uri()
+    }
+
+    /// Genera una solicitud de re-vinculación firmada para este emisor (`SPEC-PIP-REBIND-001`, `REQ-REC-004`).
+    ///
+    /// # Errores
+    /// - [`RecoveryError::RebindingExpired`] si el desafío expiró.
+    /// - [`RecoveryError::InvalidRebindingParameter`] si el emisor no coincide.
+    /// - [`RecoveryError::InvalidRebindingSignature`] si la firma criptográfica falla.
+    pub fn create_rebinding_request(
+        &self,
+        challenge: &RebindingChallenge,
+        device_class: DeviceFactorClass,
+        new_holder_key: JwkEcP256,
+        now: UnixTime,
+    ) -> Result<RebindingRequest, RecoveryError> {
+        RebindingRequest::create(self, challenge, device_class, new_holder_key, now)
     }
 }

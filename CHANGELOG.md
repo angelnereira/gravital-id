@@ -7,6 +7,18 @@ Cada componente publicado (SDK, servicios, contratos, especificación) indica su
 ## [Unreleased]
 
 ### Added
+- [recovery, issuer, devslot, protocol] Re-vinculación y reemplazo atómico por clase de dispositivo (`crates/gravital-id-recovery`, `crates/gravital-id-issuer`, `crates/gravital-id-types`, `docs/specs/PROTOCOL.md §2.3`, `ADR-0029`, `F8.T04`, `REQ-REC-004`, `REQ-ISS-006`, `REQ-DEVSLOT-001..004`, `INV-01`, `INV-02`, `INV-03`, `INV-05`, `INV-10`, `INV-11`; #104):
+  - `docs/specs/PROTOCOL.md §2.3` (`SPEC-PIP-REBIND-001`): Especificación normativa del protocolo de re-vinculación de dispositivo y reemplazo atómico gobernado por `DeviceFactorClass` (`mobile`, `card`, `other`), cálculo canónico de `RebindingTranscript` (`pip-rebinding-v1:<iss>:<nonce>:<class>:<new_holder_thumbprint>`) y verificación de firma ES256 P1363 contra `HolderRecoveryKey`.
+  - `crates/gravital-id-types`: Enum `DeviceFactorClass` (`Mobile`, `Card`, `Other`) con parsing canónico, representación de cadena y derivación `Ord`/`PartialOrd`/`Hash`.
+  - `crates/gravital-id-recovery`:
+    - `rebinding.rs`: Estructuras `RebindingChallenge` (con validación de frescura e inyección de reloj), `RebindingRequest` (con generación de firma digital ES256 y verificación fail-closed contra clave de recuperación) y cálculo del digest SHA-256 canónico del transcrito.
+    - `HolderRecoveryKey::create_rebinding_request`: Método para firmar solicitudes de re-vinculación con propósito exclusivo `KeyPurpose::HolderRecovery`.
+  - `crates/gravital-id-issuer`:
+    - `slot_manager.rs`: `DeviceSlotManager`, `ActiveDeviceSlot`, `RebindingExecutionParams`, `IssuerSigningContext` y `AtomicRebindingResult`.
+    - Cumplimiento estricto de las reglas de ranura única (`REQ-DEVSLOT-001`), independencia entre clases de soporte (`REQ-DEVSLOT-002`: un titular puede portar simultáneamente un móvil y una tarjeta inteligente física), reemplazo atómico (`REQ-DEVSLOT-003`: al re-vincular un móvil, se revoca atómicamente el índice previo del móvil en `TokenStatusList`, mientras que la tarjeta inteligente física permanece 100% activa e inalterada) y privacidad (`REQ-DEVSLOT-004`: cero IMEIs o identificadores de hardware en claro, `INV-02`).
+    - `CredentialRequest::clone_for_rebinding`: Asignación atómica de nueva clave de titular, huella de recuperación y asignación de estado.
+    - `IssuerStatusManager::allocate_with_list_id`: Asignación determinista con retorno del identificador de lista.
+  - `crates/gravital-id-recovery/tests/rebinding_tests.rs`: Suite de 5 pruebas de integración verificando el ciclo de vida completo de re-vinculación atómica y reemplazo por clase de dispositivo, rechazo fail-closed de firmas corruptas, rechazo de desafíos expirados, aislamiento estricto entre emisores y auditoría forense de cero PII.
 - [recovery, keys, issuer, protocol] Clave de recuperación del titular y extensión de emisión (`crates/gravital-id-recovery`, `crates/gravital-id-issuer`, `crates/gravital-id-credential`, `docs/specs/PROTOCOL.md §2.2`, `F8.T03`, `REQ-REC-004`, `REQ-REC-007`, `REQ-KEY-001`, `P-07`, `P-09`, `INV-01`, `INV-02`, `INV-03`, `INV-05`, `INV-10`, `INV-11`; #103):
   - `docs/specs/PROTOCOL.md §2.2`: Especificación normativa de la extensión de emisión para registro de la huella de la clave de recuperación del titular (`cnf.rec`), gobernada por `KeyPurpose::HolderRecovery` para autorización de re-vinculación sin permitir correlación cruzada entre distintos emisores.
   - `crates/gravital-id-recovery`:

@@ -41,6 +41,12 @@ pub enum RecoveryError {
     SecretIdMismatch,
     /// Formato de fragmento Shamir inválido o malformado.
     InvalidShareFormat(&'static str),
+    /// Desafío de re-vinculación de dispositivo expirado.
+    RebindingExpired,
+    /// Firma digital de la solicitud de re-vinculación inválida.
+    InvalidRebindingSignature,
+    /// Parámetro de solicitud o desafío de re-vinculación inválido o malformado.
+    InvalidRebindingParameter(&'static str),
 }
 
 impl fmt::Display for RecoveryError {
@@ -91,6 +97,15 @@ impl fmt::Display for RecoveryError {
             Self::InvalidShareFormat(msg) => {
                 write!(f, "Formato de fragmento Shamir inválido: {msg}")
             }
+            Self::RebindingExpired => {
+                write!(f, "Desafío de re-vinculación de dispositivo expirado")
+            }
+            Self::InvalidRebindingSignature => {
+                write!(f, "Firma de re-vinculación de dispositivo inválida")
+            }
+            Self::InvalidRebindingParameter(msg) => {
+                write!(f, "Parámetro de re-vinculación inválido: {msg}")
+            }
         }
     }
 }
@@ -122,6 +137,18 @@ impl From<RecoveryError> for GidError {
             RecoveryError::InsufficientEntropy => GidError::new(
                 ErrorCode::InsufficientEntropy,
                 "entropía insuficiente en recuperación",
+            ),
+            RecoveryError::RebindingExpired => GidError::new(
+                ErrorCode::CredentialExpired,
+                "desafío de re-vinculación expirado",
+            ),
+            RecoveryError::InvalidRebindingSignature => GidError::new(
+                ErrorCode::InvalidSignature,
+                "firma de re-vinculación inválida",
+            ),
+            RecoveryError::InvalidRebindingParameter(_) => GidError::new(
+                ErrorCode::MalformedMessage,
+                "parámetro de re-vinculación inválido",
             ),
             _ => GidError::new(
                 ErrorCode::MalformedMessage,

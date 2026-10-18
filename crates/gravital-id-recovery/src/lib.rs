@@ -29,6 +29,7 @@ pub mod key;
 pub mod manager;
 pub mod package;
 pub mod payload;
+pub mod rebinding;
 pub mod shamir;
 pub mod wordlist;
 
@@ -48,6 +49,10 @@ pub use package::{
 pub use payload::{
     BackupCredential, BackupDeviceSlot, BackupPayload, BackupTenantRole, BACKUP_SCHEMA_VERSION,
     MAX_BACKUP_PAYLOAD_BYTES,
+};
+pub use rebinding::{
+    compute_rebinding_digest, compute_rebinding_transcript, RebindingChallenge, RebindingRequest,
+    REBINDING_TRANSCRIPT_PREFIX,
 };
 pub use shamir::{
     ShamirSecretSharing, ShamirShare, MAX_SHAMIR_SECRET_LEN, SHAMIR_CHECKSUM_LEN,

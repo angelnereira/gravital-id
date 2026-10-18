@@ -16,7 +16,10 @@ pub mod ids;
 
 pub use clock::Clock;
 pub use error::{ErrorCode, GidError, PipError};
-pub use ids::{BundleVersion, IssuerId, Kid, ProfileId, UnixTime, Vct, MAX_ID_LEN, MAX_VCT_LEN};
+pub use ids::{
+    BundleVersion, DeviceFactorClass, IssuerId, Kid, ProfileId, UnixTime, Vct, MAX_ID_LEN,
+    MAX_VCT_LEN,
+};
 
 /// Versión semántica del crate en compilación.
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");

@@ -170,19 +170,16 @@ impl IssuerStatusManager {
         Ok(())
     }
 
-    /// Asigna de forma aleatoria un índice de estado para una credencial (REQ-ISS-003, REQ-STAT-002).
-    ///
-    /// Si se especifica `preferred_list_id`, asigna en esa lista; en caso contrario,
-    /// asigna en la primera lista disponible con capacidad libre.
+    /// Asigna de forma aleatoria un índice de estado para una credencial devolviendo también el `status_list_id` (REQ-ISS-003, REQ-STAT-002).
     ///
     /// # Errores
-    /// - [`ErrorCode::CapacityExceeded`] si no hay capacidad libre en la lista o en ninguna lista registrada.
+    /// - [`ErrorCode::StatusIndexOutOfRange`] si todas las listas registradas están llenas.
     /// - [`ErrorCode::MalformedStatusList`] si la lista indicada no existe.
-    pub fn allocate_for_credential<R: Rng>(
+    pub fn allocate_with_list_id<R: Rng>(
         &mut self,
         preferred_list_id: Option<&str>,
         rng: &R,
-    ) -> Result<StatusAllocation, GidError> {
+    ) -> Result<(String, StatusAllocation), GidError> {
         let list = match preferred_list_id {
             Some(target_id) => self
                 .lists
@@ -206,6 +203,7 @@ impl IssuerStatusManager {
                 })?,
         };
 
+        let list_id = list.status_list_id.clone();
         let index = list.allocator.allocate_random(rng)?;
         let base = list.base_url.trim_end_matches('/');
         let uri = match list.last_published {
@@ -213,7 +211,25 @@ impl IssuerStatusManager {
             None => format!("{base}/{}.jwt", list.status_list_id),
         };
 
-        StatusAllocation::new(index, uri)
+        let alloc = StatusAllocation::new(index, uri)?;
+        Ok((list_id, alloc))
+    }
+
+    /// Asigna de forma aleatoria un índice de estado para una credencial (REQ-ISS-003, REQ-STAT-002).
+    ///
+    /// Si se especifica `preferred_list_id`, asigna en esa lista; en caso contrario,
+    /// asigna en la primera lista disponible con capacidad libre.
+    ///
+    /// # Errores
+    /// - [`ErrorCode::StatusIndexOutOfRange`] si no hay capacidad libre en la lista o en ninguna lista registrada.
+    /// - [`ErrorCode::MalformedStatusList`] si la lista indicada no existe.
+    pub fn allocate_for_credential<R: Rng>(
+        &mut self,
+        preferred_list_id: Option<&str>,
+        rng: &R,
+    ) -> Result<StatusAllocation, GidError> {
+        let (_list_id, alloc) = self.allocate_with_list_id(preferred_list_id, rng)?;
+        Ok(alloc)
     }
 
     /// Revoca una credencial marcando su índice en la lista de estado correspondiente (REQ-STAT-007).

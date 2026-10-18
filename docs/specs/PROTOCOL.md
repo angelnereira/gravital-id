@@ -83,6 +83,61 @@ Para permitir la re-vinculación de credenciales tras pérdida o migración de d
    $$\text{PubKey}_{\text{Issuer}}(I_1) \ne \text{PubKey}_{\text{Issuer}}(I_2) \implies \text{rec\_thumbprint}(I_1) \ne \text{rec\_thumbprint}(I_2)$$
    Dos emisores nunca reciben la misma huella de recuperación, imposibilitando la correlación cruzada de credenciales del mismo titular entre diferentes entidades.
 
+### 2.3 Protocolo Normativo de Re-vinculación y Reemplazo Atómico por Clase de Dispositivo (`SPEC-PIP-REBIND-001`, `ADR-0029`)
+
+Cuando un titular pierde su dispositivo, lo renueva o migra a un nuevo soporte físico (`REQ-REC-004`), ejecuta el protocolo de re-vinculación ante el emisor. Este protocolo garantiza la exclusión mutua dentro de la misma clase (`REQ-DEVSLOT-001`, `REQ-DEVSLOT-003`) y la no-correlación (`REQ-REC-007`):
+
+```text
+Nuevo Dispositivo (Titular)                       Servicio del Emisor (Issuer)
+            │                                                   │
+            │ 1. Solicita desafío de re-vinculación             │
+            │    (GET /rebind/challenge?class=mobile)           │
+            │──────────────────────────────────────────────────>│
+            │                                                   │
+            │ 2. Emite RebindingChallenge                       │
+            │    { nonce, issuer_uri, expires_at }              │
+            │<──────────────────────────────────────────────────│
+            │                                                   │
+            │ 3. Genera par P-256 de silicio en el nuevo equipo │
+            │    y firma el desafío con HolderRecoveryKey:      │
+            │    RebindingRequest {                             │
+            │      issuer_uri, nonce, device_class,             │
+            │      new_holder_key, recovery_thumbprint,         │
+            │      signature (ES256 con HolderRecovery)         │
+            │    }                                              │
+            │──────────────────────────────────────────────────>│
+            │                                                   │
+            │ 4. Verificación y Reemplazo Atómico:              │
+            │    a) Valida frescura y un solo uso del nonce     │
+            │    b) Valida la firma contra la clave derivada    │
+            │       de recovery_thumbprint (KeyPurpose::HolderRecovery)
+            │    c) Reemplazo atómico por clase (ADR-0029):     │
+            │       - Si la ranura de esa clase ya está ocupada:│
+            │         marca su índice en Token Status List      │
+            │         como 01 (Revoked).                        │
+            │       - Las ranuras de OTRAS clases no se alteran.│
+            │    d) Asigna nuevo status_index y emite credencial│
+            │       con new_holder_key y recovery_thumbprint.   │
+            │                                                   │
+            │ 5. RebindingResult {                              │
+            │      issued_credential (SD-JWT VC),               │
+            │      revoked_status_index (opcional),             │
+            │      device_class, new_status_index               │
+            │    }                                              │
+            │<──────────────────────────────────────────────────│
+```
+
+1. **Transcrito Canónico de Re-vinculación (`RebindingTranscript`):**
+   Para prevenir ataques de alteración o inyección en tránsito, la firma de re-vinculación se evalúa sobre el digest SHA-256 de la cadena canónica UTF-8:
+   $$\text{Transcript} = \text{"pip-rebinding-v1:"} \mathbin{\Vert} \text{issuer\_uri} \mathbin{\Vert} \text{":"} \mathbin{\Vert} \text{nonce} \mathbin{\Vert} \text{":"} \mathbin{\Vert} \text{device\_class} \mathbin{\Vert} \text{":"} \mathbin{\Vert} \text{new\_holder\_key\_thumbprint}$$
+   $$\text{Digest} = \text{SHA-256}(\text{Transcript})$$
+   La firma digital DEBE generarse en formato IEEE P1363 (64 bytes) utilizando la clave de recuperación del titular con propósito exclusivo `KeyPurpose::HolderRecovery`.
+
+2. **Reglas de Aceptación y Atomicidad en el Emisor:**
+   - **Fail-closed en firma o huella:** Si la firma no verifica contra la clave pública de recuperación asociada a `recovery_thumbprint`, la petición se rechaza con `InvalidSignature` (`PIP-E3003`).
+   - **Anti-replay de Nonce:** Cada `nonce` es de un solo uso y caduca en $\le 300$ segundos.
+   - **Revocación atómica por clase:** El emisor busca si el titular posee una ranura activa para `device_class`. Si existe, en la misma transacción atómica marca su `status_index` previo como `01 Revoked` en la `Token Status List` y activa la nueva ranura. Las credenciales de otras clases (`mobile`, `card`, `other`) no se modifican (`REQ-DEVSLOT-003`).
+
 ---
 
 ## 3. Transporte Offline: Flujo QR de Dos Pasos

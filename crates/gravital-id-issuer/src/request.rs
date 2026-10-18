@@ -351,4 +351,19 @@ impl CredentialRequest {
         });
         Ok(copy)
     }
+
+    /// Deriva la solicitud para una re-vinculación con nueva clave de titular, huella de recuperación y asignación de estado.
+    #[must_use]
+    pub fn clone_for_rebinding(
+        &self,
+        new_holder_key: JwkEcP256,
+        recovery_thumbprint: impl Into<String>,
+        new_status: StatusAllocation,
+    ) -> Self {
+        let mut copy = self.clone();
+        copy.holder_key = Some(new_holder_key);
+        copy.recovery_thumbprint = Some(recovery_thumbprint.into());
+        copy.status = Some(new_status);
+        copy
+    }
 }
