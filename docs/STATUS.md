@@ -10,7 +10,7 @@
 | Último gate cerrado | **G8 / Hito M2** (2026-10-18) · **G7** (2026-10-18) · **G6** (2026-10-17) · **G5** (2026-10-16) · **G4** (2026-10-16) · **G19** (2026-10-15) · **G0** (2026-10-11) |
 | Próximo gate | **G9** (Bindings para 8 lenguajes) / **G20** (Núcleo de proximidad) · **G3** (#59) y **G2** pendientes de CI |
 | Hito siguiente | MP1 · Tap offline (al cerrar G21) / M3 · SDK multi-lenguaje (al cerrar G9) [M1 y M2 alcanzados] |
-| Última actualización | 2026-10-18 (`F8.T11` completada: Revisión formal del MVP y cierre de Gate G8 / Hito M2; los nueve criterios MVP-01 a MVP-09 verificados exhaustivamente con `pip-cli demo-m2` y `apps/pip-cli/tests/mvp_acceptance_m2_audit.rs`; informe técnico formal en `docs/reports/2026-10-18-mvp-evaluacion-m2.md`; resuelto #111; Gate G8 CERRADO y Hito M2 ALCANZADO) |
+| Última actualización | 2026-10-18 (sesión adicional: F9.T01 fachada SDK completa + F9.T03 FFI catch_unwind WASM; F20.T01 andamiaje proximidad; F20.T02 mensajes CBOR con ida y vuelta; integrados directamente en `main` a petición del mantenedor) |
 
 ## Gates
 
