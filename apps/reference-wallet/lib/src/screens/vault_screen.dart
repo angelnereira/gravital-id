@@ -42,9 +42,9 @@ class _VaultScreenState extends State<VaultScreen> {
       context: context,
       isScrollControlled: true,
       builder: (sheetContext) => GxDisclosureConsentSheet(
-        verifierName: 'Verificador de Punto de Atención (Offline / Proximidad)',
+        verifierName: 'Punto de Atención / Verificador',
         verifierDomain: 'verificador.terminal.pa',
-        purpose: 'Acreditación de identidad y atributos verificables (${cred.title})',
+        purpose: 'Acreditación de identidad (${cred.title})',
         transportLabel: widget.store.activeTransport.label,
         isVerifierSigned: true,
         claims: cred.claims,
@@ -57,6 +57,30 @@ class _VaultScreenState extends State<VaultScreen> {
     );
   }
 
+  void _showCredentialDetailSheet(BuildContext context) {
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      builder: (sheetContext) => DraggableScrollableSheet(
+        expand: false,
+        initialChildSize: 0.65,
+        minChildSize: 0.45,
+        maxChildSize: 0.9,
+        builder: (_, scrollController) => SingleChildScrollView(
+          controller: scrollController,
+          child: VaultCredentialDetailPane(
+            store: widget.store,
+            shrinkWrap: true,
+            onPresentSelected: () {
+              Navigator.of(sheetContext).pop();
+              _openConsentSheetForSelected(context);
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
@@ -64,6 +88,7 @@ class _VaultScreenState extends State<VaultScreen> {
     final emphasized =
         Theme.of(context).extension<EmphasizedTextTheme>()?.textTheme;
     final bannerOutcome = widget.store.lastProtocolBanner;
+    final isTwoPane = WindowClass.of(context).isTwoPane;
 
     return ListView(
       padding: const EdgeInsets.fromLTRB(
@@ -73,84 +98,63 @@ class _VaultScreenState extends State<VaultScreen> {
         GxSpace.xxxl,
       ),
       children: <Widget>[
-        // Tarjeta hero de identidad portable y acción rápida dividida
+        // Tarjeta principal de identidad portable
         Container(
-          padding: const EdgeInsets.all(GxSpace.xl),
+          padding: const EdgeInsets.all(GxSpace.l),
           decoration: BoxDecoration(
-            color: scheme.primaryContainer,
+            color: scheme.surfaceContainerLow,
             borderRadius: GxShape.extraLarge,
+            border: Border.all(color: scheme.outlineVariant),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Wrap(
-                spacing: GxSpace.s,
-                runSpacing: GxSpace.xs,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: <Widget>[
-                  StatusChip(
-                    label: 'NÚCLEO SOBERANO SIN SERVIDOR CENTRAL',
-                    tone: semantic.success,
-                    icon: Icons.shield_rounded,
-                  ),
-                  StatusChip(
-                    label: '3 SOPORTES DISTINTOS ACTIVOS',
-                    tone: semantic.info,
-                    icon: Icons.devices_other_rounded,
-                  ),
-                ],
-              ),
-              const SizedBox(height: GxSpace.m),
               Text(
                 'Tu Llave Única de Identidad Portable',
-                style: (emphasized?.headlineMedium ??
-                        Theme.of(context).textTheme.headlineMedium)
-                    ?.copyWith(color: scheme.onPrimaryContainer),
+                style: emphasized?.titleLarge ??
+                    Theme.of(context).textTheme.titleLarge,
               ),
               const SizedBox(height: GxSpace.xs),
               Text(
-                'Almacena tus credenciales cifradas con XChaCha20-Poly1305, '
-                'comparte solo los atributos necesarios sin conexión y reutiliza tu Gravital ID '
-                'en diferentes aplicaciones, teléfonos o tarjetas tipo Visa sin duplicar tu identidad.',
+                'Comparte solo los datos que autorices por QR, NFC o Passkey.',
                 style: Theme.of(context)
                     .textTheme
-                    .bodyMedium
-                    ?.copyWith(color: scheme.onPrimaryContainer),
+                    .bodySmall
+                    ?.copyWith(color: scheme.onSurfaceVariant),
               ),
-              const SizedBox(height: GxSpace.l),
+              const SizedBox(height: GxSpace.m),
               Wrap(
                 spacing: GxSpace.m,
                 runSpacing: GxSpace.s,
                 crossAxisAlignment: WrapCrossAlignment.center,
                 children: <Widget>[
                   GxSplitButton<PresentationTransport>(
-                    label: 'Compartir / Presentar Ahora',
+                    label: 'Presentar Credencial',
                     icon: Icons.qr_code_2_rounded,
                     onPressed: () => _openConsentSheetForSelected(context),
                     items: const <GxSplitButtonMenuItem<PresentationTransport>>[
                       GxSplitButtonMenuItem<PresentationTransport>(
                         value: PresentationTransport.qrOffline,
-                        label: 'Presentar por QR Offline (Base45)',
-                        subtitle: 'Óptico sin red · bloquea retrato por tamaño',
+                        label: 'Código QR (Sin conexión)',
+                        subtitle: 'Escaneo rápido en punto de atención',
                         icon: Icons.qr_code_2_rounded,
                       ),
                       GxSplitButtonMenuItem<PresentationTransport>(
                         value: PresentationTransport.nfcApdu,
-                        label: 'Transmitir por Toque NFC (GID-APDU)',
-                        subtitle: 'HCE en teléfono o Lector ISO-DEP + HPKE',
+                        label: 'Toque NFC (Sin contacto)',
+                        subtitle: 'Acerca tu teléfono o tarjeta inteligente',
                         icon: Icons.contactless_rounded,
                       ),
                       GxSplitButtonMenuItem<PresentationTransport>(
                         value: PresentationTransport.passkey,
-                        label: 'Transmitir vía Passkey (FIDO2 / WebAuthn)',
-                        subtitle:
-                            'Aserción ES256 en StrongBox / Secure Enclave o Llave NFC CTAP2',
+                        label: 'Passkey Biométrica',
+                        subtitle: 'Confirmación con huella o rostro',
                         icon: Icons.fingerprint_rounded,
                       ),
                       GxSplitButtonMenuItem<PresentationTransport>(
                         value: PresentationTransport.sessionCode,
-                        label: 'Código de Sesión 10 Dígitos (Damm)',
-                        subtitle: 'Atención remota o telefónica sin cámara',
+                        label: 'Código de 10 dígitos',
+                        subtitle: 'Para atención telefónica o remota',
                         icon: Icons.dialpad_rounded,
                       ),
                     ],
@@ -161,8 +165,8 @@ class _VaultScreenState extends State<VaultScreen> {
                   ),
                   OutlinedButton.icon(
                     onPressed: widget.onNavigateToDevices,
-                    icon: const Icon(Icons.credit_card_rounded, size: 18),
-                    label: const Text('Ver Soportes (Móvil / Visa / Otro)'),
+                    icon: const Icon(Icons.devices_other_rounded, size: 18),
+                    label: const Text('Mis Soportes'),
                   ),
                 ],
               ),
@@ -224,20 +228,12 @@ class _VaultScreenState extends State<VaultScreen> {
               onRemediate: widget.onNavigateToDevices,
             ),
         ],
-        const SizedBox(height: GxSpace.xl),
+        const SizedBox(height: GxSpace.l),
         Text(
-          'Credenciales en tu Bóveda Cifrada (${widget.store.credentials.length})',
-          style: emphasized?.titleLarge,
+          'Mis Credenciales (${widget.store.credentials.length})',
+          style: emphasized?.titleMedium,
         ),
-        const SizedBox(height: GxSpace.xs),
-        Text(
-          'Selecciona una credencial para inspeccionar sus atributos de divulgación selectiva (_sd) o presentarla.',
-          style: Theme.of(context)
-              .textTheme
-              .bodyMedium
-              ?.copyWith(color: scheme.onSurfaceVariant),
-        ),
-        const SizedBox(height: GxSpace.m),
+        const SizedBox(height: GxSpace.s),
         ...List<Widget>.generate(widget.store.credentials.length, (index) {
           final cred = widget.store.credentials[index];
           return Padding(
@@ -250,7 +246,7 @@ class _VaultScreenState extends State<VaultScreen> {
               statusState: widget.store.isOfflineMode
                   ? GxVerificationState.validWithStaleStatus
                   : cred.statusState,
-              deviceClassLabel: cred.factorClass.code,
+              deviceClassLabel: cred.factorClass.title,
               securityLevelLabel: cred.securityLevelLabel,
               remainingBatchCopies: cred.remainingBatchCopies,
               claimsCount: cred.claims.length,
@@ -258,7 +254,12 @@ class _VaultScreenState extends State<VaultScreen> {
               hasPortrait: cred.hasPortrait,
               isOfficialStateCredential: cred.isOfficialStateCredential,
               isSelected: index == widget.store.selectedCredentialIndex,
-              onTap: () => widget.store.selectCredential(index),
+              onTap: () {
+                widget.store.selectCredential(index);
+                if (!isTwoPane) {
+                  _showCredentialDetailSheet(context);
+                }
+              },
               onPresentPressed: () {
                 widget.store.selectCredential(index);
                 _openConsentSheetForSelected(context);
@@ -266,8 +267,8 @@ class _VaultScreenState extends State<VaultScreen> {
             ),
           );
         }),
-        const SizedBox(height: GxSpace.l),
-        // Sección interactiva de Unicidad Ciudadana y Cumplimiento Tribunal Electoral de Panamá (ADR-0028)
+        const SizedBox(height: GxSpace.s),
+        // Sección plegable de Unicidad Ciudadana (Tribunal Electoral)
         Material(
           color: scheme.surfaceContainerLow,
           shape: RoundedRectangleBorder(
@@ -279,27 +280,21 @@ class _VaultScreenState extends State<VaultScreen> {
             data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
             child: ExpansionTile(
               leading: Container(
-                width: 40,
-                height: 40,
+                width: 36,
+                height: 36,
                 decoration: BoxDecoration(
                   color: scheme.secondaryContainer,
                   borderRadius: GxShape.medium,
                 ),
                 child: Icon(
                   Icons.fact_check_rounded,
+                  size: 18,
                   color: scheme.onSecondaryContainer,
                 ),
               ),
               title: Text(
-                'Control de Unicidad Ciudadana (Tribunal Electoral)',
-                style: emphasized?.titleMedium,
-              ),
-              subtitle: Text(
-                'Decreto N.° 43 de 8 de octubre de 2024 · SVI · Etiqueta Ciega VOPRF',
-                style: Theme.of(context)
-                    .textTheme
-                    .bodySmall
-                    ?.copyWith(color: scheme.onSurfaceVariant),
+                'Verificación de Unicidad Ciudadana (SVI)',
+                style: emphasized?.titleSmall,
               ),
               childrenPadding: const EdgeInsets.fromLTRB(
                 GxSpace.l,
@@ -310,8 +305,7 @@ class _VaultScreenState extends State<VaultScreen> {
               children: <Widget>[
                 const SizedBox(height: GxSpace.s),
                 Text(
-                  'Evita que una misma cédula cree dos Gravital ID distintos sin publicar ningún dato personal en la blockchain (INV-02). '
-                  'Prueba con "8-888-8888" (ya registrada → dispara GID-E2010) o con una cédula nueva como "4-752-1940" o "PE-12-345".',
+                  'Garantiza que una misma cédula no registre identidades duplicadas sin exponer datos personales.',
                   style: Theme.of(context)
                       .textTheme
                       .bodySmall
@@ -322,7 +316,7 @@ class _VaultScreenState extends State<VaultScreen> {
                   controller: _cedulaController,
                   decoration: const InputDecoration(
                     labelText: 'Número de Cédula Panameña (Formato TE)',
-                    hintText: 'Ej. 8-888-8888, 4-752-1940, PE-12-345, E-8-123456',
+                    hintText: 'Ej. 8-888-8888 o 4-752-1940',
                     prefixIcon: Icon(Icons.badge_outlined),
                   ),
                 ),
@@ -380,16 +374,18 @@ class _VaultScreenState extends State<VaultScreen> {
   }
 }
 
-/// Panel secundario de detalle de credencial para ventanas `WindowClass.expanded+` (2 paneles).
+/// Panel de detalle de credencial para ventanas de 2 paneles o sábana modal en móvil.
 class VaultCredentialDetailPane extends StatelessWidget {
   const VaultCredentialDetailPane({
     required this.store,
     required this.onPresentSelected,
+    this.shrinkWrap = false,
     super.key,
   });
 
   final GravitalWalletStore store;
   final VoidCallback onPresentSelected;
+  final bool shrinkWrap;
 
   @override
   Widget build(BuildContext context) {
@@ -398,87 +394,91 @@ class VaultCredentialDetailPane extends StatelessWidget {
     final emphasized =
         Theme.of(context).extension<EmphasizedTextTheme>()?.textTheme;
 
+    final card = Container(
+      padding: const EdgeInsets.all(GxSpace.l),
+      decoration: BoxDecoration(
+        color: scheme.surfaceContainerLow,
+        borderRadius: GxShape.extraLarge,
+        border: Border.all(color: scheme.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Text(
+            cred.title,
+            style: emphasized?.titleLarge,
+          ),
+          const SizedBox(height: GxSpace.xs),
+          Text(
+            'Emitida por ${cred.issuerName}',
+            style: Theme.of(context)
+                .textTheme
+                .bodySmall
+                ?.copyWith(color: scheme.onSurfaceVariant),
+          ),
+          const SizedBox(height: GxSpace.m),
+          const Divider(),
+          const SizedBox(height: GxSpace.s),
+          ...cred.claims.map(
+            (claim) => Padding(
+              padding: const EdgeInsets.symmetric(vertical: GxSpace.xs),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Icon(
+                    claim.isSensitiveLevel1
+                        ? Icons.lock_person_rounded
+                        : Icons.check_circle_outline_rounded,
+                    size: 18,
+                    color: claim.isSensitiveLevel1
+                        ? scheme.tertiary
+                        : scheme.primary,
+                  ),
+                  const SizedBox(width: GxSpace.s),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text(
+                          claim.label,
+                          style: emphasized?.labelLarge,
+                        ),
+                        GxTabularCodeText(
+                          claim.valuePreview,
+                          style: Theme.of(context).textTheme.bodySmall,
+                          color: scheme.onSurfaceVariant,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: GxSpace.l),
+          Align(
+            alignment: Alignment.centerRight,
+            child: OutlinedButton.icon(
+              onPressed: onPresentSelected,
+              icon: const Icon(Icons.qr_code_2_rounded, size: 18),
+              label: const Text('Elegir Datos y Presentar'),
+            ),
+          ),
+        ],
+      ),
+    );
+
+    if (shrinkWrap) {
+      return Padding(
+        padding: const EdgeInsets.all(GxSpace.l),
+        child: card,
+      );
+    }
+
     return ListView(
       padding: const EdgeInsets.all(GxSpace.l),
-      children: <Widget>[
-        Container(
-          padding: const EdgeInsets.all(GxSpace.l),
-          decoration: BoxDecoration(
-            color: scheme.surfaceContainerLow,
-            borderRadius: GxShape.extraLarge,
-            border: Border.all(color: scheme.outlineVariant),
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Text(
-                'Inspección de Divulgaciones Selectivas (_sd)',
-                style: emphasized?.titleLarge,
-              ),
-              const SizedBox(height: GxSpace.xs),
-              GxTabularCodeText(
-                'vct: ${cred.vct}',
-                style: Theme.of(context).textTheme.labelSmall,
-                color: scheme.primary,
-              ),
-              const SizedBox(height: GxSpace.xs),
-              GxTabularCodeText(
-                'Emisor en TrustBundle: ${cred.issuerId}',
-                style: Theme.of(context).textTheme.labelSmall,
-                color: scheme.onSurfaceVariant,
-              ),
-              const SizedBox(height: GxSpace.m),
-              const Divider(),
-              const SizedBox(height: GxSpace.s),
-              ...cred.claims.map(
-                (claim) => Padding(
-                  padding: const EdgeInsets.symmetric(vertical: GxSpace.xs),
-                  child: Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Icon(
-                        claim.isSensitiveLevel1
-                            ? Icons.lock_person_rounded
-                            : Icons.check_circle_outline_rounded,
-                        size: 18,
-                        color: claim.isSensitiveLevel1
-                            ? scheme.tertiary
-                            : scheme.primary,
-                      ),
-                      const SizedBox(width: GxSpace.s),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            Text(
-                              claim.label,
-                              style: emphasized?.labelLarge,
-                            ),
-                            GxTabularCodeText(
-                              '${claim.key} = ${claim.valuePreview}',
-                              style: Theme.of(context).textTheme.bodySmall,
-                              color: scheme.onSurfaceVariant,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              const SizedBox(height: GxSpace.l),
-              Align(
-                alignment: Alignment.centerRight,
-                child: OutlinedButton.icon(
-                  onPressed: onPresentSelected,
-                  icon: const Icon(Icons.share_rounded, size: 18),
-                  label: const Text('Configurar Divulgación Selectiva'),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
+      children: <Widget>[card],
     );
   }
 }

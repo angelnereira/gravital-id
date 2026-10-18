@@ -10,10 +10,12 @@ import '../domain/gravital_wallet_store.dart';
 class SyncTrustScreen extends StatefulWidget {
   const SyncTrustScreen({
     required this.store,
+    this.showAppBar = false,
     super.key,
   });
 
   final GravitalWalletStore store;
+  final bool showAppBar;
 
   @override
   State<SyncTrustScreen> createState() => _SyncTrustScreenState();
@@ -29,7 +31,7 @@ class _SyncTrustScreenState extends State<SyncTrustScreen> {
     final emphasized =
         Theme.of(context).extension<EmphasizedTextTheme>()?.textTheme;
 
-    return ListView(
+    final body = ListView(
       padding: const EdgeInsets.fromLTRB(
         GxSpace.l,
         GxSpace.l,
@@ -40,36 +42,56 @@ class _SyncTrustScreenState extends State<SyncTrustScreen> {
         Container(
           padding: const EdgeInsets.all(GxSpace.xl),
           decoration: BoxDecoration(
-            color: scheme.primaryContainer,
+            color: scheme.surfaceContainerLow,
             borderRadius: GxShape.extraLarge,
+            border: Border.all(color: scheme.outlineVariant),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Row(
                 children: <Widget>[
-                  Icon(
-                    Icons.sync_rounded,
-                    color: scheme.onPrimaryContainer,
-                    size: 28,
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: scheme.primaryContainer,
+                      borderRadius: GxShape.large,
+                    ),
+                    child: Icon(
+                      Icons.sync_rounded,
+                      color: scheme.onPrimaryContainer,
+                      size: 26,
+                    ),
                   ),
                   const SizedBox(width: GxSpace.m),
                   Expanded(
-                    child: Text(
-                      'Sincronización y Confianza',
-                      style: (emphasized?.headlineSmall ??
-                              Theme.of(context).textTheme.headlineSmall)
-                          ?.copyWith(color: scheme.onPrimaryContainer),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text(
+                          'Sincronización y Confianza',
+                          style: emphasized?.headlineSmall ??
+                              Theme.of(context).textTheme.headlineSmall,
+                        ),
+                        Text(
+                          'Actualización de certificados de emisores y estado',
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodySmall
+                              ?.copyWith(color: scheme.onSurfaceVariant),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: GxSpace.s),
+              const SizedBox(height: GxSpace.m),
               Text(
-                'Cola cifrada idempotente (HPKE), backoff determinista, múltiples relays con failover. '
-                'Todo contenido se verifica antes de aceptarse; fail-closed ante divergencia.',
+                'Tu dispositivo actualiza periódicamente la lista de emisores autorizados '
+                'para verificar credenciales incluso cuando no tienes internet.',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: scheme.onPrimaryContainer,
+                      color: scheme.onSurfaceVariant,
                     ),
               ),
             ],
@@ -77,7 +99,7 @@ class _SyncTrustScreenState extends State<SyncTrustScreen> {
         ),
         const SizedBox(height: GxSpace.xl),
         Text(
-          'Trust Bundle Activo',
+          'Directorio de Confianza (Trust Bundle)',
           style: emphasized?.titleLarge,
         ),
         const SizedBox(height: GxSpace.m),
@@ -91,32 +113,29 @@ class _SyncTrustScreenState extends State<SyncTrustScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Row(
+              Wrap(
+                spacing: GxSpace.s,
+                runSpacing: GxSpace.xs,
                 children: <Widget>[
                   StatusChip(
-                    label: 'ÉPOCA 1 · VERSIÓN 14',
+                    label: 'VERSIÓN 14 ACTIVA',
                     tone: semantic.success,
                     icon: Icons.verified_rounded,
                   ),
-                  const SizedBox(width: GxSpace.s),
                   StatusChip(
-                    label: 'k-DE-n (3 DE 5)',
+                    label: '3 DE 5 FIRMAS VERIFICADAS',
                     tone: semantic.info,
                     icon: Icons.groups_rounded,
                   ),
                 ],
               ),
               const SizedBox(height: GxSpace.m),
-              GxTabularCodeText(
-                'bundle_epoch=1, bundle_version=14, chain_id=1',
-                style: Theme.of(context).textTheme.bodySmall,
-                color: scheme.onSurfaceVariant,
-              ),
-              const SizedBox(height: GxSpace.xs),
-              GxTabularCodeText(
-                'firmantes: op-alpha, op-beta, op-gamma (umbral 3)',
-                style: Theme.of(context).textTheme.bodySmall,
-                color: scheme.onSurfaceVariant,
+              Text(
+                'Emisores verificados: Tribunal Electoral de Panamá y nodos autorizados.',
+                style: Theme.of(context)
+                    .textTheme
+                    .bodySmall
+                    ?.copyWith(color: scheme.onSurfaceVariant),
               ),
               const SizedBox(height: GxSpace.m),
               OutlinedButton.icon(
@@ -130,40 +149,14 @@ class _SyncTrustScreenState extends State<SyncTrustScreen> {
                   );
                 },
                 icon: const Icon(Icons.download_rounded, size: 18),
-                label: const Text('Actualizar Trust Bundle'),
+                label: const Text('Actualizar Directorio de Confianza'),
               ),
             ],
           ),
         ),
         const SizedBox(height: GxSpace.xl),
         Text(
-          'Relays y Transporte',
-          style: emphasized?.titleLarge,
-        ),
-        const SizedBox(height: GxSpace.m),
-        ...<Widget>[
-          _RelayTile(
-            name: 'relay-pa-01.gravital.io',
-            region: 'Panamá (primario)',
-            status: 'Conectado',
-            tone: semantic.success,
-          ),
-          _RelayTile(
-            name: 'relay-pa-02.gravital.io',
-            region: 'Panamá (secundario)',
-            status: 'En espera',
-            tone: semantic.info,
-          ),
-          _RelayTile(
-            name: 'relay-us-01.gravital.io',
-            region: 'EE.UU. (failover)',
-            status: 'Disponible',
-            tone: semantic.info,
-          ),
-        ],
-        const SizedBox(height: GxSpace.xl),
-        Text(
-          'Cola de Sincronización',
+          'Estado de Sincronización',
           style: emphasized?.titleLarge,
         ),
         const SizedBox(height: GxSpace.m),
@@ -177,26 +170,29 @@ class _SyncTrustScreenState extends State<SyncTrustScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Row(
+              Wrap(
+                spacing: GxSpace.s,
+                runSpacing: GxSpace.xs,
                 children: <Widget>[
                   StatusChip(
-                    label: '3 PENDIENTES',
-                    tone: semantic.warning,
-                    icon: Icons.pending_rounded,
-                  ),
-                  const SizedBox(width: GxSpace.s),
-                  StatusChip(
-                    label: 'IDEMPOTENTE',
+                    label: 'AL DÍA',
                     tone: semantic.success,
-                    icon: Icons.repeat_rounded,
+                    icon: Icons.check_circle_rounded,
+                  ),
+                  StatusChip(
+                    label: 'COLA CIFRADA',
+                    tone: semantic.info,
+                    icon: Icons.lock_outline_rounded,
                   ),
                 ],
               ),
               const SizedBox(height: GxSpace.m),
-              GxTabularCodeText(
-                'outbox: [manifest-v14, status-anchor-42, revocation-idx-4102]',
-                style: Theme.of(context).textTheme.bodySmall,
-                color: scheme.onSurfaceVariant,
+              Text(
+                'Sincroniza el estado de tus soportes y listas de revocación cuando tengas conexión.',
+                style: Theme.of(context)
+                    .textTheme
+                    .bodySmall
+                    ?.copyWith(color: scheme.onSurfaceVariant),
               ),
               const SizedBox(height: GxSpace.m),
               FilledButton.icon(
@@ -231,17 +227,41 @@ class _SyncTrustScreenState extends State<SyncTrustScreen> {
           ),
         ),
         const SizedBox(height: GxSpace.xl),
-        GxErrorState(
-          errorCode: 'GID-E5001',
-          identifier: 'RelayUnavailable',
-          title: 'Degradación ante Caída de Relay',
-          description:
-              'Si todos los relays fallan, la wallet opera offline y reintenta con backoff '
-              'exponencial. Nunca acepta datos no verificados (fail-closed, INV-05).',
-          remediationLabel: 'Reintentar con Otro Relay',
-          onRemediate: () {},
+        Text(
+          'Servidores de Retransmisión (Relays)',
+          style: emphasized?.titleLarge,
+        ),
+        const SizedBox(height: GxSpace.m),
+        _RelayTile(
+          name: 'relay-pa-01.gravital.io',
+          region: 'Panamá (Principal)',
+          status: 'Conectado',
+          tone: semantic.success,
+        ),
+        _RelayTile(
+          name: 'relay-pa-02.gravital.io',
+          region: 'Panamá (Respaldo)',
+          status: 'En espera',
+          tone: semantic.info,
+        ),
+        _RelayTile(
+          name: 'relay-us-01.gravital.io',
+          region: 'Internacional (Respaldo)',
+          status: 'Disponible',
+          tone: semantic.info,
         ),
       ],
+    );
+
+    if (!widget.showAppBar) {
+      return body;
+    }
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Sincronización y Confianza'),
+      ),
+      body: body,
     );
   }
 }

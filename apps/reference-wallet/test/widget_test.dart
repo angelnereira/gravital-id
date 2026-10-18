@@ -175,7 +175,6 @@ void main() {
       find.text('Compartir Credencial y Acreditar Acceso'),
       findsOneWidget,
     );
-    expect(find.text('VerificationResult::Valid'), findsOneWidget);
 
     // Probar pestaña Toque NFC (APDU) y transmitir credencial por HCE
     await tester.tap(find.text('Toque NFC (APDU)'));
@@ -205,6 +204,11 @@ void main() {
       findsOneWidget,
     );
 
+    // Expandir diagnóstico del verificador de 4 estados
+    await tester.tap(find.text('Diagnóstico del Verificador (4 Estados)'));
+    await tester.pumpAndSettle();
+    expect(find.text('VerificationResult::Valid'), findsOneWidget);
+
     await tester.tap(find.text('Invalid'));
     await tester.pumpAndSettle();
     expect(find.text('VerificationResult::Invalid'), findsOneWidget);
@@ -227,7 +231,9 @@ void main() {
       findsOneWidget,
     );
 
-    // Disparar prueba interactiva de bloqueo de 2.º teléfono con otro IMEI (GID-E2011)
+    // Expandir sección de verificación de límite y disparar bloqueo de 2.º teléfono (GID-E2011)
+    await tester.tap(find.text('Verificación de Límite por Soporte'));
+    await tester.pumpAndSettle();
     await tester.tap(
       find.text('Probar Bloqueo de 2.º Teléfono con Otro IMEI (GID-E2011)'),
     );

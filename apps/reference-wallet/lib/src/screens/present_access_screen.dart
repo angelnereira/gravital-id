@@ -21,23 +21,12 @@ class PresentAccessScreen extends StatefulWidget {
 }
 
 class _PresentAccessScreenState extends State<PresentAccessScreen> {
-  final TextEditingController _sessionCodeTestController =
-      TextEditingController(text: '48291-03847');
   final TextEditingController _cardPinController =
       TextEditingController(text: '2486');
-  String? _sessionCodeValidationMessage;
-  bool _sessionCodeIsValid = true;
-
-  @override
-  void initState() {
-    super.initState();
-    _sessionCodeTestController.text = widget.store.activeSessionCode;
-    _sessionCodeIsValid = DammSessionCode.isValid(widget.store.activeSessionCode);
-  }
+  bool _showNfcTrace = false;
 
   @override
   void dispose() {
-    _sessionCodeTestController.dispose();
     _cardPinController.dispose();
     super.dispose();
   }
@@ -48,10 +37,9 @@ class _PresentAccessScreenState extends State<PresentAccessScreen> {
       context: context,
       isScrollControlled: true,
       builder: (sheetContext) => GxDisclosureConsentSheet(
-        verifierName: 'Terminal de Control de Acceso / Pasarela Inquilino',
+        verifierName: 'Terminal de Control de Acceso',
         verifierDomain: 'acceso.torrepacifica.pa',
-        purpose:
-            'Verificación criptográfica sin servidor central (${widget.store.activeTransport.label})',
+        purpose: 'Verificación de identidad sin conexión',
         transportLabel: widget.store.activeTransport.label,
         isVerifierSigned: true,
         claims: cred.claims,
@@ -62,6 +50,18 @@ class _PresentAccessScreenState extends State<PresentAccessScreen> {
       ),
     );
   }
+
+  static String _humanClaimLabel(String key) => switch (key) {
+        'given_name' => 'Nombres',
+        'family_name' => 'Apellidos',
+        'document_number' => 'N.º de Cédula',
+        'birth_date' => 'Fecha de nacimiento',
+        'age_over_18' => 'Mayor de 18 años',
+        'nationality' => 'Nacionalidad',
+        'portrait' => 'Fotografía',
+        'blood_type' => 'Tipo de sangre',
+        _ => key,
+      };
 
   @override
   Widget build(BuildContext context) {
@@ -80,21 +80,21 @@ class _PresentAccessScreenState extends State<PresentAccessScreen> {
     return ListView(
       padding: const EdgeInsets.fromLTRB(
         GxSpace.l,
-        GxSpace.l,
+        GxSpace.m,
         GxSpace.l,
         GxSpace.xxxl,
       ),
       children: <Widget>[
         Text(
           'Compartir Credencial y Acreditar Acceso',
-          style: emphasized?.headlineSmall,
+          style: emphasized?.titleLarge,
         ),
-        const SizedBox(height: GxSpace.xs),
+        const SizedBox(height: 2),
         Text(
-          'Credencial activa: ${cred.title} (${cred.factorClass.title})',
+          cred.title,
           style: Theme.of(context)
               .textTheme
-              .bodyMedium
+              .bodySmall
               ?.copyWith(color: scheme.onSurfaceVariant),
         ),
         const SizedBox(height: GxSpace.m),
@@ -107,46 +107,41 @@ class _PresentAccessScreenState extends State<PresentAccessScreen> {
               value: PresentationTransport.qrOffline,
               label: 'QR Offline',
               icon: Icons.qr_code_2_rounded,
-              badgeText: '≤1800 B',
             ),
             GxButtonSegment<PresentationTransport>(
               value: PresentationTransport.nfcApdu,
               label: 'Toque NFC (APDU)',
               icon: Icons.contactless_rounded,
-              badgeText: 'HPKE',
             ),
             GxButtonSegment<PresentationTransport>(
               value: PresentationTransport.passkey,
               label: 'Passkey (FIDO2)',
               icon: Icons.fingerprint_rounded,
-              badgeText: 'CTAP2',
             ),
             GxButtonSegment<PresentationTransport>(
               value: PresentationTransport.sessionCode,
               label: 'Código Damm',
               icon: Icons.dialpad_rounded,
-              badgeText: '10 díg',
             ),
           ],
         ),
-        const SizedBox(height: GxSpace.l),
+        const SizedBox(height: GxSpace.m),
         if (qrIncludesForbiddenPortrait) ...<Widget>[
           GxErrorState(
             errorCode: 'GID-E8002',
             identifier: 'ProximityMessageTooLarge',
-            title: 'Retrato Facial Prohibido en Código QR (REQ-IDDOC-002)',
+            title: 'Fotografía No Permitida en Código QR',
             description:
-                'El perfil pip-identity-v1 prohíbe incluir el retrato JPEG en presentaciones ópticas por QR para respetar el presupuesto de ≤ 1800 bytes. '
-                'Cambia al canal "Toque NFC (APDU)" o "Passkey (FIDO2)", o desactiva el atributo portrait en la hoja de consentimiento.',
-            remediationLabel: 'Cambiar a Toque NFC (GID-APDU)',
+                'La fotografía solo se transmite por Toque NFC o Passkey.',
+            remediationLabel: 'Cambiar a Toque NFC',
             onRemediate: () =>
                 widget.store.setTransport(PresentationTransport.nfcApdu),
           ),
-          const SizedBox(height: GxSpace.l),
+          const SizedBox(height: GxSpace.m),
         ],
         // Tarjeta visual del transporte activo
         Container(
-          padding: const EdgeInsets.all(GxSpace.xl),
+          padding: const EdgeInsets.all(GxSpace.l),
           decoration: BoxDecoration(
             color: scheme.surfaceContainerLow,
             borderRadius: GxShape.extraLarge,
@@ -154,12 +149,6 @@ class _PresentAccessScreenState extends State<PresentAccessScreen> {
           ),
           child: Column(
             children: <Widget>[
-              StatusChip(
-                label: transport.label,
-                tone: semantic.info,
-                icon: transport.icon,
-              ),
-              const SizedBox(height: GxSpace.m),
               if (transport == PresentationTransport.qrOffline) ...<Widget>[
                 Container(
                   width: 196,
@@ -175,20 +164,23 @@ class _PresentAccessScreenState extends State<PresentAccessScreen> {
                     children: <Widget>[
                       Icon(
                         Icons.qr_code_2_rounded,
-                        size: 112,
+                        size: 120,
                         color: scheme.onSurface,
                       ),
-                      GxTabularCodeText(
-                        'PIP1:BASE45+DEFLATE:784B',
-                        style: Theme.of(context).textTheme.labelSmall,
-                        color: scheme.primary,
+                      const SizedBox(height: GxSpace.xs),
+                      Text(
+                        'Listo para escanear',
+                        style: Theme.of(context)
+                            .textTheme
+                            .labelSmall
+                            ?.copyWith(color: scheme.primary),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: GxSpace.m),
+                const SizedBox(height: GxSpace.s),
                 Text(
-                  'Presentación firmada con KB-JWT (ES256 Low-S) · Sin I/O de red (INV-01)',
+                  'Muestra este código al verificador (sin conexión).',
                   textAlign: TextAlign.center,
                   style: Theme.of(context)
                       .textTheme
@@ -217,7 +209,7 @@ class _PresentAccessScreenState extends State<PresentAccessScreen> {
                 ),
                 const SizedBox(height: GxSpace.s),
                 Text(
-                  'Código efímero de 10 dígitos con dígito de control cuasigrupo de Damm (ADR-0025, TTL 180 s).',
+                  'Dicta o ingresa este código temporal en el verificador.',
                   textAlign: TextAlign.center,
                   style: Theme.of(context)
                       .textTheme
@@ -225,53 +217,24 @@ class _PresentAccessScreenState extends State<PresentAccessScreen> {
                       ?.copyWith(color: scheme.onSurfaceVariant),
                 ),
                 const SizedBox(height: GxSpace.m),
-                Row(
-                  children: <Widget>[
-                    Expanded(
-                      child: TextField(
-                        controller: _sessionCodeTestController,
-                        decoration: const InputDecoration(
-                          labelText: 'Probar Validador Damm (10 dígitos)',
-                          prefixIcon: Icon(Icons.pin_outlined),
-                        ),
-                        onChanged: (value) {
-                          setState(() {
-                            _sessionCodeIsValid = DammSessionCode.isValid(value);
-                            _sessionCodeValidationMessage = _sessionCodeIsValid
-                                ? 'Dígito verificador Damm válido (interim == 0).'
-                                : 'GID-E8010 (InvalidSessionCode): Error de transcripción o transposición detectado por Damm.';
-                          });
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: GxSpace.s),
-                    OutlinedButton(
-                      onPressed: () {
-                        widget.store.regenerateSessionCode('739204815');
-                        setState(() {
-                          _sessionCodeTestController.text =
-                              widget.store.activeSessionCode;
-                          _sessionCodeIsValid = true;
-                          _sessionCodeValidationMessage =
-                              'Nuevo código efímero generado con Damm válido.';
-                        });
-                      },
-                      child: const Text('Rotar Código'),
-                    ),
-                  ],
+                OutlinedButton.icon(
+                  onPressed: () {
+                    widget.store.regenerateSessionCode('739204815');
+                  },
+                  icon: const Icon(Icons.refresh_rounded, size: 18),
+                  label: const Text('Generar Nuevo Código'),
                 ),
-                if (_sessionCodeValidationMessage != null) ...<Widget>[
-                  const SizedBox(height: GxSpace.s),
-                  StatusChip(
-                    label: _sessionCodeValidationMessage!,
-                    tone: _sessionCodeIsValid ? semantic.success : semantic.moneyOut,
-                    icon: _sessionCodeIsValid
-                        ? Icons.check_circle_rounded
-                        : Icons.error_outline_rounded,
-                  ),
-                ],
               ],
-              const SizedBox(height: GxSpace.l),
+              const SizedBox(height: GxSpace.m),
+              const Divider(height: GxSpace.m),
+              Text(
+                'Datos seleccionados (${disclosures.length}):',
+                style: Theme.of(context)
+                    .textTheme
+                    .labelSmall
+                    ?.copyWith(color: scheme.onSurfaceVariant),
+              ),
+              const SizedBox(height: GxSpace.xs),
               Wrap(
                 spacing: GxSpace.xs,
                 runSpacing: GxSpace.xs,
@@ -280,74 +243,103 @@ class _PresentAccessScreenState extends State<PresentAccessScreen> {
                     .map(
                       (k) => Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: GxSpace.s,
+                          horizontal: GxSpace.m,
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
                           color: scheme.secondaryContainer,
                           borderRadius: GxShape.full,
                         ),
-                        child: GxTabularCodeText(
-                          '_sd: $k',
-                          style: Theme.of(context).textTheme.labelSmall,
-                          color: scheme.onSecondaryContainer,
+                        child: Text(
+                          _humanClaimLabel(k),
+                          style: Theme.of(context)
+                              .textTheme
+                              .labelSmall
+                              ?.copyWith(color: scheme.onSecondaryContainer),
                         ),
                       ),
                     )
                     .toList(),
               ),
-              const SizedBox(height: GxSpace.l),
+              const SizedBox(height: GxSpace.m),
               // Único FilledButton de esta pantalla (Regla SPEC-PIP-UI-001 §15.1)
               FilledButton.icon(
                 onPressed: () => _openDisclosureModal(context),
                 icon: const Icon(Icons.tune_rounded),
-                label: const Text('Elegir Qué Datos Compartir (Consentimiento)'),
+                label: const Text('Elegir Qué Datos Compartir'),
               ),
             ],
           ),
         ),
-        const SizedBox(height: GxSpace.xl),
-        Text(
-          'Simulador del Motor de Verificación de 4 Estados (INV-04, REQ-UI-002)',
-          style: emphasized?.titleLarge,
+        const SizedBox(height: GxSpace.l),
+        Material(
+          color: scheme.surfaceContainerLow,
+          shape: RoundedRectangleBorder(
+            borderRadius: GxShape.large,
+            side: BorderSide(color: scheme.outlineVariant),
+          ),
+          clipBehavior: Clip.antiAlias,
+          child: Theme(
+            data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+            child: ExpansionTile(
+              leading: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: scheme.secondaryContainer,
+                  borderRadius: GxShape.medium,
+                ),
+                child: Icon(
+                  Icons.verified_outlined,
+                  color: scheme.onSecondaryContainer,
+                ),
+              ),
+              title: Text(
+                'Diagnóstico del Verificador (4 Estados)',
+                style: emphasized?.titleSmall,
+              ),
+              childrenPadding: const EdgeInsets.fromLTRB(
+                GxSpace.l,
+                0,
+                GxSpace.l,
+                GxSpace.l,
+              ),
+              children: <Widget>[
+                const SizedBox(height: GxSpace.s),
+                GxButtonGroup<GxVerificationState>(
+                  selected: widget.store.simulatedVerificationState,
+                  onChanged: widget.store.setSimulatedVerificationState,
+                  segments: const <GxButtonSegment<GxVerificationState>>[
+                    GxButtonSegment<GxVerificationState>(
+                      value: GxVerificationState.valid,
+                      label: 'Valid',
+                      icon: Icons.verified_rounded,
+                    ),
+                    GxButtonSegment<GxVerificationState>(
+                      value: GxVerificationState.validWithStaleStatus,
+                      label: 'StaleStatus',
+                      icon: Icons.history_toggle_off_rounded,
+                    ),
+                    GxButtonSegment<GxVerificationState>(
+                      value: GxVerificationState.unverifiable,
+                      label: 'Unverifiable',
+                      icon: Icons.help_outline_rounded,
+                    ),
+                    GxButtonSegment<GxVerificationState>(
+                      value: GxVerificationState.invalid,
+                      label: 'Invalid',
+                      icon: Icons.gpp_bad_rounded,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: GxSpace.m),
+                _buildVerificationCardForState(
+                  widget.store.simulatedVerificationState,
+                ),
+              ],
+            ),
+          ),
         ),
-        const SizedBox(height: GxSpace.xs),
-        Text(
-          'El protocolo nunca reduce la verificación a un booleano. Prueba cómo se representan los 4 estados normativos:',
-          style: Theme.of(context)
-              .textTheme
-              .bodyMedium
-              ?.copyWith(color: scheme.onSurfaceVariant),
-        ),
-        const SizedBox(height: GxSpace.m),
-        GxButtonGroup<GxVerificationState>(
-          selected: widget.store.simulatedVerificationState,
-          onChanged: widget.store.setSimulatedVerificationState,
-          segments: const <GxButtonSegment<GxVerificationState>>[
-            GxButtonSegment<GxVerificationState>(
-              value: GxVerificationState.valid,
-              label: 'Valid',
-              icon: Icons.verified_rounded,
-            ),
-            GxButtonSegment<GxVerificationState>(
-              value: GxVerificationState.validWithStaleStatus,
-              label: 'StaleStatus',
-              icon: Icons.history_toggle_off_rounded,
-            ),
-            GxButtonSegment<GxVerificationState>(
-              value: GxVerificationState.unverifiable,
-              label: 'Unverifiable',
-              icon: Icons.help_outline_rounded,
-            ),
-            GxButtonSegment<GxVerificationState>(
-              value: GxVerificationState.invalid,
-              label: 'Invalid',
-              icon: Icons.gpp_bad_rounded,
-            ),
-          ],
-        ),
-        const SizedBox(height: GxSpace.m),
-        _buildVerificationCardForState(widget.store.simulatedVerificationState),
       ],
     );
   }
@@ -366,16 +358,17 @@ class _PresentAccessScreenState extends State<PresentAccessScreen> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
         const GxLoadingIndicator(
-          size: 56,
-          label: 'Transceptor NFC ISO/IEC 7816-4 GID-APDU Activo',
+          size: 52,
+          label: 'Lector NFC activo',
         ),
         const SizedBox(height: GxSpace.s),
-        Center(
-          child: GxTabularCodeText(
-            'AID: ${ApduCommand.kGravitalAidHex} · HPKE(P-256, HKDF-SHA256, ChaCha20Poly1305)',
-            style: Theme.of(context).textTheme.labelMedium,
-            color: scheme.primary,
-          ),
+        Text(
+          'Acerca tu teléfono o tarjeta física al terminal',
+          textAlign: TextAlign.center,
+          style: Theme.of(context)
+              .textTheme
+              .bodySmall
+              ?.copyWith(color: scheme.onSurfaceVariant),
         ),
         const SizedBox(height: GxSpace.m),
         GxButtonGroup<NfcOperatingMode>(
@@ -384,12 +377,12 @@ class _PresentAccessScreenState extends State<PresentAccessScreen> {
           segments: const <GxButtonSegment<NfcOperatingMode>>[
             GxButtonSegment<NfcOperatingMode>(
               value: NfcOperatingMode.hceCardEmulation,
-              label: 'Emulación HCE (Teléfono)',
+              label: 'Teléfono',
               icon: Icons.phone_android_rounded,
             ),
             GxButtonSegment<NfcOperatingMode>(
               value: NfcOperatingMode.isoDepCardReader,
-              label: 'Lector Tarjeta Visa (ISO-DEP)',
+              label: 'Tarjeta Física',
               icon: Icons.credit_card_rounded,
             ),
           ],
@@ -399,7 +392,7 @@ class _PresentAccessScreenState extends State<PresentAccessScreen> {
           Container(
             padding: const EdgeInsets.symmetric(
               horizontal: GxSpace.m,
-              vertical: GxSpace.s,
+              vertical: GxSpace.xs,
             ),
             decoration: BoxDecoration(
               color: scheme.surfaceContainerHighest,
@@ -408,21 +401,11 @@ class _PresentAccessScreenState extends State<PresentAccessScreen> {
             child: Row(
               children: <Widget>[
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Text(
-                        'Ventana de Toque NFC Armado (60 s · REQ-PROX-006)',
-                        style: Theme.of(context).textTheme.labelLarge,
-                      ),
-                      const SizedBox(height: GxSpace.xs),
-                      Text(
-                        nfcService.isArmedForTap
-                            ? 'HCE listo: SELECT AID + ENVELOPE transmitirán el sobre HPKE (SW=9000).'
-                            : 'Desarmado (Anti-Skimming): ENVELOPE responderá SW=6985 (GID-E8004 ConsentPending).',
-                        style: Theme.of(context).textTheme.bodySmall,
-                      ),
-                    ],
+                  child: Text(
+                    nfcService.isArmedForTap
+                        ? 'Toque NFC habilitado (60 s)'
+                        : 'Toque NFC pausado',
+                    style: Theme.of(context).textTheme.bodyMedium,
                   ),
                 ),
                 Switch.adaptive(
@@ -436,63 +419,37 @@ class _PresentAccessScreenState extends State<PresentAccessScreen> {
           TextField(
             controller: _cardPinController,
             decoration: const InputDecoration(
-              labelText: 'PIN Tarjeta Física Visa (VERIFY PIN 00 20 00 80 · Nivel 1)',
-              helperText:
-                  'PIN válido de prueba: 2486. Requerido al divulgar document_number, birth_date o portrait.',
+              labelText: 'PIN de la tarjeta física',
               prefixIcon: Icon(Icons.dialpad_rounded),
             ),
           ),
         ],
         const SizedBox(height: GxSpace.m),
-        Wrap(
-          spacing: GxSpace.s,
-          runSpacing: GxSpace.s,
-          alignment: WrapAlignment.center,
-          children: <Widget>[
-            OutlinedButton.icon(
-              onPressed: () {
-                widget.store.executeNfcApduPresentation(
-                  cardPin: _cardPinController.text,
-                );
-              },
-              icon: const Icon(Icons.contactless_rounded),
-              label: Text(
-                nfcMode == NfcOperatingMode.hceCardEmulation
-                    ? 'Transmitir Credencial por HCE (APDU)'
-                    : 'Leer / Presentar con Tarjeta NFC (ISO-DEP)',
-              ),
+        Center(
+          child: OutlinedButton.icon(
+            onPressed: () {
+              widget.store.executeNfcApduPresentation(
+                cardPin: _cardPinController.text,
+              );
+              setState(() {
+                _showNfcTrace = true;
+              });
+            },
+            icon: const Icon(Icons.contactless_rounded),
+            label: Text(
+              nfcMode == NfcOperatingMode.hceCardEmulation
+                  ? 'Transmitir Credencial por HCE (APDU)'
+                  : 'Leer Tarjeta Física NFC',
             ),
-            TextButton.icon(
-              onPressed: () {
-                setState(() {
-                  nfcService.processCommand(
-                    const ApduCommand(
-                      cla: 0x00,
-                      ins: 0xA4,
-                      p1: 0x04,
-                      p2: 0x00,
-                      data: <int>[0xA0, 0x00, 0x00, 0x00, 0x99],
-                      le: 0x00,
-                    ),
-                    disclosedClaims: widget.store.lastConfirmedDisclosures,
-                    isPhysicalCardMode:
-                        nfcMode == NfcOperatingMode.isoDepCardReader,
-                  );
-                });
-              },
-              icon: const Icon(Icons.bug_report_outlined),
-              label: const Text('Probar AID Desconocido (SW=6A82)'),
-            ),
-          ],
+          ),
         ),
-        if (log.isNotEmpty) ...<Widget>[
+        if (_showNfcTrace && log.isNotEmpty) ...<Widget>[
           const SizedBox(height: GxSpace.m),
           Container(
             padding: const EdgeInsets.all(GxSpace.m),
             decoration: BoxDecoration(
               color: scheme.surfaceContainerHighest,
-              borderRadius: GxShape.large,
-              border: Border.all(color: scheme.outlineVariant),
+              borderRadius: GxShape.medium,
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -500,69 +457,29 @@ class _PresentAccessScreenState extends State<PresentAccessScreen> {
                 Row(
                   children: <Widget>[
                     Icon(
-                      Icons.terminal_rounded,
+                      Icons.check_circle_rounded,
                       size: 18,
-                      color: scheme.primary,
+                      color: semantic.success.color,
                     ),
                     const SizedBox(width: GxSpace.xs),
                     Expanded(
                       child: Text(
-                        'Traza APDU ISO/IEC 7816-4 (${log.length} tramas · Estado: ${nfcService.phase.name})',
-                        style: emphasized?.titleSmall,
+                        'Transmisión NFC completada (${log.length} pasos)',
+                        style: emphasized?.labelLarge,
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: GxSpace.s),
+                const SizedBox(height: GxSpace.xs),
                 ...log.map(
                   (entry) => Padding(
-                    padding: const EdgeInsets.only(bottom: GxSpace.xs),
-                    child: Container(
-                      padding: const EdgeInsets.all(GxSpace.s),
-                      decoration: BoxDecoration(
-                        color: scheme.surfaceContainerLow,
-                        borderRadius: GxShape.small,
-                      ),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: <Widget>[
-                          Row(
-                            children: <Widget>[
-                              Expanded(
-                                child: Text(
-                                  entry.stepLabel,
-                                  style:
-                                      Theme.of(context).textTheme.labelMedium,
-                                ),
-                              ),
-                              StatusChip(
-                                label: 'SW=${entry.responseSwHex}',
-                                tone: entry.isSuccess
-                                    ? semantic.success
-                                    : semantic.moneyOut,
-                                icon: entry.isSuccess
-                                    ? Icons.check_circle_rounded
-                                    : Icons.error_outline_rounded,
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: GxSpace.xs),
-                          GxTabularCodeText(
-                            'C-APDU >> ${entry.commandHex}',
-                            style: Theme.of(context).textTheme.labelSmall,
-                            color: scheme.onSurfaceVariant,
-                          ),
-                          GxTabularCodeText(
-                            'Estado << ${entry.statusSummary}',
-                            style: Theme.of(context).textTheme.labelSmall,
-                            color: scheme.primary,
-                          ),
-                          Text(
-                            entry.payloadSummary,
-                            style: Theme.of(context).textTheme.bodySmall,
-                          ),
-                        ],
-                      ),
+                    padding: const EdgeInsets.only(top: 2),
+                    child: Text(
+                      entry.stepLabel,
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodySmall
+                          ?.copyWith(color: scheme.onSurfaceVariant),
                     ),
                   ),
                 ),
@@ -589,31 +506,14 @@ class _PresentAccessScreenState extends State<PresentAccessScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: <Widget>[
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: <Widget>[
-            Icon(
-              Icons.fingerprint_rounded,
-              size: 40,
-              color: scheme.primary,
-            ),
-            const SizedBox(width: GxSpace.s),
-            Icon(
-              Icons.contactless_rounded,
-              size: 36,
-              color: scheme.tertiary,
-            ),
-          ],
+        Icon(
+          Icons.fingerprint_rounded,
+          size: 44,
+          color: scheme.primary,
         ),
         const SizedBox(height: GxSpace.xs),
         Text(
-          'Presentación y Transmisión vía Passkey (FIDO2 / WebAuthn Level 3 + CTAP2)',
-          textAlign: TextAlign.center,
-          style: emphasized?.titleSmall,
-        ),
-        const SizedBox(height: GxSpace.xs),
-        Text(
-          'Vincula el challenge WebAuthn al SHA-256(transcript_hash || sd_hash) (PROTOCOL.md §7.8, ADR-0027 §6.2).',
+          'Confirma tu identidad con biometría o llave NFC',
           textAlign: TextAlign.center,
           style: Theme.of(context)
               .textTheme
@@ -627,17 +527,17 @@ class _PresentAccessScreenState extends State<PresentAccessScreen> {
           segments: const <GxButtonSegment<PasskeyAuthenticatorTransport>>[
             GxButtonSegment<PasskeyAuthenticatorTransport>(
               value: PasskeyAuthenticatorTransport.platformInternal,
-              label: 'Biometría Local',
+              label: 'Biometría',
               icon: Icons.fingerprint_rounded,
             ),
             GxButtonSegment<PasskeyAuthenticatorTransport>(
               value: PasskeyAuthenticatorTransport.nfcSecurityKey,
-              label: 'Passkey NFC (CTAP2)',
+              label: 'NFC',
               icon: Icons.contactless_rounded,
             ),
             GxButtonSegment<PasskeyAuthenticatorTransport>(
               value: PasskeyAuthenticatorTransport.hybridCrossDevice,
-              label: 'Híbrido (QR+BLE)',
+              label: 'QR / BLE',
               icon: Icons.devices_rounded,
             ),
           ],
@@ -652,7 +552,10 @@ class _PresentAccessScreenState extends State<PresentAccessScreen> {
               borderRadius: GxShape.medium,
               onTap: () => widget.store.selectPasskey(index),
               child: Container(
-                padding: const EdgeInsets.all(GxSpace.m),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: GxSpace.m,
+                  vertical: GxSpace.s,
+                ),
                 decoration: BoxDecoration(
                   color: isSelected
                       ? scheme.secondaryContainer
@@ -662,37 +565,33 @@ class _PresentAccessScreenState extends State<PresentAccessScreen> {
                     color: isSelected ? scheme.primary : scheme.outlineVariant,
                   ),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                child: Row(
                   children: <Widget>[
-                    Row(
-                      children: <Widget>[
-                        Icon(
-                          isSelected
-                              ? Icons.radio_button_checked_rounded
-                              : Icons.radio_button_off_rounded,
-                          size: 18,
-                          color: scheme.primary,
-                        ),
-                        const SizedBox(width: GxSpace.xs),
-                        Expanded(
-                          child: Text(
+                    Icon(
+                      isSelected
+                          ? Icons.radio_button_checked_rounded
+                          : Icons.radio_button_off_rounded,
+                      size: 18,
+                      color: scheme.primary,
+                    ),
+                    const SizedBox(width: GxSpace.s),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text(
                             pk.displayName,
                             style: emphasized?.labelLarge,
                           ),
-                        ),
-                        StatusChip(
-                          label: 'signCount: ${pk.signCount}',
-                          tone: semantic.info,
-                          icon: pk.transport.icon,
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: GxSpace.xs),
-                    GxTabularCodeText(
-                      'rpId: ${pk.rpId} · credId: ${pk.credentialId}',
-                      style: Theme.of(context).textTheme.labelSmall,
-                      color: scheme.onSurfaceVariant,
+                          Text(
+                            pk.rpId,
+                            style: Theme.of(context)
+                                .textTheme
+                                .bodySmall
+                                ?.copyWith(color: scheme.onSurfaceVariant),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -701,31 +600,14 @@ class _PresentAccessScreenState extends State<PresentAccessScreen> {
           );
         }),
         const SizedBox(height: GxSpace.s),
-        Wrap(
-          spacing: GxSpace.s,
-          runSpacing: GxSpace.s,
-          alignment: WrapAlignment.center,
-          children: <Widget>[
-            OutlinedButton.icon(
-              onPressed: () {
-                widget.store.transmitPresentationViaPasskey();
-              },
-              icon: const Icon(Icons.fingerprint_rounded),
-              label: const Text('Firmar y Transmitir con Passkey'),
-            ),
-            TextButton.icon(
-              onPressed: () {
-                widget.store.registerNewPasskey(
-                  rpId: 'portal.salud.gob.pa',
-                  displayName:
-                      'Passkey NFC / Plataforma #${passkeys.length + 1}',
-                  transport: activeTransport,
-                );
-              },
-              icon: const Icon(Icons.add_moderator_outlined),
-              label: const Text('Registrar Nueva Passkey'),
-            ),
-          ],
+        Center(
+          child: OutlinedButton.icon(
+            onPressed: () {
+              widget.store.transmitPresentationViaPasskey();
+            },
+            icon: const Icon(Icons.fingerprint_rounded),
+            label: const Text('Firmar y Transmitir con Passkey'),
+          ),
         ),
         if (lastEnvelope != null) ...<Widget>[
           const SizedBox(height: GxSpace.m),
@@ -733,52 +615,33 @@ class _PresentAccessScreenState extends State<PresentAccessScreen> {
             padding: const EdgeInsets.all(GxSpace.m),
             decoration: BoxDecoration(
               color: scheme.surfaceContainerHighest,
-              borderRadius: GxShape.large,
-              border: Border.all(color: scheme.outlineVariant),
+              borderRadius: GxShape.medium,
             ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+            child: Row(
               children: <Widget>[
-                Row(
-                  children: <Widget>[
-                    Expanded(
-                      child: Text(
+                Icon(
+                  Icons.verified_user_rounded,
+                  size: 18,
+                  color: semantic.success.color,
+                ),
+                const SizedBox(width: GxSpace.s),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
                         'Sobre PasskeyPresentationEnvelope Emitido',
-                        style: emphasized?.titleSmall,
+                        style: emphasized?.labelLarge,
                       ),
-                    ),
-                    StatusChip(
-                      label: 'UP=1 · UV=1 · ES256',
-                      tone: semantic.success,
-                      icon: Icons.verified_user_rounded,
-                    ),
-                  ],
-                ),
-                const SizedBox(height: GxSpace.xs),
-                GxTabularCodeText(
-                  'rpId: ${lastEnvelope.rpId} · transport: ${lastEnvelope.transport.code} · signCount: ${lastEnvelope.signCount}',
-                  style: Theme.of(context).textTheme.labelSmall,
-                  color: scheme.primary,
-                ),
-                GxTabularCodeText(
-                  'challenge (SHA256(th||sd)): ${lastEnvelope.boundChallengeBase64Url}',
-                  style: Theme.of(context).textTheme.labelSmall,
-                  color: scheme.onSurfaceVariant,
-                ),
-                GxTabularCodeText(
-                  'authenticatorData: ${lastEnvelope.authenticatorDataHex}',
-                  style: Theme.of(context).textTheme.labelSmall,
-                  color: scheme.onSurfaceVariant,
-                ),
-                GxTabularCodeText(
-                  'flags: ${lastEnvelope.flagsSummary}',
-                  style: Theme.of(context).textTheme.labelSmall,
-                  color: scheme.onSurfaceVariant,
-                ),
-                GxTabularCodeText(
-                  'signature: ${lastEnvelope.assertionSignatureHex}',
-                  style: Theme.of(context).textTheme.labelSmall,
-                  color: scheme.tertiary,
+                      Text(
+                        'Verificado para ${lastEnvelope.rpId}',
+                        style: Theme.of(context)
+                            .textTheme
+                            .bodySmall
+                            ?.copyWith(color: scheme.onSurfaceVariant),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -795,50 +658,33 @@ class _PresentAccessScreenState extends State<PresentAccessScreen> {
           state: GxVerificationState.valid,
           headline: 'Credencial y Posesión de Clave Hardware Verificadas',
           summary:
-              'Todas las 12 etapas del pipeline offline finalizaron satisfactoriamente con estado fresco.',
-          trustBundleInfo:
-              'TrustBundle v14 (3-de-5 firmas Ed25519 TFA) · StatusList frescura: 2h 10m',
+              'Todas las etapas del pipeline offline finalizaron satisfactoriamente.',
+          trustBundleInfo: 'TrustBundle v14 · Estado vigente',
           checks: <GxVerificationCheckItem>[
             GxVerificationCheckItem(
               stepName: '1. Autenticación de Emisor en TrustBundle (INV-06)',
               passed: true,
-              detail:
-                  'Clave P-256 resuelta localmente desde TrustBundle v14; sin uso de jku/x5u ni red.',
+              detail: 'Clave P-256 resuelta localmente sin uso de red.',
             ),
             GxVerificationCheckItem(
-              stepName: '2. Firma SD-JWT y Prueba de Posesión KB-JWT (Low-S)',
+              stepName: '2. Firma SD-JWT y Prueba de Posesión KB-JWT',
               passed: true,
-              detail:
-                  'Firma ES256 válida con s ≤ n/2; sd_hash y nonce coinciden con la sesión.',
-            ),
-            GxVerificationCheckItem(
-              stepName: '3. Estado por Ranura de Dispositivo (Token Status List)',
-              passed: true,
-              detail:
-                  'Índice #4102 (slot: mobile) = 00 (activo) dentro de la ventana fresca.',
+              detail: 'Firma ES256 válida vinculada a la sesión.',
             ),
           ],
         );
       case GxVerificationState.validWithStaleStatus:
         return const GxVerificationResultCard(
           state: GxVerificationState.validWithStaleStatus,
-          headline: 'Válida con Lista de Estado en Ventana de Gracia Offline',
+          headline: 'Válida con Lista de Estado en Ventana Offline',
           summary:
-              'La firma del emisor y el KB-JWT del titular son auténticos; el snapshot de revocación tiene 19h de antigüedad.',
-          trustBundleInfo:
-              'TrustBundle v14 · Snapshot de estado en caché local (edad: 19h ≤ 24h máx.)',
+              'La firma del emisor y del titular son auténticas; estado en caché local.',
+          trustBundleInfo: 'TrustBundle v14 · Caché local dentro de ventana',
           checks: <GxVerificationCheckItem>[
             GxVerificationCheckItem(
               stepName: '1. Autenticación de Emisor y Firma SD-JWT + KB-JWT',
               passed: true,
-              detail:
-                  'Criptografía autenticada completamente en local sin conexión (INV-01).',
-            ),
-            GxVerificationCheckItem(
-              stepName: '2. Frescura de Token Status List (Política Offline)',
-              passed: true,
-              detail:
-                  'Snapshot superó el TTL ideal (6h) pero está dentro de la tolerancia offline del perfil (24h).',
+              detail: 'Criptografía autenticada en local sin conexión.',
             ),
           ],
         );
@@ -848,20 +694,13 @@ class _PresentAccessScreenState extends State<PresentAccessScreen> {
           errorCode: 'GID-E4003',
           headline: 'Evidencia Local Insuficiente (Fail-Closed, INV-05)',
           summary:
-              'El verificador lleva más de 7 días sin sincronizar el snapshot de estado y la política exige estado vigente.',
-          trustBundleInfo:
-              'Acción requerida: sincronizar TrustBundle y StatusManifest antes de aceptar.',
+              'Se requiere sincronizar la lista de estado antes de aceptar.',
+          trustBundleInfo: 'Sincronización pendiente',
           checks: <GxVerificationCheckItem>[
             GxVerificationCheckItem(
-              stepName: '1. Firma Criptográfica SD-JWT y KB-JWT',
-              passed: true,
-              detail: 'Las firmas matemáticas son íntegras.',
-            ),
-            GxVerificationCheckItem(
-              stepName: '2. Ventana Máxima de Frescura Expirada (GID-E4003)',
+              stepName: '1. Ventana Máxima de Frescura Expirada (GID-E4003)',
               passed: false,
-              detail:
-                  'StatusListExpired: el verificador rechaza aceptar en silencio (INV-05).',
+              detail: 'Rechazo seguro hasta actualizar caché.',
             ),
           ],
         );
@@ -871,20 +710,13 @@ class _PresentAccessScreenState extends State<PresentAccessScreen> {
           errorCode: 'GID-E4005',
           headline: 'Credencial Rechazada (Soporte Revocado o Firma Inválida)',
           summary:
-              'El índice de estado del dispositivo figura como 01 (revocado) tras un reemplazo atómico o reporte de extravío.',
-          trustBundleInfo:
-              'Orden de corto-circuito: si falla la firma, vigencia y estado quedan Skipped.',
+              'El soporte figura como revocado tras un reemplazo o reporte.',
+          trustBundleInfo: 'Revocación verificada en lista de estado',
           checks: <GxVerificationCheckItem>[
             GxVerificationCheckItem(
-              stepName: '1. Firma del Emisor y Vínculo KB-JWT',
-              passed: true,
-              detail: 'Firmas verificadas contra el TrustBundle.',
-            ),
-            GxVerificationCheckItem(
-              stepName: '2. Consulta de Token Status List (GID-E4005)',
+              stepName: '1. Consulta de Token Status List (GID-E4005)',
               passed: false,
-              detail:
-                  'CredentialRevoked: el soporte anterior fue revocado en la lista de estado.',
+              detail: 'El soporte anterior fue revocado.',
             ),
           ],
         );

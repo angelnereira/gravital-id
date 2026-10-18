@@ -168,7 +168,10 @@ class GxAdaptiveScaffold extends StatelessWidget {
   }
 }
 
-/// Banner informativo para indicar el modo de operación offline verificable (`INV-01`).
+/// Banner informativo para indicar el modo de operación sin conexión (`INV-01`).
+///
+/// Solo se muestra cuando [isOffline] es `true` para no contaminar visualmente
+/// la interfaz durante la operación normal conectada.
 class GxOfflineBanner extends StatelessWidget {
   const GxOfflineBanner({
     required this.isOffline,
@@ -185,59 +188,49 @@ class GxOfflineBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (!isOffline) {
+      return const SizedBox.shrink();
+    }
+
     final semantic = Theme.of(context).extension<SemanticColors>()!;
     final emphasized =
         Theme.of(context).extension<EmphasizedTextTheme>()?.textTheme;
-    final tone = isOffline ? semantic.warning : semantic.info;
+    final tone = semantic.warning;
 
     return Material(
       color: tone.container,
       child: Padding(
         padding: const EdgeInsets.symmetric(
           horizontal: GxSpace.l,
-          vertical: GxSpace.s,
+          vertical: GxSpace.xs,
         ),
-        child: Wrap(
-          spacing: GxSpace.s,
-          runSpacing: GxSpace.xs,
-          crossAxisAlignment: WrapCrossAlignment.center,
+        child: Row(
           children: <Widget>[
             Icon(
-              isOffline
-                  ? Icons.wifi_off_rounded
-                  : Icons.verified_user_outlined,
+              Icons.wifi_off_rounded,
               size: 18,
               color: tone.onContainer,
             ),
-            ConstrainedBox(
-              constraints: BoxConstraints(
-                maxWidth: MediaQuery.sizeOf(context).width -
-                    (GxSpace.l * 2) -
-                    18 -
-                    GxSpace.s,
-              ),
+            const SizedBox(width: GxSpace.s),
+            Expanded(
               child: Text(
-                isOffline
-                    ? 'Modo Offline Activo (INV-01) · TrustBundle v$trustBundleVersion · Caché: $statusFreshnessLabel'
-                    : 'Sincronizado · TrustBundle v$trustBundleVersion (3/5 TFA) · Estado fresco ($statusFreshnessLabel)',
+                'Modo sin conexión · Verificación local activa ($statusFreshnessLabel)',
                 style: (emphasized?.labelMedium ??
                         Theme.of(context).textTheme.labelMedium)
                     ?.copyWith(color: tone.onContainer),
               ),
             ),
             if (onToggleOfflineMode != null)
-              TextButton.icon(
+              TextButton(
                 onPressed: onToggleOfflineMode,
-                icon: Icon(
-                  isOffline ? Icons.cloud_sync_rounded : Icons.airplanemode_on,
-                  size: 16,
-                  color: tone.onContainer,
+                style: TextButton.styleFrom(
+                  minimumSize: const Size(48, 36),
+                  padding: const EdgeInsets.symmetric(horizontal: GxSpace.m),
                 ),
-                label: Text(
-                  isOffline ? 'Conectar' : 'Simular Offline',
-                  style: Theme.of(context)
-                      .textTheme
-                      .labelSmall
+                child: Text(
+                  'Conectar',
+                  style: (emphasized?.labelMedium ??
+                          Theme.of(context).textTheme.labelMedium)
                       ?.copyWith(color: tone.onContainer),
                 ),
               ),

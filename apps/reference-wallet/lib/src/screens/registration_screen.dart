@@ -20,6 +20,7 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
 
   @override
   void dispose() {
+    widget.store.clearProtocolBanner();
     _cedulaController.dispose();
     _nameController.dispose();
     super.dispose();

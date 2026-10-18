@@ -369,7 +369,7 @@ class GxCredentialCard extends StatelessWidget {
         padding: const EdgeInsets.all(GxSpace.l),
         decoration: BoxDecoration(
           color: isSelected
-              ? scheme.secondaryContainer.withValues(alpha: 0.45)
+              ? scheme.secondaryContainer.withValues(alpha: 0.35)
               : scheme.surfaceContainerLow,
           borderRadius: GxShape.extraLarge,
           border: Border.all(
@@ -383,49 +383,26 @@ class GxCredentialCard extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
-                if (hasPortrait) ...<Widget>[
-                  Container(
-                    width: 56,
-                    height: 68,
-                    decoration: BoxDecoration(
-                      color: scheme.primaryContainer,
-                      borderRadius: GxShape.medium,
-                      border: Border.all(color: scheme.primary, width: 1.5),
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: <Widget>[
-                        Icon(
-                          Icons.account_box_rounded,
-                          size: 30,
-                          color: scheme.onPrimaryContainer,
-                        ),
-                        Text(
-                          'JPEG',
-                          style: Theme.of(context)
-                              .textTheme
-                              .labelSmall
-                              ?.copyWith(color: scheme.onPrimaryContainer),
-                        ),
-                      ],
-                    ),
+                Container(
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    color: isOfficialStateCredential
+                        ? scheme.primaryContainer
+                        : scheme.secondaryContainer,
+                    borderRadius: GxShape.large,
                   ),
-                  const SizedBox(width: GxSpace.m),
-                ] else ...<Widget>[
-                  Container(
-                    width: 48,
-                    height: 48,
-                    decoration: BoxDecoration(
-                      color: scheme.primaryContainer,
-                      borderRadius: GxShape.large,
-                    ),
-                    child: Icon(
-                      Icons.badge_rounded,
-                      color: scheme.onPrimaryContainer,
-                    ),
+                  child: Icon(
+                    hasPortrait
+                        ? Icons.account_circle_rounded
+                        : Icons.badge_rounded,
+                    size: 28,
+                    color: isOfficialStateCredential
+                        ? scheme.onPrimaryContainer
+                        : scheme.onSecondaryContainer,
                   ),
-                  const SizedBox(width: GxSpace.m),
-                ],
+                ),
+                const SizedBox(width: GxSpace.m),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -433,50 +410,27 @@ class GxCredentialCard extends StatelessWidget {
                       Wrap(
                         spacing: GxSpace.xs,
                         runSpacing: GxSpace.xs,
+                        crossAxisAlignment: WrapCrossAlignment.center,
                         children: <Widget>[
                           StatusChip.fromVerificationState(
                             state: statusState,
                             semantic: semantic,
                             scheme: scheme,
                           ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: GxSpace.s,
-                              vertical: GxSpace.xs,
-                            ),
-                            decoration: BoxDecoration(
-                              color: isOfficialStateCredential
-                                  ? scheme.primaryContainer
-                                  : scheme.tertiaryContainer,
-                              borderRadius: GxShape.full,
-                            ),
-                            child: Text(
-                              isOfficialStateCredential
-                                  ? 'OFICIAL ESTADO (TE)'
-                                  : 'DERIVADA / VERIFICADA',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .labelSmall
-                                  ?.copyWith(
-                                    color: isOfficialStateCredential
-                                        ? scheme.onPrimaryContainer
-                                        : scheme.onTertiaryContainer,
-                                  ),
-                            ),
-                          ),
                         ],
                       ),
-                      const SizedBox(height: GxSpace.s),
+                      const SizedBox(height: GxSpace.xs),
                       Text(
                         title,
-                        style: emphasized?.titleLarge ??
-                            Theme.of(context).textTheme.titleLarge,
+                        style: emphasized?.titleMedium ??
+                            Theme.of(context).textTheme.titleMedium,
                       ),
+                      const SizedBox(height: 2),
                       Text(
-                        subtitle,
+                        issuerName,
                         style: Theme.of(context)
                             .textTheme
-                            .bodyMedium
+                            .bodySmall
                             ?.copyWith(color: scheme.onSurfaceVariant),
                       ),
                     ],
@@ -484,51 +438,32 @@ class GxCredentialCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: GxSpace.m),
-            Wrap(
-              spacing: GxSpace.s,
-              runSpacing: GxSpace.xs,
-              children: <Widget>[
-                _MetaBadge(
-                  icon: Icons.account_balance_rounded,
-                  label: issuerName,
-                ),
-                _MetaBadge(
-                  icon: Icons.memory_rounded,
-                  label: '$deviceClassLabel · $securityLevelLabel',
-                ),
-                _MetaBadge(
-                  icon: Icons.layers_rounded,
-                  label: '$remainingBatchCopies copias de lote',
-                ),
-                _MetaBadge(
-                  icon: Icons.tune_rounded,
-                  label: '$claimsCount atributos _sd',
-                ),
-                if (documentNumberMasked != null)
-                  _MetaBadge(
-                    icon: Icons.pin_rounded,
-                    label: documentNumberMasked!,
-                    tabular: true,
-                  ),
-              ],
-            ),
-            const SizedBox(height: GxSpace.m),
+            if (documentNumberMasked != null) ...<Widget>[
+              const SizedBox(height: GxSpace.s),
+              _MetaBadge(
+                icon: Icons.pin_rounded,
+                label: documentNumberMasked!,
+                tabular: true,
+              ),
+            ],
+            const SizedBox(height: GxSpace.xs),
+            const Divider(height: GxSpace.m),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: <Widget>[
                 Flexible(
-                  child: GxTabularCodeText(
-                    vct,
-                    style: Theme.of(context).textTheme.labelSmall,
-                    color: scheme.onSurfaceVariant,
+                  child: Text(
+                    'Ver $claimsCount datos',
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                          color: scheme.primary,
+                        ),
                   ),
                 ),
                 if (onPresentPressed != null)
                   TextButton.icon(
                     onPressed: onPresentPressed,
                     icon: const Icon(Icons.qr_code_2_rounded, size: 18),
-                    label: const Text('Compartir / Acceso'),
+                    label: const Text('Compartir'),
                   ),
               ],
             ),
@@ -668,12 +603,12 @@ class _GxDisclosureConsentSheetState extends State<GxDisclosureConsentSheet> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       Text(
-                        'Consentimiento de Divulgación Selectiva',
+                        'Autorizar Datos a Compartir',
                         style: emphasized?.titleMedium ??
                             Theme.of(context).textTheme.titleMedium,
                       ),
                       Text(
-                        'Paso 1: prepare_presentation · Tú decides qué datos compartir',
+                        'Elige qué atributos de tu credencial deseas entregar',
                         style: Theme.of(context)
                             .textTheme
                             .bodySmall
@@ -694,13 +629,14 @@ class _GxDisclosureConsentSheetState extends State<GxDisclosureConsentSheet> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
-                  Row(
+                  Wrap(
+                    spacing: GxSpace.s,
+                    runSpacing: GxSpace.xs,
+                    crossAxisAlignment: WrapCrossAlignment.center,
                     children: <Widget>[
-                      Expanded(
-                        child: Text(
-                          widget.verifierName,
-                          style: emphasized?.titleMedium,
-                        ),
+                      Text(
+                        widget.verifierName,
+                        style: emphasized?.titleMedium,
                       ),
                       StatusChip(
                         label: widget.isVerifierSigned
@@ -717,23 +653,15 @@ class _GxDisclosureConsentSheetState extends State<GxDisclosureConsentSheet> {
                   ),
                   const SizedBox(height: GxSpace.xs),
                   GxTabularCodeText(
-                    'Dominio: ${widget.verifierDomain} · Canal: ${widget.transportLabel}',
+                    '${widget.verifierDomain} · ${widget.transportLabel}',
                     style: Theme.of(context).textTheme.labelSmall,
                     color: scheme.onSurfaceVariant,
                   ),
                   const SizedBox(height: GxSpace.xs),
                   Text(
-                    'Propósito declarado: ${widget.purpose}',
+                    'Motivo: ${widget.purpose}',
                     style: Theme.of(context).textTheme.bodySmall,
                   ),
-                  if (widget.tenantSubjectIdPreview != null) ...<Widget>[
-                    const SizedBox(height: GxSpace.xs),
-                    GxTabularCodeText(
-                      'ID de Inquilino (Pairwise): ${widget.tenantSubjectIdPreview}',
-                      style: Theme.of(context).textTheme.labelSmall,
-                      color: scheme.primary,
-                    ),
-                  ],
                 ],
               ),
             ),
@@ -754,7 +682,7 @@ class _GxDisclosureConsentSheetState extends State<GxDisclosureConsentSheet> {
                     const SizedBox(width: GxSpace.s),
                     Expanded(
                       child: Text(
-                        'Incluye atributos sensibles de Nivel 1 (cédula, fecha de nacimiento o retrato). Requiere autenticación biométrica/PIN al confirmar.',
+                        'Incluye datos personales sensibles. Se solicitará tu huella o PIN al confirmar.',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                               color: semantic.warning.onContainer,
                             ),
@@ -766,7 +694,7 @@ class _GxDisclosureConsentSheetState extends State<GxDisclosureConsentSheet> {
             ],
             const SizedBox(height: GxSpace.m),
             Text(
-              'Atributos seleccionados (${_selectedKeys.length} de ${widget.claims.length}):',
+              'Datos solicitados (${_selectedKeys.length} de ${widget.claims.length} activos):',
               style: emphasized?.labelLarge,
             ),
             const SizedBox(height: GxSpace.s),
@@ -851,7 +779,7 @@ class _GxDisclosureConsentSheetState extends State<GxDisclosureConsentSheet> {
                       ],
                     ),
                     subtitle: GxTabularCodeText(
-                      '${claim.key}: ${claim.valuePreview}',
+                      claim.valuePreview,
                       style: Theme.of(context).textTheme.bodySmall,
                       color: scheme.onSurfaceVariant,
                     ),
@@ -860,15 +788,16 @@ class _GxDisclosureConsentSheetState extends State<GxDisclosureConsentSheet> {
               );
             }),
             const SizedBox(height: GxSpace.l),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.end,
+            Wrap(
+              spacing: GxSpace.m,
+              runSpacing: GxSpace.s,
+              alignment: WrapAlignment.end,
               children: <Widget>[
                 OutlinedButton(
                   onPressed:
                       widget.onCancel ?? () => Navigator.of(context).maybePop(),
-                  child: const Text('Rechazar'),
+                  child: const Text('Cancelar'),
                 ),
-                const SizedBox(width: GxSpace.m),
                 FilledButton.icon(
                   onPressed: () =>
                       widget.onConfirmDisclosures(Set.unmodifiable(_selectedKeys)),
@@ -877,11 +806,7 @@ class _GxDisclosureConsentSheetState extends State<GxDisclosureConsentSheet> {
                         ? Icons.fingerprint_rounded
                         : Icons.check_circle_outline_rounded,
                   ),
-                  label: Text(
-                    _includesLevel1Claims
-                        ? 'Autenticar y Firmar KB-JWT'
-                        : 'Confirmar y Compartir',
-                  ),
+                  label: const Text('Confirmar y Compartir'),
                 ),
               ],
             ),
@@ -933,7 +858,7 @@ class GxDeviceSlotCard extends StatelessWidget {
         color: scheme.surfaceContainerLow,
         borderRadius: GxShape.extraLarge,
         border: Border.all(
-          color: isActive ? semantic.success.color : scheme.outlineVariant,
+          color: isActive ? scheme.outlineVariant : scheme.outline,
         ),
       ),
       child: Column(
@@ -956,36 +881,12 @@ class GxDeviceSlotCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: <Widget>[
-                    Wrap(
-                      spacing: GxSpace.xs,
-                      runSpacing: GxSpace.xs,
-                      crossAxisAlignment: WrapCrossAlignment.center,
-                      children: <Widget>[
-                        StatusChip(
-                          label: isActive
-                              ? 'RANURA OCUPADA (1/1)'
-                              : 'RANURA DISPONIBLE',
-                          tone: isActive ? semantic.success : semantic.info,
-                          icon: isActive
-                              ? Icons.lock_rounded
-                              : Icons.add_moderator_outlined,
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: GxSpace.s,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: scheme.secondaryContainer,
-                            borderRadius: GxShape.full,
-                          ),
-                          child: GxTabularCodeText(
-                            'slot: $factorClassCode (máx. 1)',
-                            style: Theme.of(context).textTheme.labelSmall,
-                            color: scheme.onSecondaryContainer,
-                          ),
-                        ),
-                      ],
+                    StatusChip(
+                      label: isActive ? 'ACTIVO' : 'DISPONIBLE',
+                      tone: isActive ? semantic.success : semantic.info,
+                      icon: isActive
+                          ? Icons.check_circle_rounded
+                          : Icons.add_circle_outline_rounded,
                     ),
                     const SizedBox(height: GxSpace.xs),
                     Text(
@@ -1005,46 +906,33 @@ class GxDeviceSlotCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: GxSpace.m),
-          Wrap(
-            spacing: GxSpace.s,
-            runSpacing: GxSpace.xs,
-            children: <Widget>[
-              _MetaBadge(
-                icon: Icons.security_rounded,
-                label: hardwareRootLabel,
-              ),
-              _MetaBadge(
-                icon: Icons.qr_code_scanner_rounded,
-                label: hardwareAttestationId,
-                tabular: true,
-              ),
-              _MetaBadge(
-                icon: Icons.list_alt_rounded,
-                label: 'TokenStatusList idx #$statusListIndex',
-                tabular: true,
-              ),
-            ],
+          const SizedBox(height: GxSpace.s),
+          _MetaBadge(
+            icon: Icons.security_rounded,
+            label: hardwareRootLabel,
           ),
-          const SizedBox(height: GxSpace.m),
-          Wrap(
-            spacing: GxSpace.s,
-            runSpacing: GxSpace.xs,
-            children: <Widget>[
-              if (onSimulateDuplicateAttempt != null)
-                OutlinedButton.icon(
-                  onPressed: onSimulateDuplicateAttempt,
-                  icon: const Icon(Icons.block_rounded, size: 18),
-                  label: Text('Probar 2.º $factorClassCode (GID-E2011)'),
-                ),
-              if (onAtomicReplace != null)
-                TextButton.icon(
-                  onPressed: onAtomicReplace,
-                  icon: const Icon(Icons.swap_horiz_rounded, size: 18),
-                  label: const Text('Reemplazo Atómico de Soporte'),
-                ),
-            ],
-          ),
+          if (onAtomicReplace != null ||
+              onSimulateDuplicateAttempt != null) ...<Widget>[
+            const SizedBox(height: GxSpace.s),
+            Wrap(
+              spacing: GxSpace.s,
+              runSpacing: GxSpace.xs,
+              children: <Widget>[
+                if (onAtomicReplace != null)
+                  OutlinedButton.icon(
+                    onPressed: onAtomicReplace,
+                    icon: const Icon(Icons.swap_horiz_rounded, size: 18),
+                    label: const Text('Reemplazar soporte'),
+                  ),
+                if (onSimulateDuplicateAttempt != null)
+                  TextButton.icon(
+                    onPressed: onSimulateDuplicateAttempt,
+                    icon: const Icon(Icons.shield_outlined, size: 18),
+                    label: const Text('Verificar límite 1/1'),
+                  ),
+              ],
+            ),
+          ],
         ],
       ),
     );
@@ -1081,6 +969,25 @@ class GxTenantAccessCard extends StatelessWidget {
   final VoidCallback? onPresentRoleAccess;
   final VoidCallback? onRevokeTenant;
 
+  static String _humanizeRole(String roleKey) {
+    switch (roleKey) {
+      case 'ciudadano_verificado':
+        return 'Ciudadano verificado';
+      case 'firmante_tramites':
+        return 'Firmante de trámites';
+      case 'treasury_approver':
+        return 'Aprobador de tesorería';
+      case 'kyc_verified_holder':
+        return 'Titular verificado';
+      case 'tenant_admin':
+        return 'Administrador';
+      case 'datacenter_operator':
+        return 'Operador de centro de datos';
+      default:
+        return roleKey.replaceAll('_', ' ');
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
@@ -1109,7 +1016,7 @@ class GxTenantAccessCard extends StatelessWidget {
                   borderRadius: GxShape.large,
                 ),
                 child: Icon(
-                  Icons.hub_rounded,
+                  Icons.apps_rounded,
                   color: scheme.onSecondaryContainer,
                 ),
               ),
@@ -1122,18 +1029,13 @@ class GxTenantAccessCard extends StatelessWidget {
                       tenantName,
                       style: emphasized?.titleMedium,
                     ),
+                    const SizedBox(height: 2),
                     Text(
-                      '$tenantSector · $tenantId',
+                      tenantSector,
                       style: Theme.of(context)
                           .textTheme
                           .bodySmall
                           ?.copyWith(color: scheme.onSurfaceVariant),
-                    ),
-                    const SizedBox(height: 4),
-                    GxTabularCodeText(
-                      'TenantSubjectId: $tenantSubjectId',
-                      style: Theme.of(context).textTheme.labelSmall,
-                      color: scheme.primary,
                     ),
                   ],
                 ),
@@ -1145,67 +1047,38 @@ class GxTenantAccessCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: GxSpace.m),
-          Text(
-            'Roles verificables en este sistema (pip-tenant-role-v1):',
-            style: emphasized?.labelMedium,
-          ),
-          const SizedBox(height: GxSpace.xs),
-          Wrap(
-            spacing: GxSpace.xs,
-            runSpacing: GxSpace.xs,
-            children: roles
-                .map(
-                  (role) => Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: GxSpace.m,
-                      vertical: 4,
-                    ),
-                    decoration: BoxDecoration(
-                      color: scheme.primaryContainer,
-                      borderRadius: GxShape.full,
-                    ),
-                    child: Text(
-                      'Rol: $role',
-                      style: Theme.of(context)
-                          .textTheme
-                          .labelSmall
-                          ?.copyWith(color: scheme.onPrimaryContainer),
-                    ),
-                  ),
-                )
-                .toList(),
-          ),
           const SizedBox(height: GxSpace.s),
-          Text(
-            'Permisos delegados y atributos portados por decisión del titular:',
-            style: Theme.of(context)
-                .textTheme
-                .labelSmall
-                ?.copyWith(color: scheme.onSurfaceVariant),
-          ),
-          const SizedBox(height: GxSpace.xs),
           Wrap(
             spacing: GxSpace.xs,
             runSpacing: GxSpace.xs,
             children: <Widget>[
-              ...permissions.map(
-                (perm) => _MetaBadge(
-                  icon: Icons.key_rounded,
-                  label: perm,
-                  tabular: true,
+              ...roles.map(
+                (role) => Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: GxSpace.m,
+                    vertical: 4,
+                  ),
+                  decoration: BoxDecoration(
+                    color: scheme.primaryContainer,
+                    borderRadius: GxShape.full,
+                  ),
+                  child: Text(
+                    _humanizeRole(role),
+                    style: Theme.of(context)
+                        .textTheme
+                        .labelSmall
+                        ?.copyWith(color: scheme.onPrimaryContainer),
+                  ),
                 ),
               ),
-              ...sharedClaims.map(
-                (claim) => _MetaBadge(
-                  icon: Icons.check_circle_outline_rounded,
-                  label: claim,
-                  tabular: true,
-                ),
+              _MetaBadge(
+                icon: Icons.check_circle_outline_rounded,
+                label: '${sharedClaims.length} datos compartidos',
               ),
             ],
           ),
-          const SizedBox(height: GxSpace.m),
+          const SizedBox(height: GxSpace.s),
+          const Divider(height: GxSpace.m),
           Wrap(
             spacing: GxSpace.s,
             runSpacing: GxSpace.xs,
@@ -1214,26 +1087,13 @@ class GxTenantAccessCard extends StatelessWidget {
                 OutlinedButton.icon(
                   onPressed: onManagePortability,
                   icon: const Icon(Icons.tune_rounded, size: 18),
-                  label: const Text('Qué Datos Comparto'),
+                  label: const Text('Datos compartidos'),
                 ),
               if (onPresentRoleAccess != null)
                 TextButton.icon(
                   onPressed: onPresentRoleAccess,
                   icon: const Icon(Icons.login_rounded, size: 18),
-                  label: const Text('Acceder con Rol'),
-                ),
-              if (onRevokeTenant != null)
-                TextButton.icon(
-                  onPressed: onRevokeTenant,
-                  icon: Icon(
-                    Icons.link_off_rounded,
-                    size: 18,
-                    color: scheme.error,
-                  ),
-                  label: Text(
-                    'Desvincular',
-                    style: TextStyle(color: scheme.error),
-                  ),
+                  label: const Text('Entrar con rol'),
                 ),
             ],
           ),

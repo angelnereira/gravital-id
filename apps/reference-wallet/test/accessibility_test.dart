@@ -33,14 +33,11 @@ void main() {
     await tester.pumpAndSettle();
     expect(tester.takeException(), isNull);
 
-    // Navegar por las 7 pestañas sin excepción
+    // Navegar por las 4 pestañas principales sin excepción
     for (final label in <String>[
       'Presentar',
       'Apps y Roles',
       'Soportes',
-      'Recuperar',
-      'Sincronizar',
-      'Consentir',
       'Credenciales',
     ]) {
       final finder = find.text(label);

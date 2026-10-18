@@ -10,7 +10,7 @@
 | Último gate cerrado | **G8 / Hito M2** (2026-10-18) · **G7** (2026-10-18) · **G6** (2026-10-17) · **G5** (2026-10-16) · **G4** (2026-10-16) · **G19** (2026-10-15) · **G0** (2026-10-11) |
 | Próximo gate | **G9** (Bindings para 8 lenguajes) / **G20** (Núcleo de proximidad) · **G3** (#59) y **G2** pendientes de CI |
 | Hito siguiente | MP1 · Tap offline (al cerrar G21) / M3 · SDK multi-lenguaje (al cerrar G9) [M1 y M2 alcanzados] |
-| Última actualización | 2026-10-18 (Refinamiento UI de reference-wallet, navegación M3 Expressive, accesibilidad WCAG 2.2 AA y release APK compilado 50.7 MB; F9.T01 fachada SDK; F20.T01-T02 proximidad CBOR) |
+| Última actualización | 2026-10-18 (Rediseño integral UI/UX de reference-wallet verificado en Google Pixel 8 Pro físico: 4 pestañas principales, eliminación de ActionBar nativo duplicado, ocultamiento de jerga técnica y simuladores en secciones colapsables, jerarquía tonal M3 Expressive y actualización del release APK `v0.1.0-alpha` 50.3 MB) |
 
 ## Gates
 
@@ -32,7 +32,7 @@
 
 | Tarea | Issue | Responsable | Estado | Siguiente paso |
 |---|---|---|---|---|
-| F11.T02 Wallet de Referencia & UI | #101 | Antigravity (agente) | Hecha | Arquitectura UI organizada: navegación de 7 pestañas, acciones AppBar para perfil/ajustes, tarjeta colapsable SVI/VOPRF, regla de acción primaria única, padding normalizado, 9/9 tests pasando y APK release generado (50.7 MB) |
+| F11.T02 Wallet de Referencia & UI | #101 | Antigravity (agente) | Hecha | Rediseño UI/UX verificado en Google Pixel 8 Pro: 4 pestañas principales sin corte de palabras, `NoActionBar` nativo, tarjetas limpias sin jerga de protocolo, diagnósticos colapsables, 13/13 tests en verde y release `v0.1.0-alpha` actualizado (50.3 MB) |
 | F8.T11 Revisión del MVP (Gate G8 / Hito M2) | #111 | Antigravity (agente) | Hecha | Ejecución scriptada y reproducible de los nueve criterios de aceptación de ROADMAP.md §24 aprobada al 100%; informe formal publicado en `docs/reports/2026-10-18-mvp-evaluacion-m2.md` y Gate G8 / Hito M2 formalmente cerrado; resuelto #111 |
 | F8.T10 Robustez | #110 | Antigravity (agente) | Hecha | Suite de inyección de fallos (aborto transaccional SQLite con rollback y comprobación PRAGMA integrity_check, matriz de fallos en respaldo GIDB, umbral insuficiente Shamir k-de-n, mitigación MitM e interrupción en migración SAS, y tolerancia a fallos en sustitución atómica de ranura de dispositivo con revocación en TokenStatusList, REQ-STOR-004, REQ-REC-001..004, REQ-DEVSLOT-003); resuelto #110 |
 | F8.T09 Procedimientos por perfil | #109 | Antigravity (agente) | Hecha | Procedimientos normativos de recuperación institucional documentados en los 5 perfiles oficiales (`pip-personal-v1`, `pip-identity-v1`, `pip-financial-v1`, `pip-enterprise-v1`, `pip-tenant-role-v1`), prohibición de correo electrónico y custodio único (`REQ-REC-006`, `P-10`), revocación atómica de ranura (`REQ-DEVSLOT-003`, `ADR-0029`) y suite de auditoría `institutional_recovery_profiles_audit.rs` probada y verificada; resuelto #109 |
@@ -175,35 +175,30 @@
 
 ## Última nota de traspaso
 
-### Traspaso — 2026-10-18 (F11.T02: Arquitectura de interfaz de usuario de reference-wallet, navegación M3 Expressive, accesibilidad WCAG 2.2 AA y compilación Release APK — apps/reference-wallet, packages/gravital_experience_ui, ADR-0030, SPEC-PIP-UI-001, AGENTS.md §9.5, REQ-A11Y-001, REQ-PERF-003, INV-01, INV-02) — Antigravity (agente)
-- Tarea: F11.T02 / Refinamiento UI de Wallet de Referencia — rama `main`
+### Traspaso — 2026-10-18 (F11.T02: Rediseño integral UI/UX de reference-wallet y gravital_experience_ui verificado en Google Pixel 8 Pro + actualización de GitHub Release v0.1.0-alpha — apps/reference-wallet, packages/gravital_experience_ui, ADR-0030, SPEC-PIP-UI-001, AGENTS.md §9.5, REQ-UI-001..004) — Antigravity (agente)
+- Tarea: F11.T02 / Rediseño y simplificación de UI de Wallet de Referencia en dispositivo físico — rama `main`
 - Estado: **hecha**
 - Hecho en esta sesión:
-  - **Reorganización y jerarquía visual de la Wallet (`apps/reference-wallet/lib/main.dart`):**
-    - Reducción de la barra de navegación inferior de 11 pestañas hacinadas a 7 pestañas funcionales principales (`Credenciales`, `Presentar`, `Apps y Roles`, `Soportes`, `Recuperar`, `Sincronizar`, `Consentir`), eliminando colisiones de área táctil.
-    - Eliminación de la barra flotante invasiva (`GxFloatingToolbar`) que obstruía permanentemente el contenido interactivo y botones primarios en todas las pantallas.
-    - Reubicación de las pantallas secundarias de usuario y sistema (`ProfileScreen` y `SettingsScreen`) en acciones dedicadas accesibles desde el `AppBar` superior.
-    - Blindaje de `AppBar` contra desbordamientos con escalado de texto al 200% y alto contraste (WCAG 2.2 AA).
-  - **Bóveda de Credenciales (`apps/reference-wallet/lib/src/screens/vault_screen.dart`):**
-    - Conversión del extenso formulario de unicidad ciudadana en un panel colapsable (`ExpansionTile`) con estilo normativo M3 Expressive ("Control de Unicidad Ciudadana · SVI / VOPRF"), preservando el 100% de la funcionalidad de prueba sin saturar la vista principal.
-    - Reemplazo de botones secundarios `FilledButton` por `OutlinedButton`, cumpliendo estrictamente con la regla de un único botón primario por pantalla (`SPEC-PIP-UI-001 §10`, `AGENTS.md §9.5`).
-  - **Ecosistema Multi-Inquilino y Portabilidad (`tenants_portability_screen.dart`, `linked_accounts_screen.dart`):**
-    - Integración de acceso directo a cuentas vinculadas desde la pantalla de inquilinos, unificando la navegación secundaria con sus propios `Scaffold` y `AppBar`.
-  - **Empaquetado y Release APK Android (`apps/reference-wallet/android/app/src/main/AndroidManifest.xml`):**
-    - Incorporación de la meta-data `<meta-data android:name="flutterEmbedding" android:value="2" />` para resolver el error fatal de compilación por eliminación de Android v1 embedding.
-    - Corrección en `.gitignore` para ignorar artefactos de compilación `.dill` y cachés locales.
-    - Compilación exitosa de la versión de producción: `apps/reference-wallet/build/app/outputs/flutter-apk/app-release.apk` (50.7 MB).
-  - **Verificación y Pruebas Automatizadas:**
-    - `flutter analyze apps/reference-wallet packages/gravital_experience_ui`: 0 advertencias / 0 errores.
-    - `flutter test`: 9/9 pruebas pasando (`widget_test.dart`, `e2e_recovery_test.dart`, `accessibility_test.dart`).
-    - `cargo xtask check-layers`: 22 crates en verde cumpliendo invariantes arquitectónicos.
-    - `cargo xtask trace`: 121 requisitos referenciados y sincronizados en `docs/TRACEABILITY.md`.
+  - **Depuración y verificación en dispositivo físico Google Pixel 8 Pro (`41191FDJG002UT`):**
+    - Corrección en `AndroidManifest.xml` (`android:theme="@style/LaunchTheme"` y `NormalTheme`) que eliminó la barra superior nativa duplicada (`ActionBar` legacy de Android que mostraba un segundo encabezado `"Gravital ID"` sobre el `AppBar` de Flutter).
+    - Reducción de la barra de navegación inferior (`NavigationBar`) de 7 pestañas apretadas a **4 pestañas principales** (`Credenciales`, `Presentar`, `Apps y Roles`, `Soportes`), eliminando por completo los cortes de palabras a mitad de sílaba (`Credencia-les`, `Sincroni-zar`, `Consen-tir`).
+    - Acceso directo a `Recuperar` y `Sincronizar` integrado limpiamente en la pantalla `Soportes` y en `Ajustes`, con limpieza automática de banners de protocolo al cambiar de pestaña o salir de pantallas secundarias.
+  - **Refinamiento de Componentes `Gravital-Experience-UI` (`packages/gravital_experience_ui`):**
+    - `GxOfflineBanner`: ahora permanece invisible cuando la aplicación está en línea y solo aparece cuando se activa el modo sin conexión.
+    - `GxButtonGroup`: distribución en cuadrícula equilibrada 2×2 (para 4 opciones) o fila proporcional (para 2–3 opciones), con fallback automático a `Wrap` en escalado de accesibilidad al 200 %.
+    - `GxCredentialCard`, `GxDisclosureConsentSheet`, `GxDeviceSlotCard` y `GxTenantAccessCard`: eliminación de jerga técnica expuesta al usuario final (`vct` URNs, `_sd`, `JPEG`, `base64url(...)`, `true`, `snake_case`), traducción de atributos y roles a español legible y jerarquía tonal calmada (`surfaceContainerLow`).
+    - Hojas modales de detalle de credencial (`DraggableScrollableSheet`) al tocar cualquier tarjeta en pantallas compactas, y secciones colapsables (`ExpansionTile`) para herramientas de diagnóstico (`Diagnóstico del Verificador (4 Estados)`, `Verificación de Unicidad Ciudadana (SVI)`, `Verificación de Límite por Soporte`).
+  - **Verificación, Instalación y Publicación:**
+    - `flutter analyze packages/gravital_experience_ui apps/reference-wallet`: 0 issues.
+    - `flutter test`: 4/4 en `gravital_experience_ui` y 9/9 en `reference-wallet` (13/13 pruebas en verde).
+    - `cargo xtask check-layers` y `cargo xtask trace`: 100 % en verde.
+    - APK de release (`50.3 MB`) instalado en el Google Pixel 8 Pro y actualizado en el GitHub Release `v0.1.0-alpha`.
 - Pendiente (siguiente paso concreto):
-  - Continuar con el despliegue / distribución del APK generado a dispositivos de prueba física o evaluadores.
+  - Continuar con las siguientes tareas de la hoja de ruta (`F9` / `F20`).
 - Bugs/issues abiertos durante la sesión: ninguno.
-- Decisiones tomadas: Adherencia total a `Gravital-Experience-UI` (ADR-0030) y regla de acción primaria única.
+- Decisiones tomadas: Adherencia estricta a `Gravital-Experience-UI` (`ADR-0030`, `AGENTS.md §9.5`).
 - Riesgos o dudas: ninguna.
-- Comprobaciones locales: flutter analyze ✅ flutter test (9/9) ✅ cargo xtask check-layers (22 crates) ✅ cargo xtask trace ✅ flutter build apk --release (50.7 MB) ✅
+- Comprobaciones locales: flutter analyze ✅ flutter test (13/13) ✅ cargo xtask check-layers ✅ cargo xtask trace ✅ APK instalado en Pixel 8 Pro ✅ GitHub Release `v0.1.0-alpha` actualizado ✅
 
 ### Traspaso — 2026-10-18 (F8.T11: Revisión formal del MVP y cierre de Gate G8 / Hito M2 — apps/pip-cli/src/lib.rs, apps/pip-cli/tests/mvp_acceptance_m2_audit.rs, docs/reports/2026-10-18-mvp-evaluacion-m2.md, ROADMAP.md §24, REQ-VER-001, REQ-PRES-005, REQ-STAT-004, REQ-STAT-008, REQ-LEDG-001, REQ-REC-001..007, REQ-CRED-001, REQ-STOR-004, REQ-PERF-003, INV-01, INV-02, INV-03, INV-04, INV-05, INV-06, INV-11, INV-16) — Antigravity (agente)
 - Tarea: F8.T11 — #111 — rama `main`

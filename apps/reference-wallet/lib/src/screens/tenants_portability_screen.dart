@@ -154,7 +154,6 @@ class TenantsPortabilityScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
-    final semantic = Theme.of(context).extension<SemanticColors>()!;
     final emphasized =
         Theme.of(context).extension<EmphasizedTextTheme>()?.textTheme;
 
@@ -167,49 +166,29 @@ class TenantsPortabilityScreen extends StatelessWidget {
       ),
       children: <Widget>[
         Container(
-          padding: const EdgeInsets.all(GxSpace.xl),
+          padding: const EdgeInsets.all(GxSpace.l),
           decoration: BoxDecoration(
-            color: scheme.secondaryContainer,
+            color: scheme.surfaceContainerLow,
             borderRadius: GxShape.extraLarge,
+            border: Border.all(color: scheme.outlineVariant),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
-              Wrap(
-                spacing: GxSpace.s,
-                runSpacing: GxSpace.xs,
-                children: <Widget>[
-                  StatusChip(
-                    label: 'CENTRALIZACIÓN SOBERANA MULTI-INQUILINO (ADR-0027)',
-                    tone: semantic.info,
-                    icon: Icons.hub_rounded,
-                  ),
-                  StatusChip(
-                    label: '${store.tenants.length} SISTEMAS CONECTADOS',
-                    tone: semantic.success,
-                    icon: Icons.verified_user_rounded,
-                  ),
-                ],
-              ),
-              const SizedBox(height: GxSpace.m),
               Text(
                 'Un Mismo Gravital ID para Todos tus Sistemas y Roles',
-                style: (emphasized?.headlineSmall ??
-                        Theme.of(context).textTheme.headlineSmall)
-                    ?.copyWith(color: scheme.onSecondaryContainer),
+                style: emphasized?.titleLarge ??
+                    Theme.of(context).textTheme.titleLarge,
               ),
               const SizedBox(height: GxSpace.xs),
               Text(
-                'Cualquier servidor, app o empresa puede alojar el Tenant Gateway de Gravital ID. '
-                'Tú ingresas con tu Gravital ID existente (o creas uno nuevo si aún no lo tienes), '
-                'mantienes una identidad consistente por inquilino (TenantSubjectId) y decides exactamente '
-                'qué atributos y qué roles (pip-tenant-role-v1) compartes con cada sistema.',
+                'Accede sin crear cuentas nuevas y elige qué datos compartes.',
                 style: Theme.of(context)
                     .textTheme
-                    .bodyMedium
-                    ?.copyWith(color: scheme.onSecondaryContainer),
+                    .bodySmall
+                    ?.copyWith(color: scheme.onSurfaceVariant),
               ),
-              const SizedBox(height: GxSpace.l),
+              const SizedBox(height: GxSpace.m),
               // Único FilledButton de esta pantalla (Regla SPEC-PIP-UI-001 §15.1)
               Wrap(
                 spacing: GxSpace.s,
@@ -218,9 +197,7 @@ class TenantsPortabilityScreen extends StatelessWidget {
                   FilledButton.icon(
                     onPressed: () => _openConnectNewTenantDialog(context),
                     icon: const Icon(Icons.add_link_rounded),
-                    label: const Text(
-                      'Ingresar / Portar Datos a Nueva App o Servicio',
-                    ),
+                    label: const Text('Conectar Nueva App o Servicio'),
                   ),
                   OutlinedButton.icon(
                     onPressed: () {
@@ -231,27 +208,19 @@ class TenantsPortabilityScreen extends StatelessWidget {
                       );
                     },
                     icon: const Icon(Icons.account_tree_outlined, size: 18),
-                    label: const Text('Ver Cuentas y Roles Detallados'),
+                    label: const Text('Ver Cuentas y Roles'),
                   ),
                 ],
               ),
             ],
           ),
         ),
-        const SizedBox(height: GxSpace.xl),
+        const SizedBox(height: GxSpace.l),
         Text(
-          'Aplicaciones, Servicios e Inquilinos Vinculados',
-          style: emphasized?.titleLarge,
+          'Servicios Vinculados (${store.tenants.length})',
+          style: emphasized?.titleMedium,
         ),
-        const SizedBox(height: GxSpace.xs),
-        Text(
-          'Toca "Qué Datos Comparto" para encender o apagar los atributos que portas hacia cada sistema.',
-          style: Theme.of(context)
-              .textTheme
-              .bodyMedium
-              ?.copyWith(color: scheme.onSurfaceVariant),
-        ),
-        const SizedBox(height: GxSpace.m),
+        const SizedBox(height: GxSpace.s),
         if (store.tenants.isEmpty)
           GxEmptyState(
             icon: Icons.hub_outlined,

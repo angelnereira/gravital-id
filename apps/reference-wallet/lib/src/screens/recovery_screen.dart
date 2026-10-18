@@ -10,10 +10,12 @@ import '../domain/gravital_wallet_store.dart';
 class RecoveryScreen extends StatefulWidget {
   const RecoveryScreen({
     required this.store,
+    this.showAppBar = false,
     super.key,
   });
 
   final GravitalWalletStore store;
+  final bool showAppBar;
 
   @override
   State<RecoveryScreen> createState() => _RecoveryScreenState();
@@ -37,7 +39,7 @@ class _RecoveryScreenState extends State<RecoveryScreen> {
     final emphasized =
         Theme.of(context).extension<EmphasizedTextTheme>()?.textTheme;
 
-    return ListView(
+    final body = ListView(
       padding: const EdgeInsets.fromLTRB(
         GxSpace.l,
         GxSpace.l,
@@ -48,37 +50,56 @@ class _RecoveryScreenState extends State<RecoveryScreen> {
         Container(
           padding: const EdgeInsets.all(GxSpace.xl),
           decoration: BoxDecoration(
-            color: scheme.tertiaryContainer,
+            color: scheme.surfaceContainerLow,
             borderRadius: GxShape.extraLarge,
+            border: Border.all(color: scheme.outlineVariant),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: <Widget>[
               Row(
                 children: <Widget>[
-                  Icon(
-                    Icons.health_and_safety_rounded,
-                    color: scheme.onTertiaryContainer,
-                    size: 28,
+                  Container(
+                    width: 48,
+                    height: 48,
+                    decoration: BoxDecoration(
+                      color: scheme.primaryContainer,
+                      borderRadius: GxShape.large,
+                    ),
+                    child: Icon(
+                      Icons.health_and_safety_rounded,
+                      color: scheme.onPrimaryContainer,
+                      size: 26,
+                    ),
                   ),
                   const SizedBox(width: GxSpace.m),
                   Expanded(
-                    child: Text(
-                      'Recuperación de tu Gravital ID',
-                      style: (emphasized?.headlineSmall ??
-                              Theme.of(context).textTheme.headlineSmall)
-                          ?.copyWith(color: scheme.onTertiaryContainer),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text(
+                          'Respaldo y Recuperación',
+                          style: emphasized?.headlineSmall ??
+                              Theme.of(context).textTheme.headlineSmall,
+                        ),
+                        Text(
+                          'Restaura tu bóveda si cambias o pierdes tu teléfono',
+                          style: Theme.of(context)
+                              .textTheme
+                              .bodySmall
+                              ?.copyWith(color: scheme.onSurfaceVariant),
+                        ),
+                      ],
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: GxSpace.s),
+              const SizedBox(height: GxSpace.m),
               Text(
-                'Tu bóveda está cifrada con una clave derivada de tu código de recuperación '
-                '(≥ 128 bits, BIP-39). Sin servidor central: solo tú puedes restaurarla en un '
-                'nuevo dispositivo mediante compromiso previo y SAS.',
+                'Tu bóveda está protegida con tu frase de recuperación de 12 palabras. '
+                'Nadie más tiene copia de tus claves: solo tú puedes restaurar tus credenciales en un dispositivo nuevo.',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: scheme.onTertiaryContainer,
+                      color: scheme.onSurfaceVariant,
                     ),
               ),
             ],
@@ -86,12 +107,12 @@ class _RecoveryScreenState extends State<RecoveryScreen> {
         ),
         const SizedBox(height: GxSpace.xl),
         Text(
-          'Código de Recuperación (BIP-39)',
+          'Frase de Recuperación (12 palabras)',
           style: emphasized?.titleLarge,
         ),
         const SizedBox(height: GxSpace.xs),
         Text(
-          'Guarda estas 12 palabras en un lugar seguro. Nunca se transmiten ni se almacenan en claro.',
+          'Guarda estas palabras en un lugar seguro y privado. Nunca las compartas.',
           style: Theme.of(context)
               .textTheme
               .bodySmall
@@ -122,15 +143,17 @@ class _RecoveryScreenState extends State<RecoveryScreen> {
                   IconButton(
                     onPressed: () => setState(() => _showCode = !_showCode),
                     icon: Icon(
-                      _showCode ? Icons.visibility_off_rounded : Icons.visibility_rounded,
+                      _showCode
+                          ? Icons.visibility_off_rounded
+                          : Icons.visibility_rounded,
                     ),
-                    tooltip: _showCode ? 'Ocultar' : 'Mostrar',
+                    tooltip: _showCode ? 'Ocultar frase' : 'Mostrar frase',
                   ),
                 ],
               ),
               const SizedBox(height: GxSpace.s),
               Text(
-                'Checksum verificado · 128 bits de entropía · derivación HKDF por emisor',
+                'Respaldo cifrado verificado · Cero custodia en servidores',
                 style: Theme.of(context)
                     .textTheme
                     .labelSmall
@@ -141,13 +164,13 @@ class _RecoveryScreenState extends State<RecoveryScreen> {
         ),
         const SizedBox(height: GxSpace.xl),
         Text(
-          'Custodia Social (Shamir k-de-n)',
+          'Recuperación con Contactos de Confianza',
           style: emphasized?.titleLarge,
         ),
         const SizedBox(height: GxSpace.xs),
         Text(
-          'Divide tu secreto de recuperación en 5 fragmentos; bastan 3 para restaurar la bóveda. '
-          'Ningún custodio único decide la confianza (INV-16).',
+          'Puedes dividir tu respaldo entre 5 personas o soportes de confianza; '
+          'se requieren al menos 3 fragmentos para restaurar tu cuenta.',
           style: Theme.of(context)
               .textTheme
               .bodySmall
@@ -159,29 +182,29 @@ class _RecoveryScreenState extends State<RecoveryScreen> {
           runSpacing: GxSpace.xs,
           children: <Widget>[
             StatusChip(
-              label: 'UMBRAL 3-DE-5',
+              label: 'UMBRAL 3 DE 5 CUSTODIOS',
               tone: semantic.info,
-              icon: Icons.shield_rounded,
+              icon: Icons.group_rounded,
             ),
             StatusChip(
-              label: 'GF(2⁸) · LAGRANGE',
+              label: 'PROTECCIÓN ACTIVA',
               tone: semantic.success,
-              icon: Icons.functions_rounded,
+              icon: Icons.verified_user_rounded,
             ),
           ],
         ),
         const SizedBox(height: GxSpace.xl),
         Text(
-          'Restaurar en Nuevo Dispositivo',
+          'Restaurar en Este Dispositivo',
           style: emphasized?.titleLarge,
         ),
         const SizedBox(height: GxSpace.m),
         TextField(
           controller: _recoveryCodeController,
           decoration: const InputDecoration(
-            labelText: 'Código de Recuperación o Fragmentos Shamir',
+            labelText: 'Frase de Recuperación o Fragmentos',
             prefixIcon: Icon(Icons.key_rounded),
-            hintText: 'Pega aquí tu mnemónico o 3 fragmentos GIDS',
+            hintText: 'Ingresa tus 12 palabras o fragmentos de custodia',
           ),
         ),
         const SizedBox(height: GxSpace.m),
@@ -214,19 +237,18 @@ class _RecoveryScreenState extends State<RecoveryScreen> {
           icon: const Icon(Icons.devices_rounded, size: 18),
           label: const Text('Migrar desde Otro Dispositivo (QR + SAS)'),
         ),
-        const SizedBox(height: GxSpace.xl),
-        GxErrorState(
-          errorCode: 'GID-E2013',
-          identifier: 'InsecureSingleFactorRecoveryRejected',
-          title: 'Recuperación por Correo Único Rechazada',
-          description:
-              'La recuperación institucional basada únicamente en correo electrónico o SMS '
-              'está prohibida (REQ-REC-006, P-10). Se requiere verificación fuera de banda '
-              'o aprobación dual.',
-          remediationLabel: 'Ver Procedimientos por Perfil',
-          onRemediate: () {},
-        ),
       ],
+    );
+
+    if (!widget.showAppBar) {
+      return body;
+    }
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Recuperación de Bóveda'),
+      ),
+      body: body,
     );
   }
 }

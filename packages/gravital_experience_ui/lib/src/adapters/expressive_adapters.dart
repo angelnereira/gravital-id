@@ -270,23 +270,23 @@ class GxButtonGroup<T> extends StatelessWidget {
   final T selected;
   final ValueChanged<T> onChanged;
 
-  @override
-  Widget build(BuildContext context) {
+  Widget _buildSegmentButton(
+    BuildContext context,
+    int index, {
+    required bool isGrid,
+  }) {
     final scheme = Theme.of(context).colorScheme;
     final emphasized =
         Theme.of(context).extension<EmphasizedTextTheme>()?.textTheme;
+    final segment = segments[index];
+    final isSelected = segment.value == selected;
+    final isFirst = index == 0;
+    final isLast = index == segments.length - 1;
 
-    return Wrap(
-      spacing: GxSpace.xs,
-      runSpacing: GxSpace.xs,
-      children: List<Widget>.generate(segments.length, (index) {
-        final segment = segments[index];
-        final isSelected = segment.value == selected;
-        final isFirst = index == 0;
-        final isLast = index == segments.length - 1;
-
-        final borderRadius = isSelected
-            ? GxShape.full
+    final borderRadius = isSelected
+        ? GxShape.full
+        : isGrid
+            ? GxShape.large
             : BorderRadius.only(
                 topLeft: Radius.circular(isFirst ? 24 : 8),
                 bottomLeft: Radius.circular(isFirst ? 24 : 8),
@@ -294,80 +294,139 @@ class GxButtonGroup<T> extends StatelessWidget {
                 bottomRight: Radius.circular(isLast ? 24 : 8),
               );
 
-        return GxSpringScale(
-          semanticLabel: segment.label,
-          onTap: () => onChanged(segment.value),
-          child: AnimatedContainer(
-            duration: MediaQuery.disableAnimationsOf(context)
-                ? Duration.zero
-                : const Duration(milliseconds: 180),
-            constraints: const BoxConstraints(minHeight: 48, minWidth: 48),
-            padding: const EdgeInsets.symmetric(
-              horizontal: GxSpace.l,
-              vertical: GxSpace.s,
-            ),
-            decoration: BoxDecoration(
+    return GxSpringScale(
+      semanticLabel: segment.label,
+      onTap: () => onChanged(segment.value),
+      child: AnimatedContainer(
+        duration: MediaQuery.disableAnimationsOf(context)
+            ? Duration.zero
+            : const Duration(milliseconds: 180),
+        constraints: const BoxConstraints(minHeight: 48, minWidth: 48),
+        padding: EdgeInsets.symmetric(
+          horizontal: isGrid ? GxSpace.s + 2 : GxSpace.m,
+          vertical: GxSpace.s,
+        ),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? scheme.secondaryContainer
+              : scheme.surfaceContainerHigh,
+          borderRadius: borderRadius,
+          border: Border.all(
+            color: isSelected ? scheme.secondary : scheme.outlineVariant,
+            width: isSelected ? 1.5 : 1,
+          ),
+        ),
+        child: Row(
+          mainAxisSize: isGrid ? MainAxisSize.max : MainAxisSize.min,
+          mainAxisAlignment:
+              isGrid ? MainAxisAlignment.center : MainAxisAlignment.start,
+          children: <Widget>[
+            Icon(
+              segment.icon,
+              size: 18,
               color: isSelected
-                  ? scheme.secondaryContainer
-                  : scheme.surfaceContainerHigh,
-              borderRadius: borderRadius,
-              border: Border.all(
-                color: isSelected ? scheme.secondary : scheme.outlineVariant,
-              ),
+                  ? scheme.onSecondaryContainer
+                  : scheme.onSurfaceVariant,
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                Icon(
-                  segment.icon,
-                  size: 18,
+            const SizedBox(width: GxSpace.xs + 2),
+            Flexible(
+              child: Text(
+                segment.label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: (isSelected
+                        ? emphasized?.labelLarge
+                        : Theme.of(context).textTheme.labelLarge)
+                    ?.copyWith(
                   color: isSelected
                       ? scheme.onSecondaryContainer
                       : scheme.onSurfaceVariant,
                 ),
-                const SizedBox(width: GxSpace.s),
-                Flexible(
-                  child: Text(
-                    segment.label,
-                    overflow: TextOverflow.ellipsis,
-                    style: (isSelected
-                            ? emphasized?.labelLarge
-                            : Theme.of(context).textTheme.labelLarge)
-                        ?.copyWith(
-                      color: isSelected
-                          ? scheme.onSecondaryContainer
-                          : scheme.onSurfaceVariant,
-                    ),
-                  ),
-                ),
-                if (segment.badgeText != null) ...<Widget>[
-                  const SizedBox(width: GxSpace.xs),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: GxSpace.xs + 2,
-                      vertical: 2,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isSelected
-                          ? scheme.primary
-                          : scheme.surfaceContainerHighest,
-                      borderRadius: GxShape.full,
-                    ),
-                    child: Text(
-                      segment.badgeText!,
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: isSelected
-                                ? scheme.onPrimary
-                                : scheme.onSurfaceVariant,
-                          ),
-                    ),
-                  ),
-                ],
-              ],
+              ),
             ),
+            if (segment.badgeText != null) ...<Widget>[
+              const SizedBox(width: GxSpace.xs),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: GxSpace.xs + 2,
+                  vertical: 2,
+                ),
+                decoration: BoxDecoration(
+                  color: isSelected
+                      ? scheme.primary
+                      : scheme.surfaceContainerHighest,
+                  borderRadius: GxShape.full,
+                ),
+                child: Text(
+                  segment.badgeText!,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: isSelected
+                            ? scheme.onPrimary
+                            : scheme.onSurfaceVariant,
+                      ),
+                ),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final textScale = MediaQuery.textScalerOf(context).scale(1.0);
+    if (textScale > 1.35 || segments.length > 4) {
+      return Wrap(
+        spacing: GxSpace.xs,
+        runSpacing: GxSpace.xs,
+        children: List<Widget>.generate(
+          segments.length,
+          (index) => _buildSegmentButton(context, index, isGrid: false),
+        ),
+      );
+    }
+
+    if (segments.length == 4) {
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: _buildSegmentButton(context, 0, isGrid: true),
+              ),
+              const SizedBox(width: GxSpace.s),
+              Expanded(
+                child: _buildSegmentButton(context, 1, isGrid: true),
+              ),
+            ],
           ),
-        );
-      }),
+          const SizedBox(height: GxSpace.s),
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: _buildSegmentButton(context, 2, isGrid: true),
+              ),
+              const SizedBox(width: GxSpace.s),
+              Expanded(
+                child: _buildSegmentButton(context, 3, isGrid: true),
+              ),
+            ],
+          ),
+        ],
+      );
+    }
+
+    return Row(
+      children: <Widget>[
+        for (int i = 0; i < segments.length; i++) ...<Widget>[
+          if (i > 0) const SizedBox(width: GxSpace.s),
+          Expanded(
+            child: _buildSegmentButton(context, i, isGrid: true),
+          ),
+        ],
+      ],
     );
   }
 }
@@ -447,37 +506,42 @@ class _GxLoadingIndicatorState extends State<GxLoadingIndicator>
     final scheme = Theme.of(context).colorScheme;
     return Semantics(
       label: widget.label ?? 'Cargando operación criptográfica',
-      child: AnimatedBuilder(
-        animation: _controller,
-        builder: (context, _) {
-          final t = _controller.value;
-          final cornerFactor = 0.25 + 0.25 * math.sin(t * 2 * math.pi);
-          final radius = widget.size * cornerFactor;
-          return Transform.rotate(
-            angle: t * math.pi,
-            child: Container(
-              width: widget.size,
-              height: widget.size,
-              decoration: BoxDecoration(
-                color: scheme.primaryContainer,
-                borderRadius: BorderRadius.circular(radius),
-                border: Border.all(
-                  color: scheme.primary,
-                  width: 3,
+      child: Center(
+        child: SizedBox.square(
+          dimension: widget.size,
+          child: AnimatedBuilder(
+            animation: _controller,
+            builder: (context, _) {
+              final t = _controller.value;
+              final cornerFactor = 0.25 + 0.25 * math.sin(t * 2 * math.pi);
+              final radius = widget.size * cornerFactor;
+              return Transform.rotate(
+                angle: t * math.pi,
+                child: Container(
+                  width: widget.size,
+                  height: widget.size,
+                  decoration: BoxDecoration(
+                    color: scheme.primaryContainer,
+                    borderRadius: BorderRadius.circular(radius),
+                    border: Border.all(
+                      color: scheme.primary,
+                      width: 3,
+                    ),
+                  ),
+                  alignment: Alignment.center,
+                  child: Container(
+                    width: widget.size * 0.36,
+                    height: widget.size * 0.36,
+                    decoration: BoxDecoration(
+                      color: scheme.primary,
+                      borderRadius: BorderRadius.circular(widget.size * 0.18),
+                    ),
+                  ),
                 ),
-              ),
-              alignment: Alignment.center,
-              child: Container(
-                width: widget.size * 0.36,
-                height: widget.size * 0.36,
-                decoration: BoxDecoration(
-                  color: scheme.primary,
-                  borderRadius: BorderRadius.circular(widget.size * 0.18),
-                ),
-              ),
-            ),
-          );
-        },
+              );
+            },
+          ),
+        ),
       ),
     );
   }

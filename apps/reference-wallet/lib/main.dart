@@ -5,14 +5,11 @@
 import 'package:gravital_experience_ui/gravital_experience_ui.dart';
 
 import 'src/domain/gravital_wallet_store.dart';
-import 'src/screens/consent_screen.dart';
 import 'src/screens/device_slots_screen.dart';
 import 'src/screens/present_access_screen.dart';
 import 'src/screens/profile_screen.dart';
 import 'src/screens/registration_screen.dart';
-import 'src/screens/recovery_screen.dart';
 import 'src/screens/settings_screen.dart';
-import 'src/screens/sync_trust_screen.dart';
 import 'src/screens/tenants_portability_screen.dart';
 import 'src/screens/vault_screen.dart';
 
@@ -50,6 +47,7 @@ class _GravitalReferenceWalletAppState
   }
 
   void _navigateToTab(int index) {
+    _store.clearProtocolBanner();
     setState(() {
       _selectedNavIndex = index;
     });
@@ -138,21 +136,6 @@ class _WalletHomeShell extends StatelessWidget {
         icon: Icons.devices_other_outlined,
         selectedIcon: Icons.devices_other_rounded,
       ),
-      const GxNavigationDestination(
-        label: 'Recuperar',
-        icon: Icons.health_and_safety_outlined,
-        selectedIcon: Icons.health_and_safety_rounded,
-      ),
-      const GxNavigationDestination(
-        label: 'Sincronizar',
-        icon: Icons.sync_outlined,
-        selectedIcon: Icons.sync_rounded,
-      ),
-      const GxNavigationDestination(
-        label: 'Consentir',
-        icon: Icons.verified_user_outlined,
-        selectedIcon: Icons.verified_user_rounded,
-      ),
     ];
 
     final Widget primaryBody = switch (selectedIndex) {
@@ -170,9 +153,6 @@ class _WalletHomeShell extends StatelessWidget {
           onNavigateToPresent: () => onDestinationSelected(1),
         ),
       3 => DeviceSlotsScreen(store: store),
-      4 => RecoveryScreen(store: store),
-      5 => SyncTrustScreen(store: store),
-      6 => ConsentScreen(store: store),
       _ => VaultScreen(
           store: store,
           onNavigateToPresent: (transport) {
@@ -199,8 +179,19 @@ class _WalletHomeShell extends StatelessWidget {
         title: const Text('Gravital ID'),
         actions: <Widget>[
           IconButton(
+            icon: Icon(
+              store.isOfflineMode
+                  ? Icons.cloud_off_rounded
+                  : Icons.cloud_done_outlined,
+            ),
+            tooltip: store.isOfflineMode
+                ? 'Modo sin conexión activo (toca para conectar)'
+                : 'Conectado (toca para probar modo sin red)',
+            onPressed: store.toggleOfflineMode,
+          ),
+          IconButton(
             icon: const Icon(Icons.account_circle_outlined),
-            tooltip: 'Perfil del Titular (8-888-8888)',
+            tooltip: 'Perfil del Titular',
             onPressed: () => _openProfile(context),
           ),
           IconButton(

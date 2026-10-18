@@ -24,9 +24,12 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    await tester.tap(find.text('Soportes'));
+    await tester.pumpAndSettle();
+
     await tester.tap(find.text('Recuperar'));
     await tester.pumpAndSettle();
-    expect(find.text('Recuperación de tu Gravital ID'), findsOneWidget);
+    expect(find.text('Respaldo y Recuperación'), findsOneWidget);
 
     await tester.tap(find.byIcon(Icons.visibility_rounded));
     await tester.pumpAndSettle();
@@ -39,15 +42,18 @@ void main() {
     await tester.tap(btn);
     await tester.pumpAndSettle();
 
+    await tester.pageBack();
+    await tester.pumpAndSettle();
+
     await tester.tap(find.text('Sincronizar'));
     await tester.pumpAndSettle();
-    expect(find.text('Sincronización y Confianza'), findsOneWidget);
+    expect(find.text('Sincronización y Confianza'), findsWidgets);
 
     final syncBtn = find.text('Sincronizar Ahora');
     await tester.tap(syncBtn);
     await tester.pumpAndSettle(const Duration(seconds: 1));
 
-    await tester.tap(find.text('Soportes'));
+    await tester.pageBack();
     await tester.pumpAndSettle();
   });
 }
