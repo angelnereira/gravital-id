@@ -98,7 +98,7 @@ class GxAdaptiveScaffold extends StatelessWidget {
           ],
         ),
         bottomNavigationBar: NavigationBar(
-          selectedIndex: selectedIndex,
+          selectedIndex: selectedIndex.clamp(0, destinations.length - 1),
           onDestinationSelected: onDestinationSelected,
           destinations: destinations
               .map(

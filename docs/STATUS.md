@@ -10,7 +10,7 @@
 | Último gate cerrado | **G8 / Hito M2** (2026-10-18) · **G7** (2026-10-18) · **G6** (2026-10-17) · **G5** (2026-10-16) · **G4** (2026-10-16) · **G19** (2026-10-15) · **G0** (2026-10-11) |
 | Próximo gate | **G9** (Bindings para 8 lenguajes) / **G20** (Núcleo de proximidad) · **G3** (#59) y **G2** pendientes de CI |
 | Hito siguiente | MP1 · Tap offline (al cerrar G21) / M3 · SDK multi-lenguaje (al cerrar G9) [M1 y M2 alcanzados] |
-| Última actualización | 2026-10-18 (sesión adicional: F9.T01 fachada SDK completa + F9.T03 FFI catch_unwind WASM; F20.T01 andamiaje proximidad; F20.T02 mensajes CBOR con ida y vuelta; integrados directamente en `main` a petición del mantenedor) |
+| Última actualización | 2026-10-18 (Refinamiento UI de reference-wallet, navegación M3 Expressive, accesibilidad WCAG 2.2 AA y release APK compilado 50.7 MB; F9.T01 fachada SDK; F20.T01-T02 proximidad CBOR) |
 
 ## Gates
 
@@ -32,6 +32,7 @@
 
 | Tarea | Issue | Responsable | Estado | Siguiente paso |
 |---|---|---|---|---|
+| F11.T02 Wallet de Referencia & UI | #101 | Antigravity (agente) | Hecha | Arquitectura UI organizada: navegación de 7 pestañas, acciones AppBar para perfil/ajustes, tarjeta colapsable SVI/VOPRF, regla de acción primaria única, padding normalizado, 9/9 tests pasando y APK release generado (50.7 MB) |
 | F8.T11 Revisión del MVP (Gate G8 / Hito M2) | #111 | Antigravity (agente) | Hecha | Ejecución scriptada y reproducible de los nueve criterios de aceptación de ROADMAP.md §24 aprobada al 100%; informe formal publicado en `docs/reports/2026-10-18-mvp-evaluacion-m2.md` y Gate G8 / Hito M2 formalmente cerrado; resuelto #111 |
 | F8.T10 Robustez | #110 | Antigravity (agente) | Hecha | Suite de inyección de fallos (aborto transaccional SQLite con rollback y comprobación PRAGMA integrity_check, matriz de fallos en respaldo GIDB, umbral insuficiente Shamir k-de-n, mitigación MitM e interrupción en migración SAS, y tolerancia a fallos en sustitución atómica de ranura de dispositivo con revocación en TokenStatusList, REQ-STOR-004, REQ-REC-001..004, REQ-DEVSLOT-003); resuelto #110 |
 | F8.T09 Procedimientos por perfil | #109 | Antigravity (agente) | Hecha | Procedimientos normativos de recuperación institucional documentados en los 5 perfiles oficiales (`pip-personal-v1`, `pip-identity-v1`, `pip-financial-v1`, `pip-enterprise-v1`, `pip-tenant-role-v1`), prohibición de correo electrónico y custodio único (`REQ-REC-006`, `P-10`), revocación atómica de ranura (`REQ-DEVSLOT-003`, `ADR-0029`) y suite de auditoría `institutional_recovery_profiles_audit.rs` probada y verificada; resuelto #109 |
@@ -173,6 +174,36 @@
 | Tamaño binario del SDK | — | — | — | — | — |
 
 ## Última nota de traspaso
+
+### Traspaso — 2026-10-18 (F11.T02: Arquitectura de interfaz de usuario de reference-wallet, navegación M3 Expressive, accesibilidad WCAG 2.2 AA y compilación Release APK — apps/reference-wallet, packages/gravital_experience_ui, ADR-0030, SPEC-PIP-UI-001, AGENTS.md §9.5, REQ-A11Y-001, REQ-PERF-003, INV-01, INV-02) — Antigravity (agente)
+- Tarea: F11.T02 / Refinamiento UI de Wallet de Referencia — rama `main`
+- Estado: **hecha**
+- Hecho en esta sesión:
+  - **Reorganización y jerarquía visual de la Wallet (`apps/reference-wallet/lib/main.dart`):**
+    - Reducción de la barra de navegación inferior de 11 pestañas hacinadas a 7 pestañas funcionales principales (`Credenciales`, `Presentar`, `Apps y Roles`, `Soportes`, `Recuperar`, `Sincronizar`, `Consentir`), eliminando colisiones de área táctil.
+    - Eliminación de la barra flotante invasiva (`GxFloatingToolbar`) que obstruía permanentemente el contenido interactivo y botones primarios en todas las pantallas.
+    - Reubicación de las pantallas secundarias de usuario y sistema (`ProfileScreen` y `SettingsScreen`) en acciones dedicadas accesibles desde el `AppBar` superior.
+    - Blindaje de `AppBar` contra desbordamientos con escalado de texto al 200% y alto contraste (WCAG 2.2 AA).
+  - **Bóveda de Credenciales (`apps/reference-wallet/lib/src/screens/vault_screen.dart`):**
+    - Conversión del extenso formulario de unicidad ciudadana en un panel colapsable (`ExpansionTile`) con estilo normativo M3 Expressive ("Control de Unicidad Ciudadana · SVI / VOPRF"), preservando el 100% de la funcionalidad de prueba sin saturar la vista principal.
+    - Reemplazo de botones secundarios `FilledButton` por `OutlinedButton`, cumpliendo estrictamente con la regla de un único botón primario por pantalla (`SPEC-PIP-UI-001 §10`, `AGENTS.md §9.5`).
+  - **Ecosistema Multi-Inquilino y Portabilidad (`tenants_portability_screen.dart`, `linked_accounts_screen.dart`):**
+    - Integración de acceso directo a cuentas vinculadas desde la pantalla de inquilinos, unificando la navegación secundaria con sus propios `Scaffold` y `AppBar`.
+  - **Empaquetado y Release APK Android (`apps/reference-wallet/android/app/src/main/AndroidManifest.xml`):**
+    - Incorporación de la meta-data `<meta-data android:name="flutterEmbedding" android:value="2" />` para resolver el error fatal de compilación por eliminación de Android v1 embedding.
+    - Corrección en `.gitignore` para ignorar artefactos de compilación `.dill` y cachés locales.
+    - Compilación exitosa de la versión de producción: `apps/reference-wallet/build/app/outputs/flutter-apk/app-release.apk` (50.7 MB).
+  - **Verificación y Pruebas Automatizadas:**
+    - `flutter analyze apps/reference-wallet packages/gravital_experience_ui`: 0 advertencias / 0 errores.
+    - `flutter test`: 9/9 pruebas pasando (`widget_test.dart`, `e2e_recovery_test.dart`, `accessibility_test.dart`).
+    - `cargo xtask check-layers`: 22 crates en verde cumpliendo invariantes arquitectónicos.
+    - `cargo xtask trace`: 121 requisitos referenciados y sincronizados en `docs/TRACEABILITY.md`.
+- Pendiente (siguiente paso concreto):
+  - Continuar con el despliegue / distribución del APK generado a dispositivos de prueba física o evaluadores.
+- Bugs/issues abiertos durante la sesión: ninguno.
+- Decisiones tomadas: Adherencia total a `Gravital-Experience-UI` (ADR-0030) y regla de acción primaria única.
+- Riesgos o dudas: ninguna.
+- Comprobaciones locales: flutter analyze ✅ flutter test (9/9) ✅ cargo xtask check-layers (22 crates) ✅ cargo xtask trace ✅ flutter build apk --release (50.7 MB) ✅
 
 ### Traspaso — 2026-10-18 (F8.T11: Revisión formal del MVP y cierre de Gate G8 / Hito M2 — apps/pip-cli/src/lib.rs, apps/pip-cli/tests/mvp_acceptance_m2_audit.rs, docs/reports/2026-10-18-mvp-evaluacion-m2.md, ROADMAP.md §24, REQ-VER-001, REQ-PRES-005, REQ-STAT-004, REQ-STAT-008, REQ-LEDG-001, REQ-REC-001..007, REQ-CRED-001, REQ-STOR-004, REQ-PERF-003, INV-01, INV-02, INV-03, INV-04, INV-05, INV-06, INV-11, INV-16) — Antigravity (agente)
 - Tarea: F8.T11 — #111 — rama `main`

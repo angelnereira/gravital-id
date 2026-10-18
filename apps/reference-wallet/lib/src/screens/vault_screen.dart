@@ -70,7 +70,7 @@ class _VaultScreenState extends State<VaultScreen> {
         GxSpace.l,
         GxSpace.l,
         GxSpace.l,
-        GxSpace.xxxl + GxSpace.xxl,
+        GxSpace.xxxl,
       ),
       children: <Widget>[
         // Tarjeta hero de identidad portable y acción rápida dividida
@@ -268,115 +268,111 @@ class _VaultScreenState extends State<VaultScreen> {
         }),
         const SizedBox(height: GxSpace.l),
         // Sección interactiva de Unicidad Ciudadana y Cumplimiento Tribunal Electoral de Panamá (ADR-0028)
-        Container(
-          padding: const EdgeInsets.all(GxSpace.l),
-          decoration: BoxDecoration(
-            color: scheme.surfaceContainerLow,
-            borderRadius: GxShape.extraLarge,
-            border: Border.all(color: scheme.outlineVariant),
+        Material(
+          color: scheme.surfaceContainerLow,
+          shape: RoundedRectangleBorder(
+            borderRadius: GxShape.large,
+            side: BorderSide(color: scheme.outlineVariant),
           ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: <Widget>[
-              Row(
-                children: <Widget>[
-                  Container(
-                    width: 44,
-                    height: 44,
-                    decoration: BoxDecoration(
-                      color: scheme.secondaryContainer,
-                      borderRadius: GxShape.large,
-                    ),
-                    child: Icon(
-                      Icons.fact_check_rounded,
-                      color: scheme.onSecondaryContainer,
-                    ),
-                  ),
-                  const SizedBox(width: GxSpace.m),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        Text(
-                          'Control de Unicidad Ciudadana (Tribunal Electoral Panamá)',
-                          style: emphasized?.titleMedium,
-                        ),
-                        Text(
-                          'Decreto N.° 43 de 8 de octubre de 2024 · SVI · Etiqueta Ciega VOPRF (RFC 9497)',
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodySmall
-                              ?.copyWith(color: scheme.onSurfaceVariant),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+          clipBehavior: Clip.antiAlias,
+          child: Theme(
+            data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+            child: ExpansionTile(
+              leading: Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  color: scheme.secondaryContainer,
+                  borderRadius: GxShape.medium,
+                ),
+                child: Icon(
+                  Icons.fact_check_rounded,
+                  color: scheme.onSecondaryContainer,
+                ),
               ),
-              const SizedBox(height: GxSpace.m),
-              Text(
-                'Evita que una misma cédula cree dos Gravital ID distintos sin publicar ningún dato personal en la blockchain (INV-02). '
-                'Prueba con "8-888-8888" (ya registrada → dispara GID-E2010) o con una cédula nueva como "4-752-1940" o "PE-12-345".',
+              title: Text(
+                'Control de Unicidad Ciudadana (Tribunal Electoral)',
+                style: emphasized?.titleMedium,
+              ),
+              subtitle: Text(
+                'Decreto N.° 43 de 8 de octubre de 2024 · SVI · Etiqueta Ciega VOPRF',
                 style: Theme.of(context)
                     .textTheme
                     .bodySmall
                     ?.copyWith(color: scheme.onSurfaceVariant),
               ),
-              const SizedBox(height: GxSpace.m),
-              TextField(
-                controller: _cedulaController,
-                decoration: const InputDecoration(
-                  labelText: 'Número de Cédula Panameña (Formato TE)',
-                  hintText: 'Ej. 8-888-8888, 4-752-1940, PE-12-345, E-8-123456',
-                  prefixIcon: Icon(Icons.badge_outlined),
+              childrenPadding: const EdgeInsets.fromLTRB(
+                GxSpace.l,
+                0,
+                GxSpace.l,
+                GxSpace.l,
+              ),
+              children: <Widget>[
+                const SizedBox(height: GxSpace.s),
+                Text(
+                  'Evita que una misma cédula cree dos Gravital ID distintos sin publicar ningún dato personal en la blockchain (INV-02). '
+                  'Prueba con "8-888-8888" (ya registrada → dispara GID-E2010) o con una cédula nueva como "4-752-1940" o "PE-12-345".',
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodySmall
+                      ?.copyWith(color: scheme.onSurfaceVariant),
                 ),
-              ),
-              const SizedBox(height: GxSpace.m),
-              TextField(
-                controller: _nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Nombre Completo Verificado por SVI',
-                  prefixIcon: Icon(Icons.person_outline_rounded),
+                const SizedBox(height: GxSpace.m),
+                TextField(
+                  controller: _cedulaController,
+                  decoration: const InputDecoration(
+                    labelText: 'Número de Cédula Panameña (Formato TE)',
+                    hintText: 'Ej. 8-888-8888, 4-752-1940, PE-12-345, E-8-123456',
+                    prefixIcon: Icon(Icons.badge_outlined),
+                  ),
                 ),
-              ),
-              const SizedBox(height: GxSpace.m),
-              Wrap(
-                spacing: GxSpace.s,
-                runSpacing: GxSpace.xs,
-                children: <Widget>[
-                  FilledButton.icon(
-                    onPressed: () {
-                      widget.store.attemptCitizenRegistration(
-                        rawCedula: _cedulaController.text,
-                        fullName: _nameController.text,
-                      );
-                    },
-                    icon: const Icon(Icons.verified_user_rounded, size: 18),
-                    label: const Text('Verificar Unicidad SVI (VOPRF)'),
+                const SizedBox(height: GxSpace.m),
+                TextField(
+                  controller: _nameController,
+                  decoration: const InputDecoration(
+                    labelText: 'Nombre Completo Verificado por SVI',
+                    prefixIcon: Icon(Icons.person_outline_rounded),
                   ),
-                  OutlinedButton(
-                    onPressed: () {
-                      setState(() {
-                        _cedulaController.text = '8-888-8888';
-                      });
-                      widget.store.attemptCitizenRegistration(
-                        rawCedula: '8-888-8888',
-                        fullName: _nameController.text,
-                      );
-                    },
-                    child: const Text('Simular Cédula Duplicada (GID-E2010)'),
-                  ),
-                  TextButton(
-                    onPressed: () {
-                      setState(() {
-                        _cedulaController.text = '4-752-1940';
-                      });
-                    },
-                    child: const Text('Cargar Cédula Nueva (4-752-1940)'),
-                  ),
-                ],
-              ),
-            ],
+                ),
+                const SizedBox(height: GxSpace.m),
+                Wrap(
+                  spacing: GxSpace.s,
+                  runSpacing: GxSpace.xs,
+                  children: <Widget>[
+                    OutlinedButton.icon(
+                      onPressed: () {
+                        widget.store.attemptCitizenRegistration(
+                          rawCedula: _cedulaController.text,
+                          fullName: _nameController.text,
+                        );
+                      },
+                      icon: const Icon(Icons.verified_user_rounded, size: 18),
+                      label: const Text('Verificar Unicidad SVI (VOPRF)'),
+                    ),
+                    OutlinedButton(
+                      onPressed: () {
+                        setState(() {
+                          _cedulaController.text = '8-888-8888';
+                        });
+                        widget.store.attemptCitizenRegistration(
+                          rawCedula: '8-888-8888',
+                          fullName: _nameController.text,
+                        );
+                      },
+                      child: const Text('Simular Cédula Duplicada (GID-E2010)'),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        setState(() {
+                          _cedulaController.text = '4-752-1940';
+                        });
+                      },
+                      child: const Text('Cargar Cédula Nueva (4-752-1940)'),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
       ],

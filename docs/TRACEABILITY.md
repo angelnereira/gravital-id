@@ -29,7 +29,7 @@
 | REQ-PRES-006 | F5 | DEBE | T, D | P-01 | lib.rs, offline_multi_qr.rs, protocol_multi_qr_and_budgets.rs | Cubierto |
 | REQ-PRES-007 | F5 | DEBE | T | P-09 | lib.rs, cli_integration.rs, offline_signed_request.rs, offline_wallet_policy.rs, protocol_wallet_request_validation.rs, bundle.rs | Cubierto |
 | REQ-PRES-008 | F10 | DEBE | T | P-04 | — | Pendiente (Fase futura) |
-| REQ-VER-001 | F4 | DEBE | T, I | P-01 | lib.rs, cli_integration.rs, issuer_key_compromise_e2e.rs, issuer_key_rotation_e2e.rs, mvp_acceptance_m2_audit.rs, root_rotation_and_forced_advance_e2e.rs, verifier_offline_and_determinism.rs | Cubierto |
+| REQ-VER-001 | F4 | DEBE | T, I | P-01 | lib.rs, cli_integration.rs, issuer_key_compromise_e2e.rs, issuer_key_rotation_e2e.rs, mvp_acceptance_m2_audit.rs, root_rotation_and_forced_advance_e2e.rs, lib.rs, verifier_offline_and_determinism.rs | Cubierto |
 | REQ-VER-002 | F4 | DEBE | T | P-05 | lib.rs, issuer_key_compromise_e2e.rs, issuer_key_rotation_e2e.rs, pipeline.rs, result.rs, verifier_negative_matrix_and_precedence.rs, verifier_pipeline_integration.rs | Cubierto |
 | REQ-VER-003 | F4 | DEBE | T, F | P-08 | lib.rs, issuer_key_compromise_e2e.rs, issuer_key_rotation_e2e.rs, kb.rs, lib.rs, parser.rs, profile.rs, vc.rs, kb_jwt_integration.rs, predicate_integration.rs, profile_schema_integration.rs, sd_jwt_parsing_verification.rs, sd_jwt_vc_integration.rs, holder_credential_management.rs, holder_dcql_and_presentation.rs, issuer_api.rs, cache.rs, status_list_integration.rs, verifier_negative_matrix_and_precedence.rs, verifier_state_integration.rs, sd_jwt_parser.rs, status_list_parser.rs | Cubierto |
 | REQ-VER-004 | F4 | DEBE | T | P-08 | lib.rs, issuer_key_rotation_e2e.rs, pipeline.rs, verifier_negative_matrix_and_precedence.rs, verifier_pipeline_integration.rs | Cubierto |
@@ -96,7 +96,7 @@
 | REQ-ISS-006 | F8 | DEBE | T | — | slot_manager.rs, rebinding.rs, rebinding_tests.rs | Cubierto |
 | REQ-SDK-001 | F9 | DEBE | I | P-11 | lib.rs | Cubierto |
 | REQ-SDK-002 | F9 | DEBE | T, D | P-11 | — | Pendiente (Fase futura) |
-| REQ-SDK-003 | F9 | DEBE | T | P-11 | lib.rs, error.rs, error_codes.rs | Cubierto |
+| REQ-SDK-003 | F9 | DEBE | T | P-11 | lib.rs, lib.rs, error.rs, error_codes.rs | Cubierto |
 | REQ-SDK-004 | F9 | DEBE | T, F | P-08 | error.rs | Cubierto |
 | REQ-SDK-005 | F9 | DEBE | T | P-11 | — | Pendiente (Fase futura) |
 | REQ-SDK-006 | F9 | DEBE | T | — | — | Pendiente (Fase futura) |
@@ -108,7 +108,7 @@
 | REQ-GOV-003 | F14 | DEBE | I | P-12 | — | Inspección / Auditoría |
 | REQ-PROX-001 | F20 | DEBE | T | P-09 | — | Pendiente (Fase futura) |
 | REQ-PROX-002 | F20 | DEBE | T | P-08 | — | Pendiente (Fase futura) |
-| REQ-PROX-003 | F20 | DEBE | T | P-06 | error.rs | Cubierto |
+| REQ-PROX-003 | F20 | DEBE | T | P-06 | lib.rs, error.rs | Cubierto |
 | REQ-PROX-004 | F20 | DEBE | T, F | P-08 | — | Pendiente (Fase futura) |
 | REQ-PROX-005 | F20 | DEBE | T, D | P-01 | — | Pendiente (Fase futura) |
 | REQ-PROX-006 | F21 | DEBE | T, I | P-09 | — | Pendiente (Fase futura) |

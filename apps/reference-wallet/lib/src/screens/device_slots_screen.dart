@@ -75,7 +75,7 @@ class DeviceSlotsScreen extends StatelessWidget {
         GxSpace.l,
         GxSpace.l,
         GxSpace.l,
-        GxSpace.xxxl + GxSpace.xxl,
+        GxSpace.xxxl,
       ),
       children: <Widget>[
         Container(

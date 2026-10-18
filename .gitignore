@@ -18,3 +18,11 @@ target/
 .env
 .env.*
 !.env.example
+
+# Flutter & Dart build artifacts
+**/build/
+**/.dart_tool/
+*.dill
+*.dill.track.dill
+**/android/local.properties
+**/android/.gradle/

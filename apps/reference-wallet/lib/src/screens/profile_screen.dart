@@ -6,15 +6,22 @@ import 'package:gravital_experience_ui/gravital_experience_ui.dart';
 import '../domain/gravital_wallet_store.dart';
 
 class ProfileScreen extends StatelessWidget {
-  const ProfileScreen({required this.store, super.key});
+  const ProfileScreen({
+    required this.store,
+    this.onOpenRegistration,
+    super.key,
+  });
+
   final GravitalWalletStore store;
+  final VoidCallback? onOpenRegistration;
 
   @override
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final emphasized = Theme.of(context).extension<EmphasizedTextTheme>()?.textTheme;
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(GxSpace.l, GxSpace.l, GxSpace.l, GxSpace.xxxl + GxSpace.xxl),
+
+    final content = ListView(
+      padding: const EdgeInsets.fromLTRB(GxSpace.l, GxSpace.l, GxSpace.l, GxSpace.xxxl),
       children: <Widget>[
         Container(
           padding: const EdgeInsets.all(GxSpace.xl),
@@ -67,7 +74,22 @@ class ProfileScreen extends StatelessWidget {
         const _InfoTile(label: 'Clave de dispositivo', value: 'StrongBox / Secure Enclave'),
         const _InfoTile(label: 'Algoritmo', value: 'ES256 (P-256 + SHA-256)'),
         const _InfoTile(label: 'Cifrado en reposo', value: 'XChaCha20-Poly1305 (DEK/KEK)'),
+        if (onOpenRegistration != null) ...<Widget>[
+          const SizedBox(height: GxSpace.xl),
+          OutlinedButton.icon(
+            onPressed: onOpenRegistration,
+            icon: const Icon(Icons.person_add_rounded, size: 18),
+            label: const Text('Registrar Nueva Identidad / Cédula (SVI)'),
+          ),
+        ],
       ],
+    );
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Perfil del Titular'),
+      ),
+      body: content,
     );
   }
 }

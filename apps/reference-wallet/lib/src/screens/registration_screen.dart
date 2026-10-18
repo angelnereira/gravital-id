@@ -43,8 +43,9 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
     final scheme = Theme.of(context).colorScheme;
     final semantic = Theme.of(context).extension<SemanticColors>()!;
     final emphasized = Theme.of(context).extension<EmphasizedTextTheme>()?.textTheme;
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(GxSpace.l, GxSpace.l, GxSpace.l, GxSpace.xxxl + GxSpace.xxl),
+
+    final content = ListView(
+      padding: const EdgeInsets.fromLTRB(GxSpace.l, GxSpace.l, GxSpace.l, GxSpace.xxxl),
       children: <Widget>[
         Text('Crear tu Gravital ID', style: emphasized?.headlineSmall),
         const SizedBox(height: GxSpace.xs),
@@ -111,6 +112,13 @@ class _RegistrationScreenState extends State<RegistrationScreen> {
           label: const Text('Iniciar Sesión'),
         ),
       ],
+    );
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Crear tu Gravital ID'),
+      ),
+      body: content,
     );
   }
 }

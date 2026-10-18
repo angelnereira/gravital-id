@@ -13,8 +13,8 @@ class LinkedAccountsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final emphasized = Theme.of(context).extension<EmphasizedTextTheme>()?.textTheme;
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(GxSpace.l, GxSpace.l, GxSpace.l, GxSpace.xxxl + GxSpace.xxl),
+    final content = ListView(
+      padding: const EdgeInsets.fromLTRB(GxSpace.l, GxSpace.l, GxSpace.l, GxSpace.xxxl),
       children: <Widget>[
         Text('Cuentas y Servicios Vinculados', style: emphasized?.headlineSmall),
         const SizedBox(height: GxSpace.xs),
@@ -63,6 +63,13 @@ class LinkedAccountsScreen extends StatelessWidget {
           label: const Text('Vincular Nueva App o Servicio'),
         ),
       ],
+    );
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Cuentas y Servicios Vinculados'),
+      ),
+      body: content,
     );
   }
 }

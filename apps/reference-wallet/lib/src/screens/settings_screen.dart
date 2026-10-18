@@ -6,8 +6,17 @@ import 'package:gravital_experience_ui/gravital_experience_ui.dart';
 import '../domain/gravital_wallet_store.dart';
 
 class SettingsScreen extends StatefulWidget {
-  const SettingsScreen({required this.store, super.key});
+  const SettingsScreen({
+    required this.store,
+    this.onOpenProfile,
+    this.onOpenRegistration,
+    super.key,
+  });
+
   final GravitalWalletStore store;
+  final VoidCallback? onOpenProfile;
+  final VoidCallback? onOpenRegistration;
+
   @override
   State<SettingsScreen> createState() => _SettingsScreenState();
 }
@@ -17,8 +26,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     final scheme = Theme.of(context).colorScheme;
     final emphasized = Theme.of(context).extension<EmphasizedTextTheme>()?.textTheme;
-    return ListView(
-      padding: const EdgeInsets.fromLTRB(GxSpace.l, GxSpace.l, GxSpace.l, GxSpace.xxxl + GxSpace.xxl),
+
+    final content = ListView(
+      padding: const EdgeInsets.fromLTRB(GxSpace.l, GxSpace.l, GxSpace.l, GxSpace.xxxl),
       children: <Widget>[
         Text('Configuración', style: emphasized?.headlineSmall),
         const SizedBox(height: GxSpace.xl),
@@ -84,6 +94,22 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 subtitle: Text('StrongBox / Secure Enclave / TEE'),
                 trailing: Icon(Icons.chevron_right_rounded),
               ),
+              if (widget.onOpenProfile != null)
+                ListTile(
+                  leading: const Icon(Icons.person_outline_rounded),
+                  title: const Text('Perfil del titular'),
+                  subtitle: const Text('Identidad oficial, Cédula 8-888-8888, VOPRF'),
+                  trailing: const Icon(Icons.chevron_right_rounded),
+                  onTap: widget.onOpenProfile,
+                ),
+              if (widget.onOpenRegistration != null)
+                ListTile(
+                  leading: const Icon(Icons.person_add_rounded),
+                  title: const Text('Crear nueva identidad'),
+                  subtitle: const Text('Verificación de unicidad SVI / Tribunal Electoral'),
+                  trailing: const Icon(Icons.chevron_right_rounded),
+                  onTap: widget.onOpenRegistration,
+                ),
               ListTile(
                 leading: const Icon(Icons.delete_forever_rounded),
                 title: const Text('Borrar bóveda'),
@@ -99,6 +125,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ),
       ],
+    );
+
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Configuración'),
+      ),
+      body: content,
     );
   }
 }

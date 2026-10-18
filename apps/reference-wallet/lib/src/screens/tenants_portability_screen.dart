@@ -5,6 +5,7 @@
 import 'package:gravital_experience_ui/gravital_experience_ui.dart';
 
 import '../domain/gravital_wallet_store.dart';
+import 'linked_accounts_screen.dart';
 
 /// Hub de servicios/sistemas que consumen Gravital ID, portabilidad de atributos
 /// y roles verificables por aplicación (`ADR-0027`, `pip-tenant-role-v1`).
@@ -162,7 +163,7 @@ class TenantsPortabilityScreen extends StatelessWidget {
         GxSpace.l,
         GxSpace.l,
         GxSpace.l,
-        GxSpace.xxxl + GxSpace.xxl,
+        GxSpace.xxxl,
       ),
       children: <Widget>[
         Container(
@@ -210,12 +211,29 @@ class TenantsPortabilityScreen extends StatelessWidget {
               ),
               const SizedBox(height: GxSpace.l),
               // Único FilledButton de esta pantalla (Regla SPEC-PIP-UI-001 §15.1)
-              FilledButton.icon(
-                onPressed: () => _openConnectNewTenantDialog(context),
-                icon: const Icon(Icons.add_link_rounded),
-                label: const Text(
-                  'Ingresar / Portar Datos a Nueva App o Servicio',
-                ),
+              Wrap(
+                spacing: GxSpace.s,
+                runSpacing: GxSpace.s,
+                children: <Widget>[
+                  FilledButton.icon(
+                    onPressed: () => _openConnectNewTenantDialog(context),
+                    icon: const Icon(Icons.add_link_rounded),
+                    label: const Text(
+                      'Ingresar / Portar Datos a Nueva App o Servicio',
+                    ),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      Navigator.of(context).push<void>(
+                        MaterialPageRoute<void>(
+                          builder: (_) => LinkedAccountsScreen(store: store),
+                        ),
+                      );
+                    },
+                    icon: const Icon(Icons.account_tree_outlined, size: 18),
+                    label: const Text('Ver Cuentas y Roles Detallados'),
+                  ),
+                ],
               ),
             ],
           ),

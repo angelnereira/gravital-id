@@ -7,7 +7,6 @@ import 'package:gravital_experience_ui/gravital_experience_ui.dart';
 import 'src/domain/gravital_wallet_store.dart';
 import 'src/screens/consent_screen.dart';
 import 'src/screens/device_slots_screen.dart';
-import 'src/screens/linked_accounts_screen.dart';
 import 'src/screens/present_access_screen.dart';
 import 'src/screens/profile_screen.dart';
 import 'src/screens/registration_screen.dart';
@@ -83,6 +82,37 @@ class _WalletHomeShell extends StatelessWidget {
   final int selectedIndex;
   final ValueChanged<int> onDestinationSelected;
 
+  void _openProfile(BuildContext context) {
+    Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (_) => ProfileScreen(
+          store: store,
+          onOpenRegistration: () => _openRegistration(context),
+        ),
+      ),
+    );
+  }
+
+  void _openSettings(BuildContext context) {
+    Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (_) => SettingsScreen(
+          store: store,
+          onOpenProfile: () => _openProfile(context),
+          onOpenRegistration: () => _openRegistration(context),
+        ),
+      ),
+    );
+  }
+
+  void _openRegistration(BuildContext context) {
+    Navigator.of(context).push<void>(
+      MaterialPageRoute<void>(
+        builder: (_) => RegistrationScreen(store: store),
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final destinations = <GxNavigationDestination>[
@@ -123,26 +153,6 @@ class _WalletHomeShell extends StatelessWidget {
         icon: Icons.verified_user_outlined,
         selectedIcon: Icons.verified_user_rounded,
       ),
-      const GxNavigationDestination(
-        label: 'Perfil',
-        icon: Icons.person_outline_rounded,
-        selectedIcon: Icons.person_rounded,
-      ),
-      const GxNavigationDestination(
-        label: 'Cuentas',
-        icon: Icons.hub_outlined,
-        selectedIcon: Icons.hub_rounded,
-      ),
-      const GxNavigationDestination(
-        label: 'Registro',
-        icon: Icons.person_add_outlined,
-        selectedIcon: Icons.person_add_rounded,
-      ),
-      const GxNavigationDestination(
-        label: 'Ajustes',
-        icon: Icons.settings_outlined,
-        selectedIcon: Icons.settings_rounded,
-      ),
     ];
 
     final Widget primaryBody = switch (selectedIndex) {
@@ -159,14 +169,18 @@ class _WalletHomeShell extends StatelessWidget {
           store: store,
           onNavigateToPresent: () => onDestinationSelected(1),
         ),
+      3 => DeviceSlotsScreen(store: store),
       4 => RecoveryScreen(store: store),
       5 => SyncTrustScreen(store: store),
       6 => ConsentScreen(store: store),
-      7 => ProfileScreen(store: store),
-      8 => LinkedAccountsScreen(store: store),
-      9 => RegistrationScreen(store: store),
-      10 => SettingsScreen(store: store),
-      _ => DeviceSlotsScreen(store: store),
+      _ => VaultScreen(
+          store: store,
+          onNavigateToPresent: (transport) {
+            store.setTransport(transport);
+            onDestinationSelected(1);
+          },
+          onNavigateToDevices: () => onDestinationSelected(3),
+        ),
     };
 
     final Widget? secondaryBody = switch (selectedIndex) {
@@ -184,15 +198,15 @@ class _WalletHomeShell extends StatelessWidget {
       appBar: AppBar(
         title: const Text('Gravital ID'),
         actions: <Widget>[
-          Padding(
-            padding: const EdgeInsets.only(right: GxSpace.s),
-            child: Center(
-              child: Text(
-                '8-888-8888',
-                style: Theme.of(context).textTheme.labelSmall,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ),
+          IconButton(
+            icon: const Icon(Icons.account_circle_outlined),
+            tooltip: 'Perfil del Titular (8-888-8888)',
+            onPressed: () => _openProfile(context),
+          ),
+          IconButton(
+            icon: const Icon(Icons.settings_outlined),
+            tooltip: 'Configuración',
+            onPressed: () => _openSettings(context),
           ),
         ],
       ),
@@ -201,42 +215,6 @@ class _WalletHomeShell extends StatelessWidget {
         trustBundleVersion: 14,
         statusFreshnessLabel: store.isOfflineMode ? '19h (en gracia)' : '2h 10m',
         onToggleOfflineMode: store.toggleOfflineMode,
-      ),
-      floatingToolbar: GxFloatingToolbar(
-        children: <Widget>[
-          TextButton.icon(
-            onPressed: () {
-              store.setTransport(PresentationTransport.qrOffline);
-              onDestinationSelected(1);
-            },
-            icon: const Icon(Icons.qr_code_2_rounded, size: 18),
-            label: const Text('QR Offline'),
-          ),
-          TextButton.icon(
-            onPressed: () {
-              store.setTransport(PresentationTransport.nfcApdu);
-              onDestinationSelected(1);
-            },
-            icon: const Icon(Icons.contactless_rounded, size: 18),
-            label: const Text('Toque NFC'),
-          ),
-          TextButton.icon(
-            onPressed: () {
-              store.setTransport(PresentationTransport.passkey);
-              onDestinationSelected(1);
-            },
-            icon: const Icon(Icons.fingerprint_rounded, size: 18),
-            label: const Text('Passkey'),
-          ),
-          TextButton.icon(
-            onPressed: () {
-              store.setTransport(PresentationTransport.sessionCode);
-              onDestinationSelected(1);
-            },
-            icon: const Icon(Icons.dialpad_rounded, size: 18),
-            label: Text('Código ${store.activeSessionCode}'),
-          ),
-        ],
       ),
       body: primaryBody,
       secondaryBody: secondaryBody,

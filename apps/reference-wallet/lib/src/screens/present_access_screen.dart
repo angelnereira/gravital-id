@@ -82,7 +82,7 @@ class _PresentAccessScreenState extends State<PresentAccessScreen> {
         GxSpace.l,
         GxSpace.l,
         GxSpace.l,
-        GxSpace.xxxl + GxSpace.xxl,
+        GxSpace.xxxl,
       ),
       children: <Widget>[
         Text(
