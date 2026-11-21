@@ -254,7 +254,3 @@ mod tests {
         }
     }
 }
-
-// Silencia imports no usados cuando las features desactivan módulos.
-#[allow(unused_imports)]
-use gravital_id_status::cache::StatusSnapshot as _SS;

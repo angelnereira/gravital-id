@@ -7,6 +7,7 @@ Cada componente publicado (SDK, servicios, contratos, especificación) indica su
 ## [Unreleased]
 
 ### Added
+- [sdk, ci] Revisión formal de la superficie pública de `gravital-id-sdk` frente a `SDK_API.md` con informe en `docs/reports/2026-11-21-sdk-api-surface.md`, y activación de `cargo-semver-checks` en CI (job `semver`, compara contra la base del PR y falla ante cambios incompatibles). Propuesta de congelación `0.x` para la beta pendiente de decisión del mantenedor (F9.T02, REQ-SDK-006; #112).
 - [cli, verifier, recovery, audit, m2] Revisión integral del MVP y cierre formal del Gate G8 / Hito M2 (`apps/pip-cli/src/lib.rs`, `apps/pip-cli/tests/mvp_acceptance_m2_audit.rs`, `docs/reports/2026-10-18-mvp-evaluacion-m2.md`, `ROADMAP.md §24`, `F8.T11`, `REQ-VER-001`, `REQ-PRES-005`, `REQ-STAT-004`, `REQ-STAT-008`, `REQ-LEDG-001`, `REQ-REC-001..007`, `REQ-CRED-001`, `REQ-STOR-004`, `REQ-PERF-003`, `INV-01`, `INV-02`, `INV-03`, `INV-04`, `INV-05`, `INV-06`, `INV-11`, `INV-16`; #111):
   - Subcomando interactivo e in-process `pip-cli demo-m2` (`run_demo_m2`): ejecución determinista y reproducible de los nueve criterios normativos de aceptación del MVP (§24 de `ROADMAP.md`):
     - MVP-01: Verificación 100 % offline y sans-I/O en memoria (`INV-01`, `REQ-VER-001`) con latencia medida de 6.78 ms (presupuesto $\le 20\text{ ms}$, `REQ-PERF-003`) y transcodificación Base45 (`GID1:`).

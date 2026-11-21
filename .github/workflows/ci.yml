@@ -79,6 +79,31 @@ jobs:
       - name: La matriz de trazabilidad commiteada está actualizada
         run: git diff --exit-code docs/TRACEABILITY.md
 
+  semver:
+    name: SemVer de la API pública del SDK (REQ-SDK-006)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.85.0"
+      - uses: Swatinem/rust-cache@v2
+      - uses: taiki-e/install-action@cargo-semver-checks
+      - name: La API pública no cambia de forma incompatible
+        env:
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PUSH_BEFORE: ${{ github.event.before }}
+        run: |
+          # En PRs se compara contra la base; en pushes contra el commit anterior.
+          #Los SHA nulos aparecen en ramas recién creadas: se usa HEAD~1 como repliegue.
+          BASELINE="${PR_BASE:-$PUSH_BEFORE}"
+          if [ -z "$BASELINE" ] || [ "${BASELINE//0/}" = "" ]; then
+            BASELINE="HEAD~1"
+          fi
+          cargo semver-checks check-release -p gravital-id-sdk --baseline-rev "$BASELINE"
+
   msrv:
     name: MSRV (ADR-0014)
     runs-on: ubuntu-latest
