@@ -1,0 +1,11 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          { "type": "command", "command": "scripts/kaizen check --quiet || echo 'kaizen: hay checks fallando, ejecuta scripts/kaizen check' >&2" }
+        ]
+      }
+    ]
+  }
+}

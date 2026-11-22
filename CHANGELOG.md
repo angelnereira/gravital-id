@@ -7,6 +7,7 @@ Cada componente publicado (SDK, servicios, contratos, especificación) indica su
 ## [Unreleased]
 
 ### Added
+- [governance, ci] Gobernanza KAIZEN como capa de proceso: `.kaizen/` (reglas, configuración, línea base), `scripts/kaizen` (init/start/check/baseline/metrics/retro), hooks `commit-msg` y `pre-push`, descriptores versionados por rama, métricas y retrospectivas; workflows `kaizen-gates` y `kaizen-pr-autofill`, adaptadores para Claude Code y opencode y ADR-0031. Política de commits K-3 (≤256 caracteres, imperativo, keyword de cierre) con "sin emojis" y "sin atribución a IA" activadas; `AGENTS.md` y `CLAUDE.md` actualizados. Instalación completa aprobada por el mantenedor (#113).
 - [sdk, ci] Revisión formal de la superficie pública de `gravital-id-sdk` frente a `SDK_API.md` con informe en `docs/reports/2026-11-21-sdk-api-surface.md`, y activación de `cargo-semver-checks` en CI (job `semver`, compara contra la base del PR y falla ante cambios incompatibles). Propuesta de congelación `0.x` para la beta pendiente de decisión del mantenedor (F9.T02, REQ-SDK-006; #112).
 - [cli, verifier, recovery, audit, m2] Revisión integral del MVP y cierre formal del Gate G8 / Hito M2 (`apps/pip-cli/src/lib.rs`, `apps/pip-cli/tests/mvp_acceptance_m2_audit.rs`, `docs/reports/2026-10-18-mvp-evaluacion-m2.md`, `ROADMAP.md §24`, `F8.T11`, `REQ-VER-001`, `REQ-PRES-005`, `REQ-STAT-004`, `REQ-STAT-008`, `REQ-LEDG-001`, `REQ-REC-001..007`, `REQ-CRED-001`, `REQ-STOR-004`, `REQ-PERF-003`, `INV-01`, `INV-02`, `INV-03`, `INV-04`, `INV-05`, `INV-06`, `INV-11`, `INV-16`; #111):
   - Subcomando interactivo e in-process `pip-cli demo-m2` (`run_demo_m2`): ejecución determinista y reproducible de los nueve criterios normativos de aceptación del MVP (§24 de `ROADMAP.md`):
@@ -384,6 +385,7 @@ Cada componente publicado (SDK, servicios, contratos, especificación) indica su
 - [governance] `docs/adr/README.md`: ADR-0014 y ADR-0019 pasan a Aceptados e indexados.
 
 ### Fixed
+- [keys] Golden files de `trybuild` actualizados para rustc 1.99.0 (`agree_with_signing_key.stderr` y `sign_with_hpke_key.stderr`); el cambio es solo de redacción del diagnóstico E0277, la aserción compile-fail permanece (#114).
 - [docs] Contradicción sobre I/O en L3 (`pip-storage`), configuración de lints inaplicable (`forbid` y herencia de workspace), fase de REQ-STAT-002 y dependencia de F6.T08 respecto de F4.T03 (#3, #4, #5).
 - [xtask] `check-error-codes` reportaba duplicados inexistentes porque contaba las menciones de `GID-Exxxx` en doc-comments y pruebas; ahora solo cuenta brazos de `match` de definición y verifica además que los discriminantes del enum coincidan con el catálogo documentado (#6).
 - [xtask] `trace`: soporte para tablas transversales de 5 columnas en `REQUIREMENTS.md` con valor por defecto para el principio arquitectónico (#36).

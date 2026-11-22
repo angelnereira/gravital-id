@@ -111,9 +111,9 @@ Issue (plantilla) → rama <tipo>/<issue>-<slug> → commits convencionales → 
 ```
 
 - **Ramas:** `feat/142-status-list-parser`, `fix/201-kb-jwt-aud-check`, `docs/88-trust-bundle-spec`.
-- **Commits:** Conventional Commits con el crate como ámbito y el issue: `feat(pip-status): parse token status list JWT (#142)`.
+- **Commits:** se rigen por la regla K-3 de `.kaizen/RULES.md` (decisión aprobada por el mantenedor, ADR-0031): una línea de resumen de máximo 256 caracteres en imperativo, con `Closes #NNN`, `Fixes #NNN` o `Resolves #NNN` cuando corresponda. Sustituye al formato Conventional Commits anterior.
 - **PR:** un issue por PR; plantilla completa; enlaza la tarea `F<n>.T<nn>` y los `REQ-*`.
-- **Merge y ramas:** En operación estándar: squash merge a `main` vía PR. **Régimen de mantenedor único en Fase F0:** Mientras el proyecto cuente con un único mantenedor humano (R-14, Issue #1), el mantenedor y sus agentes en sesión interactiva directa pueden realizar commits directos sobre `main` para tareas de documentación, especificación y configuración base (F0.T01–F0.T21), manteniendo siempre historial lineal y Conventional Commits. A partir de F1 (código fuente y CI), se activará la protección de `main` con PRs obligatorios.
+- **Merge y ramas:** En operación estándar: squash merge a `main` vía PR. **Régimen de mantenedor único en Fase F0:** Mientras el proyecto cuente con un único mantenedor humano (R-14, Issue #1), el mantenedor y sus agentes en sesión interactiva directa pueden realizar commits directos sobre `main` para tareas de documentación, especificación y configuración base (F0.T01–F0.T21), manteniendo siempre historial lineal y mensajes K-3. A partir de F1 (código fuente y CI), se activará la protección de `main` con PRs obligatorios.
 - **Aprobación humana obligatoria** para cambios en rutas de `CODEOWNERS` (criptografía, credenciales, confianza, verificador, contratos, especificaciones, CI). En régimen de mantenedor único, el mantenedor humano valida y decide directamente. Un agente **no** aprueba unilateralmente decisiones de arquitectura ni relaja invariantes.
 
 ---
@@ -366,3 +366,17 @@ Publícala como comentario en el issue y resúmela en `docs/STATUS.md` al final 
 - Riesgos o dudas: …
 - Comprobaciones locales: fmt ✅ clippy ✅ tests ✅ layers ✅ trace ✅ (marca ❌ y explica si alguna falla)
 ```
+
+---
+
+## 19. Gobernanza Kaizen (proceso)
+
+El **proceso** de trabajo se rige por `.kaizen/RULES.md` (KAIZEN; ADR-0031, aprobado por el mantenedor el 2026-11-21). Esta sección es la adaptación oficial para este repositorio:
+
+- **Jerarquía:** este `AGENTS.md` sigue siendo la autoridad máxima (§3) para comportamiento, invariantes y reglas de código. `.kaizen/RULES.md` gobierna el ciclo PDCA (descriptor, ratchet, métricas, retrospectivas). Ante cualquier conflicto se aplica §15 y la decisión se registra en un ADR.
+- **Commits:** K-3 (§6), con `KZ_POLICY_NO_EMOJI=1` y `KZ_POLICY_NO_AI_ATTRIBUTION=1`.
+- **Ramas y PR:** toda tarea lleva un descriptor en `docs/kaizen/pr-drafts/<rama-aplanada>.md`; el cuerpo del PR se copia de ahí. El descriptor debe incluir además la verificación de la *Definition of Done* de §10 (spec-first, invariantes, trazabilidad). `scripts/kaizen check` debe estar en verde antes del PR.
+- **ADR:** los ADR normativos canónicos siguen en `docs/adr/` y deben reflejarse en `ARCHITECTURE.md` (§3 y §12). `docs/kaizen/adr/` contiene únicamente la plantilla operativa de Kaizen.
+- **Calidad:** `scripts/kaizen baseline` fija la línea base; el ratchet solo sube. El agente nunca relaja la línea base sin aprobación humana (K-5).
+- **CI:** los workflows `kaizen-*.yml` quedan sujetos a la disponibilidad de GitHub Actions (ver `docs/STATUS.md` §Bloqueos). Mientras esté bloqueado, las comprobaciones se ejecutan en local mediante `scripts/kaizen check` y los hooks de `.githooks/`.
+- **Comandos:** `scripts/kaizen init|start|check|baseline|metrics|retro`.

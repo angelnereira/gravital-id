@@ -724,6 +724,7 @@ El índice vivo está en `docs/adr/README.md`. Las decisiones marcadas "Bloquea"
 | [0028](adr/0028-unicidad-ciudadana-por-pais-y-tribunal-electoral.md) | Unicidad ciudadana por país y Tribunal Electoral de Panamá | `NationalIdProfile` (Panamá TE SVI / Decreto 43 de 2024) + `UniquenessTag` ciego con VOPRF/HSM (`INV-02`) | F10 / F24 |
 | [0029](adr/0029-ranura-unica-por-clase-dispositivo-y-atestacion.md) | Ranura única por clase de dispositivo y atestación de hardware/IMEI/CPLC | Máx. 1 dispositivo activo por `DeviceFactorClass` (`mobile`, `card`, `other`); Key/IMEI Attestation + CPLC Java Card | F8 / F10 / F22 |
 | [0030](adr/0030-sistema-diseno-gravital-experience-ui-flutter.md) | Sistema de diseño `Gravital-Experience-UI` y arquitectura Flutter | Paquete compartido `gravital_experience_ui` (`SPEC-PIP-UI-001`) obligatorio en todas las apps (`apps/reference-wallet`) | F11 |
+| [0031](adr/0031-gobernanza-kaizen.md) | Gobernanza KAIZEN como capa de proceso y política de commits K-3 | KAIZEN como procedimiento PDCA subordinado a `AGENTS.md`; ratchet, descriptor por rama y hooks; K-3 sustituye al formato Conventional Commits | Gobernanza |
 
 ---
 

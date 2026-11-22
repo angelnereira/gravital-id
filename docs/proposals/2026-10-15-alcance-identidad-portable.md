@@ -77,22 +77,22 @@ El trust model de Gravital ID ya replica la lógica de autenticación offline de
 
 | Concepto EMV | Equivalente en Gravital ID | Estado |
 |---|---|---|
-| Claves públicas de las autoridades (CA) cargadas en el terminal | `TrustRoot` fijada por el integrador + `TrustBundle` cofirmado k-de-n | ✅ `gravital-id-trust` |
-| Certificado de la clave del emisor (firmado por la CA) | Claves de emisor con estado en el trust bundle | ✅ |
-| Certificado de la clave de la tarjeta (firmado por el emisor) | Credencial SD-JWT VC con `cnf.jwk` (clave del titular ligada por el emisor) | ✅ `gravital-id-credential` |
-| SDA (datos estáticos firmados, clonables) | SD-JWT sin Key Binding / QR estático | ⛔ No usar para presentación interactiva |
-| DDA/CDA: la tarjeta firma el número impredecible del terminal | KB-JWT firmado por el titular sobre `nonce`, `aud`, `iat`, `sd_hash` | ✅ `kb.rs` |
-| Autenticación offline de datos en el terminal | Pipeline del verificador (11 comprobaciones, 4 estados) | 🟡 F4 en curso |
-| Clave privada dentro del chip, no exportable | Clave del titular en StrongBox / Secure Enclave / elemento seguro de tarjeta vía `KeyStore` | 🟡 Trait listo; implementaciones de plataforma en F9 |
-| Archivo de excepciones (lista negra) del terminal | Snapshot de Token Status List + frescura | ✅ `gravital-id-status` |
-| Gestión de riesgo del terminal (límite de piso: cuándo ir en línea) | `VerificationPolicy` con frescura por operación | ✅ `policy.rs` |
-| Autorización en línea (ARQC/ARPC) | Modo en línea: estado fresco + OID4VP | ⬜ F7 / F10 |
-| Selección de aplicación por AID (`SELECT`) | Applet/servicio Gravital seleccionado por AID | 🆕 F21 |
-| Método de verificación del titular (PIN, biometría) | Presencia de usuario en la clave (teléfono) / PIN en tarjeta | 🆕 F21 / F22 |
-| Personalización de tarjetas por el emisor | Aprovisionamiento: clave generada en el chip + credencial escrita por el emisor | 🆕 F22 |
-| Tokenización (número distinto por dispositivo) | Emisión por lotes con claves distintas por copia | ✅ `gravital-id-issuer` (lotes) |
-| PAN (número de tarjeta) | Código de sesión (por defecto) o número por emisor (opcional) | 🆕 F23 |
-| 3-D Secure (el emisor pide confirmación al titular en su app) | Resolución de número por emisor con consentimiento push (opción B) | 🆕 F23 (opcional) |
+| Claves públicas de las autoridades (CA) cargadas en el terminal | `TrustRoot` fijada por el integrador + `TrustBundle` cofirmado k-de-n | OK `gravital-id-trust` |
+| Certificado de la clave del emisor (firmado por la CA) | Claves de emisor con estado en el trust bundle | OK |
+| Certificado de la clave de la tarjeta (firmado por el emisor) | Credencial SD-JWT VC con `cnf.jwk` (clave del titular ligada por el emisor) | OK `gravital-id-credential` |
+| SDA (datos estáticos firmados, clonables) | SD-JWT sin Key Binding / QR estático | NO-USAR No usar para presentación interactiva |
+| DDA/CDA: la tarjeta firma el número impredecible del terminal | KB-JWT firmado por el titular sobre `nonce`, `aud`, `iat`, `sd_hash` | OK `kb.rs` |
+| Autenticación offline de datos en el terminal | Pipeline del verificador (11 comprobaciones, 4 estados) | PARCIAL F4 en curso |
+| Clave privada dentro del chip, no exportable | Clave del titular en StrongBox / Secure Enclave / elemento seguro de tarjeta vía `KeyStore` | PARCIAL Trait listo; implementaciones de plataforma en F9 |
+| Archivo de excepciones (lista negra) del terminal | Snapshot de Token Status List + frescura | OK `gravital-id-status` |
+| Gestión de riesgo del terminal (límite de piso: cuándo ir en línea) | `VerificationPolicy` con frescura por operación | OK `policy.rs` |
+| Autorización en línea (ARQC/ARPC) | Modo en línea: estado fresco + OID4VP | PENDIENTE F7 / F10 |
+| Selección de aplicación por AID (`SELECT`) | Applet/servicio Gravital seleccionado por AID | NUEVO F21 |
+| Método de verificación del titular (PIN, biometría) | Presencia de usuario en la clave (teléfono) / PIN en tarjeta | NUEVO F21 / F22 |
+| Personalización de tarjetas por el emisor | Aprovisionamiento: clave generada en el chip + credencial escrita por el emisor | NUEVO F22 |
+| Tokenización (número distinto por dispositivo) | Emisión por lotes con claves distintas por copia | OK `gravital-id-issuer` (lotes) |
+| PAN (número de tarjeta) | Código de sesión (por defecto) o número por emisor (opcional) | NUEVO F23 |
+| 3-D Secure (el emisor pide confirmación al titular en su app) | Resolución de número por emisor con consentimiento push (opción B) | NUEVO F23 (opcional) |
 
 **Conclusión de diseño:** no hace falta otra criptografía ni otro modelo de confianza. Hace falta (1) un **transporte de proximidad cifrado** y (2) **nuevos portadores** de la clave del titular (HCE y tarjeta), reutilizando credencial, KB-JWT, trust bundle, estado y verificador tal como están.
 
@@ -127,32 +127,32 @@ El trust model de Gravital ID ya replica la lógica de autenticación offline de
 
 ### 5.2 Capacidades: hecho, parcial y pendiente
 
-Leyenda: ✅ hecho y probado · 🟡 parcial · ⬜ en el roadmap, sin iniciar · 🆕 fuera del roadmap actual
+Leyenda: OK hecho y probado · PARCIAL parcial · PENDIENTE en el roadmap, sin iniciar · NUEVO fuera del roadmap actual
 
 | # | Capacidad | Estado | Dónde / fase |
 |---|---|---|---|
-| 1 | Primitivas: ES256, SHA-256, HMAC, HKDF, XChaCha20-Poly1305, ECDH, **HPKE**, JWK | ✅ | `gravital-id-crypto` (F2) |
-| 2 | Codecs acotados: base64url, JSON, CBOR, DEFLATE, Base45 | ✅ | `gravital-id-codec` (F2) |
-| 3 | Claves tipadas por propósito, trait `KeyStore`, keystore software | ✅ | `gravital-id-keys` (F2) |
-| 4 | Keystores de hardware (StrongBox, Secure Enclave, WebCrypto, KMS/HSM) | ⬜ | F9.T04–T06, F10, F15 |
-| 5 | Credenciales SD-JWT VC: emisión, parseo, KB-JWT, perfiles, predicados, lotes | ✅ | `gravital-id-credential`, `-issuer` (F3) |
-| 6 | Interoperabilidad con una implementación externa | ⬜ bloqueada | F3.T10 |
-| 7 | Estado y revocación (Token Status List, caché, frescura por perfil) | ✅ | `gravital-id-status` (F4) |
-| 8 | Raíz y trust bundle k-de-n, anti-rollback | ✅ | `gravital-id-trust` (F4) |
-| 9 | Verificador offline (11 comprobaciones, typestate, nonces, piso de tiempo, política) | 🟡 | F4.T08–T12 pendientes |
-| 10 | Wallet: almacenamiento cifrado, importar, preparar/confirmar presentación | ⬜ | F5 |
-| 11 | Transporte QR de dos pasos y multi-QR | ⬜ (solo especificado) | F5.T09 |
-| 12 | Contratos y ledger | ⬜ | F6 |
-| 13 | Servicios: relay, trust service, indexador, sincronización | ⬜ | F7 |
-| 14 | Recuperación y migración | ⬜ | F8 |
-| 15 | SDK completo y bindings (Kotlin, Swift, TS, Python, Dart, Go, .NET) | 🟡 esqueleto | F9 |
-| 16 | OID4VCI / OID4VP y servicio de emisión | ⬜ | F10 |
-| 17 | **Transporte NFC** (HCE, lectores, APDU) | 🆕 | Solo en F18.T04 |
-| 18 | **Cifrado de sesión en proximidad** | 🆕 | El flujo QR actual no cifra la respuesta |
-| 19 | **Tarjeta física** con elemento seguro | 🆕 | No prevista |
-| 20 | **Código numérico de 9–10 dígitos** | 🆕 | No previsto |
-| 21 | **Perfil de identidad (cédula) con retrato** | 🆕 | Solo "perfil gubernamental" en F18.T08 |
-| 22 | **Formato mdoc / ISO 18013-5** | 🆕 | Solo en F18.T04 |
+| 1 | Primitivas: ES256, SHA-256, HMAC, HKDF, XChaCha20-Poly1305, ECDH, **HPKE**, JWK | OK | `gravital-id-crypto` (F2) |
+| 2 | Codecs acotados: base64url, JSON, CBOR, DEFLATE, Base45 | OK | `gravital-id-codec` (F2) |
+| 3 | Claves tipadas por propósito, trait `KeyStore`, keystore software | OK | `gravital-id-keys` (F2) |
+| 4 | Keystores de hardware (StrongBox, Secure Enclave, WebCrypto, KMS/HSM) | PENDIENTE | F9.T04–T06, F10, F15 |
+| 5 | Credenciales SD-JWT VC: emisión, parseo, KB-JWT, perfiles, predicados, lotes | OK | `gravital-id-credential`, `-issuer` (F3) |
+| 6 | Interoperabilidad con una implementación externa | PENDIENTE bloqueada | F3.T10 |
+| 7 | Estado y revocación (Token Status List, caché, frescura por perfil) | OK | `gravital-id-status` (F4) |
+| 8 | Raíz y trust bundle k-de-n, anti-rollback | OK | `gravital-id-trust` (F4) |
+| 9 | Verificador offline (11 comprobaciones, typestate, nonces, piso de tiempo, política) | PARCIAL | F4.T08–T12 pendientes |
+| 10 | Wallet: almacenamiento cifrado, importar, preparar/confirmar presentación | PENDIENTE | F5 |
+| 11 | Transporte QR de dos pasos y multi-QR | PENDIENTE (solo especificado) | F5.T09 |
+| 12 | Contratos y ledger | PENDIENTE | F6 |
+| 13 | Servicios: relay, trust service, indexador, sincronización | PENDIENTE | F7 |
+| 14 | Recuperación y migración | PENDIENTE | F8 |
+| 15 | SDK completo y bindings (Kotlin, Swift, TS, Python, Dart, Go, .NET) | PARCIAL esqueleto | F9 |
+| 16 | OID4VCI / OID4VP y servicio de emisión | PENDIENTE | F10 |
+| 17 | **Transporte NFC** (HCE, lectores, APDU) | NUEVO | Solo en F18.T04 |
+| 18 | **Cifrado de sesión en proximidad** | NUEVO | El flujo QR actual no cifra la respuesta |
+| 19 | **Tarjeta física** con elemento seguro | NUEVO | No prevista |
+| 20 | **Código numérico de 9–10 dígitos** | NUEVO | No previsto |
+| 21 | **Perfil de identidad (cédula) con retrato** | NUEVO | Solo "perfil gubernamental" en F18.T08 |
+| 22 | **Formato mdoc / ISO 18013-5** | NUEVO | Solo en F18.T04 |
 
 ### 5.3 Discrepancias detectadas (registrar como `type:spec-gap` en F19.T02)
 
@@ -661,7 +661,7 @@ Además de la Definition of Done de `AGENTS.md §10`:
   - Aceptación de ADR-0021 por el mantenedor; luego ADR-0022 a ADR-0026
 - Decisiones tomadas: ninguna (todo queda Propuesto)
 - Riesgos o dudas: R-15, R-16, R-19
-- Comprobaciones locales: fmt ✅ clippy ✅ tests ✅ layers ✅ trace ✅
+- Comprobaciones locales: fmt OK clippy OK tests OK layers OK trace OK
 ```
 
 ---

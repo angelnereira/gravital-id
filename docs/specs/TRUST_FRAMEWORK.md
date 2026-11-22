@@ -12,7 +12,7 @@
 
 El Marco de Confianza (Trust Framework) establece las reglas de gobierno, umbrales criptográficos, tiempos de observación y procedimientos operativos para garantizar la integridad descentralizada del ecosistema PIP / Gravital ID.
 
-> ⚠️ **Aviso de Fase:** Este documento constituye la especificación de **gobernanza técnica (v0.1)**. Los términos legales de vinculación, acuerdos de nivel de servicio (SLA) comerciales, responsabilidades civiles y cláusulas de jurisdicción internacional se redactarán en la **Fase F14 (Marco de confianza v1, legal y gobernanza)** en coordinación con asesoría jurídica especializada (REQ-GOV-001).
+> **Aviso de Fase:** Este documento constituye la especificación de **gobernanza técnica (v0.1)**. Los términos legales de vinculación, acuerdos de nivel de servicio (SLA) comerciales, responsabilidades civiles y cláusulas de jurisdicción internacional se redactarán en la **Fase F14 (Marco de confianza v1, legal y gobernanza)** en coordinación con asesoría jurídica especializada (REQ-GOV-001).
 
 ---
 

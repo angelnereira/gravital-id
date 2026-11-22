@@ -10,7 +10,7 @@
 | Último gate cerrado | **G8 / Hito M2** (2026-10-18) · **G7** (2026-10-18) · **G6** (2026-10-17) · **G5** (2026-10-16) · **G4** (2026-10-16) · **G19** (2026-10-15) · **G0** (2026-10-11) |
 | Próximo gate | **G9** (Bindings para 8 lenguajes) / **G20** (Núcleo de proximidad) · **G3** (#59) y **G2** pendientes de CI (no bloquean F9: G8 cerrado) |
 | Hito siguiente | MP1 · Tap offline (al cerrar G21) / M3 · SDK multi-lenguaje (al cerrar G9) [M1 y M2 alcanzados] |
-| Última actualización | 2026-11-21 (F9.T02: revisión de API del SDK y `cargo-semver-checks` activado; limpieza de ramas fusionadas/vacías completada, solo queda `main`) |
+| Última actualización | 2026-11-21 (Gobernanza KAIZEN instalada con ADR-0031 y política K-3, rama `chore/kaizen-governance`, #113; F9.T02 sigue en `feat/112-sdk-api-freeze`) |
 
 ## Gates
 
@@ -32,6 +32,7 @@
 
 | Tarea | Issue | Responsable | Estado | Siguiente paso |
 |---|---|---|---|---|
+| Gobernanza Kaizen (instalación, ratchet y adaptadores) | #113 | OpenCode (agente) | Hecha | Pendiente de revisión/merge del mantenedor; los gates remotos no ejecutan hasta resolver la facturación de Actions |
 | F9.T02 Revisión y congelación de API | #112 | OpenCode (agente) | Hecha | Revisión de superficie pública + `cargo-semver-checks` activo en CI; congelación formal `0.x` pendiente de decisión del mantenedor |
 | F11.T02 Wallet de Referencia & UI | #101 | Antigravity (agente) | Hecha | Rediseño UI/UX verificado en Google Pixel 8 Pro: 4 pestañas principales sin corte de palabras, `NoActionBar` nativo, tarjetas limpias sin jerga de protocolo, diagnósticos colapsables, 13/13 tests en verde y release `v0.1.0-alpha` actualizado (50.3 MB) |
 | F8.T11 Revisión del MVP (Gate G8 / Hito M2) | #111 | Antigravity (agente) | Hecha | Ejecución scriptada y reproducible de los nueve criterios de aceptación de ROADMAP.md §24 aprobada al 100%; informe formal publicado en `docs/reports/2026-10-18-mvp-evaluacion-m2.md` y Gate G8 / Hito M2 formalmente cerrado; resuelto #111 |
@@ -135,7 +136,7 @@
 
 ## Bloqueos
 
-- **Bloqueo de facturación de la cuenta de GitHub:** los workflows de PR #22 se crean correctamente pero los jobs no arrancan ("The job was not started because your account is locked due to a billing issue"). No es un defecto de los workflows: se validaron por sintaxis y todas sus comprobaciones se ejecutaron en local con éxito. El mantenedor debe resolver la facturación para que CI verifique G1.
+- **Bloqueo de facturación de la cuenta de GitHub:** los workflows de PR #22 se crean correctamente pero los jobs no arrancan ("The job was not started because your account is locked due to a billing issue"). No es un defecto de los workflows: se validaron por sintaxis y todas sus comprobaciones se ejecutaron en local con éxito. El mantenedor debe resolver la facturación para que CI verifique G1. Los workflows `kaizen-gates.yml` y `kaizen-pr-autofill.yml` quedan sujetos al mismo bloqueo; sus comprobaciones se ejecutan en local mediante `scripts/kaizen check` y los hooks de `.githooks/` (#113).
 
 ## Decisiones pendientes que bloquean la fase actual
 
@@ -202,4 +203,20 @@
 - Riesgos o dudas: `cargo-semver-checks` no está instalado en el entorno local; el job se
   validó por sintaxis del workflow, no ejecutándolo. GitHub Actions sigue pendiente de
   facturación.
-- Comprobaciones locales: fmt ✅ clippy ✅ tests ✅ xtask ✅ sintaxis del workflow ✅
+- Comprobaciones locales: fmt OK clippy OK tests OK xtask OK sintaxis del workflow OK
+
+### Traspaso — 2026-11-21 (gobernanza Kaizen) — OpenCode (agente)
+- Tarea: gobernanza Kaizen — #113 — rama `chore/kaizen-governance`
+- Estado: **lista para revisión** (instalación completa y `scripts/kaizen check` en verde)
+- Hecho en esta sesión:
+  - Instalación completa aprobada por el mantenedor: `.kaizen/RULES.md`, `.kaizen/config.env` con comandos reales (`cargo test`, `cargo clippy`, `cargo fmt`), `scripts/kaizen`, `.githooks/`, `docs/kaizen/` (descriptores, retros, postmortems, ADR, runbooks, métricas), adaptadores Claude Code/opencode, `.github/workflows/kaizen-*.yml` y nueva plantilla de PR.
+  - Política de commits K-3 (≤256 caracteres, imperativo, keyword de cierre) con `KZ_POLICY_NO_EMOJI=1` y `KZ_POLICY_NO_AI_ATTRIBUTION=1`; `AGENTS.md` §6 y §19 y `CLAUDE.md` actualizados. La política de emojis obligó a sustituir símbolos por texto en tres documentos heredados, sin cambiar su contenido.
+  - ADR-0031 (Aceptado) reflejado en `ARCHITECTURE.md §22`; `CHANGELOG.md` y `STATUS.md` actualizados.
+  - Línea base generada (`debt_max=2`) y primera métrica registrada (`LOC=88421`, `debt=2`); `KZ_SRC_GLOBS` acotado a fuentes porque `apps/` y `packages/` contienen artefactos de build que inflaban LOC a 5,5 M.
+  - Bug preexistente #114 corregido con aprobación explícita de CODEOWNERS: dos `.stderr` de `trybuild` regenerados para rustc 1.99.0; el diff es solo redacción del diagnóstico E0277.
+- Pendiente (siguiente paso concreto):
+  - Revisión y merge del mantenedor. La verificación KAIZEN §6.7 (PR real sin/con descriptor) no se ejecutó: no se abrieron PRs de prueba; corresponde comprobarla al abrir el PR de esta rama.
+- Bugs/issues abiertos durante la sesión: #113 (tarea), #114 (bug de trybuild, corregido en esta rama).
+- Decisiones tomadas (con enlace a ADR/issue): ADR-0031 y aprobación de CODEOWNERS registrada en #113 y #114; `docs/kaizen/adr/` queda solo como plantilla operativa, el directorio normativo sigue siendo `docs/adr/`.
+- Riesgos o dudas: GitHub Actions sigue bloqueado por facturación, por lo que `kaizen-gates` y `kaizen-pr-autofill` no se han ejecutado en remoto; `KZ_COVERAGE_CMD` y `KZ_WARNINGS_CMD` quedan vacíos (no hay comando único y estable que imprima solo el número). `cargo deny check` y `cargo audit` fallan por advisory preexistentes (RUSTSEC-2026-0387, -0459 y -0486) en dependencias no tocadas por este cambio; no se crean issues públicos por §7.4.
+- Comprobaciones locales: `scripts/kaizen init` OK; `scripts/kaizen check` OK (descriptores, políticas, formato, lint, tests y ratchet); hook `commit-msg` rechaza resumen de 300 caracteres OK; descriptor sin cierre falla y restaurado pasa OK; ratchet con TODO extra falla OK; `cargo xtask check-layers` OK; `cargo xtask trace` OK; `cargo deny check` FALLO (preexistente); `cargo audit` FALLO (preexistente).
